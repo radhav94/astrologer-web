@@ -1,0 +1,22 @@
+@import url("https://fonts.googleapis.com/css2?family=Montserrat&family=Open+Sans:wght@400;500;600;700&family=Poppins&display=swap");
+/* element selectors */
+
+.app {
+  text-align: center;
+  margin: 0;
+  padding: 0;
+  font-family: "Poppins";
+  background: transparent !important;
+  width: 100%;
+  min-height: 100vh;
+}
+
+$black: #000000;
+$white: #ffffff;
+$pri: #ffcb03;
+$sec-color: #fbf1dd;
+$light-pri: #f8f8f8;
+$bg: #f5f5f5;
+$greyLight: #e0e0e0;
+$grey: #999999;
+$greyDark: #555555;

@@ -76,20 +76,20 @@ const HomeLayout = () => {
               {true && (
                 <div className="hidden md:block text-right">
                   <p className="text-sm font-semibold text-gray-900">
-                    04/12/2025
+                    {new Date().toLocaleDateString("en-GB")}
                   </p>
                   <p className="text-xs text-gray-500">1.15k Followers</p>
                 </div>
               )}
               <button
                 onClick={() => setIsOnline(!isOnline)}
-                className={`relative inline-flex h-8 w-16 items-center rounded-full transition-colors duration-300 ${
+                className={`relative inline-flex h-8 w-[4.3rem] items-center rounded-full transition-colors duration-300 ${
                   isOnline ? "bg-green-600" : "bg-gray-300"
                 }`}
               >
                 <span
                   className={`inline-block h-6 w-6 transform rounded-full bg-white transition duration-300 ease-in-out ${
-                    isOnline ? "translate-x-9" : "translate-x-1"
+                    isOnline ? "translate-x-11" : "translate-x-1"
                   }`}
                 />
                 <span

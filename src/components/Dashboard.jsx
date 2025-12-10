@@ -53,15 +53,18 @@ const Dashboard = () => {
         {/* Consultation Price Card */}
         <div className="bg-white rounded-[2rem] p-6 text-left shadow-sm flex flex-col justify-between relative overflow-hidden group">
           <div className="z-10 relative">
-            <h3 className="font-bold  text-lg text-gray-900 mb-1">
+            <h3 as Li className="font-bold  text-lg text-gray-900 mb-1">
               Set Your Consultation Price
             </h3>
             <p className="text-gray-500 text-sm mb-6 max-w-[80%]">
               Update your per-minute rate for calls and chats instantly.
             </p>
-            <button className="bg-black text-white px-6 py-2.5 rounded-full text-sm font-medium flex items-center gap-2 hover:bg-gray-800 transition-colors">
+            <Link
+              to="/set-your-consultation-price"
+              className="bg-black text-white w-44 px-6 py-2.5 rounded-full text-sm font-medium flex items-center gap-2 hover:bg-gray-800 transition-colors"
+            >
               Set Now <Icons.ArrowRight size={16} />
-            </button>
+            </Link>
           </div>
           <div className="absolute top-4 right-4 bg-gray-100 rounded-2xl p-4 w-32 h-32 flex flex-col justify-center items-center">
             <p className="text-xs text-gray-400 mb-1">Current Rate</p>
@@ -74,19 +77,21 @@ const Dashboard = () => {
         <div className="bg-white rounded-[2rem] text-left p-6 shadow-sm flex items-center justify-between">
           <div>
             <h3 className="font-bold text-lg text-gray-900 mb-1">
-              Set Availability
-              <br />
-              Schedule
+              Set Availability Schedule
             </h3>
             <p className="text-gray-500 text-sm mb-6 max-w-[200px]">
               Curate your weekly, monthly Calendars as per availability
             </p>
-            <button className="bg-black text-white px-6 py-2.5 rounded-full text-sm font-medium flex items-center gap-2 hover:bg-gray-800 transition-colors">
+            <Link
+              to="/profile"
+              state={{ data: "availability" }}
+              className="bg-black text-white w-44 px-6 py-2.5 rounded-full text-sm font-medium flex items-center gap-2 hover:bg-gray-800 transition-colors"
+            >
               Set Now <Icons.ArrowRight size={16} />
-            </button>
+            </Link>
           </div>
-          <div className="w-28 h-28 sm:w-32 sm:h-32 bg-gray-200 rounded-2xl animate-pulse">
-            {/* Placeholder for calendar graphic */}
+          <div className="w-28 h-28 sm:w-32 sm:h-24 bg-gray-200 rounded-2xl">
+            <img src="https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcTCs3j72-r-OyO_hvrJcX2L1VtZQdAKkKwF5VW02yHCz5dCGUb2swJrS73BKMzzQ-gzMWiRx-jf" />
           </div>
         </div>
       </div>

@@ -80,7 +80,12 @@ const RecentActivity = ({ onBack }) => {
                 className="bg-[#EAEAEA] rounded-xl p-4 flex items-center justify-between"
               >
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-[#D9D9D9] rounded-lg flex-shrink-0"></div>
+                  <div className="w-12 h-12  flex-shrink-0">
+                    <img
+                      className="rounded-full"
+                      src={`https://picsum.photos/seed/${item.id}/200`}
+                    />
+                  </div>
                   <div>
                     <p className="text-sm text-gray-900 font-medium">
                       {item.title} <br />
@@ -119,7 +124,12 @@ const RecentActivity = ({ onBack }) => {
                 className="bg-[#EAEAEA] rounded-xl p-4 flex items-center justify-between"
               >
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-[#D9D9D9] rounded-lg flex-shrink-0"></div>
+                  <div className="w-12 h-12  flex-shrink-0">
+                    <img
+                      className="rounded-full"
+                      src={`https://picsum.photos/seed/${item.id}/200`}
+                    />
+                  </div>
                   <div>
                     <p className="text-sm text-gray-900 font-medium">
                       {item.title} <br />

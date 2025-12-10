@@ -65,7 +65,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           ))}
         </nav>
 
-        <div className="absolute bottom-8 left-0 w-full px-6">
+        {/* <div className="absolute bottom-8 left-0 w-full px-6">
           <div className="bg-gray-900 rounded-2xl p-4 text-white">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center">
@@ -81,7 +81,7 @@ const Sidebar = ({ isOpen, onClose }) => {
               </div>
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
     </>
   );

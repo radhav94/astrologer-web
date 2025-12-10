@@ -53,7 +53,7 @@ const Dashboard = () => {
         {/* Consultation Price Card */}
         <div className="bg-white rounded-[2rem] p-6 text-left shadow-sm flex flex-col justify-between relative overflow-hidden group">
           <div className="z-10 relative">
-            <h3 as Li className="font-bold  text-lg text-gray-900 mb-1">
+            <h3 className="font-bold  text-lg text-gray-900 mb-1">
               Set Your Consultation Price
             </h3>
             <p className="text-gray-500 text-sm mb-6 max-w-[80%]">

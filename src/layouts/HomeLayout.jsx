@@ -4,6 +4,10 @@ import Sidebar from "../components/Sidebar";
 import { Outlet } from "react-router-dom";
 
 const HomeLayout = () => {
+  const userData = JSON.parse(
+    localStorage.getItem("shubhtalk_astrologer_details")
+  );
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   // const [currentPage, setCurrentPage] = useState("dashboard");
   const [isOnline, setIsOnline] = useState(true);
@@ -24,7 +28,9 @@ const HomeLayout = () => {
   //       return <Dashboard />;
   //   }
   // };
-
+  const userName = userData
+  ? `${userData.firstName} ${userData.lastName}`
+  : "Unkown";
   return (
     <div className="flex h-screen bg-[#F8F9FA] overflow-hidden">
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
@@ -61,7 +67,7 @@ const HomeLayout = () => {
                   <div>
                     <p className="text-xs text-gray-500 font-medium">Namaste</p>
                     <h1 className="text-lg font-bold text-gray-900 leading-tight">
-                      Hari Prasad
+                      {userName}
                     </h1>
                   </div>
                 </div>

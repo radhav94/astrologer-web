@@ -2,6 +2,17 @@ import ConsultationHistory from "../../components/ConsultationHistory";
 import Dashboard, { UPCOMING_SESSIONS } from "../../components/Dashboard";
 import Profile from "../../components/Profile";
 import RecentActivity from "../../components/RecentActivity";
+import Onboarding from "../../screens/public/Onboarding/Onboarding";
+import Login from "../../screens/public/Login/Login";
+import VerifyOtp from "../../screens/public/VerifyOtp/VerifyOtp";
+import BasicDetails from "../../screens/public/BasicDetails/BasicDetails";
+import ProfessionalDetails from "../../screens/public/BasicDetails/ProfessionalDetails";
+import LanguagesYouSpeak from "../../screens/public/BasicDetails/LanguagesYouSpeak";
+import Education from "../../screens/public/BasicDetails/Education";
+import Achievements from "../../screens/public/BasicDetails/Achievements";
+import AreaOfExpertise from "../../screens/public/BasicDetails/AreaOfExpertise";
+import VerifyProfile from "../../screens/public/BasicDetails/VerifyProfile"; 
+import VerificationPending from "../../screens/public/BasicDetails/VerificationPending"; 
 import HomeLayout from "../../layouts/HomeLayout";
 import SetPrice from "../../screens/private/Home/setPrice/SetPrice";
 import SessionDetails from "../../screens/private/Home/upcomingSessions/SessionDetails";
@@ -13,10 +24,56 @@ import RecentTickets from "../../screens/private/Profile/support/tickets/RecentT
 import WithdrawMoney from "../../screens/private/Profile/withdraw/WithdrawMoney";
 
 export const PATH = {
-  publicRoutes: {},
-  privateRoutes: {
+  publicRoutes: {
     HOME: {
       path: "/",
+      element: Onboarding,
+    },
+    Login: {
+      path: "/login",
+      element: Login,
+    },
+    VerifyOtp: {
+      path: "/verify-otp",
+      element: VerifyOtp,
+    },
+    BasicDetails: {
+      path: "/basic-details",
+      element: BasicDetails,
+    },
+    ProfessionalDetails: {
+      path: "/professional-details",
+      element: ProfessionalDetails,
+    },
+    LanguagesYouSpeak: {
+      path: "/language-speak",
+      element: LanguagesYouSpeak,
+    },
+    Education: {
+      path: "/education",
+      element: Education,
+    },
+    Achievements: {
+      path: "/achievements",
+      element: Achievements,
+    },
+    AreaOfExpertise: {
+      path: "/areaofexpertise",
+      element: AreaOfExpertise,
+    },
+    VerifyProfile: {
+      path: "/verifyprofile",
+      element: VerifyProfile,
+    },
+    VerificationPending: {
+      path: "/verificationpending",
+      element: VerificationPending,
+    },
+  
+  },
+  privateRoutes: {
+    DASHBOARD: {
+      path: "/dashboard",
       element: Dashboard,
     },
     CONSULTATION_HOSTORY: {

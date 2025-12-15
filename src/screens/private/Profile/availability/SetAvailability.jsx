@@ -1,6 +1,9 @@
+import { useState } from "react";
 import { Icons } from "../../../../components/Icons";
+import { Link } from "react-router-dom";
 
 const SetAvailability = () => {
+  const [isFlexible, setIsFlexible] = useState(true);
   const days = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
   // Simplified calendar data for Dec 2025 based on image
   const calendarData = [
@@ -41,17 +44,31 @@ const SetAvailability = () => {
     { day: 2, next: true },
   ];
 
+  const handleToggle = () => {
+    setIsFlexible(!isFlexible);
+  };
+
   return (
     <div className="h-full flex flex-col max-w-lg mx-auto">
       {/* Header Tabs */}
-      {/* <div className="flex border-b border-gray-200 mb-8">
-        <button className="flex-1 pb-3 text-sm font-medium border-b-2 border-black text-black">
+      <div className="flex border-b border-gray-200 mb-8">
+        <button
+          onClick={handleToggle}
+          className={`flex-1 pb-3 text-sm font-medium border-b-2 ${
+            isFlexible ? `border-black` : `border-transparent`
+          } text-black`}
+        >
           Flexible Date
         </button>
-        <button className="flex-1 pb-3 text-sm font-medium border-b-2 border-transparent text-gray-400 hover:text-gray-600">
+        <button
+          onClick={handleToggle}
+          className={`flex-1 pb-3 text-sm font-medium border-b-2 ${
+            !isFlexible ? `border-black` : `border-transparent`
+          } text-gray-400 hover:text-gray-600`}
+        >
           Fixed Date
         </button>
-      </div> */}
+      </div>
 
       {/* Date Inputs */}
       <div className="grid grid-cols-2 gap-4 mb-8">
@@ -126,11 +143,12 @@ const SetAvailability = () => {
         </div>
       </div>
 
-      <div className="mt-auto pb-6">
-        <button className="w-full bg-black text-white font-medium py-4 rounded-2xl hover:bg-gray-900 transition-colors">
-          Next
-        </button>
-      </div>
+      <Link
+        to="/schedule-availablity"
+        className=" w-full bg-black text-white font-medium py-4 rounded-2xl hover:bg-gray-900 transition-colors"
+      >
+        <p className="text-center text-white font-medium">Next</p>
+      </Link>
     </div>
   );
 };

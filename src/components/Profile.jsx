@@ -10,6 +10,13 @@ import Support from "../screens/private/Profile/support/Support.jsx";
 const Profile = ({ onBack }) => {
   const location = useLocation();
   const receivedString = location.state?.data;
+  const userData = JSON.parse(
+    localStorage.getItem("shubhtalk_astrologer_details")
+  );
+
+  const firstName = userData?.firstName?.trim();
+  const lastName = userData?.lastName?.trim();
+  const userName = firstName && lastName ? `${firstName} ${lastName}` : "Unknown";
   const tabs = [
     {
       label: "Profile",
@@ -46,7 +53,7 @@ const Profile = ({ onBack }) => {
           </button>
           <div>
             <h1 className="text-xl font-bold text-gray-900 leading-none">
-              Hari Prasad
+              {userName}
             </h1>
             <p className="text-xs text-gray-500 mt-1">🕉️ Exp. 20 Yrs</p>
           </div>

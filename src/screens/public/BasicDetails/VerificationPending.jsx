@@ -4,9 +4,11 @@ const VerificationPending = () => {
   const navigate = useNavigate();
   const handleLogout = () => {
     localStorage.removeItem("shubhtalk_role");
-    localStorage.removeItem("shubhtalk_astro_id");
-    localStorage.removeItem("shubhtalk_astro_token");
-    localStorage.removeItem("shubhtalk_astrologer_details");
+      localStorage.removeItem("shubhtalk_astro_id");
+      localStorage.removeItem("shubhtalk_astro_token");
+      localStorage.removeItem("shubhtalk_astrologer_details");
+      localStorage.removeItem("accessToken");
+      sessionStorage.removeItem("otpSession");
     navigate("/");
 };
   return (

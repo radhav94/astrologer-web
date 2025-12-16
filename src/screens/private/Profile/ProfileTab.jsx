@@ -2,6 +2,13 @@ import { Link } from "react-router-dom";
 import { Icons } from "../../../components/Icons";
 
 const ProfileTab = () => {
+  const userData = JSON.parse(
+    localStorage.getItem("shubhtalk_astrologer_details")
+  );
+
+  const firstName = userData?.firstName?.trim();
+  const lastName = userData?.lastName?.trim();
+  const userName = firstName && lastName ? `${firstName} ${lastName}` : "Unknown";
   return (
     <>
       {/* Details Sections */}
@@ -14,7 +21,7 @@ const ProfileTab = () => {
           <span className="bg-[#444444] text-white px-3 py-1 rounded-full text-xs font-medium">
             Basic Details
           </span>
-          <h3 className="font-bold text-lg text-gray-900 mt-3">Hari Prasad</h3>
+          <h3 className="font-bold text-lg text-gray-900 mt-3">{userName}</h3>
           <p className="text-sm text-gray-600">Jan 01, 2002 • Male</p>
           <p className="text-sm text-gray-600">+91 98989 98989</p>
           <p className="text-sm text-gray-600">hariprasad@gmail.com</p>

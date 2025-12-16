@@ -23,3 +23,11 @@ export const saveUserToStorage = (user) => {
       return null;
     }
   };
+
+  export const getToken = () => {
+    return localStorage.getItem("accessToken"); // or cookie
+  };
+  
+  export const isAuthenticated = () => {
+    return !!getToken();
+  };

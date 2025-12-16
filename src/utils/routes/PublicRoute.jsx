@@ -1,10 +1,14 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
 
-const PublicRoute = ({ component: Component }) => {
-  return (
-    // !getToken() ? <Component /> : <Navigate to="/" />
-    true ? <Component /> : <Navigate to="/" />
-  );
+const PublicRoute = () => {
+  const isLoggedIn = !!localStorage.getItem("shubhtalk_astro_token");
+  const onboardingSession = sessionStorage.getItem("onboardingSession");
+
+  if (isLoggedIn && !onboardingSession) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <Outlet />;
 };
 
 export default PublicRoute;

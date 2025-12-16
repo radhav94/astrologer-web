@@ -85,9 +85,7 @@ const ProfessionalProfileDtls = () => {
       </div>
 
       <div className="mt-8 pt-6 border-t border-gray-100">
-        <Button onClick={() => console.log("Saving Professional Details...")}>
-          Save
-        </Button>
+        <Button>Save</Button>
       </div>
     </div>
   );

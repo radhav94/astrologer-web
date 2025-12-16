@@ -47,7 +47,7 @@ const Profile = ({ onBack }) => {
             onClick={onBack}
             className="p-2 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
           >
-            <Link to="/">
+            <Link to="/dashboard">
               <Icons.ChevronLeft size={20} className="text-gray-700" />
             </Link>
           </button>

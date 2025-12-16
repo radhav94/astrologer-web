@@ -8,24 +8,28 @@ const ProfileTab = () => {
 
   const firstName = userData?.firstName?.trim();
   const lastName = userData?.lastName?.trim();
-  const userName = firstName && lastName ? `${firstName} ${lastName}` : "Unknown";
+  const userName =
+    firstName && lastName ? `${firstName} ${lastName}` : "Unknown";
   return (
     <>
       {/* Details Sections */}
       <div className="space-y-4 pb-12 text-left ">
         {/* Basic Details */}
-        <div className="bg-[#EAEAEA] p-5 rounded-2xl relative cursor-pointer">
-          <div className="absolute top-5 right-5 text-gray-500">
-            <Icons.Edit size={18} />
+        <Link to="/profile/basic-details">
+          <div className="bg-[#EAEAEA] p-5 rounded-2xl relative cursor-pointer">
+            <div className="absolute top-5 right-5 text-gray-500">
+              <Icons.Edit size={18} />
+            </div>
+
+            <span className="bg-[#444444] text-white px-3 py-1 rounded-full text-xs font-medium">
+              Basic Details
+            </span>
+            <h3 className="font-bold text-lg text-gray-900 mt-3">{userName}</h3>
+            <p className="text-sm text-gray-600">Jan 01, 2002 • Male</p>
+            <p className="text-sm text-gray-600">+91 98989 98989</p>
+            <p className="text-sm text-gray-600">hariprasad@gmail.com</p>
           </div>
-          <span className="bg-[#444444] text-white px-3 py-1 rounded-full text-xs font-medium">
-            Basic Details
-          </span>
-          <h3 className="font-bold text-lg text-gray-900 mt-3">{userName}</h3>
-          <p className="text-sm text-gray-600">Jan 01, 2002 • Male</p>
-          <p className="text-sm text-gray-600">+91 98989 98989</p>
-          <p className="text-sm text-gray-600">hariprasad@gmail.com</p>
-        </div>
+        </Link>
 
         {/* Languages */}
         <Link to="/profile/languages">

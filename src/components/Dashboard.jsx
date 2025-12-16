@@ -50,115 +50,106 @@ const Dashboard = () => {
   return (
     <div className="space-y-6">
       {/* Top Row: Price & Schedule */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 ">
         {/* Consultation Price Card */}
-        <div className="bg-white rounded-[2rem] p-6 text-left shadow-sm flex flex-col justify-between relative overflow-hidden group">
-          <div className="z-10 relative">
-            <h3 className="font-bold  text-lg text-gray-900 mb-1">
+        <div className="bg-white rounded-2xl p-3 text-left shadow-sm flex flex-col justify-between relative overflow-hidden group">
+          <div className="z-10 py-2 relative">
+            <h3 className="font-bold  text-lg text-gray-900 mb-1 max-w-[70%] md:max-w-full   ">
               Set Your Consultation Price
             </h3>
-            <p className="text-gray-500 text-sm mb-6 max-w-[80%]">
+            <p className="text-gray-500 text-sm mb-3 max-w-[220px] sm:max-w-full ">
               Update your per-minute rate for calls and chats instantly.
             </p>
             <Link
               to="/set-your-consultation-price"
-              className="bg-black text-white w-44 px-6 py-2.5 rounded-full text-sm font-medium flex items-center gap-2 hover:bg-gray-800 transition-colors"
+              className="bg-black text-white w-36 px-6 py-2.5 rounded-full text-sm font-medium flex items-center gap-2 hover:bg-gray-800 transition-colors"
             >
               Set Now <Icons.ArrowRight size={16} />
             </Link>
           </div>
-          <div className="absolute top-4 right-4 bg-gray-100 rounded-2xl p-4 w-32 h-32 flex flex-col justify-center items-center">
+          <div className="absolute top-4 right-2 bg-gray-100 rounded-2xl p-3 w-28 h-28 flex flex-col justify-center items-center">
             <p className="text-xs text-gray-400 mb-1">Current Rate</p>
             <p className="text-2xl font-bold text-gray-900">₹20</p>
             <p className="text-xs text-gray-500">per minute</p>
           </div>
         </div>
-
-        {/* Availability Schedule */}
-        <div className="bg-white rounded-[2rem] text-left p-6 shadow-sm flex items-center justify-between">
-          <div>
-            <h3 className="font-bold text-lg text-gray-900 mb-1">
-              Set Availability Schedule
-            </h3>
-            <p className="text-gray-500 text-sm mb-6 max-w-[200px]">
-              Curate your weekly, monthly Calendars as per availability
-            </p>
-            <Link
-              to="/profile"
-              state={{ data: "availability" }}
-              className="bg-black text-white w-44 px-6 py-2.5 rounded-full text-sm font-medium flex items-center gap-2 hover:bg-gray-800 transition-colors"
-            >
-              Set Now <Icons.ArrowRight size={16} />
-            </Link>
-          </div>
-          <div className="w-28 h-28 sm:w-32 sm:h-24 bg-gray-200 rounded-2xl">
-            <img src="https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcTCs3j72-r-OyO_hvrJcX2L1VtZQdAKkKwF5VW02yHCz5dCGUb2swJrS73BKMzzQ-gzMWiRx-jf" />
-          </div>
-        </div>
       </div>
 
-      {/* Today's Update Grid */}
+      {/* Today's Update */}
       <div>
-        <h2 className="text-xl font-bold text-gray-900 mb-4">Today's Update</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Ongoing Call Status */}
+        <h2 className="text-xl text-start font-bold text-gray-900 mb-4">
+          Today's Update
+        </h2>
+
+        {/* GRID */}
+        <div className="grid grid-cols-2 gap-3 md:gap-4">
+          {/* CURRENT STATUS */}
           <Link to="/call-status">
-            <div className="bg-green-100 rounded-[2rem] p-6 flex flex-col justify-between h-56 relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-4 opacity-10">
-                <Icons.Phone size={90} />
+            <div className="bg-green-100 rounded-2xl p-4 md:p-6 flex flex-col justify-between relative overflow-hidden min-h-[150px] md:h-56">
+              {/* Icon */}
+              <div className="absolute top-2 right-2 opacity-10">
+                <Icons.Phone size={64} />
               </div>
-              <div>
-                <p className="text-green-800 text-sm font-medium opacity-60">
-                  Current Status
+
+              <p className="text-green-800 text-xs md:text-sm font-medium opacity-60">
+                Current Status
+              </p>
+
+              {/* Wave */}
+              <div className="flex justify-center items-end gap-1 h-10 md:h-12 my-2">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div
+                    key={i}
+                    className="w-2 bg-green-600 rounded-full animate-pulse"
+                    style={{
+                      height: `${20 + i * 10}%`,
+                      animationDuration: `${0.4 + i * 0.1}s`,
+                    }}
+                  />
+                ))}
+              </div>
+
+              <div className="text-center">
+                <p className="text-green-900 font-bold text-sm md:text-base">
+                  10:36
                 </p>
-              </div>
-
-              <div className="flex items-center justify-center py-4">
-                {/* Waveform Animation */}
-                <div className="flex items-end gap-1 h-12">
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <div
-                      key={i}
-                      className={`w-2 bg-green-600 rounded-full animate-pulse`}
-                      style={{
-                        height: `${Math.random() * 100}%`,
-                        animationDuration: `${0.5 + i * 0.1}s`,
-                      }}
-                    ></div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <p className="text-green-900 font-bold">10:36</p>
-                <div className="flex items-center gap-2 text-green-800 font-medium text-sm">
-                  <Icons.Phone size={14} className="fill-current" />
+                <p className="text-green-800 text-xs md:text-sm font-medium leading-tight">
                   Ongoing Call with
                   <br />
-                  #1890 Ms.Swati
-                </div>
+                  #1890 Ms. Swati
+                </p>
               </div>
             </div>
           </Link>
 
-          {/* Earnings & Queue */}
-          <div className="col-span-1 md:col-span-2 flex flex-col gap-4">
-            <div className="bg-gray-100 rounded-[2rem] p-6 flex flex-col justify-center h-full min-h-[140px]">
-              <p className="text-gray-500 text-sm mb-2">Today's Earnings</p>
-              <h3 className="text-4xl font-bold text-gray-900">₹2,000</h3>
+          {/* RIGHT COLUMN (EARNINGS + NEXT SESSION) */}
+          <div className="flex flex-col gap-3 md:gap-4">
+            {/* TODAY'S EARNINGS */}
+            <div className="bg-gray-100 rounded-2xl p-4 md:p-6 flex flex-col justify-center min-h-[72px] md:min-h-[140px]">
+              <p className="text-gray-500 text-xs md:text-sm mb-1">
+                Today's Earnings
+              </p>
+              <h3 className="text-2xl md:text-4xl font-bold text-gray-900">
+                ₹2,000
+              </h3>
             </div>
 
-            <div className="bg-[#EBE4D8] rounded-[2rem] p-6 flex flex-col justify-center h-full min-h-[140px]">
-              <p className="text-[#8B7355] text-sm mb-1">Next Session</p>
-              <div className="flex items-center gap-2 mb-3 text-[#5D4037] font-semibold">
-                <Icons.Menu size={16} />
+            {/* NEXT SESSION */}
+            <div className="bg-[#EBE4D8] rounded-2xl p-4 md:p-6 flex flex-col justify-center min-h-[72px] md:min-h-[140px]">
+              <p className="text-[#8B7355] text-xs md:text-sm mb-1">
+                Next Session
+              </p>
+
+              <div className="flex items-center gap-2 text-[#5D4037] font-semibold text-xs md:text-sm mb-2">
+                <Icons.Menu size={14} />
                 <span>4 Clients in Queue</span>
               </div>
-              <div className="flex gap-3">
-                <span className="bg-[#DBCFB7] text-[#5D4037] px-4 py-2 rounded-xl text-sm font-medium">
+
+              <div className="flex gap-2">
+                <span className="bg-[#DBCFB7] text-[#5D4037] px-3 py-1 rounded-lg text-xs font-medium">
                   2 Chat
                 </span>
-                <span className="bg-[#DBCFB7] text-[#5D4037] px-4 py-2 rounded-xl text-sm font-medium">
+                <span className="bg-[#DBCFB7] text-[#5D4037] px-3 py-1 rounded-lg text-xs font-medium">
                   2 Call
                 </span>
               </div>
@@ -209,13 +200,36 @@ const Dashboard = () => {
         </div>
       </div>
 
+      {/* Availability Schedule */}
+      <div className="bg-white rounded-2xl text-left p-3 shadow-sm flex items-center justify-between">
+        <div>
+          <h3 className="font-bold text-lg text-gray-900 mb-1">
+            Set Availability Schedule
+          </h3>
+          <p className="text-gray-500 text-sm mb-3 max-w-[220px] sm:max-w-full ">
+            Curate your weekly, monthly Calendars as per availability
+          </p>
+          <Link
+            to="/profile"
+            state={{ data: "availability" }}
+            className="bg-black text-white w-36 px-6 py-2.5 rounded-full text-sm font-medium flex items-center gap-2 hover:bg-gray-800 transition-colors"
+          >
+            Set Now <Icons.ArrowRight size={16} />
+          </Link>
+        </div>
+        <div className="w-28 h-28 sm:w-32 sm:h-24 rounded-2xl">
+          <img src="https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcTCs3j72-r-OyO_hvrJcX2L1VtZQdAKkKwF5VW02yHCz5dCGUb2swJrS73BKMzzQ-gzMWiRx-jf" />
+        </div>
+      </div>
+
       {/* Monthly Overview & Stats */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left Column: Metrics */}
-        <div className="space-y-6">
-          <div className="bg-white rounded-[2rem] p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="font-bold text-lg text-gray-900">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+        {/* LEFT COLUMN */}
+        <div className="space-y-4 lg:space-y-6">
+          {/* Monthly Overview */}
+          <div className="bg-white rounded-[2rem] p-4 sm:p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-base sm:text-lg text-gray-900">
                 Monthly Overview
               </h3>
               <div className="bg-gray-100 px-3 py-1 rounded-full text-xs font-medium text-gray-600 flex items-center gap-1">
@@ -223,18 +237,20 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-6">
-              <div className="flex-1 bg-white border border-gray-100 rounded-2xl p-4">
-                <p className="text-gray-500 text-xs mb-2">
+            <div className="flex  sm:flex-row gap-4 sm:gap-6">
+              {/* Earnings */}
+              <div className="flex-1 min-w-32 bg-white border border-gray-100 rounded-2xl p-4">
+                <p className="text-gray-500 text-xs mb-1">
                   Earnings This Month
                 </p>
-                <h3 className="text-3xl font-bold text-blue-600 mb-2">₹20 K</h3>
-                <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded-md">
+                <h3 className="text-3xl font-bold text-blue-600 mb-1">₹20 K</h3>
+                <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded-md inline-block">
                   +3.67% ↑
                 </span>
               </div>
 
-              <div className="flex-1 flex items-center gap-4">
+              {/* Donut + Legend */}
+              <div className="flex-1 flex items-center justify-start sm:justify-center md:gap-4">
                 <DonutChart data={METRICS_DATA} />
                 <div className="space-y-2">
                   {METRICS_DATA.map((item, idx) => (
@@ -242,7 +258,7 @@ const Dashboard = () => {
                       <div
                         className="w-2 h-2 rounded-sm"
                         style={{ backgroundColor: item.fill }}
-                      ></div>
+                      />
                       <span className="text-gray-500 w-8">{item.name}</span>
                       <span className="font-bold">{item.value}%</span>
                     </div>
@@ -252,14 +268,15 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Key Metrics Bubbles */}
-          <div className="bg-white rounded-[2rem] p-6 shadow-sm">
+          {/* Key Metrics */}
+          <div className="bg-white rounded-[2rem] p-4 sm:p-6 shadow-sm">
             <h4 className="text-sm font-medium text-gray-500 mb-4">
               Key Metrics
             </h4>
-            <div className="grid grid-cols-3 gap-4 text-center">
+
+            <div className="grid grid-cols-3 gap-3 text-center">
               <div className="flex flex-col items-center">
-                <div className="w-16 h-16 rounded-full bg-blue-50 flex flex-col items-center justify-center text-blue-600 mb-2">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-blue-50 flex flex-col items-center justify-center text-blue-600 mb-2">
                   <span className="font-bold text-lg">4.5</span>
                   <Icons.Star size={12} fill="currentColor" />
                 </div>
@@ -269,8 +286,9 @@ const Dashboard = () => {
                   Rating
                 </p>
               </div>
+
               <div className="flex flex-col items-center">
-                <div className="w-16 h-16 rounded-full bg-blue-50 flex flex-col items-center justify-center text-blue-600 mb-2">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-blue-50 flex flex-col items-center justify-center text-blue-600 mb-2">
                   <span className="font-bold text-lg">10</span>
                   <span className="text-[10px]">Mins</span>
                 </div>
@@ -280,8 +298,9 @@ const Dashboard = () => {
                   Response Time
                 </p>
               </div>
+
               <div className="flex flex-col items-center">
-                <div className="w-16 h-16 rounded-full bg-blue-50 flex flex-col items-center justify-center text-blue-600 mb-2">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 mb-2">
                   <span className="font-bold text-lg">10%</span>
                 </div>
                 <p className="text-xs font-bold text-gray-800 leading-tight">
@@ -294,27 +313,32 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Right Column: Heatmap & Milestones */}
-        <div className="space-y-6">
+        {/* RIGHT COLUMN */}
+        <div className="space-y-4 lg:space-y-6">
           {/* Heatmap */}
-          <div className="bg-white rounded-[2rem] p-6 shadow-sm">
+          <div className="bg-white rounded-[2rem] p-4 sm:p-6 shadow-sm">
             <h4 className="text-sm font-medium text-gray-500 mb-4">
               Monthly Sessions
             </h4>
-            <Heatmap data={HEATMAP_DATA} />
+            <div className="overflow-x-auto">
+              <Heatmap data={HEATMAP_DATA} />
+            </div>
           </div>
 
           {/* Milestones */}
-          <div className="bg-gray-200 rounded-[2rem] p-6">
-            <h3 className="font-bold text-lg text-gray-900 mb-4">Milestones</h3>
-            <div className="flex items-start gap-4">
-              <div className="p-2 bg-white/50 rounded-lg">
-                <div className="text-yellow-600">⚡</div>
-              </div>
+          <div className="bg-gray-200 rounded-[2rem] p-4 sm:p-6">
+            <h3 className="font-bold text-base sm:text-lg text-gray-900 mb-4">
+              Milestones
+            </h3>
+
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-white/60 rounded-lg">⚡</div>
+
               <div className="flex-1">
                 <h4 className="font-bold text-gray-900 text-sm">
                   Earn More with Milestones!
                 </h4>
+
                 <div className="flex justify-between items-end mt-2 mb-1">
                   <span className="text-[10px] text-gray-500">
                     projected earning for the month
@@ -322,17 +346,16 @@ const Dashboard = () => {
                   <span className="font-bold text-gray-900">₹30,000</span>
                 </div>
 
-                {/* Progress Bar */}
-                <div className="h-3 w-full bg-gray-300 rounded-full overflow-hidden flex items-center">
-                  <div className="h-full bg-gray-600 w-[80%] rounded-full"></div>
+                <div className="h-3 w-full bg-gray-300 rounded-full overflow-hidden">
+                  <div className="h-full bg-gray-600 w-[80%] rounded-full" />
                 </div>
 
-                <div className="flex justify-between items-center mt-1">
-                  <p className="text-[10px] text-gray-500 max-w-[200px] leading-tight mt-2">
+                <div className="flex justify-between items-center mt-2">
+                  <p className="text-[10px] text-gray-500 max-w-[180px] leading-tight">
                     Complete 2 more sessions to start getting ₹30 per minute
                   </p>
                   <div className="flex items-center gap-1 text-xs font-bold text-gray-700">
-                    <span>🏆</span> 13/15
+                    🏆 13/15
                   </div>
                 </div>
               </div>

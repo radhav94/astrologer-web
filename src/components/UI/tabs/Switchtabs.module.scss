@@ -19,7 +19,7 @@ $font-primary: "Poppins", sans-serif;
   display: flex;
   justify-content: center;
   gap: 16px;
-  flex-wrap: wrap;
+  // flex-wrap: wrap;
   margin-bottom: 24px;
   padding: 20px;
 }
@@ -59,12 +59,13 @@ $font-primary: "Poppins", sans-serif;
 
 @media (max-width: 768px) {
   .toggleButton {
-    padding: 8px 18px;
-    font-size: 14px;
+    padding: 8px 12px;
+    font-size: 12px;
   }
 
   .buttonGroup {
-    gap: 12px;
+    gap: 6px;
+    padding: 5px;
   }
 }
 

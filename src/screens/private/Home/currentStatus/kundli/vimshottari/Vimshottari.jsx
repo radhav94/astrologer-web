@@ -47,7 +47,7 @@ const Vimshottari = () => {
         <div className="w-full  space-y-8">
           {/* Date Selector Header */}
           <div className="relative w-full group">
-            <div className="w-full bg-white border-2 border-gray-900 rounded-2xl p-5 flex items-center justify-between shadow-sm group-hover:bg-gray-50 transition-all duration-200 cursor-pointer pointer-events-none">
+            <div className="w-[70%] m-auto bg-white border-2 border-gray-900 rounded-2xl p-5 flex items-center justify-between shadow-sm group-hover:bg-gray-50 transition-all duration-200 cursor-pointer pointer-events-none">
               <span className="font-bold text-gray-900 text-lg group-hover:text-gray-700">
                 {formatDateDisplay(selectedDate)}
               </span>
@@ -65,9 +65,9 @@ const Vimshottari = () => {
           </div>
 
           {/* Main Carousel Section */}
-          <div className="flex items-center gap-6">
+          <div className="flex items-center lg:gap-6">
             {/* Previous Button */}
-            <button className="p-4 bg-gray-100 rounded-2xl hover:bg-gray-200 hover:scale-105 transition-all text-gray-600 shadow-sm flex-shrink-0">
+            <button className="p-0 lg:p-4  bg-gray-100 rounded-2xl hover:bg-gray-200 hover:scale-105 transition-all text-gray-600 shadow-sm flex-shrink-0">
               <ChevronLeft size={28} />
             </button>
 
@@ -110,7 +110,7 @@ const Vimshottari = () => {
             </div>
 
             {/* Next Button */}
-            <button className="p-4 bg-gray-100 rounded-2xl hover:bg-gray-200 hover:scale-105 transition-all text-gray-600 shadow-sm flex-shrink-0">
+            <button className="p-0 lg:p-4 bg-gray-100 rounded-2xl hover:bg-gray-200 hover:scale-105 transition-all text-gray-600 shadow-sm flex-shrink-0">
               <ChevronRight size={28} />
             </button>
           </div>

@@ -25,7 +25,7 @@ const tips = [
 
 const TipsCarousel = () => {
   return (
-    <div className="w-full max-w-5xl mx-auto py-8">
+    <div className="w-full max-w-5xl mx-auto py-4">
       {/* Section Header */}
       <div className="px-4  text-start md:px-0 mb-4">
         <h2 className="text-lg md:text-xl font-bold text-gray-900">

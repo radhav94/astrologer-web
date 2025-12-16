@@ -97,7 +97,7 @@ const VerifyOtp = () => {
   
       // CUSTOMER → IF NEW, REGISTER
       const isNewUser = isRegister === true || String(isRegister) === "false";
-      navigate(isNewUser ?  "/basic-details" : "/dashboard");
+      navigate(isNewUser ? "/dashboard" :  "/basic-details");
   
     } catch (err) {
       setError(err?.message || "OTP verification failed");

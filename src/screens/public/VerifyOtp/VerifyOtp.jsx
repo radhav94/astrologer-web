@@ -3,7 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import * as AuthServices from "../../../services/appServices/authservice";
 import { saveUserToStorage } from "../../../utils/authStorage";
-
+import { Toast } from "../../../components";
 
 const OTP_LENGTH = 6;
 
@@ -81,10 +81,11 @@ const VerifyOtp = () => {
       };
   
       const response = await AuthServices.verifyOtp(payload);
+
       if (response?.data?.statusCode !== 200 || !response?.data?.success) {
         throw new Error(response?.data?.message || "OTP verification failed");
       }
-  
+      Toast.success("OTP verified successfully");
       const userData = response?.data?.data || {};
       const { isRegister, accessToken, _id } = userData;
   
@@ -95,9 +96,8 @@ const VerifyOtp = () => {
       localStorage.setItem("shubhtalk_astro_token", accessToken);
   
       // CUSTOMER → IF NEW, REGISTER
-      const isNewUser = isRegister === false || String(isRegister) === "false";
-  
-      navigate(isNewUser ? "/basic-details" : "/dashboard");
+      const isNewUser = isRegister === true || String(isRegister) === "false";
+      navigate(isNewUser ?  "/basic-details" : "/dashboard");
   
     } catch (err) {
       setError(err?.message || "OTP verification failed");

@@ -1,6 +1,5 @@
 import classes from "./App.module.scss";
 import { useEffect } from "react";
-import VerifyOtp from "./screens/public/VerifyOtp/VerifyOtp";
 import {
   createBrowserRouter,
   Navigate,
@@ -16,9 +15,20 @@ import OtpRoute from "./utils/routes/OtpRoute";
 
 import HomeLayout from "./layouts/HomeLayout";
 
+// 🔹 OTP & Onboarding Screens
+import VerifyOtp from "./screens/public/VerifyOtp/VerifyOtp";
+import BasicDetails from "./screens/public/BasicDetails/BasicDetails";
+import ProfessionalDetails from "./screens/public/BasicDetails/ProfessionalDetails";
+import LanguagesYouSpeak from "./screens/public/BasicDetails/LanguagesYouSpeak";
+import Education from "./screens/public/BasicDetails/Education";
+import Achievements from "./screens/public/BasicDetails/Achievements";
+import AreaOfExpertise from "./screens/public/BasicDetails/AreaOfExpertise";
+import VerifyProfile from "./screens/public/BasicDetails/VerifyProfile";
+import VerificationPending from "./screens/public/BasicDetails/VerificationPending";
+
 function App() {
   const router = createBrowserRouter([
-    /* -------- PUBLIC ROUTES -------- */
+    /* ================= PUBLIC ROUTES ================= */
     {
       element: <PublicRoute />,
       children: Object.values(PATH.publicRoutes).map((route) => ({
@@ -27,40 +37,56 @@ function App() {
       })),
     },
 
-    /* -------- OTP ROUTE (SPECIAL) -------- */
+    /* ================= OTP + ONBOARDING ROUTES ================= */
     {
       element: <OtpRoute />,
       children: [
-        {
-          path: "/verify-otp",
-          element: <VerifyOtp />,
-        },
+        { path: "/verify-otp", element: <VerifyOtp /> },
+        { path: "/basic-details", element: <BasicDetails /> },
+        { path: "/professional-details", element: <ProfessionalDetails /> },
+        { path: "/language-speak", element: <LanguagesYouSpeak /> },
+        { path: "/education", element: <Education /> },
+        { path: "/achievements", element: <Achievements /> },
+        { path: "/areaofexpertise", element: <AreaOfExpertise /> },
+        { path: "/verifyprofile", element: <VerifyProfile /> },
+        { path: "/verificationpending", element: <VerificationPending /> },
       ],
     },
 
-    /* -------- PRIVATE ROUTES -------- */
+    /* ================= PRIVATE ROUTES ================= */
     {
       element: <PrivateRoute />,
       children: [
         {
           element: <HomeLayout />,
-          children: flattenRoutes(PATH.privateRoutes).map((child) => ({
-            path: child.path,
-            element: <child.element />,
-            handle: {
-              header: child.header ?? true,
-              footer: child.footer ?? true,
-            },
-          })),
+          children: flattenRoutes(PATH.privateRoutes)
+            .filter(
+              (route) =>
+                ![
+                  "/basic-details",
+                  "/professional-details",
+                  "/language-speak",
+                  "/education",
+                  "/achievements",
+                  "/areaofexpertise",
+                  "/verifyprofile",
+                  "/verificationpending",
+                ].includes(route.path)
+            )
+            .map((child) => ({
+              path: child.path,
+              element: <child.element />,
+              handle: {
+                header: child.header ?? true,
+                footer: child.footer ?? true,
+              },
+            })),
         },
       ],
     },
 
-    /* -------- FALLBACK -------- */
-    {
-      path: "*",
-      element: <Navigate to="/" replace />,
-    },
+    /* ================= FALLBACK ================= */
+    { path: "*", element: <Navigate to="/" replace /> },
   ]);
 
   useEffect(() => {

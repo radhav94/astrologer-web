@@ -45,10 +45,6 @@ export const PATH = {
       path: "/dashboard",
       element: Dashboard,
     },
-    // VerifyOtp: {
-    //   path: "/verify-otp",
-    //   element: VerifyOtp,
-    // },
     CONSULTATION_HOSTORY: {
       path: "/consultation-history",
       element: ConsultationHistory,
@@ -116,38 +112,6 @@ export const PATH = {
     CLIENT_DETAILS: {
       path: "/client-details",
       element: Kundli,
-    },
-    BasicDetails: {
-      path: "/basic-details",
-      element: BasicDetails,
-    },
-    ProfessionalDetails: {
-      path: "/professional-details",
-      element: ProfessionalDetails,
-    },
-    LanguagesYouSpeak: {
-      path: "/language-speak",
-      element: LanguagesYouSpeak,
-    },
-    Education: {
-      path: "/education",
-      element: Education,
-    },
-    Achievements: {
-      path: "/achievements",
-      element: Achievements,
-    },
-    AreaOfExpertise: {
-      path: "/areaofexpertise",
-      element: AreaOfExpertise,
-    },
-    VerifyProfile: {
-      path: "/verifyprofile",
-      element: VerifyProfile,
-    },
-    VerificationPending: {
-      path: "/verificationpending",
-      element: VerificationPending,
     },
   },
 };

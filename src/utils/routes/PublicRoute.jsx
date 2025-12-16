@@ -1,8 +1,10 @@
 import { Navigate, Outlet } from "react-router-dom";
-import { isAuthenticated } from "../authStorage";
 
 const PublicRoute = () => {
-  if (isAuthenticated()) {
+  const isLoggedIn = !!localStorage.getItem("shubhtalk_astro_token");
+  const onboardingSession = sessionStorage.getItem("onboardingSession");
+
+  if (isLoggedIn && !onboardingSession) {
     return <Navigate to="/dashboard" replace />;
   }
 

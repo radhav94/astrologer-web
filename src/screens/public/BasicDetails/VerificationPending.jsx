@@ -2,7 +2,15 @@ import { useNavigate } from "react-router-dom";
 
 const VerificationPending = () => {
   const navigate = useNavigate();
-
+  const handleLogout = () => {
+    localStorage.removeItem("shubhtalk_role");
+      localStorage.removeItem("shubhtalk_astro_id");
+      localStorage.removeItem("shubhtalk_astro_token");
+      localStorage.removeItem("shubhtalk_astrologer_details");
+      localStorage.removeItem("accessToken");
+      sessionStorage.removeItem("otpSession");
+    navigate("/");
+};
   return (
     <div className="min-h-screen bg-white flex justify-center">
       <div className="w-full max-w-md px-6 pt-10 pb-8 flex flex-col">
@@ -56,14 +64,14 @@ const VerificationPending = () => {
         {/* Bottom Buttons */}
         <div className="flex gap-4 mt-10">
           <button
-            onClick={() => navigate("/tutorial")}
+             onClick={handleLogout}
             className="flex-1 border border-black py-3 rounded-xl font-medium"
           >
             Explore Our Tutorial
           </button>
 
           <button
-            onClick={() => navigate("/")}
+            onClick={handleLogout}
             className="flex-1 bg-black text-white py-3 rounded-xl font-medium"
           >
             Back to Home

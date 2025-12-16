@@ -3,6 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import * as AuthServices from "../../../services/appServices/authservice";
 import { saveUserToStorage } from "../../../utils/authStorage";
+import { Toast } from "../../../components";
 
 const OTP_LENGTH = 6;
 
@@ -10,12 +11,10 @@ const VerifyOtp = () => {
   const navigate = useNavigate();
   const { state } = useLocation();
 
-  // 📱 Values from previous screen
   const mobile = state?.mobile || "+91 XXXXX XXXXX";
   const phoneNumber = state?.phoneNumber;
   const type = "ASTROLOGER";
 
-  // 🔢 States
   const [otp, setOtp] = useState(Array(OTP_LENGTH).fill(""));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -23,35 +22,34 @@ const VerifyOtp = () => {
 
   const inputsRef = useRef([]);
 
-  /* ⏱ Resend Timer */
+  /* ⏱ Timer */
   useEffect(() => {
     if (timer === 0) return;
-
-    const interval = setInterval(() => {
-      setTimer((prev) => prev - 1);
-    }, 1000);
-
+    const interval = setInterval(() => setTimer((prev) => prev - 1), 1000);
     return () => clearInterval(interval);
   }, [timer]);
 
-  /* 🔢 Handle OTP Input */
+  /* 🔙 BLOCK BACK BUTTON */
+  useEffect(() => {
+    const handleBack = () => {
+      navigate("/login", { replace: true });
+    };
+    window.history.pushState(null, "", window.location.href);
+    window.addEventListener("popstate", handleBack);
+    return () => window.removeEventListener("popstate", handleBack);
+  }, [navigate]);
+
   const handleChange = (value, index) => {
     if (!/^\d?$/.test(value)) return;
-
     const newOtp = [...otp];
     newOtp[index] = value;
     setOtp(newOtp);
-
-    if (value && index < OTP_LENGTH - 1) {
-      inputsRef.current[index + 1]?.focus();
-    }
+    if (value && index < OTP_LENGTH - 1) inputsRef.current[index + 1]?.focus();
   };
 
-  /* ⬅ Backspace Handling */
   const handleKeyDown = (e, index) => {
-    if (e.key === "Backspace" && !otp[index] && index > 0) {
+    if (e.key === "Backspace" && !otp[index] && index > 0)
       inputsRef.current[index - 1]?.focus();
-    }
   };
 
   const isOtpComplete = otp.every((digit) => digit !== "");
@@ -65,40 +63,38 @@ const VerifyOtp = () => {
       setError("");
 
       const otpNumber = Number(otp.join(""));
-      if (isNaN(otpNumber)) {
-        throw new Error("OTP must be numeric");
-      }
+      if (isNaN(otpNumber)) throw new Error("OTP must be numeric");
 
-      const payload = {
-        phoneNumber,
-        type,
-        otp: otpNumber,
-      };
-
+      const payload = { phoneNumber, type, otp: otpNumber };
       const response = await AuthServices.verifyOtp(payload);
+      console.log(response);
 
-      if (!response?.data?.success) {
+      if (response?.data?.statusCode !== 200 || !response?.data?.success) {
         throw new Error(response?.data?.message || "OTP verification failed");
       }
 
-      const userData = response.data.data || {};
+      Toast.success("OTP verified successfully");
+
+      const userData = response?.data?.data || {};
       const { isRegister, accessToken, _id } = userData;
 
-      // ✅ Save auth data
       saveUserToStorage(userData);
       localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("shubhtalk_role", "ASTROLOGER");
       localStorage.setItem("shubhtalk_astro_id", _id);
+      localStorage.setItem("shubhtalk_astro_token", accessToken);
 
-      // clear OTP session
       sessionStorage.removeItem("otpSession");
 
-      const isNewUser =
-        isRegister === false || String(isRegister) === "false";
-
-      navigate(isNewUser ? "/basic-details" : "/dashboard", {
-        replace: true,
-      });
+      const isNewUser = isRegister === true || String(isRegister) === "false";
+      console.log(isNewUser);
+      if (isNewUser) {
+        sessionStorage.removeItem("onboardingSession");
+        navigate("/dashboard", { replace: true });
+      } else {
+        sessionStorage.setItem("onboardingSession", "true");
+        navigate("/basic-details", { replace: true });
+      }
     } catch (err) {
       setError(err?.message || "OTP verification failed");
     } finally {
@@ -114,11 +110,7 @@ const VerifyOtp = () => {
       inputsRef.current[0]?.focus();
       setError("");
 
-      const payload = {
-        phoneNumber,
-        type,
-      };
-
+      const payload = { phoneNumber, type };
       await AuthServices.loginWithPhone(payload);
     } catch {
       setError("Failed to resend OTP");
@@ -128,8 +120,7 @@ const VerifyOtp = () => {
   return (
     <div className="min-h-screen bg-white flex justify-center">
       <div className="w-full max-w-md px-6 pt-16 pb-10">
-
-        {/* 🔙 Back */}
+        {/* Back Button */}
         <div className="flex items-center mb-12">
           <button
             onClick={() => navigate(-1)}
@@ -146,7 +137,7 @@ const VerifyOtp = () => {
           <span className="font-medium text-black">{mobile}</span>
         </p>
 
-        {/* OTP INPUT */}
+        {/* OTP INPUTS */}
         <div className="flex justify-between gap-3 mb-6">
           {otp.map((digit, index) => (
             <input
@@ -163,7 +154,7 @@ const VerifyOtp = () => {
         </div>
 
         {/* RESEND */}
-        <div className="flex justify-between text-sm mb-6">
+        <div className="flex justify-end text-sm mb-6">
           {timer > 0 ? (
             <span>Resend in {timer}s</span>
           ) : (

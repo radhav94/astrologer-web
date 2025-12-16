@@ -6,13 +6,16 @@ import { UPCOMING_SESSIONS } from "../../../../components/Dashboard";
 const SessionDetails = () => {
   return (
     <div className="h-full flex flex-col">
-      <div className="flex items-center gap-4 mb-6">
-        <button className="p-2 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors">
-          <Link to="/">
-            <Icons.ChevronLeft size={20} className="text-gray-700" />
-          </Link>
-        </button>
-        <h1 className="text-xl font-bold text-gray-900">Upcoming Sessions</h1>
+      <div className="flex items-center justify-between gap-4 px-4 mb-6">
+        <div className="flex items-center gap-4 ">
+          <button className="p-2 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors">
+            <Link to="/">
+              <Icons.ChevronLeft size={20} className="text-gray-700" />
+            </Link>
+          </button>
+          <h1 className="text-xl font-bold text-gray-900">Upcoming Sessions</h1>
+        </div>
+        <p className="text-red-500">6 in Queue</p>
       </div>
 
       <div className="space-y-6 pb-24">

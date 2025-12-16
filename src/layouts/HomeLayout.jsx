@@ -118,7 +118,7 @@ const HomeLayout = () => {
         </Suspense>
 
         {/* Bottom padding for mobile nav if needed */}
-        <div className="h-20 lg:h-8"></div>
+        <div className="h-1"></div>
       </main>
     </div>
   );

@@ -14,16 +14,21 @@ const Sidebar = ({ isOpen, onClose }) => {
   };
 
   const menuItems = [
-    { icon: Icons.Home, label: "Dashboard", id: "dashboard", path: "/dashboard" },
+    {
+      icon: Icons.Home,
+      label: "Dashboard",
+      id: "dashboard",
+      path: "/dashboard",
+    },
     {
       icon: Icons.Calendar,
-      label: "History",
+      label: "Order History",
       id: "history",
       path: "/consultation-history",
     },
     {
       icon: Icons.Wallet,
-      label: "Activity",
+      label: "Recent Activity",
       id: "activity",
       path: "/recent-activity",
     },

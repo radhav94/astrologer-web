@@ -1,0 +1,91 @@
+@use "sass:color"; // Import color module
+
+// --- Theme Variables ---
+$color-primary: #ffcb03;
+$color-app-bg: #f5f5f5;
+$color-white: #ffffff;
+$color-black: #1a1a1a;
+$color-grey-light: #e0e0e0;
+$color-grey-medium: #999999;
+$color-grey-dark: #555555;
+$font-primary: "Poppins", sans-serif;
+$shadow-4: 0px 4px 12px rgba(0, 0, 0, 0.08);
+
+// --- Main Grid Layout ---
+/* --- Card Styling --- */
+.detailCard {
+  background-color: $color-white;
+  border-radius: 16px;
+  padding: 16px; // ⬅ reduced from 24px
+  border: 1px solid $color-grey-light;
+  box-shadow: $shadow-4;
+  display: flex;
+  flex-direction: column;
+  height: auto;
+  text-align: left;
+  margin: 1rem 0;
+}
+
+/* --- Card Title --- */
+.cardTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: $color-black;
+  margin: 0 0 10px 0; // ⬅ tighter
+  border-bottom: 1px solid $color-grey-light;
+  padding-bottom: 8px;
+}
+
+/* --- Table Wrapper --- */
+.tableWrapper {
+  margin-bottom: 0 !important; // ⬅ CRITICAL
+}
+
+/* --- Table Styling --- */
+.detailsTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  margin-bottom: 0 !important; // ⬅ CRITICAL
+}
+
+.detailsTable td {
+  padding: 8px 10px; // ⬅ reduced from 14px
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.detailsTable tr:last-child td {
+  border-bottom: none;
+  padding-bottom: 4px; // ⬅ trims last-row extra space
+}
+
+.detailsTable td:first-child {
+  font-weight: 600;
+  color: $color-grey-dark;
+  width: 45%;
+}
+
+.detailsTable td:last-child {
+  color: $color-black;
+  font-weight: 500;
+}
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+}
+
+.toggleBtn {
+  background: none;
+  border: none;
+  padding: 4px;
+  color: #666;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+
+  &:hover {
+    color: #000;
+  }
+}

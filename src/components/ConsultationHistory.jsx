@@ -67,7 +67,7 @@ const HISTORY_DATA = [
 
 const ConsultationHistory = ({ onBack }) => {
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full text-start flex flex-col relative">
       <div className="flex items-center gap-4 mb-6">
         <button
           onClick={onBack}
@@ -112,7 +112,7 @@ const ConsultationHistory = ({ onBack }) => {
                       {item.type}
                     </span>
                     <button className="text-gray-400 hover:text-gray-600">
-                      {/* <Icons.MoreVertical size={16} /> */}
+                      <Icons.MoreVertical size={16} />
                     </button>
                   </div>
                 </div>
@@ -170,7 +170,7 @@ const ConsultationHistory = ({ onBack }) => {
                       {item.type}
                     </span>
                     <button className="text-gray-400 hover:text-gray-600">
-                      {/* <Icons.MoreVertical size={16} /> */}
+                      <Icons.MoreVertical size={16} />
                     </button>
                   </div>
                 </div>
@@ -200,16 +200,16 @@ const ConsultationHistory = ({ onBack }) => {
       </div>
 
       {/* Floating Action Buttons */}
-      {/* <div className="fixed bottom-6 left-0 w-full px-6 flex justify-center gap-4 z-20 pointer-events-none">
+      <div className="absolute bottom-6 left-0 w-full px-6 flex justify-center gap-4 z-20 pointer-events-none">
         <div className="flex gap-2 pointer-events-auto shadow-lg bg-gray-900 p-1.5 rounded-full">
           <button className="flex items-center gap-2 px-6 py-2.5 bg-white text-black rounded-full text-sm font-medium">
             <Icons.Sliders size={16} /> Sort
           </button>
-          <button className="flex items-center gap-2 px-6 py-2.5 bg-transparent text-white rounded-full text-sm font-medium hover:bg-gray-800">
+          <button className="flex items-center gap-2 px-6 py-2.5 bg-white text-black rounded-full text-sm font-medium hover:bg-gray-800">
             <Icons.Filter size={16} /> Filter
           </button>
         </div>
-      </div> */}
+      </div>
     </div>
   );
 };

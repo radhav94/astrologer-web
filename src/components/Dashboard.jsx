@@ -1,6 +1,7 @@
 import { Icons } from "./Icons";
 import { DonutChart, Heatmap } from "./Charts";
 import { Link } from "react-router-dom";
+import TipsCarousel from "../screens/private/Home/tipsAndGrowth/TipsCarousel";
 
 // --- MOCK DATA ---
 export const UPCOMING_SESSIONS = [
@@ -101,42 +102,44 @@ const Dashboard = () => {
         <h2 className="text-xl font-bold text-gray-900 mb-4">Today's Update</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Ongoing Call Status */}
-          <div className="bg-green-100 rounded-[2rem] p-6 flex flex-col justify-between h-56 relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-4 opacity-10">
-              <Icons.Phone size={90} />
-            </div>
-            <div>
-              <p className="text-green-800 text-sm font-medium opacity-60">
-                Current Status
-              </p>
-            </div>
+          <Link to="/call-status">
+            <div className="bg-green-100 rounded-[2rem] p-6 flex flex-col justify-between h-56 relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-4 opacity-10">
+                <Icons.Phone size={90} />
+              </div>
+              <div>
+                <p className="text-green-800 text-sm font-medium opacity-60">
+                  Current Status
+                </p>
+              </div>
 
-            <div className="flex items-center justify-center py-4">
-              {/* Waveform Animation */}
-              <div className="flex items-end gap-1 h-12">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <div
-                    key={i}
-                    className={`w-2 bg-green-600 rounded-full animate-pulse`}
-                    style={{
-                      height: `${Math.random() * 100}%`,
-                      animationDuration: `${0.5 + i * 0.1}s`,
-                    }}
-                  ></div>
-                ))}
+              <div className="flex items-center justify-center py-4">
+                {/* Waveform Animation */}
+                <div className="flex items-end gap-1 h-12">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <div
+                      key={i}
+                      className={`w-2 bg-green-600 rounded-full animate-pulse`}
+                      style={{
+                        height: `${Math.random() * 100}%`,
+                        animationDuration: `${0.5 + i * 0.1}s`,
+                      }}
+                    ></div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <p className="text-green-900 font-bold">10:36</p>
+                <div className="flex items-center gap-2 text-green-800 font-medium text-sm">
+                  <Icons.Phone size={14} className="fill-current" />
+                  Ongoing Call with
+                  <br />
+                  #1890 Ms.Swati
+                </div>
               </div>
             </div>
-
-            <div className="space-y-1">
-              <p className="text-green-900 font-bold">10:36</p>
-              <div className="flex items-center gap-2 text-green-800 font-medium text-sm">
-                <Icons.Phone size={14} className="fill-current" />
-                Ongoing Call with
-                <br />
-                #1890 Ms.Swati
-              </div>
-            </div>
-          </div>
+          </Link>
 
           {/* Earnings & Queue */}
           <div className="col-span-1 md:col-span-2 flex flex-col gap-4">
@@ -337,6 +340,9 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Tips and Growth */}
+      <TipsCarousel />
     </div>
   );
 };

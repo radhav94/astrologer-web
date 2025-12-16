@@ -31,6 +31,7 @@ import {
   Plus,
   Minus,
   AlertCircle,
+  LogOut,
 } from "lucide-react";
 
 export const Icons = {
@@ -66,4 +67,5 @@ export const Icons = {
   Plus,
   Minus,
   AlertCircle,
+  LogOut,
 };

@@ -28,9 +28,10 @@ const HomeLayout = () => {
   //       return <Dashboard />;
   //   }
   // };
-  const userName = userData
-  ? `${userData.firstName} ${userData.lastName}`
-  : "Unkown";
+  const firstName = userData?.firstName?.trim();
+  const lastName = userData?.lastName?.trim();
+  const userName = firstName && lastName ? `${firstName} ${lastName}` : "Unknown";
+
   return (
     <div className="flex h-screen bg-[#F8F9FA] overflow-hidden">
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />

@@ -4,7 +4,6 @@ import { useLocation, useNavigate } from "react-router-dom";
 import * as AuthServices from "../../../services/appServices/authservice";
 import { saveUserToStorage } from "../../../utils/authStorage";
 
-
 const OTP_LENGTH = 6;
 
 const VerifyOtp = () => {
@@ -60,52 +59,52 @@ const VerifyOtp = () => {
   /* ✅ VERIFY OTP */
   const handleVerifyOtp = async () => {
     if (!isOtpComplete || loading) return;
-  
+
     try {
       setLoading(true);
       setError("");
-  
-      if (!otp || otp.length === 0) {
-        throw new Error("OTP is empty");
-      }
-  
+
       const otpNumber = Number(otp.join(""));
       if (isNaN(otpNumber)) {
         throw new Error("OTP must be numeric");
       }
-  
+
       const payload = {
         phoneNumber,
         type,
         otp: otpNumber,
       };
-  
+
       const response = await AuthServices.verifyOtp(payload);
-      if (response?.data?.statusCode !== 200 || !response?.data?.success) {
+
+      if (!response?.data?.success) {
         throw new Error(response?.data?.message || "OTP verification failed");
       }
-  
-      const userData = response?.data?.data || {};
+
+      const userData = response.data.data || {};
       const { isRegister, accessToken, _id } = userData;
-  
-      // SAVE ONLY NECESSARY DATA
+
+      // ✅ Save auth data
       saveUserToStorage(userData);
+      localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("shubhtalk_role", "ASTROLOGER");
       localStorage.setItem("shubhtalk_astro_id", _id);
-      localStorage.setItem("shubhtalk_astro_token", accessToken);
-  
-      // CUSTOMER → IF NEW, REGISTER
-      const isNewUser = isRegister === false || String(isRegister) === "false";
-  
-      navigate(isNewUser ? "/basic-details" : "/dashboard");
-  
+
+      // clear OTP session
+      sessionStorage.removeItem("otpSession");
+
+      const isNewUser =
+        isRegister === false || String(isRegister) === "false";
+
+      navigate(isNewUser ? "/basic-details" : "/dashboard", {
+        replace: true,
+      });
     } catch (err) {
       setError(err?.message || "OTP verification failed");
     } finally {
       setLoading(false);
     }
   };
-  
 
   /* 🔁 RESEND OTP */
   const handleResend = async () => {
@@ -121,8 +120,7 @@ const VerifyOtp = () => {
       };
 
       await AuthServices.loginWithPhone(payload);
-
-    } catch (err) {
+    } catch {
       setError("Failed to resend OTP");
     }
   };
@@ -141,7 +139,6 @@ const VerifyOtp = () => {
           </button>
         </div>
 
-        {/* 🔢 Heading */}
         <h1 className="text-3xl font-bold mb-2">Enter OTP</h1>
         <p className="text-gray-500 text-sm mb-10">
           We've sent a 6-digit code to your mobile
@@ -149,65 +146,39 @@ const VerifyOtp = () => {
           <span className="font-medium text-black">{mobile}</span>
         </p>
 
-        {/* 🔢 OTP INPUTS */}
+        {/* OTP INPUT */}
         <div className="flex justify-between gap-3 mb-6">
           {otp.map((digit, index) => (
             <input
               key={index}
               ref={(el) => (inputsRef.current[index] = el)}
               type="tel"
-              inputMode="numeric"
               maxLength={1}
               value={digit}
               onChange={(e) => handleChange(e.target.value, index)}
               onKeyDown={(e) => handleKeyDown(e, index)}
-              className="
-                w-12 sm:w-14 h-14 sm:h-16
-                text-center text-xl sm:text-2xl font-bold
-                border rounded-xl
-                focus:outline-none focus:ring-1 focus:ring-black
-              "
+              className="w-12 h-14 text-center text-xl border rounded-xl"
             />
           ))}
         </div>
 
-        {/* 🔁 RESEND */}
-        <div className="flex justify-between text-sm mb-10">
-          <span className="text-gray-500">Didn’t get it?</span>
-
+        {/* RESEND */}
+        <div className="flex justify-between text-sm mb-6">
           {timer > 0 ? (
-            <span className="text-black font-medium">
-              Resend in {timer} seconds
-            </span>
+            <span>Resend in {timer}s</span>
           ) : (
-            <button
-              onClick={handleResend}
-              className="text-black font-semibold underline"
-            >
+            <button onClick={handleResend} className="underline">
               Resend OTP
             </button>
           )}
         </div>
 
-        {/* ❌ Error */}
-        {error && (
-          <p className="text-red-500 text-sm mb-4 text-center">
-            {error}
-          </p>
-        )}
+        {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
 
-        {/* ✅ VERIFY BUTTON */}
         <button
           onClick={handleVerifyOtp}
           disabled={!isOtpComplete || loading}
-          className={`
-            w-full py-3 rounded-xl font-medium transition
-            ${
-              isOtpComplete
-                ? "bg-black text-white hover:bg-gray-900"
-                : "bg-gray-300 text-gray-600 cursor-not-allowed"
-            }
-          `}
+          className="w-full py-3 rounded-xl bg-black text-white"
         >
           {loading ? "Verifying..." : "Verify & Continue"}
         </button>

@@ -44,6 +44,7 @@ const Login = () => {
       }
   
       // ✅ Navigate to OTP verify page
+      sessionStorage.setItem("otpSession", "true");
       navigate("/verify-otp", {
         state: {
           mobile: `+91${mobile}`,

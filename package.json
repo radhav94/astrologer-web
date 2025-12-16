@@ -15,10 +15,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@reduxjs/toolkit": "^2.11.2",
+    "axios": "^1.13.2",
     "env-cmd": "^11.0.0",
+    "framer-motion": "^12.23.26",
     "lucide-react": "^0.556.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-redux": "^9.2.0",
     "react-router-dom": "^7.10.1",
     "recharts": "^3.5.1"
   },

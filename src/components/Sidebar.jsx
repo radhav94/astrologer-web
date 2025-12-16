@@ -4,16 +4,21 @@ import { Icons } from "./Icons";
 const Sidebar = ({ isOpen, onClose }) => {
   const location = useLocation();
   const menuItems = [
-    { icon: Icons.Home, label: "Dashboard", id: "dashboard", path: "/" },
+    {
+      icon: Icons.Home,
+      label: "Dashboard",
+      id: "dashboard",
+      path: "/dashboard",
+    },
     {
       icon: Icons.Calendar,
-      label: "History",
+      label: "Order History",
       id: "history",
       path: "/consultation-history",
     },
     {
       icon: Icons.Wallet,
-      label: "Activity",
+      label: "Recent Activity",
       id: "activity",
       path: "/recent-activity",
     },

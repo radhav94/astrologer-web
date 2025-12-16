@@ -55,7 +55,7 @@ const ACTIVITY_DATA = [
 
 const RecentActivity = ({ onBack }) => {
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col text-start ">
       <div className="flex items-center gap-4 mb-6">
         <button
           onClick={onBack}

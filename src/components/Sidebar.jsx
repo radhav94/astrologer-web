@@ -35,6 +35,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       path: "/recent-activity",
     },
     { icon: Icons.User, label: "Profile", id: "profile", path: "/profile" },
+    { icon: Icons.Radio, label: "Live", id: "live", path: "/astrologer-dashboard/live-streaming" },
   ];
 
   return (
@@ -75,7 +76,6 @@ const Sidebar = ({ isOpen, onClose }) => {
               key={item.id}
               onClick={onClose}
               to={item.path}
-              onClick={onClose}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
                 location.pathname === item.path
                   ? "bg-green-50 text-green-600 font-semibold"

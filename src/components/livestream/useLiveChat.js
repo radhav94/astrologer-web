@@ -4,15 +4,15 @@ import { useEffect, useRef, useState } from "react";
 import AgoraRTM from "agora-rtm-sdk";
 
 const APP_ID = "b7bd8229702e4ec3b0938ea15f23a39c";
-const CHANNEL_NAME = "testchannel";
+const CHANNEL_NAME = "testnewchannellive";
 
 /**
  * NOTE:
  * Replace these with the tokens FROM AGORA CONSOLE
  * based on the exact UID format below
  */
-const HOST_RTM_TOKEN = "007eJxTYEi3qZBa/n3lsSOt91w+82xcmPqf7dW7yvuXHn8Iu5KzemmnAkOSeVKKhZGRpbmBUapJarJxkoGlsUVqoqFpmpFxorFl8vcCp8yGQEaGwmmejIwMEAjiczOUpBaXJGck5uWl5jAwAACT9SZa";
-const AUDIENCE_RTM_TOKEN = "007eJxTYEi3qZBa/n3lsSOt91w+82xcmPqf7dW7yvuXHn8Iu5KzemmnAkOSeVKKhZGRpbmBUapJarJxkoGlsUVqoqFpmpFxorFl8vcCp8yGQEaGwmmejIwMEAjiczOUpBaXJGck5uWl5jAwAACT9SZa";
+const HOST_RTM_TOKEN = "006b7bd8229702e4ec3b0938ea15f23a39cIABjuXZUD3AWTqdx9UwEdVX9qvVE1WjUZUb9SbY5TzmMYpO2XjoAAAAAEADItRogY4k6aQEA6ANjiTpp";
+const AUDIENCE_RTM_TOKEN = "006b7bd8229702e4ec3b0938ea15f23a39cIABysGXiQuZ73Y5OgXl4/rqXbluuFoZF6KfC6Ew27aIQWQLXAzAAAAAAEADItRogL4k6aQEA6AMviTpp";
 
 export const useLiveChat = (ROLE) => {
   const rtmClientRef = useRef(null);

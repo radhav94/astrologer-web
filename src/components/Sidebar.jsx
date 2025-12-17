@@ -6,13 +6,14 @@ const Sidebar = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-      localStorage.removeItem("shubhtalk_role");
-      localStorage.removeItem("shubhtalk_astro_id");
-      localStorage.removeItem("shubhtalk_astro_token");
-      localStorage.removeItem("shubhtalk_astrologer_details");
-      localStorage.removeItem("accessToken");
-      sessionStorage.removeItem("otpSession")
-      navigate("/");
+    localStorage.removeItem("shubhtalk_role");
+    localStorage.removeItem("shubhtalk_astro_id");
+    localStorage.removeItem("shubhtalk_astro_token");
+    localStorage.removeItem("shubhtalk_astrologer_details");
+    localStorage.removeItem("accessToken");
+    sessionStorage.removeItem("otpSession");
+    // navigate("/");
+    navigate("/login", { replace: true });
   };
 
   const menuItems = [
@@ -59,9 +60,7 @@ const Sidebar = ({ isOpen, onClose }) => {
             <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-lg">S</span>
             </div>
-            <span className="font-bold text-xl text-gray-800">
-              ShubhAstro
-            </span>
+            <span className="font-bold text-xl text-gray-800">ShubhAstro</span>
           </div>
           <button onClick={onClose} className="lg:hidden text-gray-500">
             <Icons.X size={24} />
@@ -75,7 +74,6 @@ const Sidebar = ({ isOpen, onClose }) => {
               key={item.id}
               onClick={onClose}
               to={item.path}
-              onClick={onClose}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
                 location.pathname === item.path
                   ? "bg-green-50 text-green-600 font-semibold"

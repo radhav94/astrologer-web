@@ -36,6 +36,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       path: "/recent-activity",
     },
     { icon: Icons.User, label: "Profile", id: "profile", path: "/profile" },
+    { icon: Icons.Radio, label: "Live", id: "live", path: "/astrologer-dashboard/live-streaming" },
   ];
 
   return (

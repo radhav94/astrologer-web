@@ -1,13 +1,22 @@
+// utils/routes/PrivateRoute.jsx
 import { Navigate, Outlet, useLocation } from "react-router-dom";
-import { isAuthenticated } from "../authStorage";
 
 const PrivateRoute = () => {
+  const isLoggedIn = !!localStorage.getItem("shubhtalk_astro_token");
+  const onboardingSession = sessionStorage.getItem("onboardingSession");
   const location = useLocation();
 
-  if (!isAuthenticated()) {
-    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  // 🔒 NOT LOGGED IN → LOGIN
+  if (!isLoggedIn) {
+    return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
+  // 🔒 LOGGED IN BUT ONBOARDING NOT COMPLETE
+  if (isLoggedIn && onboardingSession) {
+    return <Navigate to="/basic-details" replace />;
+  }
+
+  // ✅ ALLOW ACCESS
   return <Outlet />;
 };
 

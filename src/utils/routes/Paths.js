@@ -19,6 +19,7 @@ import TermsConditions from "../../screens/private/Profile/support/guidelines/Te
 import RecentTickets from "../../screens/private/Profile/support/tickets/RecentTickets";
 import WithdrawMoney from "../../screens/private/Profile/withdraw/WithdrawMoney";
 import Basic from "../../screens/private/Profile/profile/Basic";
+import InteractiveLiveStreaming from "../../components/livestream/InteractiveLiveStreaming";
 
 export const PATH = {
   publicRoutes: {
@@ -107,6 +108,12 @@ export const PATH = {
     CLIENT_DETAILS: {
       path: "/client-details",
       element: Kundli,
+    },
+    ASTRO_LIVE_STREAMING: {
+      path: "/astrologer-dashboard/live-streaming",
+      element: InteractiveLiveStreaming,
+      header: false,
+      footer: false,
     },
   },
 };

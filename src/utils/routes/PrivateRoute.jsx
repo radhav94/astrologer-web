@@ -4,15 +4,9 @@ import { isAuthenticated } from "../authStorage";
 const PrivateRoute = () => {
   const location = useLocation();
 
-  if (!isAuthenticated()) {
-    return (
-      <Navigate
-        to="/login"
-        replace
-        state={{ from: location.pathname }}
-      />
-    );
-  }
+  // if (!isAuthenticated()) {
+  //   return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  // }
 
   return <Outlet />;
 };

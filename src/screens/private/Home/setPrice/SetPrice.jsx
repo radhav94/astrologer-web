@@ -6,7 +6,7 @@ const SetPrice = () => {
     <div className="h-full flex flex-col max-w-lg mx-auto">
       <div className="flex items-center gap-4 mb-8">
         <button className="p-2 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors">
-          <Link to="/">
+          <Link to="/dashboard">
             <Icons.ChevronLeft size={20} className="text-gray-700" />
           </Link>
         </button>
@@ -62,7 +62,7 @@ const SetPrice = () => {
           </p>
         </div>
 
-        <Link to="/">
+        <Link to="/dashboard">
           <button className="w-full bg-black text-white font-medium py-4 rounded-2xl hover:bg-gray-900 transition-colors">
             Save
           </button>

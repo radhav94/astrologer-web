@@ -59,7 +59,7 @@ const Kundli = () => {
         </div>
       </div>
       {isAstro ? <Tabs tabs={tabsData} /> : "Loading..."}
-      <div className="relative flex items-center gap-3">
+      <div className="relative flex items-center lg:gap-3">
         <div className="flex-1 relative group">
           <input
             type="text"

@@ -11,7 +11,6 @@ const Vedic = () => {
     isLoading: birthLoading,
     isSuccess: birthSuccess,
   } = useGetChartQuery({ chartType: "D1" });
-  console.log("birthChart", birthChart);
 
   const svgBirthUrl = birthChart
     ? `data:image/svg+xml;utf8,${encodeURIComponent(birthChart)}`

@@ -64,7 +64,7 @@ const ChatInterface = () => {
       <div className="flex items-center justify-between p-2  border-b border-gray-100 bg-white rounded-t-2xl z-10">
         <div className="flex items-center gap-3">
           <button className="p-2 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors">
-            <Link to="/">
+            <Link to="/dashboard">
               <ChevronLeft size={20} className="text-gray-700" />
             </Link>
           </button>

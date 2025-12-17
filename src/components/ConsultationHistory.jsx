@@ -67,13 +67,13 @@ const HISTORY_DATA = [
 
 const ConsultationHistory = ({ onBack }) => {
   return (
-    <div className="h-full text-start flex flex-col relative">
+    <div className="h-full  text-start flex flex-col relative">
       <div className="flex items-center gap-4 mb-6">
         <button
           onClick={onBack}
           className="p-2 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
         >
-          <Link to="/">
+          <Link to="/dashboard">
             <Icons.ChevronLeft size={20} className="text-gray-700" />
           </Link>
         </button>
@@ -200,12 +200,12 @@ const ConsultationHistory = ({ onBack }) => {
       </div>
 
       {/* Floating Action Buttons */}
-      <div className="absolute bottom-6 left-0 w-full px-6 flex justify-center gap-4 z-20 pointer-events-none">
+      <div className="fixed bottom-2 left-0 lg:left-[8%]  w-full px-6 flex justify-center gap-4 z-20 pointer-events-none">
         <div className="flex gap-2 pointer-events-auto shadow-lg bg-gray-900 p-1.5 rounded-full">
           <button className="flex items-center gap-2 px-6 py-2.5 bg-white text-black rounded-full text-sm font-medium">
             <Icons.Sliders size={16} /> Sort
           </button>
-          <button className="flex items-center gap-2 px-6 py-2.5 bg-white text-black rounded-full text-sm font-medium hover:bg-gray-800">
+          <button className="flex items-center gap-2 px-6 py-2.5 bg-white text-black rounded-full text-sm font-medium">
             <Icons.Filter size={16} /> Filter
           </button>
         </div>

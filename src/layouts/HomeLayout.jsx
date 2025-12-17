@@ -9,47 +9,32 @@ const HomeLayout = () => {
   );
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  // const [currentPage, setCurrentPage] = useState("dashboard");
   const [isOnline, setIsOnline] = useState(true);
 
-  // const renderContent = () => {
-  //   switch (currentPage) {
-  //     case "dashboard":
-  //       return <Dashboard />;
-  //     case "history":
-  //       return (
-  //         <ConsultationHistory onBack={() => setCurrentPage("dashboard")} />
-  //       );
-  //     case "activity":
-  //       return <RecentActivity onBack={() => setCurrentPage("dashboard")} />;
-  //     case "profile":
-  //       return <Profile onBack={() => setCurrentPage("dashboard")} />;
-  //     default:
-  //       return <Dashboard />;
-  //   }
-  // };
   const firstName = userData?.firstName?.trim();
   const lastName = userData?.lastName?.trim();
-  const userName = firstName && lastName ? `${firstName} ${lastName}` : "Unknown";
+  const userName =
+    firstName && lastName ? `${firstName} ${lastName}` : "Unknown";
 
   return (
     <div className="flex h-screen bg-[#F8F9FA] overflow-hidden">
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
       <main className="flex-1 h-full overflow-y-auto overflow-x-hidden relative">
-        {/* Header - Only show full header on Dashboard, simplified on others usually, but keeping consistent for now except Profile */}
-        <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-gray-100 px-6 py-4">
+        <header className="sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-gray-100 px-4 py-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+            {/* LEFT: Profile + Info */}
+            <div className="flex items-center gap-3">
+              {/* Mobile menu */}
               <button
                 onClick={() => setIsSidebarOpen(true)}
                 className="lg:hidden p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-lg"
               >
-                <Icons.Menu size={24} />
+                <Icons.Menu size={22} />
               </button>
 
-              {/* Conditional Title based on page, or keep user profile on Dashboard */}
-              {true ? (
+              {/* Avatar */}
+              <div className="relative">
                 <div className="flex items-center gap-3">
                   <div className="relative">
                     <div className="w-12 h-12 rounded-full bg-gray-200 overflow-hidden border-2 border-white shadow-sm">
@@ -65,54 +50,61 @@ const HomeLayout = () => {
                       } border-2 border-white rounded-full`}
                     ></div>
                   </div>
-                  <div>
-                    <p className="text-xs text-gray-500 font-medium">Namaste</p>
-                    <h1 className="text-lg font-bold text-gray-900 leading-tight">
-                      {userName}
-                    </h1>
-                  </div>
                 </div>
-              ) : (
-                <div className="text-xl font-medium text-red-500 uppercase tracking-wider">
-                  ShubhAstro
-                </div>
-              )}
+              </div>
+
+              {/* Name + Date */}
+              <div className="leading-tight  text-start">
+                <p className="text-xs  text-gray-500">Namaste</p>
+                <p className="text-sm font-semibold text-gray-900">
+                  {userName}
+                </p>
+                <p className="text-xs mt-2 text-gray-400">
+                  {new Date().toLocaleDateString("en-GB")}
+                </p>
+              </div>
             </div>
 
-            <div className="flex items-center gap-4">
-              {true && (
-                <div className="hidden md:block text-right">
-                  <p className="text-sm font-semibold text-gray-900">
-                    {new Date().toLocaleDateString("en-GB")}
-                  </p>
-                  <p className="text-xs text-gray-500">1.15k Followers</p>
-                </div>
-              )}
-              <button
-                onClick={() => setIsOnline(!isOnline)}
-                className={`relative inline-flex h-8 w-[4.3rem] items-center rounded-full transition-colors duration-300 ${
-                  isOnline ? "bg-green-600" : "bg-gray-300"
-                }`}
-              >
-                <span
-                  className={`inline-block h-6 w-6 transform rounded-full bg-white transition duration-300 ease-in-out ${
-                    isOnline ? "translate-x-11" : "translate-x-1"
-                  }`}
-                />
-                <span
-                  className={`absolute text-[10px] font-bold text-white ${
-                    isOnline ? "left-2" : "right-2"
+            {/* RIGHT: Followers + Status */}
+            <div className="flex flex-col items-end gap-1">
+              <p className="text-xs text-gray-500">1.15k followers</p>
+
+              <div className="flex justify-start lg:justify-end">
+                <button
+                  onClick={() => setIsOnline(!isOnline)}
+                  className={`relative flex items-center h-9 w-[92px] rounded-full px-1 transition-colors duration-300 ${
+                    isOnline ? "bg-green-600" : "bg-gray-300"
                   }`}
                 >
-                  {isOnline ? "Online" : "offline"}
-                </span>
-              </button>
+                  <span
+                    className={`absolute text-xs font-semibold text-white left-3 transition-opacity ${
+                      isOnline ? "opacity-100" : "opacity-0"
+                    }`}
+                  >
+                    Online
+                  </span>
+
+                  <span
+                    className={`absolute text-xs font-semibold text-white right-3 transition-opacity ${
+                      !isOnline ? "opacity-100" : "opacity-0"
+                    }`}
+                  >
+                    Offline
+                  </span>
+
+                  <span
+                    className={`h-7 w-7 bg-white rounded-full shadow transform transition-transform duration-300 ${
+                      isOnline ? "translate-x-[52px]" : "translate-x-0"
+                    }`}
+                  />
+                </button>
+              </div>
             </div>
           </div>
         </header>
 
         <Suspense fallback="..Loading">
-          <div className="p-4 lg:p-8 max-w-7xl mx-auto min-h-[calc(100vh-80px)]">
+          <div className="p-4  max-w-7xl mx-auto min-h-[calc(100vh-80px)]">
             <Outlet />
           </div>
         </Suspense>

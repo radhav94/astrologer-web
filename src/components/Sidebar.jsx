@@ -73,6 +73,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           {menuItems.map((item) => (
             <Link
               key={item.id}
+              onClick={onClose}
               to={item.path}
               onClick={onClose}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${

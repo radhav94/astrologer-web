@@ -28,6 +28,7 @@ import Guidelines from "../../screens/private/Profile/support/guidelines/Guideli
 import TermsConditions from "../../screens/private/Profile/support/guidelines/TermsConditions/TermsCondition";
 import RecentTickets from "../../screens/private/Profile/support/tickets/RecentTickets";
 import WithdrawMoney from "../../screens/private/Profile/withdraw/WithdrawMoney";
+import Basic from "../../screens/private/Profile/profile/Basic";
 
 export const PATH = {
   publicRoutes: {
@@ -96,6 +97,10 @@ export const PATH = {
     SCHEDULE_AVAILABILITY: {
       path: "/schedule-availablity",
       element: SchedulePage,
+    },
+    BASIC_EDIT_DETAILS: {
+      path: "/profile/basic-details",
+      element: Basic,
     },
     LANGUAGES: {
       path: "/profile/languages",

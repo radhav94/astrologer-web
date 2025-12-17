@@ -4,16 +4,6 @@ import Profile from "../../components/Profile";
 import RecentActivity from "../../components/RecentActivity";
 import Onboarding from "../../screens/public/Onboarding/Onboarding";
 import Login from "../../screens/public/Login/Login";
-import VerifyOtp from "../../screens/public/VerifyOtp/VerifyOtp";
-import BasicDetails from "../../screens/public/BasicDetails/BasicDetails";
-import ProfessionalDetails from "../../screens/public/BasicDetails/ProfessionalDetails";
-import LanguagesYouSpeak from "../../screens/public/BasicDetails/LanguagesYouSpeak";
-import Education from "../../screens/public/BasicDetails/Education";
-import Achievements from "../../screens/public/BasicDetails/Achievements";
-import AreaOfExpertise from "../../screens/public/BasicDetails/AreaOfExpertise";
-import VerifyProfile from "../../screens/public/BasicDetails/VerifyProfile";
-import VerificationPending from "../../screens/public/BasicDetails/VerificationPending";
-import HomeLayout from "../../layouts/HomeLayout";
 import ChatInterface from "../../screens/private/Home/currentStatus/ChatInterface";
 import Kundli from "../../screens/private/Home/currentStatus/kundli/kundli";
 import SetPrice from "../../screens/private/Home/setPrice/SetPrice";
@@ -56,7 +46,7 @@ export const PATH = {
       element: RecentActivity,
     },
     PROFILE: {
-      path: "/Profile",
+      path: "/profile",
       element: Profile,
     },
     UPCOMING_SESSIONS_DETAILS: {

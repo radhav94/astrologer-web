@@ -67,7 +67,6 @@ const VerifyOtp = () => {
 
       const payload = { phoneNumber, type, otp: otpNumber };
       const response = await AuthServices.verifyOtp(payload);
-      console.log(response);
 
       if (response?.data?.statusCode !== 200 || !response?.data?.success) {
         throw new Error(response?.data?.message || "OTP verification failed");
@@ -87,7 +86,7 @@ const VerifyOtp = () => {
       sessionStorage.removeItem("otpSession");
 
       const isNewUser = isRegister === true || String(isRegister) === "false";
-      console.log(isNewUser);
+
       if (isNewUser) {
         sessionStorage.removeItem("onboardingSession");
         navigate("/dashboard", { replace: true });

@@ -17,12 +17,42 @@ export const registerUser = async (data) => {
   return await privateRequest.post("users/registerUser", data);
 };
 
+export const updateAstrologerStatus = async (status) => {
+  try {
+    return await privateRequest.patch(
+      "astrologers/updateStatus",
+      { status }
+    );
+  } catch (error) {
+    console.error(
+      "Update status failed:",
+      error?.response?.data || error.message
+    );
+  }    
+};
+
 export const totalEarning = async () => {
   try {
     const response = await privateRequest.get("transactions/getTotalEarning");
     return response;
   } catch (error) {
 
+    return {
+      data: {
+        success: false,
+        message: "Status update failed",
+      },
+    };
+  }
+};
+
+export const getAstrologerById = async (id) => {
+  try {
+    return await privateRequest.get(
+      `astrologers/astrologer?astrologerId=${id}`
+    );
+  } catch (error) {
+    console.error("Fetch astrologer failed:", error?.response?.status);
     return {
       data: {
         success: false,

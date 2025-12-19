@@ -20,6 +20,8 @@ import RecentTickets from "../../screens/private/Profile/support/tickets/RecentT
 import WithdrawMoney from "../../screens/private/Profile/withdraw/WithdrawMoney";
 import Basic from "../../screens/private/Profile/profile/Basic";
 import InteractiveLiveStreaming from "../../components/livestream/InteractiveLiveStreaming";
+import ChatWindow from "../../screens/private/chat/ChatWindow";
+import ChatPage from "../../screens/private/chat/ChatPage";
 
 export const PATH = {
   publicRoutes: {
@@ -108,6 +110,14 @@ export const PATH = {
     CLIENT_DETAILS: {
       path: "/client-details",
       element: Kundli,
+    },
+    CHAT: {
+      path: "/chats",
+      element: ChatPage,
+    },
+    CHAT_WINDOW: {
+      path: "/chat/:chatId",
+      element: ChatWindow,
     },
     ASTRO_LIVE_STREAMING: {
       path: "/astrologer-dashboard/live-streaming",

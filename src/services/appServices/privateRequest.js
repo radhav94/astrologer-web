@@ -1,6 +1,7 @@
 import axios from "axios";
 import { Toast } from "../../components";
 import { getToken } from "../../utils/utlis";
+import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 let unAuthorizedCount = 0;
 const BASE_URL = import.meta.env.VITE_APP_API_BASE_URL;
@@ -135,3 +136,41 @@ export const privateDelete = (endPoint, id, config = {}) => {
 };
 
 export default privateRequest;
+
+// Create the RTK Query API
+export const privateApi = createApi({
+  reducerPath: "privateApi",
+
+  baseQuery: async (args, api, extraOptions) => {
+    const rawBaseQuery = fetchBaseQuery({
+      baseUrl: `${BASE_URL}/api/`,
+      prepareHeaders: (headers) => {
+        headers.set("Content-Type", "application/json");
+
+        const role = localStorage.getItem("shubhtalk_role");
+        const token =
+          role === "ASTROLOGER"
+            ? localStorage.getItem("shubhtalk_astro_token")
+            : localStorage.getItem("shubhtalk_customer_token");
+
+        if (token) {
+          headers.set("Authorization", `Bearer ${token}`);
+        }
+
+        return headers;
+      },
+    });
+
+    const result = await rawBaseQuery(args, api, extraOptions);
+
+    if (result.error) {
+      responseErrorHandler(result.error);
+    }
+
+    return result;
+  },
+
+  tagTypes: ["Chat", "User"],
+
+  endpoints: () => ({}), // Empty for now, will inject endpoints later
+});

@@ -33,6 +33,7 @@ import {
   AlertCircle,
   LogOut,
   Radio,
+  MessagesSquare
 } from "lucide-react";
 
 export const Icons = {
@@ -70,4 +71,5 @@ export const Icons = {
   AlertCircle,
   LogOut,
   Radio,
+  Chats: MessageSquare
 };

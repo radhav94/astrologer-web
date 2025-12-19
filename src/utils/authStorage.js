@@ -11,6 +11,7 @@ export const saveUserToStorage = (user) => {
       languagePreferences: user.languagePreferences || [],
       accessToken: user.accessToken,
       refreshToken: user.refreshToken,
+      isActive: user.isActive
     };
   
     localStorage.setItem("shubhtalk_astrologer_details", JSON.stringify(filteredUser));

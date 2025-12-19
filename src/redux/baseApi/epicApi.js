@@ -1,0 +1,15 @@
+import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { getToken } from "../../utils/utlis";
+
+export const epicApi = createApi({
+  reducerPath: "epicApi",
+  baseQuery: fetchBaseQuery({
+    baseUrl: `https://devapi-shubhtalk.epicon.in/api/`,
+    prepareHeaders: (headers) => {
+      headers.set("Authorization", `Bearer ${getToken()}`);
+      headers.set("Content-Type", "application/json");
+      return headers;
+    },
+  }),
+  endpoints: () => ({}),
+});

@@ -85,7 +85,7 @@ const VerifyOtp = () => {
 
       sessionStorage.removeItem("otpSession");
 
-      const isNewUser = isRegister === true || String(isRegister) === "false";
+      const isNewUser = isRegister === false ? false : true;
 
       if (isNewUser) {
         sessionStorage.removeItem("onboardingSession");

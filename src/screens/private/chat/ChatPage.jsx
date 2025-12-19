@@ -1,0 +1,150 @@
+import React from "react";
+import { Link, useNavigate } from "react-router";
+
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+import { Icons } from "../../../components/Icons";
+import { useGetChatMessagesQuery } from "../../../redux/activity/chatApi";
+import { PATH } from "../../../utils/routes/Paths";
+
+dayjs.extend(relativeTime);
+
+const mapRecentActivity = (apiData = []) => {
+  return apiData?.map((room) => {
+    const sortedHistory = [...(room.chatHistory || [])].sort(
+      (a, b) => dayjs(a.createdAt).valueOf() - dayjs(b.createdAt).valueOf()
+    );
+
+    const lastChat = sortedHistory[sortedHistory.length - 1];
+
+    return {
+      id: room.roomId,
+      userId: room.userId,
+      type: "chat",
+      title: `${room.firstName} ${room.lastName}`,
+      subtitle:
+        lastChat?.senderType === "astrologer"
+          ? "Astrologer replied"
+          : "You sent a message",
+      timeAgo: lastChat?.createdAt
+        ? dayjs(lastChat.createdAt).fromNow()
+        : "",
+      messagePreview:
+        lastChat?.message || lastChat?.response || "",
+      avatarSeed: room.userId,
+      lastMessageTime: lastChat?.createdAt || null, 
+    };
+  })
+  .sort(
+    (a, b) =>
+      dayjs(b.lastMessageTime).valueOf() -
+      dayjs(a.lastMessageTime).valueOf()
+  );
+};
+
+
+const ChatPage = ({ onBack }) => {
+  const astroIdLocal = localStorage.getItem("shubhtalk_astro_id");
+  
+  const { data, isLoading, isError, refetch } = useGetChatMessagesQuery({
+    astrologerId: astroIdLocal,
+  });
+  const navigate = useNavigate();
+  const activityList = mapRecentActivity(data?.data);
+
+  {isLoading && (
+    <div className="text-center text-gray-400 py-4">
+        Loading messages...
+    </div>
+    )}
+
+    {isError && (   
+    <div className="text-center text-red-500 py-4">
+        Failed to load messages.
+        <button
+        onClick={refetch}
+        className="ml-2 underline text-sm"
+        >
+        Retry
+        </button>
+    </div>
+    )}
+
+  return (
+    <div className="h-full flex flex-col text-start ">
+      <div className="flex items-center gap-4 mb-6">
+        <button
+          onClick={onBack}
+          className="p-2 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
+        >
+          <Link to="/dashboard">
+            <Icons.ChevronLeft size={20} className="text-gray-700" />
+          </Link>
+        </button>
+        <h1 className="text-xl font-bold text-gray-900">Client Chats</h1>
+      </div>
+
+      <div className="space-y-6 pb-20">
+        <div>
+          {/* <h3 className="text-sm font-semibold text-gray-900 mb-3 border-b border-gray-200 pb-2">
+            20/11/2025
+          </h3> */}
+          <div className="space-y-3">
+            {activityList.map((item) => (
+              <div
+                key={item.id}
+                onClick={() =>
+                navigate(
+                  PATH.privateRoutes.CHAT_WINDOW.path.replace(
+                    ":chatId",
+                    item?.id
+                  ),
+                  {
+                    state: {
+                      userId: item?.userId,
+                      astrologerId: astroIdLocal,
+                      fullName: item?.title,
+                      roomId: item?.id,
+                      isUserSide: false,
+                      kundliId:null
+                    },
+                  }
+                )
+              }
+                className="bg-[#EAEAEA] rounded-xl p-4 flex items-center justify-between cursor-pointer"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 flex-shrink-0">
+                    <img
+                      className="rounded-full"
+                      src={`https://picsum.photos/seed/${item.avatarSeed}/200`}
+                      alt={item.title}
+                    />
+                  </div>
+
+                  <div>
+                    <p className="text-sm text-gray-900 font-medium">
+                      {item.title}
+                    </p>
+                    <p className="text-gray-600 text-xs line-clamp-1">
+                      {item.messagePreview}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="text-right">
+                  <p className="text-xs text-gray-400">
+                    {item.timeAgo}
+                  </p>
+                </div>
+              </div>
+            ))}
+
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ChatPage;

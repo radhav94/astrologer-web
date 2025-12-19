@@ -2,6 +2,7 @@ import { Icons } from "./Icons";
 import { DonutChart, Heatmap } from "./Charts";
 import { Link } from "react-router-dom";
 import TipsCarousel from "../screens/private/Home/tipsAndGrowth/TipsCarousel";
+import * as AuthServices from "../../src/services/appServices/authservice";
 
 // --- MOCK DATA ---
 export const UPCOMING_SESSIONS = [
@@ -34,6 +35,8 @@ export const UPCOMING_SESSIONS = [
     time: "04:30 PM",
   },
 ];
+const response = await AuthServices.totalEarning();
+const earnings = response?.data?.data?.[0]?.amount || 0;
 
 const METRICS_DATA = [
   { name: "Call", value: 50, fill: "#3b82f6" }, // blue-500
@@ -130,7 +133,7 @@ const Dashboard = () => {
                 Today's Earnings
               </p>
               <h3 className="text-2xl md:text-4xl font-bold text-gray-900">
-                ₹2,000
+                ₹{earnings}
               </h3>
             </div>
 

@@ -28,6 +28,14 @@ export const updateAstrologerStatus = async (status) => {
       "Update status failed:",
       error?.response?.data || error.message
     );
+  }    
+};
+
+export const totalEarning = async () => {
+  try {
+    const response = await privateRequest.get("transactions/getTotalEarning");
+    return response;
+  } catch (error) {
 
     return {
       data: {
@@ -48,6 +56,8 @@ export const getAstrologerById = async (id) => {
     return {
       data: {
         success: false,
+        data: [],
+        message: "Total earning API failed",
       },
     };
   }

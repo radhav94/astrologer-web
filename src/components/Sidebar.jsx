@@ -30,6 +30,12 @@ const Sidebar = ({ isOpen, onClose }) => {
       path: "/consultation-history",
     },
     {
+      icon: Icons.Chats, 
+      label: "Chats",
+      id: "chats",
+      path: "/chats", 
+    },
+    {
       icon: Icons.Wallet,
       label: "Recent Activity",
       id: "activity",

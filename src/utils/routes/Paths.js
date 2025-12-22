@@ -22,6 +22,7 @@ import Basic from "../../screens/private/Profile/profile/Basic";
 import InteractiveLiveStreaming from "../../components/livestream/InteractiveLiveStreaming";
 import ChatWindow from "../../screens/private/chat/ChatWindow";
 import ChatPage from "../../screens/private/chat/ChatPage";
+import AgoraVoiceCalling from "../../screens/private/call/VoiceCall";
 
 export const PATH = {
   publicRoutes: {
@@ -42,6 +43,10 @@ export const PATH = {
     CONSULTATION_HOSTORY: {
       path: "/consultation-history",
       element: ConsultationHistory,
+    },
+    VOICE_CALL: {
+      path: "/voice-call",
+      element: AgoraVoiceCalling,
     },
     RECENT_ACTIVITY: {
       path: "/recent-activity",

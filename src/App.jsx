@@ -25,6 +25,8 @@ import Achievements from "./screens/public/BasicDetails/Achievements";
 import AreaOfExpertise from "./screens/public/BasicDetails/AreaOfExpertise";
 import VerifyProfile from "./screens/public/BasicDetails/VerifyProfile";
 import VerificationPending from "./screens/public/BasicDetails/VerificationPending";
+import IncomingCallModal from "./components/IncomingCallModal";
+import AudioVideoContainer from "./screens/private/call/AudioVideoContainer";
 
 function App() {
   const router = createBrowserRouter([
@@ -102,6 +104,9 @@ function App() {
 
   return (
     <div className={classes.app}>
+          <IncomingCallModal />
+          {/* <AudioVideoContainer/> */}
+
       <RouterProvider router={router} />
     </div>
   );

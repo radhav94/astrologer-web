@@ -1,76 +1,134 @@
 import React from "react";
 import { Icons } from "../../../../components/Icons";
 import { Link } from "react-router";
-import { UPCOMING_SESSIONS } from "../../../../components/Dashboard";
+// import { Toast } from "../../../../components/Dashboard"; // adjust import if needed
+import { useCall } from "../../../../context/CallContext";
+import { voiceSocket } from "../../../../services/appServices/voiceSocketServices";
+import toast from "../../../../components/toast";
 
 const SessionDetails = () => {
+  const { waitingList, setWaitingList, activeCall, setActiveCall } = useCall();
+
+  const astroIdLocal = localStorage.getItem("shubhtalk_astro_id");
+
+  // ✅ ACCEPT CALL (same logic as old CallHistoryTab)
+  const handleAccept = async (call) => {
+    if (!call?.roomId || !call?.agoraToken) return;
+
+    if (activeCall) {
+      toast.error("Please cancel the previous call");
+      return;
+    }
+
+    // reset just in case
+    setActiveCall(null);
+
+    await new Promise((res) => setTimeout(res, 0));
+
+    voiceSocket.emit("accept_call", {
+      roomId: call.roomId,
+      token: call.agoraToken,
+      channelName: call.roomId,
+      astrologerId: astroIdLocal,
+    });
+
+    // remove from waiting list
+    setWaitingList((prev) =>
+      prev.filter((item) => item.roomId !== call.roomId)
+    );
+
+    await new Promise((res) => setTimeout(res, 50));
+
+    // start call
+    setActiveCall({
+      roomId: call.roomId,
+      agoraToken: call.agoraToken,
+      callerName: call.callerName,
+      isUserSide: false,
+      callType: call.callType || "audio",
+    });
+  };
+
+  // ❌ REJECT CALL
+  const handleReject = (call) => {
+    if (!call?.roomId) return;
+
+    voiceSocket.emit("reject_call", {
+      roomId: call.roomId,
+    });
+
+    setWaitingList((prev) =>
+      prev.filter((item) => item.roomId !== call.roomId)
+    );
+  };
+
+  console.log("callll",waitingList)
+
   return (
     <div className="h-full flex flex-col">
+      {/* HEADER */}
       <div className="flex items-center justify-between gap-4 md:px-4 mb-6">
-        <div className="flex justify-start items-center md:gap-4 ">
-          <button className="p-2 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors">
-            <Link to="/dashboard">
+        <div className="flex justify-start items-center md:gap-4">
+          <Link to="/dashboard">
+            <button className="p-2 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors">
               <Icons.ChevronLeft size={20} className="text-gray-700" />
-            </Link>
-          </button>
+            </button>
+          </Link>
           <h1 className="text-xl font-bold text-gray-900">Upcoming Sessions</h1>
         </div>
-        <p className="text-red-500">6 in Queue</p>
+
+        <p className="text-red-500">{waitingList.length} in Queue</p>
       </div>
 
+      {/* LIST */}
       <div className="space-y-6 pb-24">
-        <div>
+        {waitingList.length === 0 ? (
+          <p className="text-gray-500 text-center">No waiting sessions</p>
+        ) : (
           <div className="space-y-3">
-            {UPCOMING_SESSIONS.map((item) => (
+            {waitingList.map((call) => (
               <div
-                key={item.id}
-                className="bg-gray-300 rounded-xl p-4 shadow-sm border border-gray-100 relative"
+                key={call._id}
+                className="bg-gray-300 rounded-xl p-4 shadow-sm border border-gray-100"
               >
+                {/* TOP */}
                 <div className="flex justify-between items-start mb-2">
-                  <div className="flex font-bold  gap-1">{item.clientName}</div>
-                  <div className="flex items-center gap-2">
-                    <span className="bg-gray-800 text-white text-[10px] font-medium px-3 py-1 rounded-full">
-                      {item.type}
-                    </span>
-                    <button className="text-gray-400 hover:text-gray-600">
-                      {/* <Icons.MoreVertical size={16} /> */}
-                    </button>
+                  <div className="font-bold">
+                    {call.callerName || call.callerId}
                   </div>
+
+                  <span className="bg-gray-800 text-white text-[10px] font-medium px-3 py-1 rounded-full">
+                    {call.callType?.toUpperCase() || "AUDIO"}
+                  </span>
                 </div>
 
-                <div className="flex justify-between items-end text-left">
-                  <div>
-                    <h4 className="font-bold"></h4>
-                    <p className="text-xs  mt-1">
-                      Session : {item.duration} minutes
-                    </p>
-                    <p className="text-xs">
-                      Time of Consultation : {item.time}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    {/* <span className="font-bold text-gray-900">
-                      ₹{item.price}
-                    </span> */}
-                  </div>
+                {/* DETAILS */}
+                <div className="text-xs space-y-1">
+                  <p>Name: {call?.user?.customer?.firstName}</p>
+                  <p>Status: {call.status}</p>
+                </div>
+
+                {/* ACTIONS */}
+                <div className="flex gap-3 mt-4">
+                  <button
+                    onClick={() => handleAccept(call)}
+                    className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg text-sm font-medium"
+                  >
+                    Accept
+                  </button>
+
+                  <button
+                    onClick={() => handleReject(call)}
+                    className="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg text-sm font-medium"
+                  >
+                    Reject
+                  </button>
                 </div>
               </div>
             ))}
           </div>
-        </div>
+        )}
       </div>
-
-      {/* Floating Action Buttons */}
-      {/* <div className="fixed bottom-6 left-0 w-full px-6 flex justify-center gap-4 z-20 pointer-events-none">
-        <div className="flex gap-2 pointer-events-auto shadow-lg bg-gray-900 p-1.5 rounded-full">
-          <button className="flex items-center gap-2 px-6 py-2.5 bg-white text-black rounded-full text-sm font-medium">
-            <Icons.Sliders size={16} /> Sort
-          </button>
-          <button className="flex items-center gap-2 px-6 py-2.5 bg-transparent text-white rounded-full text-sm font-medium hover:bg-gray-800">
-            <Icons.Filter size={16} /> Filter
-          </button>
-        </div>
-      </div> */}
     </div>
   );
 };

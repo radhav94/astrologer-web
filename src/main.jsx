@@ -4,9 +4,11 @@ import { Toaster } from "react-hot-toast";
 import "./index.css";
 import { Provider } from "react-redux";
 import { store } from "./store/store.js";
+import { CallProvider } from "./context/CallContext.jsx";
 
 createRoot(document.getElementById("root")).render(
-    <Provider store={store}>
+  <Provider store={store}>
+    <CallProvider>
       <Toaster
         position="top-right"
         reverseOrder={false}
@@ -18,5 +20,6 @@ createRoot(document.getElementById("root")).render(
         }}
       />
       <App />
-    </Provider>
+    </CallProvider>
+  </Provider>
 );

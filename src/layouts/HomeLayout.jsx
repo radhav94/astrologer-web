@@ -3,6 +3,7 @@ import { Icons } from "../components/Icons";
 import Sidebar from "../components/Sidebar";
 import { Outlet } from "react-router-dom";
 import { updateAstrologerStatus, getAstrologerById } from "../../src/services/appServices/authservice";
+import AudioVideoContainer from "../screens/private/call/AudioVideoContainer";
 
 const HomeLayout = () => {
   const userData = JSON.parse(
@@ -179,6 +180,7 @@ const HomeLayout = () => {
 
         {/* Bottom padding for mobile nav if needed */}
         <div className="h-1"></div>
+        <AudioVideoContainer/>
       </main>
     </div>
   );

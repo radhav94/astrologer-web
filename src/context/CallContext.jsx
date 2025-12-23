@@ -18,24 +18,6 @@ export const CallProvider = ({ children }) => {
   const [incomingCall, setIncomingCall] = useState(null);
 
 
-// useEffect(() => {
-//   if (!activeCall) {
-//     navigator.mediaDevices
-//       ?.enumerateDevices()
-//       .then(() => {
-//         const streams = document.querySelectorAll("video");
-//         streams.forEach(video => {
-//           const stream = video.srcObject;
-//           if (stream) {
-//             stream.getTracks().forEach(track => track.stop());
-//             video.srcObject = null;
-//           }
-//         });
-//       })
-//       .catch(() => {});
-//   }
-// }, [activeCall]);
-
 
 
 
@@ -77,12 +59,13 @@ useEffect(() => {
 
   // 📞 EVENTS
   const handleIncomingCall = (data) => {
-    console.log("📞 GLOBAL incoming call", data);
+    console.log("GLOBAL incoming call", data);
     setIncomingCall({
       roomId: data.roomId,
       agoraToken: data.agoraToken,
       callerId: data.callerId,
       callType: data.type || "audio",
+      callerName:data?.callerDetail?.firstName
     });
   };
 

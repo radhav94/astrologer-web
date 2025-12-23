@@ -18,6 +18,7 @@ const IncomingCallModal = () => {
       agoraToken: incomingCall.agoraToken,
       isUserSide: false,
       callType: incomingCall.callType,
+      callerName:incomingCall.callerName
     });
 
     setIncomingCall(null);

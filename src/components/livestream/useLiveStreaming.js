@@ -10,9 +10,9 @@ import {
 } from "agora-rtc-react";
 
 const APP_ID = "b7bd8229702e4ec3b0938ea15f23a39c";
-const CHANNEL_NAME = "testtoken ";
+const CHANNEL_NAME = "testnewtokenlive";
 const TEMP_TOKEN =
-  "007eJxTYGDhuLVzd+/ygJroBd9sfz99evOFlUVH0P7Xi0+U7ar6c3e5AkOSeVKKhZGRpbmBUapJarJxkoGlsUVqoqFpmpFxorFl8v1PHpkNgYwMpUGBLIwMEAjiczKUpBaXlORnp+YxMAAAQ3MlyA==";
+"007eJxTYPh6IHPGLrNH+09q7dvTJelQ5h1Qdv3wdY4b94pedt300XyqwJBknpRiYWRkaW5glGqSmmycZGBpbJGaaGiaZmScaGyZPGOGd2ZDICPDtu4oBkYoBPEFGEpSi0vyUstL8rNT83Iyy1IZGAD++id2"
 export const useLiveStreaming = (client, ROLE) => {
   const [calling, setCalling] = useState(true);
   const isConnected = useIsConnected();

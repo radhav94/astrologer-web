@@ -50,7 +50,7 @@ const VideoCalling = ({ callData }) => {
     camTrackRef.current.play(container);
   };
 
-  /* ================= REMOTE VIDEO SAFE PLAY ================= */
+  /* ================= REMOTE VIDEO ================= */
   const safePlayRemoteVideo = (track) => {
     if (!remoteVideoRef.current || !track) return;
 
@@ -63,21 +63,18 @@ const VideoCalling = ({ callData }) => {
     setTimeout(() => {
       try {
         track.play(div);
-      } catch (e) {
-        console.warn("Retry remote video play");
+      } catch {
         setTimeout(() => track.play(div), 300);
       }
     }, 150);
   };
 
-  /* ================= RESUME REMOTE AUDIO ================= */
-  const resumeRemoteAudio = () => {
-    if (!clientRef.current) return;
-    clientRef.current.remoteUsers.forEach((user) => {
-      if (user.audioTrack) {
-        user.audioTrack.play();
-      }
-    });
+  const playRemoteAudio = (user) => {
+    user?.audioTrack?.play();
+  };
+
+  const resumeAllRemoteAudio = () => {
+    clientRef.current?.remoteUsers.forEach(playRemoteAudio);
   };
 
   /* ================= START CALL ================= */
@@ -87,32 +84,20 @@ const VideoCalling = ({ callData }) => {
 
     const start = async () => {
       try {
-        if (clientRef.current) {
-          await clientRef.current.leave();
-          clientRef.current.removeAllListeners();
-          clientRef.current = null;
-        }
-
         const client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
         clientRef.current = client;
 
         client.on("user-published", async (user, mediaType) => {
           await client.subscribe(user, mediaType);
-
-          if (mediaType === "video" && user.videoTrack) {
-            safePlayRemoteVideo(user.videoTrack);
-          }
-
-          // ❌ no audio autoplay (incognito safe)
+          if (mediaType === "video") safePlayRemoteVideo(user.videoTrack);
+          if (mediaType === "audio") playRemoteAudio(user);
         });
 
-        client.on("user-unpublished", () => {
-          if (remoteVideoRef.current) {
+        client.on("user-unpublished", (user, mediaType) => {
+          if (mediaType === "video" && remoteVideoRef.current) {
             remoteVideoRef.current.innerHTML = "";
           }
         });
-
-        client.on("user-left", safeEndCall);
 
         await client.join(APP_ID, roomId, agoraToken, null);
 
@@ -134,7 +119,6 @@ const VideoCalling = ({ callData }) => {
 
     start();
     return () => cleanup();
-    // eslint-disable-next-line
   }, [roomId]);
 
   /* ================= LOCAL VIDEO ================= */
@@ -145,64 +129,45 @@ const VideoCalling = ({ callData }) => {
       : playLocalVideo(localVideoFullRef.current);
   }, [joined, isMinimized]);
 
+  /* ================= MIC (AUDIO ONLY – VIDEO SAFE) ================= */
   useEffect(() => {
-    micTrackRef.current?.setEnabled(micOn);
-    resumeRemoteAudio();
+    if (!micTrackRef.current) return;
+
+    // 🔒 ONLY AUDIO MUTED
+    micTrackRef.current.setEnabled(micOn);
+
+    // 🛡️ DEFENSIVE: ENSURE VIDEO NEVER STOPS
+    if (camTrackRef.current && cameraOn) {
+      camTrackRef.current.setEnabled(true);
+    }
   }, [micOn]);
 
+  /* ================= CAMERA (VIDEO ONLY) ================= */
   useEffect(() => {
-    camTrackRef.current?.setEnabled(cameraOn);
+    if (!camTrackRef.current) return;
+    camTrackRef.current.setEnabled(cameraOn);
   }, [cameraOn]);
-
-  /* ================= REMOTE VIDEO SAFETY REPLAY ================= */
-  useEffect(() => {
-    if (!joined || !clientRef.current) return;
-
-    clientRef.current.remoteUsers.forEach((user) => {
-      if (user.videoTrack) {
-        safePlayRemoteVideo(user.videoTrack);
-      }
-    });
-  }, [joined]);
 
   /* ================= CLEANUP ================= */
   const cleanup = async () => {
     if (cleanupRef.current) return;
     cleanupRef.current = true;
 
-    try {
-      micTrackRef.current?.stop();
-      micTrackRef.current?.close();
-      camTrackRef.current?.stop();
-      camTrackRef.current?.close();
+    clearInterval(timerRef.current);
 
-      if (clientRef.current) {
-        await clientRef.current.leave();
-        clientRef.current.removeAllListeners();
-      }
-    } catch (e) {
-      console.warn(e);
-    } finally {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
+    micTrackRef.current?.stop();
+    micTrackRef.current?.close();
+    camTrackRef.current?.stop();
+    camTrackRef.current?.close();
 
-      micTrackRef.current = null;
-      camTrackRef.current = null;
-      clientRef.current = null;
+    await clientRef.current?.leave();
 
-      if (remoteVideoRef.current) {
-        remoteVideoRef.current.innerHTML = "";
-      }
-
-      setJoined(false);
-      setCallSeconds(0);
-      setActiveCall(null);
-    }
+    setJoined(false);
+    setCallSeconds(0);
+    setActiveCall(null);
   };
 
-  /* ================= SAFE END CALL ================= */
+  /* ================= END CALL ================= */
   const safeEndCall = async () => {
     if (endCallRef.current) return;
     endCallRef.current = true;
@@ -215,110 +180,12 @@ const VideoCalling = ({ callData }) => {
     await cleanup();
   };
 
-  /* ================= SOCKET ================= */
-  useEffect(() => {
-    voiceSocket.on("call_ended", safeEndCall);
-    voiceSocket.on("force_call_end", safeEndCall);
-    voiceSocket.on("disconnect", safeEndCall);
-
-    return () => {
-      voiceSocket.off("call_ended", safeEndCall);
-      voiceSocket.off("force_call_end", safeEndCall);
-      voiceSocket.off("disconnect", safeEndCall);
-    };
-  }, []);
-
-  /* ================= DRAG ================= */
-  const dragOffset = useRef({ x: 0, y: 0 });
-
-  const startDrag = (e) => {
-    const x = e.touches ? e.touches[0].clientX : e.clientX;
-    const y = e.touches ? e.touches[0].clientY : e.clientY;
-    dragOffset.current = { x: x - position.x, y: y - position.y };
-    document.addEventListener("mousemove", onDrag);
-    document.addEventListener("mouseup", stopDrag);
-    document.addEventListener("touchmove", onDrag);
-    document.addEventListener("touchend", stopDrag);
-  };
-
-  const onDrag = (e) => {
-    const x = e.touches ? e.touches[0].clientX : e.clientX;
-    const y = e.touches ? e.touches[0].clientY : e.clientY;
-    setPosition({ x: x - dragOffset.current.x, y: y - dragOffset.current.y });
-  };
-
-  const stopDrag = () => {
-    document.removeEventListener("mousemove", onDrag);
-    document.removeEventListener("mouseup", stopDrag);
-    document.removeEventListener("touchmove", onDrag);
-    document.removeEventListener("touchend", stopDrag);
-  };
-
-  /* ================= CHAT ================= */
-  const openChatWithMinimize = () => {
-    setIsMinimized(true);
-    setTimeout(() => {
-      if (isUserSide) {
-        navigate(`/talk-to-astrologers/${activeCall.astrologerId}`, {
-          state: {
-            roomId: activeCall.chatRoomId,
-            userId: activeCall.userId,
-            astrologerId: activeCall.astrologerId,
-            kundliId: activeCall.kundliId,
-            fullName: activeCall.callerName,
-            isUserSide: true,
-          },
-        });
-      }
-    }, 50);
-  };
-
-  const formatTime = (s) =>
-    `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(
-      2,
-      "0"
-    )}`;
-
   /* ================= UI ================= */
   return (
     <>
-      {/* MINI VIEW */}
-      <div
-        className={styles.floatingMini}
-        style={{
-          top: position.y,
-          left: position.x,
-          display: isMinimized ? "block" : "none",
-        }}
-        onMouseDown={startDrag}
-        onTouchStart={startDrag}
-        onClick={resumeRemoteAudio}
-      >
-        <div className={styles.miniHeader}>
-          <span>
-            {callerName || "Video Call"} • {formatTime(callSeconds)}
-          </span>
-          <button onClick={() => setIsMinimized(false)}>⤢</button>
-        </div>
-
-        <div className={styles.miniVideo}>
-          <div ref={localVideoMiniRef} style={{ width: "100%", height: "100%" }} />
-        </div>
-
-        <div className={styles.miniControls}>
-          <button onClick={() => setMicOn((p) => !p)}>🎙️</button>
-          <button onClick={() => setCameraOn((p) => !p)}>📷</button>
-          <button className={styles.endBtnMini} onClick={safeEndCall}>
-            📞
-          </button>
-        </div>
-      </div>
-
-      {/* FULL VIEW */}
       <div
         className={styles.videoContainer}
-        style={{ visibility: isMinimized ? "hidden" : "visible" }}
-        onClick={resumeRemoteAudio}
+        onClick={resumeAllRemoteAudio}
       >
         <button
           className={styles.minimizeBtn}
@@ -344,7 +211,8 @@ const VideoCalling = ({ callData }) => {
               <div className={styles.callInfo}>
                 <span className={styles.callerName}>{callerName}</span>
                 <span className={styles.callTimer}>
-                  ⏱️ {formatTime(callSeconds)}
+                  ⏱ {Math.floor(callSeconds / 60)}:
+                  {String(callSeconds % 60).padStart(2, "0")}
                 </span>
               </div>
 
@@ -376,7 +244,7 @@ const VideoCalling = ({ callData }) => {
 
                 <button
                   className={styles.iconBtn}
-                  onClick={openChatWithMinimize}
+                  onClick={() => setIsMinimized(true)}
                 >
                   <IoChatbubbleEllipses size={22} />
                 </button>

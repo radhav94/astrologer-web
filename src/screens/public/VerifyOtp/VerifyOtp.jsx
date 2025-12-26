@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import * as AuthServices from "../../../services/appServices/authservice";
 import { saveUserToStorage } from "../../../utils/authStorage";
 import { Toast } from "../../../components";
+import { useCall } from "../../../context/CallContext";
 
 const OTP_LENGTH = 6;
 
@@ -19,6 +20,8 @@ const VerifyOtp = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [timer, setTimer] = useState(20);
+      const { setAstroId } = useCall();
+
 
   const inputsRef = useRef([]);
 
@@ -81,6 +84,8 @@ const VerifyOtp = () => {
       localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("shubhtalk_role", "ASTROLOGER");
       localStorage.setItem("shubhtalk_astro_id", _id);
+      setAstroId(_id);
+
       localStorage.setItem("shubhtalk_astro_token", accessToken);
 
       sessionStorage.removeItem("otpSession");

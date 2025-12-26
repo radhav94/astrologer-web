@@ -1,9 +1,12 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Icons } from "./Icons";
+import { useCall } from "../context/CallContext";
 
 const Sidebar = ({ isOpen, onClose }) => {
   const location = useLocation();
   const navigate = useNavigate();
+    const { setAstroId } = useCall(); // 🔥 VERY IMPORTANT
+
 
   const handleLogout = () => {
     localStorage.removeItem("shubhtalk_role");
@@ -13,6 +16,9 @@ const Sidebar = ({ isOpen, onClose }) => {
     localStorage.removeItem("accessToken");
     sessionStorage.removeItem("otpSession");
     // navigate("/");
+
+    setAstroId(null);
+
     navigate("/login", { replace: true });
   };
 

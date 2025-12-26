@@ -19,10 +19,6 @@ const LiveView = (props) => {
     rate: 32,
   };
 
-
-
-  
-
   const giftList = [
     { id: 1, name: "Flowers", price: 15, icon: "/gifts/flowers.png" },
     { id: 2, name: "Pooja Thali", price: 21, icon: "/gifts/pooja.png" },
@@ -155,15 +151,14 @@ const LiveView = (props) => {
           setShowGifts(false);
         }}
       />
-     <SharePopup
-  show={showSharePopup}
-  onClose={() => setShowSharePopup(false)}
-  url={window.location.href}
-  shareToWhatsapp={shareToWhatsapp}
-  shareToGmail={shareToGmail}
-  handleCopyLink={handleCopyLink}
-/>
-
+      <SharePopup
+        show={showSharePopup}
+        onClose={() => setShowSharePopup(false)}
+        url={window.location.href}
+        shareToWhatsapp={shareToWhatsapp}
+        shareToGmail={shareToGmail}
+        handleCopyLink={handleCopyLink}
+      />
 
       <CallRequestPopup
         show={showCallPopup}
@@ -185,9 +180,9 @@ const LiveView = (props) => {
           📞
         </button>
 
-        <button className="icon-btn" onClick={() => setShowGifts(true)}>
+        {/* <button className="icon-btn" onClick={() => setShowGifts(true)}>
           🎁
-        </button>
+        </button> */}
 
         {isHost && (
           <button
@@ -198,7 +193,6 @@ const LiveView = (props) => {
           </button>
         )}
       </div>
-
     </div>
   );
 };

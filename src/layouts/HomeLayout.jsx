@@ -2,7 +2,10 @@ import { Suspense, useState, useEffect } from "react";
 import { Icons } from "../components/Icons";
 import Sidebar from "../components/Sidebar";
 import { Outlet } from "react-router-dom";
-import { updateAstrologerStatus, getAstrologerById } from "../../src/services/appServices/authservice";
+import {
+  updateAstrologerStatus,
+  getAstrologerById,
+} from "../../src/services/appServices/authservice";
 import AudioVideoContainer from "../screens/private/call/AudioVideoContainer";
 
 const HomeLayout = () => {
@@ -12,11 +15,9 @@ const HomeLayout = () => {
   const astrologerId = userData?._id || userData?.id;
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isOnline, setIsOnline] = useState(
-    userData?.isActive === "online"
-  );
+  const [isOnline, setIsOnline] = useState(userData?.isActive === "online");
   const [loadingStatus, setLoadingStatus] = useState(false);
-  
+
   const firstName = userData?.firstName?.trim();
   const lastName = userData?.lastName?.trim();
   const userName =
@@ -25,16 +26,16 @@ const HomeLayout = () => {
 
   const handleStatusToggle = async () => {
     if (loadingStatus) return;
-  
+
     const currentStatus = isOnline;
     const newStatus = currentStatus ? "offline" : "online";
-  
+
     // Optimistic UI
     setIsOnline(!currentStatus);
     setLoadingStatus(true);
-  
+
     const response = await updateAstrologerStatus(newStatus);
-  
+
     if (!response?.data?.success) {
       // Revert if API fails
       setIsOnline(currentStatus);
@@ -43,31 +44,31 @@ const HomeLayout = () => {
         ...userData,
         isActive: newStatus,
       };
-  
+
       localStorage.setItem(
         "shubhtalk_astrologer_details",
         JSON.stringify(updatedUser)
       );
     }
-  
+
     setLoadingStatus(false);
   };
-    
+
   useEffect(() => {
     const syncAstrologerStatus = async () => {
       if (!astrologerId) return;
-  
+
       try {
         setLoadingStatus(true);
-  
+
         const response = await getAstrologerById(astrologerId);
-  
+
         if (response?.data?.success) {
           const apiUser = response.data.data;
-  
+
           // Backend = source of truth
           setIsOnline(apiUser.isActive === "online");
-  
+
           // Update localStorage with latest data
           localStorage.setItem(
             "shubhtalk_astrologer_details",
@@ -80,10 +81,10 @@ const HomeLayout = () => {
         setLoadingStatus(false);
       }
     };
-  
+
     syncAstrologerStatus();
   }, [astrologerId]);
-  
+
   return (
     <div className="flex h-screen bg-[#F8F9FA] overflow-hidden">
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
@@ -139,9 +140,9 @@ const HomeLayout = () => {
 
               <div className="flex justify-start lg:justify-end">
                 <button
-                 disabled={loadingStatus}
-                 onClick={handleStatusToggle}
-                 className={`relative flex items-center h-9 w-[92px] rounded-full px-1 transition-colors duration-300
+                  disabled={loadingStatus}
+                  onClick={handleStatusToggle}
+                  className={`relative flex items-center h-9 w-[92px] rounded-full px-1 transition-colors duration-300
                    ${isOnline ? "bg-green-600" : "bg-gray-300"}
                    ${loadingStatus ? "opacity-60 cursor-not-allowed" : ""}
                  `}
@@ -181,7 +182,7 @@ const HomeLayout = () => {
 
         {/* Bottom padding for mobile nav if needed */}
         <div className="h-1"></div>
-        <AudioVideoContainer/>
+        <AudioVideoContainer />
       </main>
     </div>
   );

@@ -34,7 +34,7 @@ const Login = () => {
       const type = "ASTROLOGER";
   
       const payload = {
-        phoneNumber: '+91'+mobile, // 10-digit number
+        phoneNumber: '91'+mobile, // 10-digit number
         type,
       };
   
@@ -48,7 +48,7 @@ const Login = () => {
       navigate("/verify-otp", {
         state: {
           mobile: `+91${mobile}`,
-          phoneNumber: `+91${mobile}`,
+          phoneNumber: `91${mobile}`,
         },
       });
   

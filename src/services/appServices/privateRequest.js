@@ -43,7 +43,7 @@ const requestHandler = (request) => {
 };
 
 const clearToken = () => {
-  localStorage.removeItem("token");
+  localStorage.removeItem("shubhtalk_astro_token");
 };
 
 const responseErrorHandler = (error) => {

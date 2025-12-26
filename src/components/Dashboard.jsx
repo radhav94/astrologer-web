@@ -50,6 +50,10 @@ const HEATMAP_DATA = Array.from({ length: 60 }, (_, i) => ({
 }));
 
 const Dashboard = () => {
+  const userData = JSON.parse(
+    localStorage.getItem("shubhtalk_astrologer_details")
+  );
+
   return (
     <div className="space-y-6">
       {/* Top Row: Price & Schedule */}
@@ -72,8 +76,8 @@ const Dashboard = () => {
           </div>
           <div className="absolute top-4 right-2 bg-gray-100 rounded-2xl p-3 w-28 h-28 flex flex-col justify-center items-center">
             <p className="text-xs text-gray-400 mb-1">Current Rate</p>
-            <p className="text-2xl font-bold text-gray-900">₹20</p>
-            <p className="text-xs text-gray-500">per minute</p>
+            <p className="text-2xl font-bold text-gray-900">₹{userData?.price?.callRate?.amount}</p>
+            <p className="text-xs text-gray-500">per {userData?.price?.callRate?.unit}</p>
           </div>
         </div>
       </div>

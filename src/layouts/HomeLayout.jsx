@@ -21,6 +21,7 @@ const HomeLayout = () => {
   const lastName = userData?.lastName?.trim();
   const userName =
     firstName && lastName ? `${firstName} ${lastName}` : "Unknown";
+  const avatar = userData?.imageUrl;
 
   const handleStatusToggle = async () => {
     if (loadingStatus) return;
@@ -106,7 +107,7 @@ const HomeLayout = () => {
                   <div className="relative">
                     <div className="w-12 h-12 rounded-full bg-gray-200 overflow-hidden border-2 border-white shadow-sm">
                       <img
-                        src="https://picsum.photos/100/100"
+                        src={avatar}
                         alt="Profile"
                         className="w-full h-full object-cover"
                       />

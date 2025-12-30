@@ -17,7 +17,7 @@ export const useVoiceRecorder = () => {
     });
 
     const mediaRecorder = new MediaRecorder(streamRef.current, {
-      mimeType: "audio/webm", // ✅ important
+      mimeType: "audio/webm;codecs=opus", // ✅ important
     });
 
     mediaRecorderRef.current = mediaRecorder;

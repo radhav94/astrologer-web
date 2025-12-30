@@ -33,6 +33,7 @@ const mapRecentActivity = (apiData = []) => {
         lastChat?.message || lastChat?.response || "",
       avatarSeed: room.userId,
       lastMessageTime: lastChat?.createdAt || null, 
+      userID: room.user_Id
     };
   })
   .sort(
@@ -106,7 +107,8 @@ const ChatPage = ({ onBack }) => {
                       fullName: item?.title,
                       roomId: item?.id,
                       isUserSide: false,
-                      kundliId:null
+                      kundliId:null,
+                      userID: item?.userID
                     },
                   }
                 )

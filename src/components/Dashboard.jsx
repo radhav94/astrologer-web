@@ -50,12 +50,15 @@ const HEATMAP_DATA = Array.from({ length: 60 }, (_, i) => ({
 }));
 
 const Dashboard = () => {
+  const userData = JSON.parse(
+    localStorage.getItem("shubhtalk_astrologer_details")
+  );
   return (
     <div className="space-y-6">
       {/* Top Row: Price & Schedule */}
       <div className="grid grid-cols-1 ">
         {/* Consultation Price Card */}
-        <div className="bg-white rounded-2xl p-3 text-left shadow-sm flex flex-col justify-between relative overflow-hidden group">
+        <div className="bg-white rounded-2xl p-3 text-left shadow-sm flex row justify-between relative overflow-hidden group">
           <div className="z-10 py-2 relative">
             <h3 className="font-bold  text-lg text-gray-900 mb-1 max-w-[70%] md:max-w-full   ">
               Set Your Consultation Price
@@ -70,10 +73,30 @@ const Dashboard = () => {
               Set Now <Icons.ArrowRight size={16} />
             </Link>
           </div>
-          <div className="absolute top-4 right-2 bg-gray-100 rounded-2xl p-3 w-28 h-28 flex flex-col justify-center items-center">
-            <p className="text-xs text-gray-400 mb-1">Current Rate</p>
-            <p className="text-2xl font-bold text-gray-900">₹20</p>
-            <p className="text-xs text-gray-500">per minute</p>
+          <div className="flex gap-1">
+            <div className=" bg-gray-100 rounded-2xl p-3 w-28 h-28 flex flex-col justify-center items-center">
+              <p className="text-xs text-gray-400 mb-1">Audio Rate</p>
+              <p className="text-2xl font-bold text-gray-900">
+                ₹{userData?.price?.callRate?.amount}
+              </p>
+              <p className="text-xs text-gray-500">per minute</p>
+            </div>
+            <div className=" bg-gray-100 rounded-2xl p-3 w-28 h-28 flex flex-col justify-center items-center">
+              <p className="text-xs text-gray-400 mb-1">chat Rate</p>
+              <p className="text-2xl font-bold text-gray-900">
+                ₹{userData?.price?.chatRate?.amount}
+              </p>
+              <p className="text-xs text-gray-500">per minute</p>
+            </div>
+            {userData?.price?.videocall?.amount && (
+              <div className=" bg-gray-100 rounded-2xl p-3 w-28 h-28 flex flex-col justify-center items-center">
+                <p className="text-xs text-gray-400 mb-1">Video Rate</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  ₹{userData?.price?.videocall?.amount}
+                </p>
+                <p className="text-xs text-gray-500">per minute</p>
+              </div>
+            )}
           </div>
         </div>
       </div>

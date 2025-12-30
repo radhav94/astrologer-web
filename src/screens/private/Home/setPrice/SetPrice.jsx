@@ -6,9 +6,21 @@ import { Toast } from "../../../../components";
 import { useSelector } from "react-redux";
 
 const SetPrice = () => {
+  const userData = JSON.parse(
+    localStorage.getItem("shubhtalk_astrologer_details")
+  );
+  console.log(userData, "userData");
   const [price, setPrice] = useState({
-    callRate: { unit: "minute", currency: "INR", amount: +25 },
-    chatRate: { unit: "minute", currency: "INR", amount: +15 },
+    callRate: {
+      unit: "minute",
+      currency: "INR",
+      amount: userData?.price?.callRate?.amount,
+    },
+    chatRate: {
+      unit: "minute",
+      currency: "INR",
+      amount: userData?.price?.chatRate?.amount,
+    },
   });
 
   const [setAstrologerPrice, { isLoading }] = useSetAstrologerPriceMutation();

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, Mic, Send } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { IoCallOutline, IoVideocamOutline } from "react-icons/io5";
 import dayjs from "dayjs";
 import { useGetChatHistoryQuery } from "../../../redux/activity/chatApi";
@@ -10,7 +10,9 @@ import VoiceMessage from "./voiceChat/VoiceMessage";
 import { useVoiceRecorder } from "./voiceChat/useVoiceRecorder";
 import VoiceRecorderPopup from "./voiceChat/VoiceRecorderPopup";
 import { useGetS3SignedUrlMutation } from "../../../redux/s3SignedApi";
-
+import ReviewModal from "./review/ReviewModal";
+import { useAddUserReviewMutation } from "../../../redux/review/reviewApi";
+import { Toast } from "../../../components";
 
 /* -------------------- Helpers -------------------- */
 
@@ -71,7 +73,15 @@ const Message = ({ text, isSender, time }) => {
 
 
 const ChatWindow = () => {
+  const navigate = useNavigate();
   const { state } = useLocation();
+  const userData = JSON.parse(
+    localStorage.getItem("shubhtalk_astrologer_details")
+  );
+  const firstName = userData?.firstName?.trim();
+  const lastName = userData?.lastName?.trim();
+  const userName =
+    firstName && lastName ? `${firstName} ${lastName}` : "Unknown";
   const {
     userId,
     astrologerId,
@@ -79,6 +89,7 @@ const ChatWindow = () => {
     fullName,
     isUserSide,
     kundliId,
+    userID
   } = state || {};
 
   const [message, setMessage] = useState("");
@@ -198,7 +209,7 @@ const ChatWindow = () => {
         "Content-Type": blob.type,
       },
     });
-    
+
     if (!res.ok) {
       throw new Error("S3 upload failed");
     }
@@ -212,6 +223,30 @@ const ChatWindow = () => {
         Unable to open chat. Please go back and select a conversation.
       </div>
     );
+  }
+
+  const [openReview, setOpenReview] = useState(false);
+  const [addUserReview, { isLoading }] = useAddUserReviewMutation();
+  const handleReviewSubmit = async ({ rating, review, isAnonymous }) => {
+    try {
+      const res = await addUserReview({
+        userID,
+        rating,
+        review,
+        isAnonymous,
+      }).unwrap();
+
+      if (res.success) {
+        Toast.success(res.message);
+        navigate(-1)
+      } else {
+        Toast.error(res.message);
+      }
+
+      setOpenReview(false);
+    } catch (error) {
+      console.error("Failed to submit review", error);
+    }
   }
 
   /* -------------------- UI -------------------- */
@@ -311,9 +346,23 @@ const ChatWindow = () => {
               onCancel={cancelRecording}
             />
           )}
-
+          <button
+            className="flex items-center justify-center p-4 rounded-2xl bg-red-500 text-white hover:bg-red-600 active:scale-95 transition"
+            onClick={() => setOpenReview(true)}
+          >
+            End
+          </button>
         </div>
       </div>
+      {/* Review Modal */}
+      {openReview && (
+        <ReviewModal
+          onClose={() => setOpenReview(false)}
+          onSubmit={handleReviewSubmit}
+          ratedUserName={fullName}
+          reviewerName={userName}
+        />
+      )}
     </div>
   );
 };

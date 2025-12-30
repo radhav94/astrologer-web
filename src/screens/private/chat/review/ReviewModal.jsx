@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-const ReviewModal = ({ onClose, onSubmit }) => {
+const ReviewModal = ({ onClose, onSubmit, ratedUserName, reviewerName }) => {
   const [rating, setRating] = useState(0);
   const [review, setReview] = useState("");
   const [isAnonymous, setAnonymous] = useState(false);
@@ -17,7 +17,7 @@ const ReviewModal = ({ onClose, onSubmit }) => {
         </button>
 
         {/* Header */}
-        <h2 className="text-center text-lg font-semibold">Rate Manoj</h2>
+        <h2 className="text-center text-lg font-semibold">Rate {ratedUserName}</h2>
 
         {/* Avatar */}
         <div className="mt-4 flex justify-center">
@@ -44,7 +44,7 @@ const ReviewModal = ({ onClose, onSubmit }) => {
             </svg>
           </div>
           <div>
-            <p className="font-medium">Latif</p>
+            <p className="font-medium">{reviewerName}</p>
             <p className="text-xs text-gray-500">
               Reviews are public if you are not anonymous
             </p>

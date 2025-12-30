@@ -53,6 +53,13 @@ const Message = ({ text, isSender, time }) => {
 const ChatWindow = () => {
   const navigate = useNavigate();
   const { state } = useLocation();
+  const userData = JSON.parse(
+    localStorage.getItem("shubhtalk_astrologer_details")
+  );
+  const firstName = userData?.firstName?.trim();
+  const lastName = userData?.lastName?.trim();
+  const userName =
+    firstName && lastName ? `${firstName} ${lastName}` : "Unknown";
   const {
     userId,
     astrologerId,
@@ -270,6 +277,8 @@ const ChatWindow = () => {
             <ReviewModal
               onClose={() => setOpenReview(false)}
               onSubmit={handleReviewSubmit}
+              ratedUserName={fullName}
+              reviewerName={userName}
             />
           )}
     </div>

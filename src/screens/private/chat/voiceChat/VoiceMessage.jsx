@@ -68,7 +68,10 @@ const VoiceMessage = ({ url, duration = 0, sender }) => {
         </div>
       </div>
 
-      <audio ref={audioRef} src={url} preload="metadata" />
+      <audio ref={audioRef} preload="metadata">
+        <source src={url} type="audio/webm" />
+      </audio>
+
     </div>
   );
 };

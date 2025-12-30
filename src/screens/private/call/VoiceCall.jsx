@@ -53,6 +53,10 @@ const AgoraVoiceCalling = ({ callData }) => {
         if (mediaType === "audio") {
           user.audioTrack?.play();
         }
+
+        if (mediaType === "video") {
+          user.videoTrack?.play("remote-video");
+        }
       });
 
       client.on("user-left", endCall);
@@ -225,13 +229,19 @@ const AgoraVoiceCalling = ({ callData }) => {
 
       {/* FULL VIEW */}
       {!isMinimized && (
-        <div className={styles.fullscreenWrapper}>
-          {isVideo && (
+        <div className={styles.fullscreenWrapper} id="remote-video">
+          {/* {isVideo && (
+            <div
+              id="remote-video"
+              className="w-full h-full bg-black rounded-lg"
+            />
+          )} */}
+          {/* {isVideo && (
             <div
               id="local-video"
               className="absolute bottom-20 right-4 w-32 h-40 bg-black rounded-lg overflow-hidden"
             />
-          )}
+          )} */}
           <button
             className={styles.minimizeBtn}
             onClick={() => setIsMinimized(true)}

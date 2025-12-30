@@ -52,7 +52,7 @@ const Message = ({ text, isSender, time }) => {
 
           {isVoiceMsg == true ? (
             <VoiceMessage
-              url={message.url}
+              url={message.audioUrl}
               duration={message.duration}
               sender={isSender}
             />

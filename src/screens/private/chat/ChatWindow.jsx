@@ -1,12 +1,14 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, Send } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { IoCallOutline, IoVideocamOutline } from "react-icons/io5";
 import dayjs from "dayjs";
 import { useGetChatHistoryQuery } from "../../../redux/activity/chatApi";
 import useChat from "../../../hooks/useChatWindow";
 import { PATH } from "../../../utils/routes/Paths";
-
+import ReviewModal from "./review/ReviewModal";
+import { useAddUserReviewMutation } from "../../../redux/review/reviewApi";
+import { Toast } from "../../../components";
 
 /* -------------------- Helpers -------------------- */
 
@@ -49,6 +51,7 @@ const Message = ({ text, isSender, time }) => {
 
 
 const ChatWindow = () => {
+  const navigate = useNavigate();
   const { state } = useLocation();
   const {
     userId,
@@ -57,6 +60,7 @@ const ChatWindow = () => {
     fullName,
     isUserSide,
     kundliId,
+    userID
   } = state || {};
 
   const [message, setMessage] = useState("");
@@ -140,10 +144,34 @@ const ChatWindow = () => {
 
   if (!state?.roomId) {
     return (
-        <div className="h-screen flex items-center justify-center text-gray-500">
+      <div className="h-screen flex items-center justify-center text-gray-500">
         Unable to open chat. Please go back and select a conversation.
-        </div>
+      </div>
     );
+  }
+
+  const [openReview, setOpenReview] = useState(false);
+  const [addUserReview, { isLoading }] = useAddUserReviewMutation();
+  const handleReviewSubmit = async ({rating, review, isAnonymous}) => {
+    try {
+      const res = await addUserReview({
+        userID,
+        rating,
+        review,
+        isAnonymous,
+      }).unwrap();
+
+      if (res.success) {
+        Toast.success(res.message);
+        navigate(-1)
+      } else {
+        Toast.error(res.message);
+      }
+
+      setOpenReview(false);
+    } catch (error) {
+      console.error("Failed to submit review", error);
+    }
   }
 
   /* -------------------- UI -------------------- */
@@ -222,16 +250,28 @@ const ChatWindow = () => {
             onClick={handleSend}
             disabled={!message.trim()}
             aria-label="Send message"
-            className={`p-4 rounded-2xl transition-all ${
-              message.trim()
-                ? "bg-gray-900 text-white hover:bg-gray-800"
-                : "bg-gray-300 cursor-not-allowed"
-            }`}
+            className={`p-4 rounded-2xl transition-all ${message.trim()
+              ? "bg-gray-900 text-white hover:bg-gray-800"
+              : "bg-gray-300 cursor-not-allowed"
+              }`}
           >
             <Send size={20} />
           </button>
+          <button
+            className="flex items-center justify-center p-4 rounded-2xl bg-red-500 text-white hover:bg-red-600 active:scale-95 transition"
+            onClick={() => setOpenReview(true)}
+          >
+            End
+          </button>
         </div>
       </div>
+      {/* Review Modal */}
+          {openReview && (
+            <ReviewModal
+              onClose={() => setOpenReview(false)}
+              onSubmit={handleReviewSubmit}
+            />
+          )}
     </div>
   );
 };

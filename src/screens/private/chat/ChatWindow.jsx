@@ -178,9 +178,8 @@ const ChatWindow = () => {
     const signedUrl = await getS3SignedUrl({
       fileType: blob.type,
     }).unwrap();
-    const audioUrl = signedUrl.key;
+    const audioUrl = (signedUrl.uploadUrl).split("?")[0];
     const uploadUrl = signedUrl.uploadUrl;
-    console.log("signed url", uploadUrl);
     await uploadAudioToS3(uploadUrl, blob);
     const jsonString = JSON.stringify({
       type: "voice",
@@ -199,7 +198,7 @@ const ChatWindow = () => {
         "Content-Type": blob.type,
       },
     });
-    console.log("uploadAudioToS3", res);
+    
     if (!res.ok) {
       throw new Error("S3 upload failed");
     }

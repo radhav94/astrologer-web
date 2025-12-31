@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
 import socketService from "../services/appServices/socketService";
+import { voiceSocket } from "../services/appServices/voiceSocketServices";
+import toast from "../components/toast";
+import {useChat as useChatContext} from "../context/chatContext"
 
 export default function useChat({
   userId,
@@ -11,6 +14,8 @@ export default function useChat({
   const [messages, setMessages] = useState([]);
   const [error, setError] = useState(null);
   const [isTyping, setIsTyping] = useState(false);
+  const [isMessageDisabled, setIsMessageDisabled] = useState(false);
+  const {setActiveChat} = useChatContext();
 
   const formatTime = () =>
     new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -23,54 +28,39 @@ export default function useChat({
     if(!roomId || !userId || !astrologerId) return;
     socketService.connect({
       onConnected: () => {
-        socketService.joinRoom({ roomId, userId, astrologerId });
+        // socketService.joinRoom({ roomId, userId, astrologerId });
       },
-      onError: (errMsg) => setError(errMsg),
+      onError: (errMsg) => {
+        toast.error(errMsg ||"Something went wrong");
+        setError(errMsg)
+      },
     });
 
-    socketService.listenEvents({
-      onMessage: (data) => {
-        const isSenderUser = data.sender === userId;
+    const handleAddMessage = (data) => {
+      const isSenderAstrologer = data.sender === "astrologer";
 
         addMessage({
           text: data.message,
-          sender: isSenderUser ? "user" : "astro",
-          isSender: isSenderUser === isUserSide,
+          sender: isSenderAstrologer,
           time: formatTime(),
+          dateTime: data?.dateTime
         });
-      },
-
-      onTyping: (data) => {
-        if (data.sender !== userId) {
-          setIsTyping(true);
-          setTimeout(() => setIsTyping(false), 1200);
-        }
-      },
-    });
-  }, [roomId]);
-
-  // USER SEND
-  const sendMessage = (text) => {
-    const res = socketService.sendMessage({
-      message: text,
-      roomId,
-      userId,
-      astrologerId,
-      kundliId,
-    });
-
-    if (res?.error) {
-      setError(res.error);
-      return;
     }
 
-    addMessage({
-      text,
-      sender: "user",
-      isSender: isUserSide,
-      time: formatTime(),
-    });
-  };
+    const handleChatEnd = () => {
+      toast.warning("Chat has ended");
+      setIsMessageDisabled(true);
+      setActiveChat(null);
+    }
+
+    voiceSocket.on("message:recieved", handleAddMessage);
+    voiceSocket.on("chat:ended", handleChatEnd);
+
+    return () => {
+    voiceSocket.off("message:recieved", handleAddMessage);
+    voiceSocket.on("chat:ended", handleChatEnd);
+    }
+  }, [roomId]);
 
   // ASTRO SEND
   const astroReply = (text) => {
@@ -79,19 +69,15 @@ export default function useChat({
       roomId,
       userId,
       astrologerId,
+      sender: "astrologer",
+      kundliId,
+      type: "message"
     });
 
     if (res?.error) {
       setError(res.error);
       return;
     }
-
-    addMessage({
-      text,
-      sender: "astro",
-      isSender: !isUserSide,
-      time: formatTime(),
-    });
   };
 
   //  typing emit
@@ -103,8 +89,10 @@ export default function useChat({
     messages,
     error,
     isTyping,
-    sendMessage,
+    // sendMessage,
     astroReply,
     sendTyping,
+    isMessageDisabled,
+    setIsMessageDisabled
   };
 }

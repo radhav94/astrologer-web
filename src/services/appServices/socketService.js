@@ -38,17 +38,17 @@ class SocketService {
   }
 
   joinRoom({ roomId, userId, astrologerId }) {
-    this.socket.emit(
-      "joinRoom",
-      { roomId, userId, astrologerId },
-      (response) => {
-        if (response?.error) {
-          console.error("JOIN FAILED:", response.error);
-        } else {
-          console.log("ROOM JOINED SUCCESSFULLY");
-        }
-      }
-    );
+    // this.socket.emit(
+    //   "joinRoom",
+    //   { roomId, userId, astrologerId },
+    //   (response) => {
+    //     if (response?.error) {
+    //       console.error("JOIN FAILED:", response.error);
+    //     } else {
+    //       console.log("ROOM JOINED SUCCESSFULLY");
+    //     }
+    //   }
+    // );
   }
 
   // USER SEND
@@ -73,17 +73,19 @@ class SocketService {
   }
 
   // ASTRO SEND
-  astrologerReplied({ roomId, userId, astrologerId, message }) {
+  astrologerReplied({ roomId, userId, astrologerId, kundliId, message }) {
     try {
       if (!this.socket?.connected)
         throw new Error("Socket not connected, try again.");
 
-      this.socket.emit("astrologer_sent_message", {
-        sender: astrologerId,
+      this.socket.emit("chat:message", {
         roomId,
         userId,
         astrologerId,
         message,
+        sender: "astrologer",
+        kundliId,
+        type: "message"
       });
 
       return { success: true };
@@ -103,17 +105,12 @@ class SocketService {
   listenEvents(callbacks) {
     const { onMessage, onTyping } = callbacks;
 
-    this.socket.on("user_received_message", (data) => {
+    this.socket.on("message:recieved", (data) => {
+      console.log('message', data)
       onMessage?.({
         sender: data.sender,
-        message: data.message || data.response,
-      });
-    });
-
-    this.socket.on("astrologer_received_message", (data) => {
-      onMessage?.({
-        sender: data.sender,
-        message: data.message || data.response,
+        message: data.message || "",
+        dateTime: data.createdAt || new Date().toISOString(),
       });
     });
 

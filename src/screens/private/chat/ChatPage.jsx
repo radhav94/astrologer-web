@@ -10,36 +10,42 @@ import { PATH } from "../../../utils/routes/Paths";
 dayjs.extend(relativeTime);
 
 const mapRecentActivity = (apiData = []) => {
-  return apiData?.map((room) => {
-    const sortedHistory = [...(room.chatHistory || [])].sort(
-      (a, b) => dayjs(a.createdAt).valueOf() - dayjs(b.createdAt).valueOf()
+  return apiData
+    .map((item) => {
+      const latestMessage = item?.latestMessage;
+      const user = item?.userDetail;
+
+      return {
+        id: item?._id,
+        userId: user?._id,
+        type: "chat",
+
+        title:
+          user?.firstName || user?.lastName
+            ? `${user?.firstName || ""} ${user?.lastName || ""}`.trim()
+            : user?.phoneNumber || "Unknown User",
+
+        subtitle:
+          latestMessage?.sender === "astrologer"
+            ? "Astrologer replied"
+            : "You sent a message",
+
+        timeAgo: latestMessage?.updatedAt
+          ? dayjs(latestMessage.updatedAt).fromNow()
+          : "",
+
+        messagePreview: latestMessage?.message || "",
+
+        avatarSeed: user?._id,
+
+        lastMessageTime: latestMessage?.updatedAt || null,
+      };
+    })
+    .sort(
+      (a, b) =>
+        dayjs(b.lastMessageTime).valueOf() -
+        dayjs(a.lastMessageTime).valueOf()
     );
-
-    const lastChat = sortedHistory[sortedHistory.length - 1];
-
-    return {
-      id: room.roomId,
-      userId: room.userId,
-      type: "chat",
-      title: `${room.firstName} ${room.lastName}`,
-      subtitle:
-        lastChat?.senderType === "astrologer"
-          ? "Astrologer replied"
-          : "You sent a message",
-      timeAgo: lastChat?.createdAt
-        ? dayjs(lastChat.createdAt).fromNow()
-        : "",
-      messagePreview:
-        lastChat?.message || lastChat?.response || "",
-      avatarSeed: room.userId,
-      lastMessageTime: lastChat?.createdAt || null, 
-    };
-  })
-  .sort(
-    (a, b) =>
-      dayjs(b.lastMessageTime).valueOf() -
-      dayjs(a.lastMessageTime).valueOf()
-  );
 };
 
 

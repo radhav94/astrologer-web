@@ -16,15 +16,14 @@ export const chatApi = privateApi.injectEndpoints({
 
     getChatMessages: builder.query({
       query: ({ astrologerId }) => ({
-        url: "chat/messages",
+        url: "chat/messages/inbox",
         params: { astrologerId },
       }),
     }),
 
     getChatHistory: builder.query({
-      query: ({ roomId }) => ({
-        url: "chat/messages",
-        params: { roomId },
+      query: ({ userId }) => ({
+        url: `chat/messages/inbox/${userId}`,
       }),
     }),
   }),

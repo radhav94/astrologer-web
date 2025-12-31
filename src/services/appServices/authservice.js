@@ -21,7 +21,7 @@ export const updateAstrologerStatus = async (status) => {
   try {
     return await privateRequest.patch(
       "astrologers/updateStatus",
-      { status }
+      { status : status === "online", activeType : status === "online" ? ['chat', 'video', 'audio'] : [] }
     );
   } catch (error) {
     console.error(

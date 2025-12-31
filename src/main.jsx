@@ -5,10 +5,12 @@ import "./index.css";
 import { Provider } from "react-redux";
 import { store } from "./store/store.js";
 import { CallProvider } from "./context/CallContext.jsx";
+import { ChatProvider } from "./context/chatContext.jsx";
 
 createRoot(document.getElementById("root")).render(
   <Provider store={store}>
     <CallProvider>
+    <ChatProvider>
       <Toaster
         position="top-right"
         reverseOrder={false}
@@ -20,6 +22,7 @@ createRoot(document.getElementById("root")).render(
         }}
       />
       <App />
+    </ChatProvider>
     </CallProvider>
   </Provider>
 );

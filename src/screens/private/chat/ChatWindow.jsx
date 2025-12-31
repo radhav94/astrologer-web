@@ -63,16 +63,16 @@ const ChatWindow = () => {
   const messagesEndRef = useRef(null);
 
   /* --------- History --------- */
-  const { data } = useGetChatHistoryQuery({ roomId });
-  const historyMessages = data?.data?.[0]?.chatHistory || [];
+  const { data } = useGetChatHistoryQuery({ userId : userId });
+  const historyMessages = data?.data || [];
 
   /* --------- Socket Chat --------- */
   const {
     messages: socketMessages,
     isTyping,
-    sendMessage,
     astroReply,
     sendTyping,
+    isMessageDisabled
   } = useChat({
     userId,
     astrologerId,
@@ -82,27 +82,31 @@ const ChatWindow = () => {
   });
 
   /* --------- Normalize & Merge Messages --------- */
-  const finalMessages = useMemo(() => {
-    const history = historyMessages.map((item) => ({
-      id: `history-${item.createdAt}`,
-      text: item.message || item.response,
-      isSender: isUserSide
-        ? item.senderType === "user"
-        : item.senderType === "astrologer",
-      time: formatTime(item.createdAt),
-      date: formatDate(item.createdAt),
-    }));
+const finalMessages = useMemo(() => {
+  const history = historyMessages.map((item, index) => ({
+    id: `history-${item._id || item.createdAt}-${index}`,
+    text: item.message,
+    isSender: isUserSide
+      ? item.sender === "user"
+      : item.sender === "astrologer",
+    time: formatTime(item.createdAt),
+    date: formatDate(item.createdAt),
+    dateTime: item.createdAt,
+  }));
 
-    const socket = socketMessages.map((msg, idx) => ({
-      id: `socket-${idx}-${msg.time}`,
-      text: msg.text,
-      isSender: msg.isSender,
-      time: msg.time,
-      date: msg.date || formatDate(new Date()),
-    }));
+  const socket = socketMessages.map((msg, idx) => ({
+    id: `socket-${idx}-${msg.time}`,
+    text: msg.text,
+    isSender: msg.sender,
+    time: msg.time,
+    date: msg.date || formatDate(new Date()),
+    dateTime: msg.dateTime || new Date().toISOString(),
+  }));
 
-    return [...history, ...socket];
-  }, [historyMessages, socketMessages, isUserSide]);
+  return [...history, ...socket].sort(
+    (a, b) => new Date(a.dateTime) - new Date(b.dateTime)
+  );
+}, [historyMessages, socketMessages, isUserSide]);
 
   /* --------- Group By Date --------- */
   const messagesWithDate = useMemo(() => {
@@ -134,7 +138,7 @@ const ChatWindow = () => {
   const handleSend = () => {
     if (!message.trim()) return;
 
-    isUserSide ? sendMessage(message.trim()) : astroReply(message.trim());
+    astroReply(message.trim());
     setMessage("");
   };
 
@@ -214,13 +218,14 @@ const ChatWindow = () => {
                 handleSend();
               }
             }}
+            disabled={isMessageDisabled}
             className="flex-1 px-5 py-4 border border-gray-300 rounded-2xl 
            outline-none focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
           />
 
           <button
             onClick={handleSend}
-            disabled={!message.trim()}
+            disabled={!message.trim() || isMessageDisabled}
             aria-label="Send message"
             className={`p-4 rounded-2xl transition-all ${
               message.trim()

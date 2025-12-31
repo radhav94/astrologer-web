@@ -1,12 +1,16 @@
 import { Suspense, useState, useEffect } from "react";
 import { Icons } from "../components/Icons";
 import Sidebar from "../components/Sidebar";
-import { Outlet } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 import {
   updateAstrologerStatus,
   getAstrologerById,
 } from "../../src/services/appServices/authservice";
 import AudioVideoContainer from "../screens/private/call/AudioVideoContainer";
+import IncomingChatModal from "../components/IncomingChatModal";
+import { voiceSocket } from "../services/appServices/voiceSocketServices";
+import { useChat } from "../context/chatContext";
+import { PATH } from "../utils/routes/Paths";
 
 const HomeLayout = () => {
   const userData = JSON.parse(
@@ -23,6 +27,10 @@ const HomeLayout = () => {
   const userName =
     firstName && lastName ? `${firstName} ${lastName}` : "Unknown";
   const avatar = userData?.imageUrl;
+
+  //Chat
+  const {setActiveChat} = useChat();
+  const navigate = useNavigate();
 
   const handleStatusToggle = async () => {
     if (loadingStatus) return;
@@ -84,6 +92,44 @@ const HomeLayout = () => {
 
     syncAstrologerStatus();
   }, [astrologerId]);
+
+  //Handle if chat accepted by user
+      useEffect(() => {
+      const handleChatUserAccepted = (data) => {
+        console.log("useraccept list update", data);
+        const {astrologerId, roomId, userId} = data
+        setActiveChat({
+              roomId: roomId,
+              isUserSide: false,
+              chaterName:"Customer",
+              chaterId : userId
+            });
+        
+            navigate(
+                    PATH.privateRoutes.CHAT_WINDOW.path.replace(
+                      ":chatId",
+                      userId
+                    ),
+                    {
+                      state: {
+                        userId: userId,
+                        astrologerId: astrologerId,
+                        fullName: "Customer",
+                        roomId: roomId,
+                        isUserSide: false,
+                        kundliId:null
+                      },
+                    }
+                  )
+      };
+
+      voiceSocket.on("chat:accepted", handleChatUserAccepted);
+
+      return () => {
+
+    voiceSocket.off("chat:accepted", handleChatUserAccepted);
+      }
+  }, [])
 
   return (
     <div className="flex h-screen bg-[#F8F9FA] overflow-hidden">
@@ -183,6 +229,7 @@ const HomeLayout = () => {
         {/* Bottom padding for mobile nav if needed */}
         <div className="h-1"></div>
         <AudioVideoContainer />
+        <IncomingChatModal />
       </main>
     </div>
   );

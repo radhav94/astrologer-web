@@ -5,9 +5,12 @@ import { Link } from "react-router";
 import { useCall } from "../../../../context/CallContext";
 import { voiceSocket } from "../../../../services/appServices/voiceSocketServices";
 import toast from "../../../../components/toast";
+import { useChat } from "../../../../context/chatContext";
+import { Toast } from "../../../../components";
 
 const SessionDetails = () => {
   const { waitingList, setWaitingList, activeCall, setActiveCall } = useCall();
+  const { activeChat, setActiveChat } = useChat();
 
   const astroIdLocal = localStorage.getItem("shubhtalk_astro_id");
 
@@ -15,8 +18,8 @@ const SessionDetails = () => {
   const handleAccept = async (call) => {
     if (!call?.roomId || !call?.agoraToken) return;
 
-    if (activeCall) {
-      toast.error("Please cancel the previous call");
+    if (activeCall || activeChat) {
+      toast.error("Please cancel the previous call/chat");
       return;
     }
 
@@ -49,6 +52,32 @@ const SessionDetails = () => {
     });
   };
 
+    // ✅ ACCEPT CALL (same logic as old CallHistoryTab)
+  const handleAcceptChat = async (chat) => {
+    if (!chat?.roomId) return;
+
+    if (activeCall || activeChat) {
+      toast.error("Please cancel the previous call/Chat");
+      return;
+    }
+
+    // reset just in case
+    setActiveChat(null);
+
+    await new Promise((res) => setTimeout(res, 0));
+
+    voiceSocket.emit("waiting:accept", {
+      roomId: chat.roomId,
+    });
+
+    // remove from waiting list
+    setWaitingList((prev) =>
+      prev.filter((item) => item.roomId !== chat.roomId)
+    );
+
+    Toast.success("Wait for customer to accept");
+  };
+
   // ❌ REJECT CALL
   const handleReject = (call) => {
     if (!call?.roomId) return;
@@ -59,6 +88,19 @@ const SessionDetails = () => {
 
     setWaitingList((prev) =>
       prev.filter((item) => item.roomId !== call.roomId)
+    );
+  };
+
+  const handleRejectChat = (chat) => {
+    if (!chat?.roomId) return;
+
+    voiceSocket.emit("chat:reject", {
+      roomId: chat.roomId,
+      rejectedBy: "ASTROLOGER"
+    });
+
+    setWaitingList((prev) =>
+      prev.filter((item) => item.roomId !== chat.roomId)
     );
   };
 
@@ -98,7 +140,7 @@ const SessionDetails = () => {
                   </div>
 
                   <span className="bg-gray-800 text-white text-[10px] font-medium px-3 py-1 rounded-full">
-                    {call.callType?.toUpperCase() || "AUDIO"}
+                    {call.type?.toUpperCase() || "AUDIO"}
                   </span>
                 </div>
 
@@ -111,14 +153,14 @@ const SessionDetails = () => {
                 {/* ACTIONS */}
                 <div className="flex gap-3 mt-4">
                   <button
-                    onClick={() => handleAccept(call)}
+                    onClick={() => call.type === "chat" ? handleAcceptChat(call) : handleAccept(call)}
                     className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg text-sm font-medium"
                   >
                     Accept
                   </button>
 
                   <button
-                    onClick={() => handleReject(call)}
+                    onClick={() => call.type === "chat" ? handleRejectChat(call) : handleReject(call)}
                     className="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg text-sm font-medium"
                   >
                     Reject

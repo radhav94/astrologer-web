@@ -112,7 +112,8 @@ const ChatPage = ({ onBack }) => {
                       fullName: item?.title,
                       roomId: item?.id,
                       isUserSide: false,
-                      kundliId:null
+                      kundliId:null,
+                      userID: item?.userID
                     },
                   }
                 )

@@ -1,12 +1,18 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronLeft, Send } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { ChevronLeft, Mic, Send } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { IoCallOutline, IoVideocamOutline } from "react-icons/io5";
 import dayjs from "dayjs";
 import { useGetChatHistoryQuery } from "../../../redux/activity/chatApi";
 import useChat from "../../../hooks/useChatWindow";
 import { PATH } from "../../../utils/routes/Paths";
-
+import VoiceMessage from "./voiceChat/VoiceMessage";
+import { useVoiceRecorder } from "./voiceChat/useVoiceRecorder";
+import VoiceRecorderPopup from "./voiceChat/VoiceRecorderPopup";
+import { useGetS3SignedUrlMutation } from "../../../redux/s3SignedApi";
+import ReviewModal from "./review/ReviewModal";
+import { useAddUserReviewMutation } from "../../../redux/review/reviewApi";
+import { Toast } from "../../../components";
 
 /* -------------------- Helpers -------------------- */
 
@@ -16,27 +22,45 @@ const formatTime = (date) => dayjs(date).format("HH:mm");
 /* -------------------- Message Bubble -------------------- */
 
 const Message = ({ text, isSender, time }) => {
+  let message = [];
+  let isVoiceMsg = false;
+  try {
+    if (text != null) {
+      message = JSON.parse(text);
+      isVoiceMsg = true;
+    }
+  } catch {
+    message = text;
+    isVoiceMsg = false;
+  }
+
   return (
     <div
-      className={`flex w-full mb-4 ${
-        isSender ? "justify-end" : "justify-start"
-      }`}
+      className={`flex w-full mb-4 ${isSender ? "justify-end" : "justify-start"
+        }`}
     >
       <div
-        className={`flex flex-col max-w-[85%] md:max-w-[65%] ${
-          isSender ? "items-end" : "items-start"
-        }`}
+        className={`flex flex-col max-w-[85%] md:max-w-[65%] ${isSender ? "items-end" : "items-start"
+          }`}
       >
         <div
           className={`px-5 py-3 rounded-2xl text-sm md:text-base leading-relaxed shadow-sm
-            ${
-              isSender
-                ? "bg-gray-300 text-gray-900 rounded-tr-sm"
-                : "bg-gray-100 text-gray-800 rounded-tl-sm border border-gray-100"
+            ${isSender
+              ? "bg-gray-300 text-gray-900 rounded-tr-sm"
+              : "bg-gray-100 text-gray-800 rounded-tl-sm border border-gray-100"
             }
           `}
         >
-          {text}
+
+          {isVoiceMsg == true ? (
+            <VoiceMessage
+              url={message.audioUrl}
+              duration={message.duration}
+              sender={isSender}
+            />
+          ) : (
+            text
+          )}
         </div>
 
         <span className="text-[10px] text-gray-400 mt-1 px-1 font-medium">
@@ -49,7 +73,15 @@ const Message = ({ text, isSender, time }) => {
 
 
 const ChatWindow = () => {
+  const navigate = useNavigate();
   const { state } = useLocation();
+  const userData = JSON.parse(
+    localStorage.getItem("shubhtalk_astrologer_details")
+  );
+  const firstName = userData?.firstName?.trim();
+  const lastName = userData?.lastName?.trim();
+  const userName =
+    firstName && lastName ? `${firstName} ${lastName}` : "Unknown";
   const {
     userId,
     astrologerId,
@@ -57,6 +89,7 @@ const ChatWindow = () => {
     fullName,
     isUserSide,
     kundliId,
+    userID
   } = state || {};
 
   const [message, setMessage] = useState("");
@@ -142,12 +175,82 @@ const finalMessages = useMemo(() => {
     setMessage("");
   };
 
+  const {
+    recording,
+    seconds,
+    startRecording,
+    stopRecording,
+    cancelRecording
+  } = useVoiceRecorder();
+
+  const handleMicClick = async () => {
+    await startRecording();
+  };
+
+  const [getS3SignedUrl] = useGetS3SignedUrlMutation();
+  const handleStopRecording = async () => {
+    const { blob, duration } = await stopRecording();
+    const signedUrl = await getS3SignedUrl({
+      fileType: blob.type,
+    }).unwrap();
+    const audioUrl = (signedUrl.uploadUrl).split("?")[0];
+    const uploadUrl = signedUrl.uploadUrl;
+    await uploadAudioToS3(uploadUrl, blob);
+    const jsonString = JSON.stringify({
+      type: "voice",
+      audioUrl,
+      duration,
+    });
+    astroReply(jsonString);
+    setMessage("");
+  };
+
+  const uploadAudioToS3 = async (uploadUrl, blob) => {
+    const res = await fetch(uploadUrl, {
+      method: "PUT",
+      body: blob,
+      headers: {
+        "Content-Type": blob.type,
+      },
+    });
+
+    if (!res.ok) {
+      throw new Error("S3 upload failed");
+    }
+
+    return "success";
+  };
+
   if (!state?.roomId) {
     return (
-        <div className="h-screen flex items-center justify-center text-gray-500">
+      <div className="h-screen flex items-center justify-center text-gray-500">
         Unable to open chat. Please go back and select a conversation.
-        </div>
+      </div>
     );
+  }
+
+  const [openReview, setOpenReview] = useState(false);
+  const [addUserReview, { isLoading }] = useAddUserReviewMutation();
+  const handleReviewSubmit = async ({ rating, review, isAnonymous }) => {
+    try {
+      const res = await addUserReview({
+        userID,
+        rating,
+        review,
+        isAnonymous,
+      }).unwrap();
+
+      if (res.success) {
+        Toast.success(res.message);
+        navigate(-1)
+      } else {
+        Toast.error(res.message);
+      }
+
+      setOpenReview(false);
+    } catch (error) {
+      console.error("Failed to submit review", error);
+    }
   }
 
   /* -------------------- UI -------------------- */
@@ -227,16 +330,44 @@ const finalMessages = useMemo(() => {
             onClick={handleSend}
             disabled={!message.trim() || isMessageDisabled}
             aria-label="Send message"
-            className={`p-4 rounded-2xl transition-all ${
-              message.trim()
-                ? "bg-gray-900 text-white hover:bg-gray-800"
-                : "bg-gray-300 cursor-not-allowed"
-            }`}
+            className={`p-4 rounded-2xl transition-all ${message.trim()
+              ? "bg-gray-900 text-white hover:bg-gray-800"
+              : "bg-gray-300 cursor-not-allowed"
+              }`}
           >
             <Send size={20} />
           </button>
+          <button
+            onClick={handleMicClick}
+            aria-label="Voice message"
+            className="p-4 rounded-2xl transition-all bg-gray-300 hover:bg-gray-800 hover:text-white"
+          >
+            <Mic size={20} />
+          </button>
+          {recording && (
+            <VoiceRecorderPopup
+              seconds={seconds}
+              onStop={handleStopRecording}
+              onCancel={cancelRecording}
+            />
+          )}
+          <button
+            className="flex items-center justify-center p-4 rounded-2xl bg-red-500 text-white hover:bg-red-600 active:scale-95 transition"
+            onClick={() => setOpenReview(true)}
+          >
+            End
+          </button>
         </div>
       </div>
+      {/* Review Modal */}
+      {openReview && (
+        <ReviewModal
+          onClose={() => setOpenReview(false)}
+          onSubmit={handleReviewSubmit}
+          ratedUserName={fullName}
+          reviewerName={userName}
+        />
+      )}
     </div>
   );
 };

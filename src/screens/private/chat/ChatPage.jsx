@@ -39,6 +39,8 @@ const mapRecentActivity = (apiData = []) => {
         avatarSeed: user?._id,
 
         lastMessageTime: latestMessage?.updatedAt || null,
+
+        userID: user?.user_ID
       };
     })
     .sort(

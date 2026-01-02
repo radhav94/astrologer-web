@@ -6,6 +6,7 @@ import GiftPopup from "./GiftPopup";
 import CallRequestPopup from "./CallRequestPopup";
 import SharePopup from "./SharePopup";
 import { Toast } from "../../components";
+import { stopLiveStream } from "../../services/appServices/authservice";
 
 const LiveView = (props) => {
   const [showGifts, setShowGifts] = useState(false);
@@ -46,7 +47,21 @@ const LiveView = (props) => {
     messages,
     chatInput,
     setChatInput,
+    channelName
   } = props;
+
+
+  const handleEndLive = async () => {
+  try {
+    await stopLiveStream(channelName);
+    Toast.success("Live ended successfully");
+  } catch (e) {
+    Toast.error("Unable to end live");
+  } finally {
+    setCalling(false);
+  }
+};
+
 
   const isHost = ROLE === "host";
   const viewerCount = (remoteUsers?.length || 0) + 1;
@@ -185,10 +200,7 @@ const LiveView = (props) => {
         </button> */}
 
         {isHost && (
-          <button
-            className="icon-btn end-live"
-            onClick={() => setCalling(false)}
-          >
+          <button className="icon-btn end-live" onClick={handleEndLive}>
             ✖
           </button>
         )}

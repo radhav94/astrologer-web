@@ -10,6 +10,7 @@ export default function useChat({
   roomId,
   isUserSide,
   kundliId,
+  setOpenReview
 }) {
   const [messages, setMessages] = useState([]);
   const [error, setError] = useState(null);
@@ -51,6 +52,7 @@ export default function useChat({
       toast.warning("Chat has ended");
       setIsMessageDisabled(true);
       setActiveChat(null);
+      setOpenReview(true);
     }
 
     voiceSocket.on("message:recieved", handleAddMessage);

@@ -99,6 +99,10 @@ const ChatWindow = () => {
   const { data } = useGetChatHistoryQuery({ userId : userId });
   const historyMessages = data?.data || [];
 
+  // Review
+    const [openReview, setOpenReview] = useState(false);
+  const [addUserReview, { isLoading }] = useAddUserReviewMutation();
+
   /* --------- Socket Chat --------- */
   const {
     messages: socketMessages,
@@ -112,6 +116,7 @@ const ChatWindow = () => {
     roomId,
     isUserSide,
     kundliId,
+    setOpenReview
   });
 
   /* --------- Normalize & Merge Messages --------- */
@@ -229,8 +234,6 @@ const finalMessages = useMemo(() => {
     );
   }
 
-  const [openReview, setOpenReview] = useState(false);
-  const [addUserReview, { isLoading }] = useAddUserReviewMutation();
   const handleReviewSubmit = async ({ rating, review, isAnonymous }) => {
     try {
       const res = await addUserReview({
@@ -305,7 +308,7 @@ const finalMessages = useMemo(() => {
       </div>
 
       {/* ---------- Input ---------- */}
-      <div className="sticky bottom-0 z-20 p-4 md:p-6 border-t border-gray-100 bg-white">
+      {!isMessageDisabled && <div className="sticky bottom-0 z-20 p-4 md:p-6 border-t border-gray-100 bg-white">
         <div className="flex items-center gap-3">
           <input
             type="text"
@@ -351,14 +354,15 @@ const finalMessages = useMemo(() => {
               onCancel={cancelRecording}
             />
           )}
-          <button
+          {/* End button */}
+          {/* <button
             className="flex items-center justify-center p-4 rounded-2xl bg-red-500 text-white hover:bg-red-600 active:scale-95 transition"
             onClick={() => setOpenReview(true)}
           >
             End
-          </button>
+          </button> */}
         </div>
-      </div>
+      </div>}
       {/* Review Modal */}
       {openReview && (
         <ReviewModal

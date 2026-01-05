@@ -5,10 +5,13 @@ import React, {
   useEffect,
 } from "react";
 import { voiceSocket } from "../services/appServices/voiceSocketServices";
+import { useCall } from "./CallContext";
 
 const ChatContext = createContext();
 
 export const ChatProvider = ({ children }) => {
+
+  const {astroId} = useCall();
   const [activeChat, setActiveChat] = useState(null);
 
   // ✅ GLOBAL waiting list
@@ -19,11 +22,21 @@ export const ChatProvider = ({ children }) => {
 
 
 useEffect(() => {
-  const astrologerId = localStorage.getItem("shubhtalk_astro_id");
-  if (!astrologerId) {
-    console.log("❌ astrologerId not found in localStorage");
+  if (!astroId) {
+    if (voiceSocket.connected) voiceSocket.disconnect();
     return;
   }
+  if (voiceSocket.connected) {
+      voiceSocket.disconnect();
+    }
+
+    voiceSocket.io.opts.query = {
+      astrologerId: astroId,
+      role: "ASTROLOGER",
+    };
+
+    console.log("🔄 Connecting socket with:", voiceSocket.io.opts.query);
+    voiceSocket.connect();
 
   // 🔍 SOCKET DEBUG LISTENERS
   const onConnect = () => {
@@ -47,7 +60,7 @@ useEffect(() => {
   // 🔌 CONNECT SOCKET
   if (!voiceSocket.connected) {
     voiceSocket.io.opts.query = {
-      astrologerId,
+      astrologerId: astroId,
       role: "ASTROLOGER",
     };
     voiceSocket.connect();
@@ -90,7 +103,7 @@ useEffect(() => {
     voiceSocket.off("chat:canceled", handleChatCanceled);
     voiceSocket.off("waiting_list", handleWaitingList);
   };
-}, []);
+}, [astroId]);
 
 
   return (

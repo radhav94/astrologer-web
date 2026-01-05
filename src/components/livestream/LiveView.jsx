@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useCallback, useState,useRef } from "react";
 import { LocalUser, RemoteUser } from "agora-rtc-react";
 import "./styles/videoBox.scss";
 import { useLiveViewLogic } from "./useLiveViewLogic";
@@ -7,12 +7,21 @@ import CallRequestPopup from "./CallRequestPopup";
 import SharePopup from "./SharePopup";
 import { Toast } from "../../components";
 import { stopLiveStream } from "../../services/appServices/authservice";
+import { useNavigate } from "react-router-dom";
+
 
 const LiveView = (props) => {
   const [showGifts, setShowGifts] = useState(false);
   const [selectedGift, setSelectedGift] = useState(null);
   const [coins, setCoins] = useState(106);
   const [showCallPopup, setShowCallPopup] = useState(false);
+
+  const navigate = useNavigate();
+
+
+  const hasEndedRef = useRef(false);
+const isMountedRef = useRef(false);
+
 
   const hostData = {
     name: "Anaisha",
@@ -51,16 +60,41 @@ const LiveView = (props) => {
   } = props;
 
 
-  const handleEndLive = async () => {
+  const handleEndLive = useCallback(async () => {
+  if (ROLE !== "host") return;
+
   try {
     await stopLiveStream(channelName);
     Toast.success("Live ended successfully");
+
+    // ✅ Navigate AFTER successful API call
+    navigate("/astrologer-dashboard", { replace: true });
+
   } catch (e) {
     Toast.error("Unable to end live");
   } finally {
     setCalling(false);
   }
-};
+}, [ROLE, channelName, setCalling, navigate]);
+
+const endLiveSafely = useCallback(async () => {
+  if (ROLE !== "host") return;
+  if (hasEndedRef.current) return;
+
+  hasEndedRef.current = true;
+
+  try {
+    await stopLiveStream(channelName);
+    Toast.success("Live ended");
+  } catch (e) {
+    console.error("Failed to end live", e);
+  } finally {
+    setCalling(false);
+  }
+}, [ROLE, channelName, setCalling]);
+
+
+
 
 
   const isHost = ROLE === "host";

@@ -68,7 +68,7 @@ const VerifyOtp = () => {
       const otpNumber = Number(otp.join(""));
       if (isNaN(otpNumber)) throw new Error("OTP must be numeric");
 
-      const payload = { phoneNumber, type, otp: otpNumber };
+      const payload = { phoneNumber, type, otp: String(otpNumber) };
       const response = await AuthServices.verifyOtp(payload);
 
       if (response?.data?.statusCode !== 200 || !response?.data?.success) {

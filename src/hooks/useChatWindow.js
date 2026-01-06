@@ -60,7 +60,7 @@ export default function useChat({
 
     return () => {
     voiceSocket.off("message:recieved", handleAddMessage);
-    voiceSocket.on("chat:ended", handleChatEnd);
+    voiceSocket.off("chat:ended", handleChatEnd);
     }
   }, [roomId]);
 

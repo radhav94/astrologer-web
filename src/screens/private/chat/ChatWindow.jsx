@@ -109,7 +109,8 @@ const ChatWindow = () => {
     isTyping,
     astroReply,
     sendTyping,
-    isMessageDisabled
+    isMessageDisabled,
+    formattedTime
   } = useChat({
     userId,
     astrologerId,
@@ -277,10 +278,17 @@ const finalMessages = useMemo(() => {
           </Link>
         </div>
 
-        <div className="flex items-center gap-4 text-red-500 bg-red-50 px-3 py-2 rounded-full">
-          <IoCallOutline size={20} className="cursor-pointer" />
-          <IoVideocamOutline size={20} className="cursor-pointer" />
+        <div className="flex items-center gap-4">
+          <span className="text-sm font-semibold text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
+            ⏱ {formattedTime}
+          </span>
+
+          <div className="flex items-center gap-4 text-red-500 bg-red-50 px-3 py-2 rounded-full">
+            <IoCallOutline size={20} className="cursor-pointer" />
+            <IoVideocamOutline size={20} className="cursor-pointer" />
+          </div>
         </div>
+
       </div>
 
       {/* ---------- Messages ---------- */}

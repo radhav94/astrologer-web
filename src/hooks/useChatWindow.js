@@ -3,6 +3,7 @@ import socketService from "../services/appServices/socketService";
 import { voiceSocket } from "../services/appServices/voiceSocketServices";
 import toast from "../components/toast";
 import {useChat as useChatContext} from "../context/chatContext"
+import { formatTimer } from "../utils/timeFormat";
 
 export default function useChat({
   userId,
@@ -16,7 +17,7 @@ export default function useChat({
   const [error, setError] = useState(null);
   const [isTyping, setIsTyping] = useState(false);
   const [isMessageDisabled, setIsMessageDisabled] = useState(false);
-  const {setActiveChat} = useChatContext();
+  const {setActiveChat, activeChat, startTimer, stopTimer, chatSeconds} = useChatContext();
 
   const formatTime = () =>
     new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -30,10 +31,16 @@ export default function useChat({
     socketService.connect({
       onConnected: () => {
         // socketService.joinRoom({ roomId, userId, astrologerId });
+        if(Object.keys(activeChat || {}).length > 0 ) startTimer();
       },
       onError: (errMsg) => {
         toast.error(errMsg ||"Something went wrong");
         setError(errMsg)
+        if(errMsg === 'Chat no longer available' || errMsg === 'Chat has already ended' || errMsg === 'Session not found'){
+        setIsMessageDisabled(true);
+        stopTimer();
+        setActiveChat(null);
+        }
       },
     });
 
@@ -53,6 +60,7 @@ export default function useChat({
       setIsMessageDisabled(true);
       setActiveChat(null);
       setOpenReview(true);
+      stopTimer();
     }
 
     voiceSocket.on("message:recieved", handleAddMessage);
@@ -95,6 +103,7 @@ export default function useChat({
     astroReply,
     sendTyping,
     isMessageDisabled,
-    setIsMessageDisabled
+    setIsMessageDisabled,
+    formattedTime: formatTimer(chatSeconds)
   };
 }

@@ -30,7 +30,7 @@ const HomeLayout = () => {
   const avatar = userData?.imageUrl;
 
   //Chat
-  const {setActiveChat} = useChatContext();
+  const {setActiveChat, setChatSeconds} = useChatContext();
   const navigate = useNavigate();
 
   const handleStatusToggle = async () => {
@@ -105,6 +105,8 @@ const HomeLayout = () => {
               chaterName:"Customer",
               chaterId : userId
             });
+        if(data?.remainingTime)
+        setChatSeconds(Number(data?.remainingTime)*60)
         
             navigate(
                     PATH.privateRoutes.CHAT_WINDOW.path.replace(

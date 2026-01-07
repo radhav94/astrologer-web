@@ -226,13 +226,13 @@ const finalMessages = useMemo(() => {
     return "success";
   };
 
-  if (!state?.roomId) {
-    return (
-      <div className="h-screen flex items-center justify-center text-gray-500">
-        Unable to open chat. Please go back and select a conversation.
-      </div>
-    );
-  }
+  // if (!state?.roomId) {
+  //   return (
+  //     <div className="h-screen flex items-center justify-center text-gray-500">
+  //       Unable to open chat. Please go back and select a conversation.
+  //     </div>
+  //   );
+  // }
 
   const handleReviewSubmit = async ({ rating, review, isAnonymous }) => {
     try {

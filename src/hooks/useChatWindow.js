@@ -49,7 +49,7 @@ export default function useChat({
     }
 
     const handleChatEnd = () => {
-      toast.warning("Chat has ended");
+      // toast.warning("Chat has ended");
       setIsMessageDisabled(true);
       setActiveChat(null);
       setOpenReview(true);

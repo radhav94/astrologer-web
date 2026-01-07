@@ -9,8 +9,9 @@ import {
 import AudioVideoContainer from "../screens/private/call/AudioVideoContainer";
 import IncomingChatModal from "../components/IncomingChatModal";
 import { voiceSocket } from "../services/appServices/voiceSocketServices";
-import { useChat } from "../context/chatContext";
+import { useChat as useChatContext } from "../context/chatContext";
 import { PATH } from "../utils/routes/Paths";
+import toast from "../components/toast";
 
 const HomeLayout = () => {
   const userData = JSON.parse(
@@ -29,7 +30,7 @@ const HomeLayout = () => {
   const avatar = userData?.imageUrl;
 
   //Chat
-  const {setActiveChat} = useChat();
+  const {setActiveChat} = useChatContext();
   const navigate = useNavigate();
 
   const handleStatusToggle = async () => {
@@ -123,11 +124,18 @@ const HomeLayout = () => {
                   )
       };
 
+      const handleChatEnd = () => {
+        toast.warning("Chat has ended")
+        setActiveChat(null);
+      }
+
       voiceSocket.on("chat:accepted", handleChatUserAccepted);
+    voiceSocket.on("chat:ended", handleChatEnd);
 
       return () => {
 
     voiceSocket.off("chat:accepted", handleChatUserAccepted);
+    voiceSocket.off("chat:ended", handleChatEnd);
       }
   }, [])
 

@@ -12,7 +12,7 @@ const SessionDetails = () => {
   const { waitingList, setWaitingList, activeCall, setActiveCall } = useCall();
   const { activeChat, setActiveChat } = useChat();
 
-  const astroIdLocal = localStorage.getItem("shubhtalk_astro_id");
+  // const astroIdLocal = localStorage.getItem("shubhtalk_astro_id");
 
   // ✅ ACCEPT CALL (same logic as old CallHistoryTab)
   const handleAccept = async (call) => {
@@ -28,11 +28,8 @@ const SessionDetails = () => {
 
     await new Promise((res) => setTimeout(res, 0));
 
-    voiceSocket.emit("accept_call", {
+    voiceSocket.emit("waiting:accept", {
       roomId: call.roomId,
-      token: call.agoraToken,
-      channelName: call.roomId,
-      astrologerId: astroIdLocal,
     });
 
     // remove from waiting list
@@ -48,7 +45,7 @@ const SessionDetails = () => {
       agoraToken: call.agoraToken,
       callerName: call.callerName,
       isUserSide: false,
-      callType: call.callType || "audio",
+      callType: call.type || "audio",
     });
   };
 
@@ -82,8 +79,12 @@ const SessionDetails = () => {
   const handleReject = (call) => {
     if (!call?.roomId) return;
 
-    voiceSocket.emit("reject_call", {
+    // voiceSocket.emit("reject_call", {
+    //   roomId: call.roomId,
+    // });
+    voiceSocket.emit("call:reject", {
       roomId: call.roomId,
+      rejectedBy: "ASTROLOGER"
     });
 
     setWaitingList((prev) =>

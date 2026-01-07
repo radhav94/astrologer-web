@@ -60,34 +60,47 @@ export const CallProvider = ({ children }) => {
       });
     };
 
+    const handleIncomingCallRequest = (data) => {
+      if (data.type == "chat") return null;
+      setIncomingCall({
+        roomId: data.roomId,
+        agoraToken: data.agoraToken,
+        callerId: data.callerId,
+        callType: data.type || "audio",
+        callerName: data?.callerDetail?.firstName,
+      });
+    };
 
-     const handleCallCanceled = () => {
-    console.log("Call canceled");
-    setIncomingCall(null);
-  };
 
-  const handleWaitingList = (data) => {
-    console.log("Waiting list update", data);
-    setWaitingList(data?.list || []);
-  };
+    const handleCallCanceled = () => {
+      setIncomingCall(null);
+    };
+
+    const handleWaitingList = (data) => {
+      setWaitingList(data?.list || []);
+    };
 
     voiceSocket.on("connect", onConnect);
     voiceSocket.on("disconnect", onDisconnect);
     voiceSocket.on("connect_error", onConnectError);
     voiceSocket.on("incoming_call", handleIncomingCall);
-     voiceSocket.on("call_canceled", handleCallCanceled);
+    voiceSocket.on("incoming", handleIncomingCallRequest);
+    voiceSocket.on("call_canceled", handleCallCanceled);
+    voiceSocket.on("call:canceled", handleCallCanceled);
     voiceSocket.on("waiting_list", handleWaitingList);
 
     return () => {
       voiceSocket.off("connect", onConnect);
       voiceSocket.off("disconnect", onDisconnect);
       voiceSocket.off("connect_error", onConnectError);
-       voiceSocket.off("call_canceled", handleCallCanceled);
-        voiceSocket.off("waiting_list", handleWaitingList);
+      voiceSocket.off("call_canceled", handleCallCanceled);
+      voiceSocket.off("call:canceled", handleCallCanceled);
+      voiceSocket.off("waiting_list", handleWaitingList);
       voiceSocket.off("incoming_call", handleIncomingCall);
+      voiceSocket.off("incoming", handleIncomingCallRequest);
       voiceSocket.disconnect();
     };
-  }, [astroId]); 
+  }, [astroId]);
 
   return (
     <CallContext.Provider

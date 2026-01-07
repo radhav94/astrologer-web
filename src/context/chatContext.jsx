@@ -56,8 +56,7 @@ useEffect(() => {
 
   // 📞 EVENTS
   const handleIncomingChat = (data) => {
-    console.log("GLOBAL incoming call", data);
-
+    if(data.type != "chat") return;
     setIncomingChat({
       roomId: data.roomId,
       chaterrId: data.user?._id,

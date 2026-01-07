@@ -125,23 +125,29 @@ const AgoraVoiceCalling = ({ callData }) => {
 
   /* ================= END CALL ================= */
   const endCall = async () => {
-    voiceSocket.emit("call_end", {
+    voiceSocket.emit("call:end", {
       roomId,
       endedBy: isUserSide ? "CUSTOMER" : "ASTROLOGER",
     });
     await cleanup();
   };
 
+  const handleCallCanceled = async () => {
+    await cleanup();
+  };
+
   /* ================= SOCKET ================= */
   useEffect(() => {
-    voiceSocket.on("call_ended", endCall);
+    voiceSocket.on("call:ended", endCall);
     voiceSocket.on("force_call_end", endCall);
     voiceSocket.on("disconnect", endCall);
+    voiceSocket.on("call:canceled", handleCallCanceled);
 
     return () => {
-      voiceSocket.off("call_ended", endCall);
+      voiceSocket.off("call:ended", endCall);
       voiceSocket.off("force_call_end", endCall);
       voiceSocket.off("disconnect", endCall);
+      voiceSocket.off("call:canceled", handleCallCanceled);
     };
   }, []);
 

@@ -1,211 +1,157 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Icons } from "./Icons";
 import { Link } from "react-router";
+import { useGetOrderHistoryQuery } from "../redux/oderHistory/orderHistory";
 
-const HISTORY_DATA = [
-  {
-    id: "1",
-    clientName: "Swati Kumar",
-    date: "Oct 01, 2025",
-    time: "04:36 PM",
-    duration: "5 Min 30 Secs",
-    price: 200,
-    rating: 4,
-    type: "Call",
-  },
-  {
-    id: "2",
-    clientName: "Nikita Yadav",
-    date: "Oct 06, 2025",
-    time: "04:15 PM",
-    duration: "4 Min 33 Secs",
-    price: 220,
-    rating: 4.4,
-    type: "Call",
-  },
-  {
-    id: "3",
-    clientName: "Akshay Khanna",
-    date: "Oct 10, 2025",
-    time: "03:23 PM",
-    duration: "5 Min 11 Secs",
-    price: 210,
-    rating: 4.2,
-    type: "Chat",
-  },
-  {
-    id: "4",
-    clientName: "Suresh Gaikwad",
-    date: "Oct 19, 2025",
-    time: "05:13 PM",
-    duration: "6 Min 43 Secs",
-    price: 300,
-    rating: 4.6,
-    type: "Call",
-  },
-  {
-    id: "5",
-    clientName: "Ajit Sharma",
-    date: "Oct 22, 2025",
-    time: "06:06 PM",
-    duration: "7 Min 30 Secs",
-    price: 320,
-    rating: 4.3,
-    type: "Call",
-  },
-  {
-    id: "6",
-    clientName: "Pawan kulkarni",
-    date: "Oct 09, 2025",
-    time: "1:54 PM",
-    duration: "10 Min 09 Secs",
-    price: 500,
-    rating: 4.7,
-    type: "Call",
-  },
-];
+const formatDate = (iso) =>
+  new Date(iso).toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+
+const formatTime = (iso) =>
+  new Date(iso).toLocaleTimeString("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+const formatDuration = (seconds = 0) => {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins} Min ${secs} Sec`;
+};
 
 const ConsultationHistory = ({ onBack }) => {
+  const [page, setPage] = useState(1);
+  const [list, setList] = useState([]);
+
+  const { data, isLoading, isFetching, isError } =
+    useGetOrderHistoryQuery({ page, limit: 10 });
+
+  // Here  Append data when page changes
+  useEffect(() => {
+    if (data?.data?.length) {
+      setList((prev) => [...prev, ...data.data]);
+    }
+  }, [data]);
+
+  // THis useEffet is for  Infinite scroll handler
+  useEffect(() => {
+    const handleScroll = () => {
+      const nearBottom =
+        window.innerHeight + window.scrollY >=
+        document.body.offsetHeight - 200;
+
+      if (nearBottom && !isFetching) {
+        setPage((prev) => prev + 1);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [isFetching]);
+
+  if (isLoading && page === 1) {
+    return (
+      <div className="h-full flex items-center justify-center text-sm text-gray-500">
+        Loading history...
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="h-full flex items-center justify-center text-sm text-red-500">
+        Failed to load history
+      </div>
+    );
+  }
+
   return (
-    <div className="h-full  text-start flex flex-col relative">
+    <div className="h-full text-start flex flex-col relative">
+      {/* Header */}
       <div className="flex items-center gap-4 mb-6">
         <button
           onClick={onBack}
-          className="p-2 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
+          className="p-2 bg-gray-100 rounded-xl hover:bg-gray-200"
         >
           <Link to="/dashboard">
-            <Icons.ChevronLeft size={20} className="text-gray-700" />
+            <Icons.ChevronLeft size={20} />
           </Link>
         </button>
-        <h1 className="text-xl font-bold text-gray-900">
-          Consultation History
-        </h1>
+        <h1 className="text-xl font-bold">Consultation History</h1>
       </div>
 
-      <div className="space-y-6 pb-24">
-        <div>
-          <h3 className="text-sm font-semibold text-gray-900 mb-3 border-b border-gray-200 pb-2">
-            20/11/2025
-          </h3>
-          <div className="space-y-3">
-            {HISTORY_DATA.map((item) => (
-              <div
-                key={item.id}
-                className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 relative"
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <div className="flex gap-1">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <Icons.Star
-                        key={star}
-                        size={12}
-                        className={
-                          star <= item.rating
-                            ? "fill-black text-black"
-                            : "text-gray-300"
-                        }
-                      />
-                    ))}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="bg-gray-800 text-white text-[10px] font-medium px-3 py-1 rounded-full">
-                      {item.type}
-                    </span>
-                    <button className="text-gray-400 hover:text-gray-600">
-                      <Icons.MoreVertical size={16} />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex justify-between items-end">
-                  <div>
-                    <h4 className="font-bold text-gray-900">
-                      {item.clientName}
-                    </h4>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {item.date} • {item.time}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      Duration : {item.duration}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <span className="font-bold text-gray-900">
-                      ₹{item.price}
-                    </span>
-                  </div>
-                </div>
+      {/* List */}
+      <div className="space-y-3 pb-24">
+        {list.map((item) => (
+          <div
+            key={item._id}
+            className="bg-white rounded-xl p-4 shadow-sm border"
+          >
+            <div className="flex justify-between items-start mb-2">
+              <div className="flex gap-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Icons.Star
+                    key={star}
+                    size={12}
+                    className={
+                      star <= item.rating
+                        ? "fill-black text-black"
+                        : "text-gray-300"
+                    }
+                  />
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
 
-        <div>
-          <h3 className="text-sm font-semibold text-gray-900 mb-3 border-b border-gray-200 pb-2">
-            20/11/2025
-          </h3>
-          {/* Repeating data for visual effect as per design */}
-          <div className="space-y-3">
-            {HISTORY_DATA.slice(0, 2).map((item) => (
-              <div
-                key={`dup-${item.id}`}
-                className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 relative"
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <div className="flex gap-1">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <Icons.Star
-                        key={star}
-                        size={12}
-                        className={
-                          star <= item.rating
-                            ? "fill-black text-black"
-                            : "text-gray-300"
-                        }
-                      />
-                    ))}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="bg-gray-800 text-white text-[10px] font-medium px-3 py-1 rounded-full">
-                      {item.type}
-                    </span>
-                    <button className="text-gray-400 hover:text-gray-600">
-                      <Icons.MoreVertical size={16} />
-                    </button>
-                  </div>
-                </div>
+              <span className="bg-gray-800 text-white text-[10px] px-3 py-1 rounded-full">
+                Call
+              </span>
+            </div>
 
-                <div className="flex justify-between items-end">
-                  <div>
-                    <h4 className="font-bold text-gray-900">
-                      {item.clientName}
-                    </h4>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {item.date} • {item.time}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      Duration : {item.duration}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <span className="font-bold text-gray-900">
-                      ₹{item.price}
-                    </span>
-                  </div>
-                </div>
+            <div className="flex justify-between items-end">
+              <div>
+                <h4 className="font-bold">
+                  {item.displayProfile?.name || "Unknown User"}
+                </h4>
+                <p className="text-xs text-gray-500 mt-1">
+                  {formatDate(item.createdAt)} •{" "}
+                  {formatTime(item.createdAt)}
+                </p>
+                <p className="text-xs text-gray-500">
+                  Duration :{" "}
+                  {formatDuration(item.sessionDetails?.durationSeconds)}
+                </p>
               </div>
-            ))}
+
+              <div className="text-right font-bold">
+                ₹{item.sessionDetails?.amount}
+              </div>
+            </div>
           </div>
-        </div>
+        ))}
+
+        {isFetching && (
+          <p className="text-center text-xs text-gray-400 py-4">
+            Loading more...
+          </p>
+        )}
+
+        {!isFetching && list.length === 0 && (
+          <p className="text-center text-sm text-gray-500 py-10">
+            No consultation history found
+          </p>
+        )}
       </div>
 
-      {/* Floating Action Buttons */}
-      <div className="fixed bottom-2 left-0 lg:left-[8%]  w-full px-6 flex justify-center gap-4 z-20 pointer-events-none">
+      {/* Floating Buttons */}
+      <div className="fixed bottom-2 left-0 lg:left-[8%] w-full px-6 flex justify-center z-20 pointer-events-none">
         <div className="flex gap-2 pointer-events-auto shadow-lg bg-gray-900 p-1.5 rounded-full">
-          <button className="flex items-center gap-2 px-6 py-2.5 bg-white text-black rounded-full text-sm font-medium">
+          <button className="flex items-center gap-2 px-6 py-2.5 bg-white rounded-full text-sm">
             <Icons.Sliders size={16} /> Sort
           </button>
-          <button className="flex items-center gap-2 px-6 py-2.5 bg-white text-black rounded-full text-sm font-medium">
+          <button className="flex items-center gap-2 px-6 py-2.5 bg-white rounded-full text-sm">
             <Icons.Filter size={16} /> Filter
           </button>
         </div>

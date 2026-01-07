@@ -20,12 +20,12 @@ const LiveStreamingContainer = ({ client }) => {
   const { calling, setCalling } = live;
 
   // 🟢 UI return is the condition, NOT hook call ✔
-  if (ROLE === "host" && !calling) {
-    return <StartLivePopup onStart={() => setCalling(true)} />;
-  }
+  // if (ROLE === "host" && !calling) {
+  //   return <StartLivePopup onStart={() => setCalling(true)} />;
+  // }
 
   return (
-    <div className="h-10">
+    <div className="live-container">
       <LiveView ROLE={ROLE} {...live} {...chat} />
     </div>
   );

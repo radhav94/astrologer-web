@@ -62,3 +62,24 @@ export const getAstrologerById = async (id) => {
     };
   }
 };
+
+
+// 🔴 Stop Live Streaming (Host End Live)
+export const stopLiveStream = async (channel) => {
+  try {
+    return await privateRequest.post("users/live/stop", {
+      channel,
+    });
+  } catch (error) {
+    console.error(
+      "Stop live stream failed:",
+      error?.response?.data || error.message
+    );
+    return {
+      data: {
+        success: false,
+        message: "Failed to stop live stream",
+      },
+    };
+  }
+};

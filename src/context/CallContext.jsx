@@ -112,6 +112,7 @@ export const CallProvider = ({ children }) => {
         incomingCall,
         setIncomingCall,
         setAstroId,
+        astroId
       }}
     >
       {children}

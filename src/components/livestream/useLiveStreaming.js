@@ -8,13 +8,16 @@ import {
   useIsConnected,
   useRemoteUsers,
 } from "agora-rtc-react";
+import { getAgoraToken } from "../../services/appServices/getLiveStreamService";
 
-const APP_ID = "b7bd8229702e4ec3b0938ea15f23a39c";
-const CHANNEL_NAME = "testnewtokenlive";
-const TEMP_TOKEN =
-"007eJxTYPh6IHPGLrNH+09q7dvTJelQ5h1Qdv3wdY4b94pedt300XyqwJBknpRiYWRkaW5glGqSmmycZGBpbJGaaGiaZmScaGyZPGOGd2ZDICPDtu4oBkYoBPEFGEpSi0vyUstL8rNT83Iyy1IZGAD++id2"
+const APP_ID = "5630460abdc141e3b2f8d9597752bd7d";
 export const useLiveStreaming = (client, ROLE) => {
   const [calling, setCalling] = useState(true);
+    const [token, setToken] = useState(null);
+  const [channelName, setChannelName] = useState(null);
+      const [uid, setUid] = useState(null);
+
+
   const isConnected = useIsConnected();
   const [micOn, setMic] = useState(true);
   const [cameraOn, setCamera] = useState(true);
@@ -26,16 +29,37 @@ export const useLiveStreaming = (client, ROLE) => {
     }
   }, [client, ROLE]);
 
-  useJoin(
-    {
-      appid: APP_ID,
-      channel: CHANNEL_NAME,
-      token: TEMP_TOKEN,
-      role: ROLE,
-    },
-    calling
-  );
 
+  const AGORA_ROLE =
+  ROLE === "host" ? "publisher" : "subscriber";
+
+
+  useEffect(() => {
+      const fetchAgoraToken = async () => {
+        try {
+          const res = await getAgoraToken();
+          setToken(res.data?.data?.token);
+          setChannelName(res.data?.data?.channel);
+          setUid(res.data?.data?.uid);
+        } catch (err) {
+          console.error("Agora token fetch failed", err);
+        }
+      };
+      fetchAgoraToken();
+    }, []);
+
+  const canJoin = Boolean(token && channelName && calling);
+
+   useJoin(
+      {
+        appid: APP_ID,
+        channel: channelName ?? "",
+        token: token ?? null,
+        uid: uid ?? null,
+        role: AGORA_ROLE,
+      },
+      canJoin
+    );
   const { localMicrophoneTrack } = useLocalMicrophoneTrack(
     micOn && ROLE === "host"
   );
@@ -62,5 +86,6 @@ export const useLiveStreaming = (client, ROLE) => {
     localMicrophoneTrack,
     localCameraTrack,
     remoteUsers,
+    channelName
   };
 };

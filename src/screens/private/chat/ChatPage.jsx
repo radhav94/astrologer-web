@@ -6,6 +6,7 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import { Icons } from "../../../components/Icons";
 import { useGetChatMessagesQuery } from "../../../redux/activity/chatApi";
 import { PATH } from "../../../utils/routes/Paths";
+import { useChat } from "../../../context/chatContext";
 
 dayjs.extend(relativeTime);
 
@@ -56,8 +57,9 @@ const ChatPage = ({ onBack }) => {
   
   const { data, isLoading, isError, refetch } = useGetChatMessagesQuery({
     astrologerId: astroIdLocal,
-  });
+  }, {refetchOnMountOrArgChange : true});
   const navigate = useNavigate();
+  const { activeChat } = useChat();
   const activityList = mapRecentActivity(data?.data);
 
   {isLoading && (
@@ -112,7 +114,7 @@ const ChatPage = ({ onBack }) => {
                       userId: item?.userId,
                       astrologerId: astroIdLocal,
                       fullName: item?.title,
-                      roomId: item?.id,
+                      roomId: activeChat?.chaterId === item.id ? activeChat?.roomId : null,
                       isUserSide: false,
                       kundliId:null,
                       userID: item?.userID
@@ -120,7 +122,12 @@ const ChatPage = ({ onBack }) => {
                   }
                 )
               }
-                className="bg-[#EAEAEA] rounded-xl p-4 flex items-center justify-between cursor-pointer"
+                className={`rounded-xl p-4 flex items-center justify-between cursor-pointer transition-all
+                            ${
+                              activeChat?.chaterId === item.id
+                                ? "bg-blue-100 ring-2 ring-blue-400"
+                                : "bg-[#EAEAEA] hover:bg-gray-200"
+                            }`}
               >
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 flex-shrink-0">

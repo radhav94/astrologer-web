@@ -268,7 +268,7 @@ const VideoCalling = ({ callData }) => {
     if (endCallRef.current) return;
     endCallRef.current = true;
 
-    voiceSocket.emit("call_end", {
+    voiceSocket.emit("call:end", {
       roomId,
       endedBy: isUserSide ? "CUSTOMER" : "ASTROLOGER",
     });
@@ -276,16 +276,26 @@ const VideoCalling = ({ callData }) => {
     await cleanup();
   };
 
+  /* ================= SAFE END CALL ================= */
+  const handleCallCanceled = async () => {
+    if (endCallRef.current) return;
+    endCallRef.current = true;
+
+    await cleanup();
+  };
+
   /* ================= SOCKET ================= */
   useEffect(() => {
-    voiceSocket.on("call_ended", safeEndCall);
+    voiceSocket.on("call:ended", safeEndCall);
     voiceSocket.on("force_call_end", safeEndCall);
     voiceSocket.on("disconnect", safeEndCall);
+    voiceSocket.on("call:canceled", handleCallCanceled);
 
     return () => {
-      voiceSocket.off("call_ended", safeEndCall);
+      voiceSocket.off("call:ended", safeEndCall);
       voiceSocket.off("force_call_end", safeEndCall);
       voiceSocket.off("disconnect", safeEndCall);
+      voiceSocket.off("call:canceled", handleCallCanceled);
     };
   }, []);
 

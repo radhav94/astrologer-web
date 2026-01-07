@@ -3,14 +3,20 @@ import { voiceSocket } from "../services/appServices/voiceSocketServices";
 
 const IncomingCallModal = () => {
   const { incomingCall, setIncomingCall, setActiveCall } = useCall();
-
   if (!incomingCall) return null;
 
   const acceptCall = () => {
-    voiceSocket.emit("accept_call", {
+    // voiceSocket.emit("accept_call", {
+    //   roomId: incomingCall.roomId,
+    //   token: incomingCall.agoraToken,
+    //   channelName: incomingCall.roomId,
+    // });
+
+    voiceSocket.emit("call:accept", {
       roomId: incomingCall.roomId,
       token: incomingCall.agoraToken,
       channelName: incomingCall.roomId,
+      acceptedBy : "ASTROLOGER"
     });
 
     setActiveCall({
@@ -25,9 +31,14 @@ const IncomingCallModal = () => {
   };
 
   const rejectCall = () => {
-    voiceSocket.emit("reject_call", {
+    // voiceSocket.emit("reject_call", {
+    //   roomId: incomingCall.roomId,
+    // });
+
+    voiceSocket.emit("call:reject", {
       roomId: incomingCall.roomId,
-    });
+      rejectedBy: "ASTROLOGER"
+    })
     setIncomingCall(null);
   };
 

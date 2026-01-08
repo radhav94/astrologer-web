@@ -12,12 +12,14 @@ import { voiceSocket } from "../services/appServices/voiceSocketServices";
 import { useChat as useChatContext } from "../context/chatContext";
 import { PATH } from "../utils/routes/Paths";
 import toast from "../components/toast";
+import { useGetAstrologerByIdQuery } from "../redux/astrologer/astrologerApi";
 
 const HomeLayout = () => {
   const userData = JSON.parse(
     localStorage.getItem("shubhtalk_astrologer_details")
   );
   const astrologerId = userData?._id || userData?.id;
+  const { data : astrologerData } = useGetAstrologerByIdQuery(astrologerId);
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isOnline, setIsOnline] = useState(userData?.isActive === "online");
@@ -69,14 +71,11 @@ const HomeLayout = () => {
 
       try {
         setLoadingStatus(true);
-
-        const response = await getAstrologerById(astrologerId);
-
-        if (response?.data?.success) {
-          const apiUser = response.data.data;
+        if (astrologerData?.success) {
+          const apiUser = astrologerData.data;
 
           // Backend = source of truth
-          setIsOnline(apiUser.isActive === "online");
+          setIsOnline(apiUser?.isActive === "online");
 
           // Update localStorage with latest data
           localStorage.setItem(
@@ -92,7 +91,7 @@ const HomeLayout = () => {
     };
 
     syncAstrologerStatus();
-  }, [astrologerId]);
+  }, [astrologerId, astrologerData]);
 
   //Handle if chat accepted by user
       useEffect(() => {

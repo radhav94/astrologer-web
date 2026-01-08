@@ -19,8 +19,15 @@ export const astrologerApi = epicApi.injectEndpoints({
       }),
       invalidatesTags: ["Price"],
     }),
+
+    getAstrologerById: builder.query({
+      query: (id) => ({
+        url: `astrologers/astrologer?astrologerId=${id}`,
+        method: "GET",
+      }),
+    })
   }),
 });
 
-export const { useUpdateAvailabilityMutation, useSetAstrologerPriceMutation } =
+export const { useUpdateAvailabilityMutation, useSetAstrologerPriceMutation, useGetAstrologerByIdQuery } =
   astrologerApi;

@@ -96,7 +96,7 @@ const ChatWindow = () => {
   const messagesEndRef = useRef(null);
 
   /* --------- History --------- */
-  const { data } = useGetChatHistoryQuery({ userId : userId });
+  const { data } = useGetChatHistoryQuery({ userId : userId }, {refetchOnMountOrArgChange : roomId ? true : false});
   const historyMessages = data?.data || [];
 
   // Review

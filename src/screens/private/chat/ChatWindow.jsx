@@ -13,7 +13,8 @@ import { useGetS3SignedUrlMutation } from "../../../redux/s3SignedApi";
 import ReviewModal from "./review/ReviewModal";
 import { useAddUserReviewMutation } from "../../../redux/review/reviewApi";
 import { Toast } from "../../../components";
-
+import { GrReactjs } from "react-icons/gr";
+import IframeModal from "./IframeModal";
 /* -------------------- Helpers -------------------- */
 
 const formatDate = (date) => dayjs(date).format("DD MMMM YYYY");
@@ -22,37 +23,101 @@ const formatTime = (date) => dayjs(date).format("HH:mm");
 /* -------------------- Message Bubble -------------------- */
 
 const Message = ({ text, isSender, time }) => {
-  let message = [];
+  const [iframeSrc, setIframeSrc] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  let message = text;
   let isVoiceMsg = false;
+
+  // Detect voice message (JSON)
   try {
-    if (text != null) {
-      message = JSON.parse(text);
-      isVoiceMsg = true;
+    if (typeof text === "string") {
+      const parsed = JSON.parse(text);
+      if (parsed && typeof parsed === "object") {
+        message = parsed;
+        isVoiceMsg = true;
+      }
     }
   } catch {
     message = text;
     isVoiceMsg = false;
   }
 
+  // Extract /kundli/:id path
+  const extractKundliPath = (url) => {
+    setLoading(true);
+    try {
+      const parsed = new URL(url);
+      return parsed.pathname; // "/kundli/:id"
+    } catch {
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Accept only .../kundli/:id
+  const kundliUrlRegex = /^https?:\/\/[^\/]+\/kundli\/[^\/\s]+$/i;
+
+  // Normalize message to string for URL scan
+  let textToCheck = "";
+  if (typeof message === "string") {
+    textToCheck = message;
+  } else if (Array.isArray(message)) {
+    textToCheck = message.join(" ");
+  } else if (typeof message === "object" && message !== null) {
+    textToCheck = JSON.stringify(message);
+  }
+
+  // Extract URLs
+  let match = null;
+  const urlMatches = textToCheck.match(/https?:\/\/[^\s]+/g);
+
+  if (urlMatches) {
+    match = urlMatches.find((url) => kundliUrlRegex.test(url)) || null;
+  }
+
+  console.log("match :", match);
+
   return (
     <div
-      className={`flex w-full mb-4 ${isSender ? "justify-end" : "justify-start"
-        }`}
+      className={`flex w-full mb-4 ${
+        isSender ? "justify-end" : "justify-start"
+      }`}
     >
       <div
-        className={`flex flex-col max-w-[85%] md:max-w-[65%] ${isSender ? "items-end" : "items-start"
-          }`}
+        className={`flex flex-col max-w-[85%] md:max-w-[65%] ${
+          isSender ? "items-end" : "items-start"
+        }`}
       >
         <div
           className={`px-5 py-3 rounded-2xl text-sm md:text-base leading-relaxed shadow-sm
-            ${isSender
-              ? "bg-gray-300 text-gray-900 rounded-tr-sm"
-              : "bg-gray-100 text-gray-800 rounded-tl-sm border border-gray-100"
+            ${
+              isSender
+                ? "bg-gray-300 text-gray-900 rounded-tr-sm"
+                : "bg-gray-100 text-gray-800 rounded-tl-sm border border-gray-100"
             }
           `}
         >
-
-          {isVoiceMsg == true ? (
+          {match ? (
+            <div
+              onClick={() => {
+                const path = extractKundliPath(match);
+                if (path) setIframeSrc(path);
+              }}
+              style={{
+                textDecoration: "underline",
+                fontWeight: 600,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+              }}
+            >
+              <GrReactjs />
+              View Kundli
+            </div>
+          ) : isVoiceMsg ? (
             <VoiceMessage
               url={message.audioUrl}
               duration={message.duration}
@@ -67,6 +132,13 @@ const Message = ({ text, isSender, time }) => {
           {time}
         </span>
       </div>
+
+      <IframeModal
+        open={!!iframeSrc}
+        src={iframeSrc}
+        onClose={() => setIframeSrc(null)}
+        loading={loading}
+      />
     </div>
   );
 };
@@ -372,6 +444,7 @@ const finalMessages = useMemo(() => {
           reviewerName={userName}
         />
       )}
+      {/* 👇 Modal */}
     </div>
   );
 };

@@ -1,7 +1,7 @@
 import { Suspense, useState, useEffect } from "react";
 import { Icons } from "../components/Icons";
 import Sidebar from "../components/Sidebar";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate, useParams } from "react-router-dom";
 import {
   updateAstrologerStatus,
   getAstrologerById,
@@ -14,6 +14,7 @@ import { PATH } from "../utils/routes/Paths";
 import toast from "../components/toast";
 
 const HomeLayout = () => {
+  const {kundliId} = useParams();
   const userData = JSON.parse(
     localStorage.getItem("shubhtalk_astrologer_details")
   );
@@ -140,11 +141,11 @@ const HomeLayout = () => {
   }, [])
 
   return (
-    <div className="flex h-screen bg-[#F8F9FA] overflow-hidden">
+    <div className="flex h-screen bg-[#F8F9FA] overflow-hidden" >
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
       <main className="flex-1 h-full overflow-y-auto overflow-x-hidden relative">
-        <header className="sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-gray-100 px-4 py-3">
+      <header className={`sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-gray-100 px-4 py-3 ${kundliId ? 'hidden' : 'block'}`}>
           <div className="flex items-center justify-between">
             {/* LEFT: Profile + Info */}
             <div className="flex items-center gap-3">

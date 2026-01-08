@@ -53,6 +53,8 @@ const VerifyOtp = () => {
   const handleKeyDown = (e, index) => {
     if (e.key === "Backspace" && !otp[index] && index > 0)
       inputsRef.current[index - 1]?.focus();
+    if(e.key === "Enter" && index == otp.length - 1)
+      handleVerifyOtp();
   };
 
   const isOtpComplete = otp.every((digit) => digit !== "");

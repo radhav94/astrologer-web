@@ -20,15 +20,10 @@ export const convertTo24Hour = (hour, meridiem) => {
   
   // Format TOB → HH:MM
   export const formatTOB = (hour, min, meridiem) => {
-    let hour24;
+    const h = Number(hour);
   
-    if (meridiem) {
-      // 12-hour format with AM/PM
-      hour24 = convertTo24Hour(hour, meridiem);
-    } else {
-      // 🟢 Backend format: 12 means midnight
-      hour24 = Number(hour) === 12 ? 0 : Number(hour);
-    }
+    // ✅ if meridiem is missing, assume already 24-hour
+    const hour24 = meridiem ? convertTo24Hour(h, meridiem) : h;
   
     return `${String(hour24).padStart(2, "0")}:${String(min).padStart(2, "0")}`;
   };

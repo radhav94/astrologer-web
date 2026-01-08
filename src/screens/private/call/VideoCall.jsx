@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import AgoraRTC from "agora-rtc-sdk-ng";
 import {
   IoMic,
@@ -7,11 +7,13 @@ import {
   IoVideocamOff,
   IoArrowBack,
   IoChatbubbleEllipses,
+  IoFilter
 } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
 import styles from "./VideoCalling.module.scss";
 import { voiceSocket } from "../../../services/appServices/voiceSocketServices";
 import { useCall } from "../../../context/CallContext";
+import VideoCallChat from "./VideoCallChat";
 
 const APP_ID = "5630460abdc141e3b2f8d9597752bd7d";
 
@@ -44,18 +46,19 @@ const VideoCalling = ({ callData }) => {
 
   const [callSeconds, setCallSeconds] = useState(0);
   const timerRef = useRef(null);
+  const [isChatOpen, setIsChatOpen] = useState(false); // Chat panel state
 
   /* ================= LOCAL VIDEO ================= */
- const playLocalVideo = (container) => {
-  if (!camTrackRef.current || !container) return;
+  const playLocalVideo = (container) => {
+    if (!camTrackRef.current || !container) return;
 
-  try {
-    camTrackRef.current.stop(); // 🔥 IMPORTANT
-  } catch (e) {}
+    try {
+      camTrackRef.current.stop(); // 🔥 IMPORTANT
+    } catch (e) { }
 
-  container.innerHTML = "";
-  camTrackRef.current.play(container);
-};
+    container.innerHTML = "";
+    camTrackRef.current.play(container);
+  };
 
 
   /* ================= REMOTE VIDEO SAFE PLAY ================= */
@@ -79,34 +82,34 @@ const VideoCalling = ({ callData }) => {
   // };
 
   const safePlayRemoteVideo = (track) => {
-  if (!track) return;
+    if (!track) return;
 
-  const container = isLocalBig
-    ? localVideoFullRef.current
-    : remoteVideoRef.current;
+    const container = isLocalBig
+      ? localVideoFullRef.current
+      : remoteVideoRef.current;
 
-  if (!container) return;
+    if (!container) return;
 
-  try {
-    track.stop(); // 🔥 VERY IMPORTANT
-  } catch (e) {}
-
-  container.innerHTML = "";
-
-  const div = document.createElement("div");
-  div.style.width = "100%";
-  div.style.height = "100%";
-  container.appendChild(div);
-
-  setTimeout(() => {
     try {
-      track.play(div);
-    } catch (err) {
-      console.warn("Remote play retry");
-      setTimeout(() => track.play(div), 300);
-    }
-  }, 100);
-};
+      track.stop(); // 🔥 VERY IMPORTANT
+    } catch (e) { }
+
+    container.innerHTML = "";
+
+    const div = document.createElement("div");
+    div.style.width = "100%";
+    div.style.height = "100%";
+    container.appendChild(div);
+
+    setTimeout(() => {
+      try {
+        track.play(div);
+      } catch (err) {
+        console.warn("Remote play retry");
+        setTimeout(() => track.play(div), 300);
+      }
+    }, 100);
+  };
 
 
   /* ================= RESUME REMOTE AUDIO ================= */
@@ -201,9 +204,9 @@ const VideoCalling = ({ callData }) => {
   }, [joined, isMinimized, isLocalBig]);
 
   useEffect(() => {
-  if (!clientRef.current) return;
-  resumeRemoteTracks();
-}, [isLocalBig]);
+    if (!clientRef.current) return;
+    resumeRemoteTracks();
+  }, [isLocalBig]);
 
 
   useEffect(() => {
@@ -326,6 +329,10 @@ const VideoCalling = ({ callData }) => {
   };
 
   /* ================= CHAT ================= */
+  const toggleChat = () => {
+    setIsChatOpen((prev) => !prev);
+  };
+
   const openChatWithMinimize = () => {
     setIsMinimized(true);
     setTimeout(() => {
@@ -349,6 +356,15 @@ const VideoCalling = ({ callData }) => {
       2,
       "0"
     )}`;
+
+  // Memoize chat data to prevent unnecessary re-renders
+  const chatData = useMemo(() => ({
+    userId: activeCall.userId,
+    astrologerId: activeCall.astrologerId,
+    chatRoomId: activeCall.chatRoomId,
+    kundliId: activeCall.kundliId,
+    isUserSide: activeCall.isUserSide,
+  }), [activeCall.userId, activeCall.astrologerId, activeCall.chatRoomId, activeCall.kundliId, activeCall.isUserSide]);
   return (
     <>
       {/* MINI VIEW */}
@@ -448,16 +464,30 @@ const VideoCalling = ({ callData }) => {
                 >
                   End
                 </button>
-
                 <button
                   className={styles.iconBtn}
                   onClick={openChatWithMinimize}
                 >
                   <IoChatbubbleEllipses size={22} />
                 </button>
+                <button
+                  className={`${styles.iconBtn} ${isChatOpen ? styles.active : ''}`}
+                  onClick={toggleChat}
+                  title="Toggle Chat"
+                >
+                  <IoFilter size={22} />
+                </button>
               </div>
             </div>
           </div>
+        )}
+        {/* Chat Panel */}
+        {isChatOpen && (
+          <VideoCallChat
+            isOpen={isChatOpen}
+            onClose={() => setIsChatOpen(false)}
+            videoCallData={chatData}
+          />
         )}
       </div>
     </>

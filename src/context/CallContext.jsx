@@ -57,6 +57,10 @@ export const CallProvider = ({ children }) => {
         callerId: data.callerId,
         callType: data.type || "audio",
         callerName: data?.callerDetail?.firstName,
+        userId: data.userId || data.callerId,
+        astrologerId: data.astrologerId || astroId,
+        chatRoomId: data.chatRoomId || data.roomId,
+        kundliId: data.kundliId,
       });
     };
 
@@ -68,6 +72,10 @@ export const CallProvider = ({ children }) => {
         callerId: data.callerId,
         callType: data.type || "audio",
         callerName: data?.callerDetail?.firstName,
+        userId: data.userId || data.callerId,
+        astrologerId: data.astrologerId || astroId,
+        chatRoomId: data.chatRoomId || data.roomId,
+        kundliId: data.kundliId,
       });
     };
 

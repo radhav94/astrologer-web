@@ -404,6 +404,15 @@
   background: rgba(0, 0, 0, 0.7);
 }
 
+.iconBtn.active {
+  background: #4f46e5;
+  color: white;
+}
+
+.iconBtn.active:hover {
+  background: #4338ca;
+}
+
 .endBtn {
   background: #e53935;
 }

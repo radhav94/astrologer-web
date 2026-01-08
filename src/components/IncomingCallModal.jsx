@@ -24,7 +24,11 @@ const IncomingCallModal = () => {
       agoraToken: incomingCall.agoraToken,
       isUserSide: false,
       callType: incomingCall.callType,
-      callerName:incomingCall.callerName
+      callerName: incomingCall.callerName,
+      userId: incomingCall.userId,
+      astrologerId: incomingCall.astrologerId,
+      chatRoomId: incomingCall.chatRoomId,
+      kundliId: incomingCall.kundliId,
     });
 
     setIncomingCall(null);

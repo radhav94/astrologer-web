@@ -73,7 +73,7 @@ class SocketService {
   }
 
   // ASTRO SEND
-  astrologerReplied({ roomId, userId, astrologerId, kundliId, message }) {
+  astrologerReplied({ roomId, userId, astrologerId, kundliId, message, type = "message" }) {
     try {
       if (!this.socket?.connected)
         throw new Error("Socket not connected, try again.");
@@ -85,7 +85,7 @@ class SocketService {
         message,
         sender: "astrologer",
         kundliId,
-        type: "message"
+        type
       });
 
       return { success: true };

@@ -3,6 +3,7 @@ import { DonutChart, Heatmap } from "./Charts";
 import { Link } from "react-router-dom";
 import TipsCarousel from "../screens/private/Home/tipsAndGrowth/TipsCarousel";
 import * as AuthServices from "../../src/services/appServices/authservice";
+import { useGetAstrologerByIdQuery } from "../redux/astrologer/astrologerApi";
 
 // --- MOCK DATA ---
 export const UPCOMING_SESSIONS = [
@@ -53,6 +54,9 @@ const Dashboard = () => {
   const userData = JSON.parse(
     localStorage.getItem("shubhtalk_astrologer_details")
   );
+  const astrologerId = userData?._id || userData?.id;
+  const { data } = useGetAstrologerByIdQuery(astrologerId);
+  const astrologerData = data?.data || {};
   return (
     <div className="space-y-6">
       {/* Top Row: Price & Schedule */}
@@ -77,22 +81,22 @@ const Dashboard = () => {
             <div className=" bg-gray-100 rounded-2xl p-3 w-28 h-28 flex flex-col justify-center items-center">
               <p className="text-xs text-gray-400 mb-1">Audio Rate</p>
               <p className="text-2xl font-bold text-gray-900">
-                ₹{userData?.price?.callRate?.amount}
+                ₹{astrologerData?.price?.audioRate?.amount}
               </p>
               <p className="text-xs text-gray-500">per minute</p>
             </div>
             <div className=" bg-gray-100 rounded-2xl p-3 w-28 h-28 flex flex-col justify-center items-center">
               <p className="text-xs text-gray-400 mb-1">chat Rate</p>
               <p className="text-2xl font-bold text-gray-900">
-                ₹{userData?.price?.chatRate?.amount}
+                ₹{astrologerData?.price?.chatRate?.amount}
               </p>
               <p className="text-xs text-gray-500">per minute</p>
             </div>
-            {userData?.price?.videocall?.amount && (
+            {Number(astrologerData?.price?.videoCallRate?.amount) > 0 && (
               <div className=" bg-gray-100 rounded-2xl p-3 w-28 h-28 flex flex-col justify-center items-center">
                 <p className="text-xs text-gray-400 mb-1">Video Rate</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  ₹{userData?.price?.videocall?.amount}
+                  ₹{astrologerData?.price?.videoCallRate?.amount}
                 </p>
                 <p className="text-xs text-gray-500">per minute</p>
               </div>

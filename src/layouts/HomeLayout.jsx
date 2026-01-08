@@ -1,7 +1,7 @@
 import { Suspense, useState, useEffect } from "react";
 import { Icons } from "../components/Icons";
 import Sidebar from "../components/Sidebar";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate, useParams } from "react-router-dom";
 import {
   updateAstrologerStatus,
   getAstrologerById,
@@ -12,12 +12,15 @@ import { voiceSocket } from "../services/appServices/voiceSocketServices";
 import { useChat as useChatContext } from "../context/chatContext";
 import { PATH } from "../utils/routes/Paths";
 import toast from "../components/toast";
+import { useGetAstrologerByIdQuery } from "../redux/astrologer/astrologerApi";
 
 const HomeLayout = () => {
+  const {kundliId} = useParams();
   const userData = JSON.parse(
     localStorage.getItem("shubhtalk_astrologer_details")
   );
   const astrologerId = userData?._id || userData?.id;
+  const { data : astrologerData } = useGetAstrologerByIdQuery(astrologerId);
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isOnline, setIsOnline] = useState(userData?.isActive === "online");
@@ -30,7 +33,7 @@ const HomeLayout = () => {
   const avatar = userData?.imageUrl;
 
   //Chat
-  const {setActiveChat} = useChatContext();
+  const {setActiveChat, setChatSeconds} = useChatContext();
   const navigate = useNavigate();
 
   const handleStatusToggle = async () => {
@@ -69,14 +72,11 @@ const HomeLayout = () => {
 
       try {
         setLoadingStatus(true);
-
-        const response = await getAstrologerById(astrologerId);
-
-        if (response?.data?.success) {
-          const apiUser = response.data.data;
+        if (astrologerData?.success) {
+          const apiUser = astrologerData.data;
 
           // Backend = source of truth
-          setIsOnline(apiUser.isActive === "online");
+          setIsOnline(apiUser?.isActive === "online");
 
           // Update localStorage with latest data
           localStorage.setItem(
@@ -92,7 +92,7 @@ const HomeLayout = () => {
     };
 
     syncAstrologerStatus();
-  }, [astrologerId]);
+  }, [astrologerId, astrologerData]);
 
   //Handle if chat accepted by user
       useEffect(() => {
@@ -105,6 +105,8 @@ const HomeLayout = () => {
               chaterName:"Customer",
               chaterId : userId
             });
+        if(data?.remainingTime)
+        setChatSeconds(Number(data?.remainingTime)*60)
         
             navigate(
                     PATH.privateRoutes.CHAT_WINDOW.path.replace(
@@ -140,11 +142,11 @@ const HomeLayout = () => {
   }, [])
 
   return (
-    <div className="flex h-screen bg-[#F8F9FA] overflow-hidden">
+    <div className="flex h-screen bg-[#F8F9FA] overflow-hidden" >
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
       <main className="flex-1 h-full overflow-y-auto overflow-x-hidden relative">
-        <header className="sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-gray-100 px-4 py-3">
+      <header className={`sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-gray-100 px-4 py-3 ${kundliId ? 'hidden' : 'block'}`}>
           <div className="flex items-center justify-between">
             {/* LEFT: Profile + Info */}
             <div className="flex items-center gap-3">

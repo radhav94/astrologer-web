@@ -58,6 +58,12 @@ const Login = () => {
       setLoading(false);
     }
   };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && isValidMobile && !loading) {
+      handleGetOtp();
+    }
+  };
   
 
   return (
@@ -103,6 +109,7 @@ const Login = () => {
               value={mobile}
               onChange={handleMobileChange}
               placeholder="Enter your Number"
+              onKeyDown={handleKeyDown} 
               className="
                 flex-1 border rounded-xl px-4 py-3 text-sm
                 focus:outline-none focus:ring-1 focus:ring-black
@@ -128,7 +135,7 @@ const Login = () => {
               }
             `}
           >
-            {loading ? "Sending OTP..." : "Get OTP"}
+            {loading ? "Sending OTP..." : "Send OTP"}
           </button>
 
           {/* OR Divider */}

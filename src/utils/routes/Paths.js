@@ -130,5 +130,11 @@ export const PATH = {
       header: false,
       footer: false,
     },
+    KUNDLI_BY_ID: {
+      path: "/kundli/:kundliId",
+      element: Kundli,
+      header: false,
+      footer: false,
+    },
   },
 };

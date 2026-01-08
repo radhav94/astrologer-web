@@ -1,0 +1,39 @@
+import React from "react";
+import { useSelector } from "react-redux";
+import { skipToken } from "@reduxjs/toolkit/query";
+import { useGetGemStoneReportQuery } from "../../../../../../../../redux/api/kundli/planetApi";
+import PrimaryLoader from "../../../../../../../../components/UI/PrimaryLoader";
+import GemStoneCard from "./GemStoneCard";
+
+const GemStones = (props) => {
+  // const formData = useSelector((state) => state?.form?.kundliPayload);
+  const {userDetails } = props || {};
+  const formData = userDetails;
+const queryArgs = formData
+  ? {
+      dob: `${String(formData.day).padStart(2, "0")}/${String(
+        formData.month
+      ).padStart(2, "0")}/${formData.year}`,
+      tob: `${String(formData.hour).padStart(2, "0")}:${String(
+        formData.min
+      ).padStart(2, "0")}`,
+      lat: formData.lat,
+      lon: formData.lon,
+      tz: formData.tzone,
+      lang: "en",
+    }
+  : skipToken;
+
+  const { data, isLoading } = useGetGemStoneReportQuery(queryArgs);
+  const gem = data?.response;
+
+  return (
+    <div>
+      {isLoading && <PrimaryLoader isLoading={isLoading} />}
+
+      {!isLoading && gem && <GemStoneCard gem={gem} />}
+    </div>
+  );
+};
+
+export default GemStones;

@@ -1,0 +1,109 @@
+@use "sass:color"; // Import color module
+
+// --- Theme Variables ---
+$color-primary: #ffcb03;
+$color-app-bg: #f5f5f5;
+$color-white: #ffffff;
+$color-black: #1a1a1a;
+$color-grey-light: #e0e0e0;
+$color-grey-medium: #999999;
+$color-grey-dark: #555555;
+$font-primary: "Poppins", sans-serif;
+$shadow-4: 0px 4px 12px rgba(0, 0, 0, 0.08);
+
+// --- Main Grid Layout ---
+.gridContainer {
+  display: grid;
+  grid-template-columns: 1fr; // Mobile-first layout
+  gap: 24px;
+  font-family: $font-primary;
+
+  // --- Desktop Layout ---
+  @media (min-width: 992px) {
+    grid-template-columns: 1fr 1fr; // Two columns
+    align-items: start; // Cards align naturally to top
+    column-gap: 24px;
+    row-gap: 24px;
+
+    .basicCard {
+      grid-column: 1 / 2;
+      grid-row: 1 / 2;
+      align-self: start;
+      height: auto; // Prevent stretching
+    }
+
+    .panchangCard {
+      grid-column: 1 / 2;
+      grid-row: 2 / 3;
+      align-self: start;
+      height: auto;
+    }
+
+    .avakhadaCard {
+      grid-column: 2 / 3;
+      grid-row: 1 / span 2; //  Align right card with both rows
+      align-self: start;
+      height: auto; // Adjust based on content only
+    }
+  }
+}
+
+// --- Card Styling ---
+.detailCard {
+  background-color: $color-white;
+  border-radius: 16px;
+  padding: 24px;
+  border: 1px solid $color-grey-light;
+  box-shadow: $shadow-4;
+  display: flex;
+  flex-direction: column;
+  height: auto; //  auto-resize card
+}
+
+.cardTitle {
+  font-size: 20px;
+  font-weight: 700;
+  color: $color-black;
+  margin: 0 0 16px 0;
+  border-bottom: 1px solid $color-grey-light;
+  padding-bottom: 12px;
+}
+
+// --- Table Styling ---
+.detailsTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+
+  tbody tr {
+    transition: background-color 0.2s ease;
+
+    &:nth-child(even) {
+      background-color: color.adjust($color-app-bg, $lightness: 1%);
+    }
+
+    // &:hover {
+    //   background-color: color.adjust($color-primary, $lightness: 25%);
+    // }
+  }
+
+  td {
+    padding: 14px 10px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  td:first-child {
+    font-weight: 600;
+    color: $color-grey-dark;
+    width: 45%;
+  }
+
+  td:last-child {
+    color: $color-black;
+    font-weight: 500;
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+}

@@ -32,12 +32,13 @@ export const useVideoCallChat = ({ userId, astrologerId, roomId, kundliId, isAct
     });
 
     const handleAddMessage = (data) => {
-      const isSenderUser = data.sender === "user";
+      const isSenderAstrologer = data.sender === "astrologer";
       addMessage({
         text: data.message,
-        sender: isSenderUser,
+        sender: isSenderAstrologer,
         time: formatTime(),
         dateTime: data?.dateTime,
+        type: data?.type
       });
     };
 

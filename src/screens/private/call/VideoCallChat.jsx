@@ -7,6 +7,8 @@ import { useFileSelector } from "../../../screens/private/chat/filePicker/useFil
 import { Toast } from "../../../components";
 import dayjs from "dayjs";
 import { useVideoCallChat } from "./useVideoCallChat";
+import IframeModal from "../../private/chat/IframeModal";
+import { GrReactjs } from "react-icons/gr";
 
 const formatDate = (date) => dayjs(date).format("DD MMMM YYYY");
 
@@ -15,8 +17,9 @@ const VideoCallChat = ({
   onClose,
   videoCallData = {}
 }) => {
-  const [message, setMessage] = useState("");
+  // const [message, setMessage] = useState("");
   const messagesRef = useRef(null);
+  const [iframeSrc, setIframeSrc] = useState(null);
 
   const { astrologerId, userId, isUserSide, kundliId, chatRoomId } = videoCallData;
 
@@ -69,6 +72,7 @@ const VideoCallChat = ({
         minute: "2-digit",
       }),
       dateTime: item.createdAt,
+      type: item?.type
     }));
 
     const socketMsgs = messages.map((msg, idx) => ({
@@ -78,6 +82,7 @@ const VideoCallChat = ({
       time: msg.time,
       date: msg.date || formatDate(new Date()),
       dateTime: msg.dateTime || new Date().toISOString(),
+      type: msg?.type
     }));
 
     return [...historyMsgs, ...socketMsgs].sort(
@@ -158,9 +163,8 @@ const VideoCallChat = ({
   };
 
   const renderMessage = (msg, index) => {
-    let content = msg.text;
     let isSpecialMessage = false;
-    // Try to parse as JSON for special message types
+    let content = msg.text;
     try {
       if (msg.type === "audio") {
         isSpecialMessage = true;
@@ -173,35 +177,80 @@ const VideoCallChat = ({
             </button>
             <div className={styles.waveformContainer}>
               <audio controls className={styles.audioPlayer}>
-                <source src={content} type="audio/mpeg" />
+                <source src={msg.text} type="audio/mpeg" />
               </audio>
             </div>
             <span className={styles.voiceDuration}>
-              {/* {Math.floor(msg.duration / 60)}:{String(msg.duration % 60).padStart(2, '0')} */}
+              {/* {Math.floor(parsed.duration / 60)}:{String(parsed.duration % 60).padStart(2, '0')} */}
             </span>
           </div>
         );
-      } else if (msg.type === "attachment" || msg.type === "image") {
+      } else if (msg.type === "video") {
+        isSpecialMessage = true;
+        content = (
+          <div className={styles.videoMessage}>
+            <div className={styles.videoWrapper}>
+              <video
+                className={styles.videoPlayer}
+                controls
+                preload="metadata"
+                onClick={(e) => e.target.play()}
+              >
+                <source src={msg.text} type="video/mp4" />
+                <a
+                  href={msg.text}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.fileLink}
+                >
+                  📎 {msg.text}
+                </a>
+              </video>
+            </div>
+
+            <span className={styles.videoDuration}>
+              {/* Optional: duration if you calculate later */}
+            </span>
+          </div>
+        );
+      } else if (msg.type === "kundli") {
+        isSpecialMessage = true;
+        content = (
+          <div className={styles.KundliMessage}>
+            <span
+              onClick={() => {
+                if (msg.text) setIframeSrc(msg.text);
+              }}
+            >
+              <GrReactjs/> View Kundli
+            </span>
+          </div>
+        );
+      } else if (msg.type === "image") {
         isSpecialMessage = true;
         content = (
           <div className={styles.fileMessage}>
-            {msg.type === "image" ? (
-              <img
-                src={content}
-                alt={content}
-                className={styles.imageAttachment}
-                onClick={() => window.open(content, '_blank')}
-              />
-            ) : (
-              <a
-                href={content}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={styles.fileLink}
-              >
-                📎 {content}
-              </a>
-            )}
+            <img
+              src={msg.text}
+              alt={msg.text}
+              className={styles.imageAttachment}
+              onClick={() => window.open(msg.text, '_blank')}
+            />
+          </div>
+        )
+      } else if (msg.type === "attachment") {
+        isSpecialMessage = true;
+        content = (
+          <div className={styles.fileMessage}>
+            <a
+              href={msg.text}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.fileLink}
+            >
+              📎 {msg.text}
+            </a>
+
           </div>
         );
       }
@@ -277,6 +326,12 @@ const VideoCallChat = ({
           <IoSend size={18} />
         </button> */}
       </div>
+      {/* 👇 Modal */}
+      <IframeModal
+        open={!!iframeSrc}
+        src={iframeSrc}
+        onClose={() => setIframeSrc(null)}
+      />
     </div>
   );
 };

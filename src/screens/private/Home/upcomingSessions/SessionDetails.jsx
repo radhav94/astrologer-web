@@ -46,6 +46,10 @@ const SessionDetails = () => {
       callerName: call.callerName,
       isUserSide: false,
       callType: call.type || "audio",
+      userId: call.userId || call.callerId,
+      astrologerId: call.astrologerId || astroIdLocal,
+      chatRoomId: call.chatRoomId || call.roomId,
+      kundliId: call.kundliId,
     });
   };
 

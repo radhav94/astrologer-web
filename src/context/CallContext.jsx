@@ -11,6 +11,8 @@ export const CallProvider = ({ children }) => {
   const [activeCall, setActiveCall] = useState(null);
   const [waitingList, setWaitingList] = useState([]);
   const [incomingCall, setIncomingCall] = useState(null);
+  const [openReview, setOpenReview] = useState(null);
+  const [reviewData, setReviewData] = useState(null);
 
   /* 🔥 Listen to login/logout changes */
   useEffect(() => {
@@ -76,6 +78,7 @@ export const CallProvider = ({ children }) => {
         astrologerId: data.astrologerId || astroId,
         chatRoomId: data.chatRoomId || data.roomId,
         kundliId: data.kundliId,
+        userID: data?.callerDetail?.user_ID
       });
     };
 
@@ -120,7 +123,11 @@ export const CallProvider = ({ children }) => {
         incomingCall,
         setIncomingCall,
         setAstroId,
-        astroId
+        astroId,
+        openReview,
+        setOpenReview,
+        reviewData,
+        setReviewData
       }}
     >
       {children}

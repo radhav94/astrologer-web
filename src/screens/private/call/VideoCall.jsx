@@ -18,7 +18,7 @@ import VideoCallChat from "./VideoCallChat";
 const APP_ID = "5630460abdc141e3b2f8d9597752bd7d";
 
 const VideoCalling = ({ callData }) => {
-  const { activeCall, setActiveCall } = useCall();
+  const { activeCall, setActiveCall, setReviewData, setOpenReview } = useCall();
   const navigate = useNavigate();
 
   if (!activeCall || activeCall.callType !== "video") return null;
@@ -270,12 +270,17 @@ const VideoCalling = ({ callData }) => {
   const safeEndCall = async () => {
     if (endCallRef.current) return;
     endCallRef.current = true;
+    // setReviewData({
+    //   userID: activeCall.userID,
+    //   fullName: activeCall.callerName,
+    // });
 
     voiceSocket.emit("call:end", {
       roomId,
       endedBy: isUserSide ? "CUSTOMER" : "ASTROLOGER",
     });
 
+    // setOpenReview(true);
     await cleanup();
   };
 

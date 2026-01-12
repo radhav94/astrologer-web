@@ -270,17 +270,17 @@ const VideoCalling = ({ callData }) => {
   const safeEndCall = async () => {
     if (endCallRef.current) return;
     endCallRef.current = true;
-    // setReviewData({
-    //   userID: activeCall.userID,
-    //   fullName: activeCall.callerName,
-    // });
+    setReviewData({
+      userID: activeCall.userID,
+      fullName: activeCall.callerName,
+    });
 
     voiceSocket.emit("call:end", {
       roomId,
       endedBy: isUserSide ? "CUSTOMER" : "ASTROLOGER",
     });
 
-    // setOpenReview(true);
+    setOpenReview(true);
     await cleanup();
   };
 

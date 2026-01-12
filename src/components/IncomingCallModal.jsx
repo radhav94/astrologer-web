@@ -29,6 +29,7 @@ const IncomingCallModal = () => {
       astrologerId: incomingCall.astrologerId,
       chatRoomId: incomingCall.chatRoomId,
       kundliId: incomingCall.kundliId,
+      userID: incomingCall.userID
     });
 
     setIncomingCall(null);

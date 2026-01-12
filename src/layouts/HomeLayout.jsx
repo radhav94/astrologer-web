@@ -13,6 +13,7 @@ import { useChat as useChatContext } from "../context/chatContext";
 import { PATH } from "../utils/routes/Paths";
 import toast from "../components/toast";
 import { useGetAstrologerByIdQuery } from "../redux/astrologer/astrologerApi";
+import StickyReviewFooter from "../screens/private/chat/review/StickyReviewFooter";
 
 const HomeLayout = () => {
   const {kundliId} = useParams();
@@ -240,6 +241,7 @@ const HomeLayout = () => {
         <div className="h-1"></div>
         <AudioVideoContainer />
         <IncomingChatModal />
+        <StickyReviewFooter/>
       </main>
     </div>
   );

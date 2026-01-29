@@ -53,7 +53,7 @@ const VideoCalling = ({ callData }) => {
     if (!camTrackRef.current || !container) return;
 
     try {
-      camTrackRef.current.stop(); // 🔥 IMPORTANT
+      camTrackRef.current.stop(); // 🔥 IMPORTANT - stops the track before replaying
     } catch (e) { }
 
     container.innerHTML = "";
@@ -126,7 +126,16 @@ const VideoCalling = ({ callData }) => {
     });
   };
 
-  const resumeRemoteAudio = resumeRemoteTracks;
+  const resumeRemoteAudio = () => {
+  if (!clientRef.current) return;
+
+  clientRef.current.remoteUsers.forEach((user) => {
+    if (user.audioTrack) {
+      user.audioTrack.play();
+    }
+  });
+};
+
 
   /* ================= START CALL ================= */
   useEffect(() => {
@@ -157,10 +166,9 @@ const VideoCalling = ({ callData }) => {
           }
         });
 
-        client.on("user-unpublished", () => {
-          if (remoteVideoRef.current) {
-            remoteVideoRef.current.innerHTML = "";
-          }
+        client.on("user-unpublished", (user, mediaType) => {
+          if (mediaType === "video") 
+            if (remoteVideoRef.current) remoteVideoRef.current.innerHTML = "";
         });
 
         client.on("user-left", safeEndCall);

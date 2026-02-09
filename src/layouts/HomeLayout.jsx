@@ -104,7 +104,8 @@ const HomeLayout = () => {
               roomId: roomId,
               isUserSide: false,
               chaterName:"Customer",
-              chaterId : userId
+              chaterId : userId,
+              remainingTime: Number(data?.remainingTime)
             });
         if(data?.remainingTime)
         setChatSeconds(Number(data?.remainingTime)*60)

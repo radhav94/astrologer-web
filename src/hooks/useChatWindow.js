@@ -26,21 +26,35 @@ export default function useChat({
     setMessages((prev) => [...prev, msg]);
   };
 
+  const handleChatEndedFromServer = () => {
+    setIsMessageDisabled(true);
+    setOpenReview(true);
+    stopTimer();
+    setActiveChat(null);
+  };
+
   useEffect(() => {
+    if(activeChat?.astrologerId !== astrologerId) setIsMessageDisabled(true);
     if(!roomId || !userId || !astrologerId) return;
     socketService.connect({
       onConnected: () => {
         // socketService.joinRoom({ roomId, userId, astrologerId });
-        if(Object.keys(activeChat || {}).length > 0 ) startTimer();
+        if(Object.keys(activeChat || {}).length > 0 ) {
+          startTimer();
+          setIsMessageDisabled(false);
+        }
       },
       onError: (errMsg) => {
         toast.error(errMsg ||"Something went wrong");
         setError(errMsg)
         if(errMsg === 'Chat no longer available' || errMsg === 'Chat has already ended' || errMsg === 'Session not found'){
-        setIsMessageDisabled(true);
-        stopTimer();
-        setActiveChat(null);
+          setIsMessageDisabled(true);
+          stopTimer();
+          setActiveChat(null);
         }
+      },
+      onWarn: (msg) => {
+        toast.warning(msg ||"Something went wrong");
       },
     });
 
@@ -55,22 +69,27 @@ export default function useChat({
         });
     }
 
-    const handleChatEnd = () => {
-      // toast.warning("Chat has ended");
-      setIsMessageDisabled(true);
-      setActiveChat(null);
-      setOpenReview(true);
-      stopTimer();
+    const handleWarning = (msg) => {
+      toast.warning(msg?.message || "Warning msg");
+    }
+
+    const handleTyping = (isTyping) => {
+      console.log('Typing event received:', isTyping);
+      setIsTyping(isTyping === true);
     }
 
     voiceSocket.on("message:recieved", handleAddMessage);
-    voiceSocket.on("chat:ended", handleChatEnd);
+    voiceSocket.on("warning", handleWarning);
+    voiceSocket.on("typing", handleTyping);
+    voiceSocket.on("chat:ended", handleChatEndedFromServer);
 
     return () => {
-    voiceSocket.off("message:recieved", handleAddMessage);
-    voiceSocket.off("chat:ended", handleChatEnd);
+      voiceSocket.off("message:recieved", handleAddMessage);
+      voiceSocket.off("warning", handleWarning);
+      voiceSocket.off("typing", handleTyping);
+      voiceSocket.off("chat:ended", handleChatEndedFromServer);
     }
-  }, [roomId]);
+  }, [roomId, activeChat]);
 
   // ASTRO SEND
   const astroReply = (text) => {
@@ -104,6 +123,9 @@ export default function useChat({
     sendTyping,
     isMessageDisabled,
     setIsMessageDisabled,
-    formattedTime: formatTimer(chatSeconds)
+    formattedTime: formatTimer(chatSeconds),
+    chatSeconds,
+    remainingTime: activeChat?.remainingTime || 0,
+    handleChatEndedFromServer
   };
 }

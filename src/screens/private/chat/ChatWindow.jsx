@@ -24,26 +24,9 @@ const MIN_CHAT_SECONDS = 60;
 
 /* -------------------- Message Bubble -------------------- */
 
-const Message = ({ text, isSender, time }) => {
+const Message = (message) => {
   const [iframeSrc, setIframeSrc] = useState(null);
   const [loading, setLoading] = useState(false);
-
-  let message = text;
-  let isVoiceMsg = false;
-
-  // Detect voice message (JSON)
-  try {
-    if (typeof text === "string") {
-      const parsed = JSON.parse(text);
-      if (parsed && typeof parsed === "object") {
-        message = parsed;
-        isVoiceMsg = true;
-      }
-    }
-  } catch {
-    message = text;
-    isVoiceMsg = false;
-  }
 
   // Extract /kundli/:id path
   const extractKundliPath = (url) => {
@@ -58,80 +41,98 @@ const Message = ({ text, isSender, time }) => {
     }
   };
 
-  // Accept only .../kundli/:id
-  const kundliUrlRegex = /^https?:\/\/[^\/]+\/kundli\/[^\/\s]+$/i;
+  const renderMessageContent = () => {
+    if (message?.type === "audio") {
+      return (
+        <VoiceMessage
+          url={message.text}
+          sender={message.isSender}
+        />
+      );
+    }
 
-  // Normalize message to string for URL scan
-  let textToCheck = "";
-  if (typeof message === "string") {
-    textToCheck = message;
-  } else if (Array.isArray(message)) {
-    textToCheck = message.join(" ");
-  } else if (typeof message === "object" && message !== null) {
-    textToCheck = JSON.stringify(message);
-  }
+    if (message?.type === "image") {
+      return (
+        <img
+          src={message.text}
+          alt="Shared image"
+          className="max-w-[200px] max-h-[200px] object-cover rounded-lg"
+        />
+      );
+    }
 
-  // Extract URLs
-  let match = null;
-  const urlMatches = textToCheck.match(/https?:\/\/[^\s]+/g);
+    if (message?.type === "video") {
+      return (
+        <video
+          src={message.text}
+          controls
+          className="max-w-[250px] max-h-[250px] rounded-lg"
+        />
+      );
+    }
 
-  if (urlMatches) {
-    match = urlMatches.find((url) => kundliUrlRegex.test(url)) || null;
-  }
+    if (message?.type === "attachment") {
+      return (
+        <a
+          href={message.text}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 text-sm underline font-semibold"
+        >
+          <span className="text-lg">📎</span>
+          <span className="truncate max-w-[180px]">{"Download Attachment"}</span>
+        </a>
+      );
+    }
 
-  console.log("match :", match);
+    if (message?.type === "kundli") {
+      return (
+        <div
+          onClick={() => {
+            const path = extractKundliPath(message.text);
+            if (path) setIframeSrc(path);
+          }}
+          style={{
+            textDecoration: "underline",
+            fontWeight: 600,
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+          }}
+        >
+          <GrReactjs />
+          View Kundli
+        </div>
+      );
+    }
+
+    // Default: text message
+    return message.content || message.text;
+  };
 
   return (
     <div
-      className={`flex w-full mb-4 ${
-        isSender ? "justify-end" : "justify-start"
-      }`}
+      className={`flex w-full mb-4 ${message?.isSender ? "justify-end" : "justify-start"
+        }`}
     >
       <div
-        className={`flex flex-col max-w-[85%] md:max-w-[65%] ${
-          isSender ? "items-end" : "items-start"
-        }`}
+        className={`flex flex-col max-w-[85%] md:max-w-[65%] ${message?.isSender ? "items-end" : "items-start"
+          }`}
       >
         <div
           className={`px-5 py-3 rounded-2xl text-sm md:text-base leading-relaxed shadow-sm
-            ${
-              isSender
-                ? "bg-gray-300 text-gray-900 rounded-tr-sm"
-                : "bg-gray-100 text-gray-800 rounded-tl-sm border border-gray-100"
+            ${message?.isSender
+              ? "bg-gray-300 text-gray-900 rounded-tr-sm"
+              : "bg-gray-100 text-gray-800 rounded-tl-sm border border-gray-100"
             }
           `}
         >
-          {match ? (
-            <div
-              onClick={() => {
-                const path = extractKundliPath(match);
-                if (path) setIframeSrc(path);
-              }}
-              style={{
-                textDecoration: "underline",
-                fontWeight: 600,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-              }}
-            >
-              <GrReactjs />
-              View Kundli
-            </div>
-          ) : isVoiceMsg ? (
-            <VoiceMessage
-              url={message.audioUrl}
-              duration={message.duration}
-              sender={isSender}
-            />
-          ) : (
-            text
-          )}
+          {renderMessageContent()}
         </div>
 
         <span className="text-[10px] text-gray-400 mt-1 px-1 font-medium">
-          {time}
+          {message.time}
         </span>
       </div>
 
@@ -170,11 +171,11 @@ const ChatWindow = () => {
   const messagesEndRef = useRef(null);
 
   /* --------- History --------- */
-  const { data } = useGetChatHistoryQuery({ userId : userId }, {refetchOnMountOrArgChange : roomId ? true : false});
+  const { data } = useGetChatHistoryQuery({ userId: userId }, { refetchOnMountOrArgChange: roomId ? true : false });
   const historyMessages = data?.data || [];
 
   // Review
-    const [openReview, setOpenReview] = useState(false);
+  const [openReview, setOpenReview] = useState(false);
   const [addUserReview, { isLoading }] = useAddUserReviewMutation();
 
   /* --------- Socket Chat --------- */
@@ -198,31 +199,33 @@ const ChatWindow = () => {
   });
 
   /* --------- Normalize & Merge Messages --------- */
-const finalMessages = useMemo(() => {
-  const history = historyMessages.map((item, index) => ({
-    id: `history-${item._id || item.createdAt}-${index}`,
-    text: item.message,
-    isSender: isUserSide
-      ? item.sender === "user"
-      : item.sender === "astrologer",
-    time: formatTime(item.createdAt),
-    date: formatDate(item.createdAt),
-    dateTime: item.createdAt,
-  }));
+  const finalMessages = useMemo(() => {
+    const history = historyMessages.map((item, index) => ({
+      id: `history-${item._id || item.createdAt}-${index}`,
+      text: item.message,
+      isSender: isUserSide
+        ? item.sender === "user"
+        : item.sender === "astrologer",
+      time: formatTime(item.createdAt),
+      date: formatDate(item.createdAt),
+      dateTime: item.createdAt,
+      type: item?.type
+    }));
 
-  const socket = socketMessages.map((msg, idx) => ({
-    id: `socket-${idx}-${msg.time}`,
-    text: msg.text,
-    isSender: msg.sender,
-    time: msg.time,
-    date: msg.date || formatDate(new Date()),
-    dateTime: msg.dateTime || new Date().toISOString(),
-  }));
+    const socket = socketMessages.map((msg, idx) => ({
+      id: `socket-${idx}-${msg.time}`,
+      text: msg.text,
+      isSender: msg.sender,
+      time: msg.time,
+      date: msg.date || formatDate(new Date()),
+      dateTime: msg.dateTime || new Date().toISOString(),
+      type: msg?.type
+    }));
 
-  return [...history, ...socket].sort(
-    (a, b) => new Date(a.dateTime) - new Date(b.dateTime)
-  );
-}, [historyMessages, socketMessages, isUserSide]);
+    return [...history, ...socket].sort(
+      (a, b) => new Date(a.dateTime) - new Date(b.dateTime)
+    );
+  }, [historyMessages, socketMessages, isUserSide]);
 
   /* --------- Group By Date --------- */
   const messagesWithDate = useMemo(() => {
@@ -272,20 +275,28 @@ const finalMessages = useMemo(() => {
 
   const [getS3SignedUrl] = useGetS3SignedUrlMutation();
   const handleStopRecording = async () => {
-    const { blob, duration } = await stopRecording();
+    const { blob } = await stopRecording();
     const signedUrl = await getS3SignedUrl({
       fileType: blob.type,
     }).unwrap();
     const audioUrl = (signedUrl.uploadUrl).split("?")[0];
     const uploadUrl = signedUrl.uploadUrl;
     await uploadAudioToS3(uploadUrl, blob);
-    const jsonString = JSON.stringify({
-      type: "voice",
-      audioUrl,
-      duration,
-    });
-    astroReply(jsonString);
+    const attachType = getAttachType(blob.type);
+    astroReply(audioUrl, attachType);
     setMessage("");
+  };
+
+  const getAttachType = (mimeType) => {
+    if (mimeType.startsWith('image/')) {
+      return 'image';
+    } else if (mimeType.startsWith('video/')) {
+      return 'video';
+    } else if (mimeType.startsWith('audio/')) {
+      return 'audio';
+    } else {
+      return 'attachment';
+    }
   };
 
   const uploadAudioToS3 = async (uploadUrl, blob) => {
@@ -397,7 +408,7 @@ const finalMessages = useMemo(() => {
               {msg.date}
             </div>
           ) : (
-            <Message key={msg.id} {...msg} />
+            <Message key={msg.id} text={msg.text} isSender={msg.isSender} time={msg.time} type={msg.type} />
           )
         )}
 
@@ -414,22 +425,22 @@ const finalMessages = useMemo(() => {
       {!isMessageDisabled && <div className="sticky bottom-0 z-20 p-4 md:p-6 border-t border-gray-100 bg-white">
         <div className="flex items-center gap-3">
           <div className="flex-1 flex items-center bg-white border border-gray-300 rounded-full px-4 h-14">
-          <input
-            type="text"
-            value={message}
-            placeholder="Write a message..."
-            onChange={(e) => {
-              setMessage(e.target.value);
-              sendTyping();
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                handleSend();
-              }
-            }}
-            disabled={isMessageDisabled}
-            className="flex-1 h-full border-none outline-none focus:outline-none text-sm md:text-base"
+            <input
+              type="text"
+              value={message}
+              placeholder="Write a message..."
+              onChange={(e) => {
+                setMessage(e.target.value);
+                sendTyping();
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
+              disabled={isMessageDisabled}
+              className="flex-1 h-full border-none outline-none focus:outline-none text-sm md:text-base"
             />
 
             <div className="flex items-center gap-2 pl-2">

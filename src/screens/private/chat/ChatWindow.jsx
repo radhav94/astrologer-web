@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, Mic, Send } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { IoCallOutline, IoVideocamOutline } from "react-icons/io5";
+import { IoCallOutline, IoVideocamOutline, IoCallSharp } from "react-icons/io5";
 import dayjs from "dayjs";
 import { useGetChatHistoryQuery } from "../../../redux/activity/chatApi";
 import useChat from "../../../hooks/useChatWindow";
@@ -15,10 +15,12 @@ import { useAddUserReviewMutation } from "../../../redux/review/reviewApi";
 import { Toast } from "../../../components";
 import { GrReactjs } from "react-icons/gr";
 import IframeModal from "./IframeModal";
+import { voiceSocket } from "../../../services/appServices/voiceSocketServices";
 /* -------------------- Helpers -------------------- */
 
 const formatDate = (date) => dayjs(date).format("DD MMMM YYYY");
 const formatTime = (date) => dayjs(date).format("HH:mm");
+const MIN_CHAT_SECONDS = 60;
 
 /* -------------------- Message Bubble -------------------- */
 
@@ -182,7 +184,10 @@ const ChatWindow = () => {
     astroReply,
     sendTyping,
     isMessageDisabled,
-    formattedTime
+    formattedTime,
+    chatSeconds,
+    remainingTime,
+    handleChatEndedFromServer
   } = useChat({
     userId,
     astrologerId,
@@ -299,6 +304,24 @@ const finalMessages = useMemo(() => {
     return "success";
   };
 
+  const handleDisconnect = () => {
+    try {
+      voiceSocket.emit("chat:end", { roomId, endedBy: "ASTROLOGER" });
+    } catch (error) {
+      handleChatEndedFromServer();
+      console.log('chat end error', error);
+    }
+  };
+
+  const handleChatEnd = () => {
+    if (remainingTime * 60 - chatSeconds < MIN_CHAT_SECONDS) {
+      Toast.error("Chat cannot be ended before 1 minute");
+      return false;
+    }
+    handleDisconnect();
+    return true;
+  };
+
   // if (!state?.roomId) {
   //   return (
   //     <div className="h-screen flex items-center justify-center text-gray-500">
@@ -390,6 +413,7 @@ const finalMessages = useMemo(() => {
       {/* ---------- Input ---------- */}
       {!isMessageDisabled && <div className="sticky bottom-0 z-20 p-4 md:p-6 border-t border-gray-100 bg-white">
         <div className="flex items-center gap-3">
+          <div className="flex-1 flex items-center bg-white border border-gray-300 rounded-full px-4 h-14">
           <input
             type="text"
             value={message}
@@ -405,27 +429,37 @@ const finalMessages = useMemo(() => {
               }
             }}
             disabled={isMessageDisabled}
-            className="flex-1 px-5 py-4 border border-gray-300 rounded-2xl 
-           outline-none focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
-          />
+            className="flex-1 h-full border-none outline-none focus:outline-none text-sm md:text-base"
+            />
 
+            <div className="flex items-center gap-2 pl-2">
+              <button
+                onClick={handleMicClick}
+                aria-label="Voice message"
+                className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-orange-50 transition-all text-orange-600"
+              >
+                <Mic size={22} />
+              </button>
+
+              <button
+                onClick={handleSend}
+                disabled={!message.trim() || isMessageDisabled}
+                aria-label="Send message"
+                className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-orange-50 transition-all text-orange-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Send size={22} />
+              </button>
+            </div>
+          </div>
+
+          {/* End Call Button */}
           <button
-            onClick={handleSend}
-            disabled={!message.trim() || isMessageDisabled}
-            aria-label="Send message"
-            className={`p-4 rounded-2xl transition-all ${message.trim()
-              ? "bg-gray-900 text-white hover:bg-gray-800"
-              : "bg-gray-300 cursor-not-allowed"
-              }`}
+            onClick={handleChatEnd}
+            aria-label="End chat"
+            className="w-16 h-16 min-w-[64px] rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 active:scale-95 transition-all shadow-lg"
+            style={{ transform: 'rotate(135deg)' }}
           >
-            <Send size={20} />
-          </button>
-          <button
-            onClick={handleMicClick}
-            aria-label="Voice message"
-            className="p-4 rounded-2xl transition-all bg-gray-300 hover:bg-gray-800 hover:text-white"
-          >
-            <Mic size={20} />
+            <IoCallSharp size={28} />
           </button>
           {recording && (
             <VoiceRecorderPopup
@@ -434,13 +468,6 @@ const finalMessages = useMemo(() => {
               onCancel={cancelRecording}
             />
           )}
-          {/* End button */}
-          {/* <button
-            className="flex items-center justify-center p-4 rounded-2xl bg-red-500 text-white hover:bg-red-600 active:scale-95 transition"
-            onClick={() => setOpenReview(true)}
-          >
-            End
-          </button> */}
         </div>
       </div>}
       {/* Review Modal */}

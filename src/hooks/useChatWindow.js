@@ -65,7 +65,8 @@ export default function useChat({
           text: data.message,
           sender: isSenderAstrologer,
           time: formatTime(),
-          dateTime: data?.dateTime
+          dateTime: data?.dateTime,
+          type: data?.type
         });
     }
 
@@ -92,7 +93,7 @@ export default function useChat({
   }, [roomId, activeChat]);
 
   // ASTRO SEND
-  const astroReply = (text) => {
+  const astroReply = (text, type = "message") => {
     const res = socketService.astrologerReplied({
       message: text,
       roomId,
@@ -100,7 +101,7 @@ export default function useChat({
       astrologerId,
       sender: "astrologer",
       kundliId,
-      type: "message"
+      type: type
     });
 
     if (res?.error) {

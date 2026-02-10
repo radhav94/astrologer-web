@@ -16,6 +16,8 @@ import { Toast } from "../../../components";
 import { GrReactjs } from "react-icons/gr";
 import IframeModal from "./IframeModal";
 import { voiceSocket } from "../../../services/appServices/voiceSocketServices";
+import LinkPreview from "./LinkPreview";
+import { detectURL } from "../../../utils/helper/linkPreview";
 /* -------------------- Helpers -------------------- */
 
 const formatDate = (date) => dayjs(date).format("DD MMMM YYYY");
@@ -24,9 +26,26 @@ const MIN_CHAT_SECONDS = 60;
 
 /* -------------------- Message Bubble -------------------- */
 
-const Message = (message) => {
+const Message = ({ text, isSender, time, type }) => {
   const [iframeSrc, setIframeSrc] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  let message = text;
+  let isVoiceMsg = false;
+
+  // Detect voice message (JSON)
+  try {
+    if (typeof text === "string") {
+      const parsed = JSON.parse(text);
+      if (parsed && typeof parsed === "object") {
+        message = parsed;
+        isVoiceMsg = true;
+      }
+    }
+  } catch {
+    message = text;
+    isVoiceMsg = false;
+  }
 
   // Extract /kundli/:id path
   const extractKundliPath = (url) => {
@@ -41,55 +60,81 @@ const Message = (message) => {
     }
   };
 
+  // Accept only .../kundli/:id
+  const kundliUrlRegex = /^https?:\/\/[^\/]+\/kundli\/[^\/\s]+$/i;
+
+  // Normalize message to string for URL scan
+  let textToCheck = "";
+  if (typeof message === "string") {
+    textToCheck = message;
+  } else if (Array.isArray(message)) {
+    textToCheck = message.join(" ");
+  } else if (typeof message === "object" && message !== null) {
+    textToCheck = JSON.stringify(message);
+  }
+
+  // Extract URLs
+  let kundliMatch = null;
+  const urlMatches = textToCheck.match(/https?:\/\/[^\s]+/g);
+
+  if (urlMatches) {
+    kundliMatch = urlMatches.find((url) => kundliUrlRegex.test(url)) || null;
+  }
+
+  // Detect general URLs for link preview (excluding kundli links and voice messages)
+  const detectedURL = !isVoiceMsg && !kundliMatch ? detectURL(textToCheck) : null;
+
+  // Handle different message types
   const renderMessageContent = () => {
-    if (message?.type === "audio") {
+    // Handle type-based messages
+    if (type === "audio") {
       return (
         <VoiceMessage
-          url={message.text}
-          sender={message.isSender}
+          url={text}
+          sender={isSender}
         />
       );
     }
 
-    if (message?.type === "image") {
+    if (type === "image") {
       return (
         <img
-          src={message.text}
+          src={text}
           alt="Shared image"
           className="max-w-[200px] max-h-[200px] object-cover rounded-lg"
         />
       );
     }
 
-    if (message?.type === "video") {
+    if (type === "video") {
       return (
         <video
-          src={message.text}
+          src={text}
           controls
           className="max-w-[250px] max-h-[250px] rounded-lg"
         />
       );
     }
 
-    if (message?.type === "attachment") {
+    if (type === "attachment") {
       return (
         <a
-          href={message.text}
+          href={text}
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-2 text-sm underline font-semibold"
         >
           <span className="text-lg">📎</span>
-          <span className="truncate max-w-[180px]">{"Download Attachment"}</span>
+          <span className="truncate max-w-[180px]">Download Attachment</span>
         </a>
       );
     }
 
-    if (message?.type === "kundli") {
+    if (type === "kundli") {
       return (
         <div
           onClick={() => {
-            const path = extractKundliPath(message.text);
+            const path = extractKundliPath(text);
             if (path) setIframeSrc(path);
           }}
           style={{
@@ -107,24 +152,77 @@ const Message = (message) => {
       );
     }
 
-    // Default: text message
-    return message.content || message.text;
+    // Handle kundli match from URL detection
+    if (kundliMatch) {
+      return (
+        <div
+          onClick={() => {
+            const path = extractKundliPath(kundliMatch);
+            if (path) setIframeSrc(path);
+          }}
+          style={{
+            textDecoration: "underline",
+            fontWeight: 600,
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+          }}
+        >
+          <GrReactjs />
+          View Kundli
+        </div>
+      );
+    }
+
+    // Handle voice message from JSON
+    if (isVoiceMsg) {
+      return (
+        <VoiceMessage
+          url={message.audioUrl}
+          duration={message.duration}
+          sender={isSender}
+        />
+      );
+    }
+
+    // Handle regular text with link preview
+    return (
+      <>
+        {/* Show the text if it's more than just the URL */}
+        {detectedURL && text !== detectedURL ? (
+          <div style={{ marginBottom: 8 }}>
+            {text}
+          </div>
+        ) : !detectedURL ? (
+          text
+        ) : null}
+        
+        {/* Show link preview if URL detected */}
+        {detectedURL && (
+          <LinkPreview url={detectedURL} isSender={isSender} />
+        )}
+      </>
+    );
   };
 
   return (
     <div
-      className={`flex w-full mb-4 ${message?.isSender ? "justify-end" : "justify-start"
-        }`}
+      className={`flex w-full mb-4 ${
+        isSender ? "justify-end" : "justify-start"
+      }`}
     >
       <div
-        className={`flex flex-col max-w-[85%] md:max-w-[65%] ${message?.isSender ? "items-end" : "items-start"
-          }`}
+        className={`flex flex-col max-w-[85%] md:max-w-[65%] ${
+          isSender ? "items-end" : "items-start"
+        }`}
       >
         <div
           className={`px-5 py-3 rounded-2xl text-sm md:text-base leading-relaxed shadow-sm
-            ${message?.isSender
-              ? "bg-gray-300 text-gray-900 rounded-tr-sm"
-              : "bg-gray-100 text-gray-800 rounded-tl-sm border border-gray-100"
+            ${
+              isSender
+                ? "bg-gray-300 text-gray-900 rounded-tr-sm"
+                : "bg-gray-100 text-gray-800 rounded-tl-sm border border-gray-100"
             }
           `}
         >
@@ -132,7 +230,7 @@ const Message = (message) => {
         </div>
 
         <span className="text-[10px] text-gray-400 mt-1 px-1 font-medium">
-          {message.time}
+          {time}
         </span>
       </div>
 

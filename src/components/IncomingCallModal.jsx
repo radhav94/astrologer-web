@@ -62,7 +62,7 @@ const IncomingCallModal = () => {
               Incoming {incomingCall.callType === "video" ? "Video" : "Audio"} Call
             </h3>
             <p className="text-sm text-zinc-400">
-              Someone is calling you…
+              {incomingCall.callerName || "Someone"} is calling you…
             </p>
           </div>
         </div>

@@ -14,6 +14,7 @@ import styles from "./VideoCalling.module.scss";
 import { voiceSocket } from "../../../services/appServices/voiceSocketServices";
 import { useCall } from "../../../context/CallContext";
 import VideoCallChat from "./VideoCallChat";
+import { PATH } from "../../../utils/routes/Paths";
 
 const APP_ID = "5630460abdc141e3b2f8d9597752bd7d";
 
@@ -348,20 +349,21 @@ const VideoCalling = ({ callData }) => {
 
   const openChatWithMinimize = () => {
     setIsMinimized(true);
-    setTimeout(() => {
-      if (isUserSide) {
-        navigate(`/talk-to-astrologers/${activeCall.astrologerId}`, {
-          state: {
-            roomId: activeCall.chatRoomId,
-            userId: activeCall.userId,
-            astrologerId: activeCall.astrologerId,
-            kundliId: activeCall.kundliId,
-            fullName: activeCall.callerName,
-            isUserSide: true,
-          },
-        });
+    navigate(
+      PATH.privateRoutes.CHAT_WINDOW.path.replace(
+        ":chatId",
+        activeCall.userId
+      ),
+      {
+        state: {
+          roomId: activeCall.chatRoomId,
+          userId: activeCall.userId,
+          astrologerId: activeCall.astrologerId,
+          kundliId: activeCall.kundliId,
+          fullName: activeCall.callerName,
+        },
       }
-    }, 50);
+    )
   };
 
   const formatTime = (s) =>

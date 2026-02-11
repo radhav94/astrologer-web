@@ -4,6 +4,7 @@ import { voiceSocket } from "../services/appServices/voiceSocketServices";
 import toast from "../components/toast";
 import {useChat as useChatContext} from "../context/chatContext"
 import { formatTimer } from "../utils/timeFormat";
+import { useCall } from "../context/CallContext";
 
 export default function useChat({
   userId,
@@ -18,6 +19,7 @@ export default function useChat({
   const [isTyping, setIsTyping] = useState(false);
   const [isMessageDisabled, setIsMessageDisabled] = useState(false);
   const {setActiveChat, activeChat, startTimer, stopTimer, chatSeconds} = useChatContext();
+  const { activeCall } = useCall();
 
   const formatTime = () =>
     new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -34,7 +36,10 @@ export default function useChat({
   };
 
   useEffect(() => {
-    if(activeChat?.astrologerId !== astrologerId) setIsMessageDisabled(true);
+    // Disable messages only if userId is not in activeCall AND not in activeChat
+    if(activeChat?.userId !== userId && activeCall?.userId !== userId) {
+      setIsMessageDisabled(true);
+    }
     if(!roomId || !userId || !astrologerId) return;
     socketService.connect({
       onConnected: () => {

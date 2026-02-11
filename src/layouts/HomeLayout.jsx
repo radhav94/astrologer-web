@@ -77,7 +77,7 @@ const HomeLayout = () => {
           const apiUser = astrologerData.data;
 
           // Backend = source of truth
-          setIsOnline(apiUser?.isActive === "online");
+          setIsOnline(apiUser?.isActive);
 
           // Update localStorage with latest data
           localStorage.setItem(

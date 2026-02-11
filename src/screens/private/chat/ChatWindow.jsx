@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronLeft, Mic, Send } from "lucide-react";
+import { ChevronLeft, Mic, Send, Gift } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { IoCallOutline, IoVideocamOutline, IoCallSharp } from "react-icons/io5";
 import dayjs from "dayjs";
@@ -26,25 +26,25 @@ const MIN_CHAT_SECONDS = 60;
 
 /* -------------------- Message Bubble -------------------- */
 
-const Message = ({ text, isSender, time, type }) => {
+const Message = ({ text, isSender, time, type, giftData }) => {
   const [iframeSrc, setIframeSrc] = useState(null);
   const [loading, setLoading] = useState(false);
-
   let message = text;
   let isVoiceMsg = false;
-
-  // Detect voice message (JSON)
-  try {
-    if (typeof text === "string") {
-      const parsed = JSON.parse(text);
-      if (parsed && typeof parsed === "object") {
-        message = parsed;
-        isVoiceMsg = true;
+  // Detect voice message (JSON) only if not a special type
+  if (type !== "gift" && type !== "kundli" && type !== "audio" && type !== "video" && type !== "image" && type !== "attachment") {
+    try {
+      if (typeof text === "string") {
+        const parsed = JSON.parse(text);
+        if (parsed && typeof parsed === "object") {
+          message = parsed;
+          isVoiceMsg = true;
+        }
       }
+    } catch {
+      message = text;
+      isVoiceMsg = false;
     }
-  } catch {
-    message = text;
-    isVoiceMsg = false;
   }
 
   // Extract /kundli/:id path
@@ -86,6 +86,70 @@ const Message = ({ text, isSender, time, type }) => {
 
   // Handle different message types
   const renderMessageContent = () => {
+    // Handle gift type
+    if (type === "gift") {
+      let parsedGiftData = giftData;
+      let giftText = "Gift received";
+      
+      // If giftData is not passed as prop, try to parse from text
+      if (!parsedGiftData && typeof text === "string") {
+        try {
+          const parsed = JSON.parse(text);
+          if (parsed.giftData) {
+            parsedGiftData = parsed.giftData;
+            giftText = parsed.text || giftText;
+          }
+        } catch (e) {
+          // If parsing fails, giftData might be passed directly
+          parsedGiftData = giftData;
+        }
+      } else if (parsedGiftData) {
+        giftText = parsedGiftData.text || giftText;
+      }
+
+      const parts = giftText.split("a gift");
+
+      return (
+        <div className="flex flex-col gap-3 min-w-[250px] animate-fadeIn">
+          {/* Gift Header */}
+          <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
+            <Gift size={18} className="text-orange-500 animate-bounce" />
+            <span className="text-xs font-semibold text-gray-600 uppercase">
+              Gift Received
+            </span>
+          </div>
+          {/* Gift Message */}
+          {giftText && (
+            <p className="text-sm text-gray-700 italic bg-gradient-to-r from-orange-50 to-yellow-50 p-3 rounded-lg border-l-4 border-orange-400">
+              "{parts[0]} a gift to you"
+            </p>
+          )}
+          {/* Gift Content */}
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <img
+                src={parsedGiftData?.giftImg}
+                alt={parsedGiftData?.giftName}
+                className="w-20 h-20 object-contain rounded-lg bg-white p-2 shadow-sm border border-gray-100"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                }}
+              />
+            </div>
+            
+            <div className="flex flex-col flex-1">
+              <span className="font-bold text-lg text-gray-900">
+                {parsedGiftData?.giftName}
+              </span>
+              <span className="text-base font-semibold text-orange-600">
+                ₹{parsedGiftData?.price?.toLocaleString('en-IN')}
+              </span>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     // Handle type-based messages
     if (type === "audio") {
       return (

@@ -16,6 +16,17 @@ const mapRecentActivity = (apiData = []) => {
       const latestMessage = item?.latestMessage;
       const user = item?.userDetail;
 
+      // Handle gift message preview
+      let messagePreview = latestMessage?.message || "";
+      if (latestMessage?.type === "gift") {
+        try {
+          const parsed = typeof messagePreview === "string" ? JSON.parse(messagePreview) : messagePreview;
+            messagePreview = "🎁 Sent a gift";
+        } catch (e) {
+          messagePreview = "🎁 Sent a gift";
+        }
+      }
+
       return {
         id: item?._id,
         userId: user?._id,
@@ -35,7 +46,7 @@ const mapRecentActivity = (apiData = []) => {
           ? dayjs(latestMessage.updatedAt).fromNow()
           : "",
 
-        messagePreview: latestMessage?.message || "",
+        messagePreview: messagePreview,
 
         avatarSeed: user?._id,
 

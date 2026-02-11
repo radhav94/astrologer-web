@@ -108,7 +108,7 @@ const IncomingChatModal = () => {
               Incoming Chat 
             </h3>
             <p className="text-sm text-zinc-400">
-              {activeChat?.chaterName || "Someone"} wants to chat with you…
+              {incomingChat?.chaterName || "Someone"} wants to chat with you…
             </p>
           </div>
         </div>

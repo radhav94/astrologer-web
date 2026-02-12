@@ -15,6 +15,7 @@ import styles from "./VoiceCall.module.scss";
 // import { PATH } from "../../utils/routes/Paths";
 import { useCall } from "../../../context/CallContext";
 import { voiceSocket } from "../../../services/appServices/voiceSocketServices";
+import { PATH } from "../../../utils/routes/Paths";
 
 const APP_ID = "5630460abdc141e3b2f8d9597752bd7d";
 
@@ -182,6 +183,25 @@ const AgoraVoiceCalling = ({ callData }) => {
     `${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(
       sec % 60
     ).padStart(2, "0")}`;
+
+  const openChatWithMinimize = () => {
+    setIsMinimized(true);
+    navigate(
+      PATH.privateRoutes.CHAT_WINDOW.path.replace(
+        ":chatId",
+        activeCall.userId
+      ),
+      {
+        state: {
+          roomId: activeCall.chatRoomId,
+          userId: activeCall.userId,
+          astrologerId: activeCall.astrologerId,
+          kundliId: activeCall.kundliId,
+          fullName: activeCall.callerName,
+        },
+      }
+    );
+  };
 
   const toggleCamera = async () => {
     const client = clientRef.current;
@@ -368,26 +388,7 @@ const AgoraVoiceCalling = ({ callData }) => {
 
             {/* CHAT */}
             <button
-              onClick={() => {
-                setIsMinimized(true);
-                isUserSide
-                  ? navigate(
-                    `/talk-to-astrologers/${activeCall.astrologerId}`,
-                    {
-                      state: {
-                        roomId: activeCall.chatRoomId,
-                        userId: activeCall.userId,
-                        astrologerId: activeCall.astrologerId,
-                        kundliId: activeCall.kundliId,
-                        fullName: activeCall.callerName,
-                        isUserSide: true,
-                      },
-                    }
-                  )
-                  : navigate(
-                    PATH.privateRoutes.ASTROLOGER_CHAT_USER_LIST.path
-                  );
-              }}
+              onClick={openChatWithMinimize}
               className="w-14 h-14 rounded-full bg-white/20 text-white flex items-center justify-center backdrop-blur-md"
             >
               <IoChatbubbleEllipses size={22} />
@@ -440,26 +441,7 @@ const AgoraVoiceCalling = ({ callData }) => {
               </button>
 
               <button
-                onClick={() => {
-                  setIsMinimized(true);
-                  isUserSide
-                    ? navigate(
-                      `/talk-to-astrologers/${activeCall.astrologerId}`,
-                      {
-                        state: {
-                          roomId: activeCall.chatRoomId,
-                          userId: activeCall.userId,
-                          astrologerId: activeCall.astrologerId,
-                          kundliId: activeCall.kundliId,
-                          fullName: activeCall.callerName,
-                          isUserSide: true,
-                        },
-                      }
-                    )
-                    : navigate(
-                      PATH.privateRoutes.ASTROLOGER_CHAT_USER_LIST.path
-                    );
-                }}
+                onClick={openChatWithMinimize}
               >
                 <IoChatbubbleEllipses size={20} />
               </button>

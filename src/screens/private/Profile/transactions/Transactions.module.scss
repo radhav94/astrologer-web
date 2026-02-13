@@ -1,0 +1,245 @@
+// Transactions.module.scss
+
+// Wrapper
+.transactionsWrapper {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  padding-bottom: 100px;
+}
+
+// Container
+.transactionsContainer {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+// Custom Tabs Header
+.tabsHeader {
+  display: flex;
+  border-bottom: 2px solid #E5E5E5;
+  margin-bottom: 24px;
+}
+
+.tabButton {
+  flex: 1;
+  padding: 16px 0;
+  background: none;
+  border: none;
+  font-size: 18px;
+  font-weight: 400;
+  color: #9E9E9E;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    color: #1A1A1A;
+  }
+  
+  &.active {
+    color: #1A1A1A;
+    font-weight: 600;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background-color: #1A1A1A;
+    }
+  }
+}
+
+.tabContent {
+  width: 100%;
+}
+
+// Contact Support Button
+.contactSupportButton {
+  width: 100%;
+  background-color: #3D2817;
+  color: #ffffff;
+  padding: 16px 24px;
+  border-radius: 50px;
+  border: none;
+  font-size: 18px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 32px;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background-color: #2D1F10;
+  }
+}
+
+// Transaction History Item
+.transactionItem {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 16px;
+  margin-bottom: 12px;
+}
+
+.transactionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.transactionId {
+  font-size: 14px;
+  color: #9E9E9E;
+  font-weight: 400;
+}
+
+.transactionAmount {
+  font-size: 18px;
+  font-weight: 600;
+  
+  &.credit {
+    color: #05CD99;
+  }
+  
+  &.debit {
+    color: #C03744;
+  }
+}
+
+.transactionTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1A1A1A;
+  margin: 0;
+}
+
+// Gift Received Item
+.giftItem {
+  background-color: #ffffff;
+  padding: 16px;
+  border-radius: 16px;
+  margin-bottom: 12px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.giftImage {
+  width: 80px;
+  height: 80px;
+  border-radius: 12px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.giftContent {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.giftHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.giftInfo {
+  flex: 1;
+}
+
+.giftMeta {
+  font-size: 14px;
+  color: #9E9E9E;
+  font-weight: 400;
+  margin-bottom: 8px;
+}
+
+.giftName {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1A1A1A;
+  margin: 0 0 4px 0;
+}
+
+.giftSender {
+  font-size: 14px;
+  color: #6B6B6B;
+  margin: 0;
+}
+
+.giftAmount {
+  font-size: 18px;
+  font-weight: 600;
+  color: #05CD99;
+  white-space: nowrap;
+}
+
+.claimButton {
+  background-color: #D4F4E7;
+  color: #05CD99;
+  padding: 10px 24px;
+  border-radius: 50px;
+  border: none;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  margin-top: 8px;
+  
+  &:hover {
+    background-color: #C0EDD9;
+  }
+  
+  &.claimed {
+    background-color: #FFF4E6;
+    color: #F3AD3D;
+    cursor: default;
+    
+    &:hover {
+      background-color: #FFF4E6;
+    }
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .giftItem {
+    padding: 12px;
+    gap: 12px;
+  }
+  
+  .giftImage {
+    width: 64px;
+    height: 64px;
+  }
+  
+  .giftName {
+    font-size: 16px;
+  }
+  
+  .giftMeta,
+  .giftSender {
+    font-size: 13px;
+  }
+  
+  .claimButton {
+    padding: 8px 20px;
+    font-size: 14px;
+  }
+}

@@ -30,7 +30,7 @@ export const Toggle = ({ label, checked, onChange }) => {
 export const Button = ({ children, className = "", ...props }) => {
   return (
     <button
-      className={`w-full bg-gray-950 text-white font-medium py-4 px-6 rounded-xl hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 ${className}`}
+      className={`w-full bg-gray-950 text-white font-medium py-4 px-6 rounded-xl hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 flex items-center justify-center gap-2 ${className}`}
       {...props}
     >
       {children}
@@ -41,13 +41,15 @@ export const Button = ({ children, className = "", ...props }) => {
 // Section Header
 export const SectionHeader = ({ title }) => (
   <div className="flex items-center gap-4 mb-8">
-    <button className="p-2 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors">
-      <Link to="/profile">
+      <button
+        onClick={() => navigate(-1)}
+        className="p-2 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
+      >
         <Icons.ChevronLeft size={20} className="text-gray-700" />
-      </Link>
-    </button>
-    <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
-  </div>
+      </button>
+
+      <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
+    </div>
 );
 
 export const Chip = ({ label, selected, onClick, icon }) => {

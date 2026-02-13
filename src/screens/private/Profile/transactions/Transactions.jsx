@@ -1,64 +1,67 @@
 import { Icons } from "../../../../components/Icons";
+import { AppImages } from "../../../../utils/appImages";
+import styles from "./Transactions.module.scss";
+import SwitchTabs from "../../../../components/UI/tabs/SwitchTabs";
 
 const TRANSACTIONS = [
   {
-    id: "1",
+    id: 1,
     title: "Call with #1876",
     date: "Oct 01, 2025 • 04:36 PM",
     amount: 200,
     isCredit: true,
   },
   {
-    id: "2",
+    id: 2,
     title: "Withdrawal to bank",
     date: "Oct 01, 2025 • 04:36 PM",
     amount: 5000,
     isCredit: false,
   },
   {
-    id: "3",
+    id: 3,
     title: "Call with #1876",
     date: "Oct 01, 2025 • 04:36 PM",
     amount: 200,
     isCredit: true,
   },
   {
-    id: "4",
+    id: 4,
     title: "Call with #1876",
     date: "Oct 01, 2025 • 04:36 PM",
     amount: 200,
     isCredit: true,
   },
   {
-    id: "5",
+    id: 5,
     title: "Call with #1876",
     date: "Oct 01, 2025 • 04:36 PM",
     amount: 200,
     isCredit: true,
   },
   {
-    id: "6",
+    id: 6,
     title: "Withdrawal to bank",
     date: "Oct 01, 2025 • 04:36 PM",
     amount: 5000,
     isCredit: false,
   },
   {
-    id: "7",
+    id: 7,
     title: "Call with #1876",
     date: "Oct 01, 2025 • 04:36 PM",
     amount: 200,
     isCredit: true,
   },
   {
-    id: "8",
+    id: 8,
     title: "Call with #1876",
     date: "Oct 01, 2025 • 04:36 PM",
     amount: 200,
     isCredit: true,
   },
   {
-    id: "9",
+    id: 9,
     title: "Call with #1876",
     date: "Oct 01, 2025 • 04:36 PM",
     amount: 200,
@@ -66,43 +69,157 @@ const TRANSACTIONS = [
   },
 ];
 
-const Transactions = () => {
-  return (
-    <div className="h-full w-full flex flex-col">
-      <div className="flex items-center gap-4 mb-6">
-        {/* Title is usually in header, but keeping layout consistent with other subpages */}
-      </div>
+const GIFT_RECEIVED = [
+  {
+    id: 1896,
+    giftName: "Pooja Thali",
+    giftImage: AppImages.Ring, // Replace with actual gift image
+    senderName: "Swati Sharma",
+    date: "Oct 01, 2025",
+    time: "04:36 PM",
+    amount: 200,
+    isClaimed: false,
+  },
+  {
+    id: 1896,
+    giftName: "Pooja Thali",
+    giftImage: AppImages.Ring, // Replace with actual gift image
+    senderName: "Swati Sharma",
+    date: "Oct 01, 2025",
+    time: "04:36 PM",
+    amount: 200,
+    isClaimed: true,
+  },
+  {
+    id: 1896,
+    giftName: "Pooja Thali",
+    giftImage: AppImages.Ring, // Replace with actual gift image
+    senderName: "Swati Sharma",
+    date: "Oct 01, 2025",
+    time: "04:36 PM",
+    amount: 200,
+    isClaimed: false,
+  },
+  {
+    id: 1896,
+    giftName: "Pooja Thali",
+    giftImage: AppImages.Ring, // Replace with actual gift image
+    senderName: "Swati Sharma",
+    date: "Oct 01, 2025",
+    time: "04:36 PM",
+    amount: 200,
+    isClaimed: false,
+  },
+  {
+    id: 1896,
+    giftName: "Pooja Thali",
+    giftImage: AppImages.Ring, // Replace with actual gift image
+    senderName: "Swati Sharma",
+    date: "Oct 01, 2025",
+    time: "04:36 PM",
+    amount: 200,
+    isClaimed: true,
+  },
+];
 
-      <div className="space-y-4">
-        {TRANSACTIONS.map((item, idx) => (
-          <div
-            key={`${item.id}-${idx}`}
-            className="flex justify-between items-start border-b border-gray-100 pb-4 last:border-0"
-          >
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <p className="text-xs text-gray-500">#1896 • {item.date}</p>
-              </div>
-              <h4 className="font-bold text-gray-900">{item.title}</h4>
-            </div>
-            <div
-              className={`font-bold ${
-                item.isCredit ? "text-[#05CD99]" : "text-[#C03744]"
+
+
+export const TransactionHistory = () => {
+  return (
+    <div>
+      {TRANSACTIONS.map((item, idx) => (
+        <div key={`${item.id}-${idx}`} className={styles.transactionItem}>
+          <div className={styles.transactionHeader}>
+            <span className={styles.transactionId}>
+              #{item.id} • {item.date}
+            </span>
+            <span
+              className={`${styles.transactionAmount} ${
+                item.isCredit ? styles.credit : styles.debit
               }`}
             >
               {item.isCredit ? "+" : "-"} ₹{item.amount}
-            </div>
+            </span>
           </div>
-        ))}
-      </div>
-
-      <div className=" bottom-6 left-0 w-full px-6 flex justify-center z-20 pointer-events-none">
-        <div className="w-full max-w-lg pointer-events-auto">
-          <button className="w-full bg-black text-white font-medium py-4 rounded-2xl hover:bg-gray-900 transition-colors shadow-lg">
-            Contact Support
-          </button>
+          <h4 className={styles.transactionTitle}>{item.title}</h4>
         </div>
-      </div>
+      ))}
+    </div>
+  );
+};
+
+export const GiftsReceived = () => {
+  return (
+    <div>
+      {GIFT_RECEIVED.map((gift, idx) => (
+        <div key={`${gift.id}-${idx}`} className={styles.giftItem}>
+          <img
+            src={gift.giftImage}
+            alt={gift.giftName}
+            className={styles.giftImage}
+          />
+          <div className={styles.giftContent}>
+            <div className={styles.giftHeader}>
+              <div className={styles.giftInfo}>
+                <p className={styles.giftMeta}>
+                  #{gift.id} • {gift.date} • {gift.time}
+                </p>
+                <h4 className={styles.giftName}>{gift.giftName}</h4>
+                <p className={styles.giftSender}>From {gift.senderName}</p>
+              </div>
+              
+            </div>
+            <div className="d-flex flex-column">
+              <span className={styles.giftAmount}>+ ₹{gift.amount}</span>
+              <button
+              className={`${styles.claimButton} ${
+                gift.isClaimed ? styles.claimed : ""
+              }`}
+            >
+              {gift.isClaimed ? "Claimed" : "Claim"}
+              {!gift.isClaimed && <Icons.ChevronRight size={16} />}
+            </button>
+            </div>
+            
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const Transactions = () => {
+  const tabs = [
+    {
+      label: "Transaction History",
+      value: "transactions",
+      component: TransactionHistory,
+    },
+    {
+      label: "Gifts Received",
+      value: "gifts",
+      component: GiftsReceived,
+    },
+  ];
+
+  const customTabStyles = {
+    container: styles.transactionsContainer,
+    buttonGroup: styles.tabsHeader,
+    button: styles.tabButton,
+    activeButton: styles.active,
+    content: styles.tabContent,
+  };
+
+  return (
+    <div className={styles.transactionsWrapper}>
+      <SwitchTabs 
+        tabs={tabs} 
+        defaultTab="transactions" 
+        customStyles={customTabStyles}
+      />
+      <button className={styles.contactSupportButton}>
+        Contact Support <Icons.ChevronRight size={20} />
+      </button>
     </div>
   );
 };

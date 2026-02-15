@@ -1,6 +1,6 @@
 import ConsultationHistory from "../../components/ConsultationHistory";
 import Dashboard from "../../components/Dashboard";
-import Profile from "../../components/Profile";
+import Profile from "../../screens/private/Profile/Profile";
 import RecentActivity from "../../components/RecentActivity";
 import Onboarding from "../../screens/public/Onboarding/Onboarding";
 import Login from "../../screens/public/Login/Login";
@@ -9,16 +9,16 @@ import Kundli from "../../screens/private/Home/currentStatus/kundli/kundli";
 import SetPrice from "../../screens/private/Home/setPrice/SetPrice";
 import SessionDetails from "../../screens/private/Home/upcomingSessions/SessionDetails";
 import SchedulePage from "../../screens/private/Profile/availability/SchedulePage";
-import AchievementsProfile from "../../screens/private/Profile/profile/AchievementsProfile";
-import Languages from "../../screens/private/Profile/profile/Languages";
-import ProfessionalProfileDtls from "../../screens/private/Profile/profile/ProfessionalDetails";
+import AchievementsProfile from "../../screens/private/Profile/profileForms/AchievementsProfile";
+import Languages from "../../screens/private/Profile/profileForms/Languages";
+import ProfessionalProfileDtls from "../../screens/private/Profile/profileForms/ProfessionalDetails";
 import CustomerSupport from "../../screens/private/Profile/support/customerSupport/CustomerSupport";
 import FAQs from "../../screens/private/Profile/support/FAQs/FAQs";
 import Guidelines from "../../screens/private/Profile/support/guidelines/Guidelines";
 import TermsConditions from "../../screens/private/Profile/support/guidelines/TermsConditions/TermsCondition";
 import RecentTickets from "../../screens/private/Profile/support/tickets/RecentTickets";
 import WithdrawMoney from "../../screens/private/Profile/withdraw/WithdrawMoney";
-import Basic from "../../screens/private/Profile/profile/Basic";
+import Basic from "../../screens/private/Profile/profileForms/Basic";
 import InteractiveLiveStreaming from "../../components/livestream/InteractiveLiveStreaming";
 import ChatWindow from "../../screens/private/chat/ChatWindow";
 import ChatPage from "../../screens/private/chat/ChatPage";
@@ -106,6 +106,10 @@ export const PATH = {
     },
     PROFESSIONALS_DETAILS: {
       path: "/profile/professional-details",
+      element: ProfessionalProfileDtls,
+    },
+    EDUCATIONAL_DETAILS: {
+      path: "/profile/educational-details",
       element: ProfessionalProfileDtls,
     },
     ACHIEVEMENTS_PROFILE: {

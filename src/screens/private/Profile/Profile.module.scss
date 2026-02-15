@@ -1,0 +1,240 @@
+// Profile.module.scss
+.profileContainer {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+
+// Header Section
+.headerSection {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.backButton {
+  width: 48px;
+  height: 48px;
+  background-color: #ffffff;
+  border: 1px solid #E5E5E5;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  
+  &:hover {
+    background-color: #F9F9F9;
+    border-color: #D1D1D1;
+  }
+}
+
+.userInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.nameRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.userName {
+  font-size: 28px;
+  font-weight: 600;
+  color: #1A1A1A;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.verifiedBadge {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.userExperience {
+  font-size: 14px;
+  color: #6B6B6B;
+  font-weight: 400;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+}
+
+// Balance Card
+.balanceCard {
+  background: linear-gradient(135deg, #8B5A2B 0%, #6B4423 50%, #5A3A1F 100%);
+  border-radius: 24px;
+  padding: 32px;
+  margin-bottom: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  position: relative;
+  overflow: hidden;
+  min-height: 160px;
+}
+
+.balanceCardBg {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.15;
+  
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.balanceContent {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.balanceLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.coinIcon {
+  width: 24px;
+  height: 24px;
+  background-color: #D4AF37;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  
+  img {
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+  }
+}
+
+.twinkleIcon {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 12px;
+  height: 12px;
+}
+
+.balanceAmount {
+  font-size: 48px;
+  font-weight: 600;
+  color: #ffffff;
+  line-height: 1;
+  margin: 0;
+}
+
+.withdrawButton {
+  position: relative;
+  z-index: 10;
+  background-color: #ffffff;
+  color: #1A1A1A;
+  padding: 14px 28px;
+  border-radius: 50px;
+  font-size: 16px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  
+  &:hover {
+    background-color: #F5F5F5;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  }
+}
+
+.divider {
+  border: none;
+  border-top: 1px solid #E5E5E5;
+  margin: 24px 0;
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .headerSection {
+    margin-bottom: 20px;
+    gap: 12px;
+  }
+  
+  .backButton {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .userName {
+    font-size: 22px;
+  }
+  
+  .verifiedBadge {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .userExperience {
+    font-size: 13px;
+  }
+  
+  .balanceCard {
+    padding: 24px;
+    margin-bottom: 24px;
+    min-height: 140px;
+  }
+  
+  .balanceAmount {
+    font-size: 40px;
+  }
+  
+  .withdrawButton {
+    padding: 12px 24px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .balanceCard {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+    padding: 20px;
+  }
+  
+  .withdrawButton {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .balanceAmount {
+    font-size: 36px;
+  }
+}

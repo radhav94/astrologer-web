@@ -1,5 +1,4 @@
 //appicons
-
 import Logo from "../assets/icons/logo.png";
 import Call from "../assets/icons/phone.png";
 import Chat from "../assets/icons/chat.png";
@@ -17,6 +16,9 @@ import Share from "../assets/icons/share.png";
 import Gmail from "../assets/icons/gmail.png";
 import whatsapp from "../assets/icons/whatsapp.png";
 import CopyLink from "../assets/icons/link.png";
+import Verified from "../assets/icons/Verified.png"
+import Coin from "../assets/icons/coin.png";
+import TwinkleStar from "../assets/icons/twinkle star.png"
 
 export const AppIcons = {
   Logo,
@@ -36,11 +38,13 @@ export const AppIcons = {
   Share,
   Gmail,
   whatsapp,
-  CopyLink
+  CopyLink,
+  Verified,
+  Coin,
+  TwinkleStar
 };
 
 //appImages
-
 import Hero from "../assets/images/navratri-hero.jpg";
 import Astro1 from "../assets/images/astrologer-1.jpg";
 import Astro2 from "../assets/images/astrologer-2.jpg";
@@ -58,6 +62,12 @@ import Dosh from "../assets/images/dosh.png";
 import Ring from "../assets/images/ring.png";
 import ChatBg from "../assets/images/Chat.png";
 import tarotCard from "../assets/images/tarotCard.png";
+import ProfileWallet from "../assets/images/profile-wallet.jpg"
+import Astrologer from "../assets/images/astrologer.png"
+import ProfileAchivment from "../assets/images/profile-achivement.png";
+import Letter1 from "../assets/images/letter1.png";
+import AchivmentImg from "../assets/images/achivments.png"
+
 export const AppImages = {
   Hero,
   Astro1,
@@ -76,6 +86,11 @@ export const AppImages = {
   Ring,
   ChatBg,
   tarotCard,
+  ProfileWallet,
+  Astrologer,
+  ProfileAchivment,
+  Letter1,
+  AchivmentImg
 };
 
 //svgs

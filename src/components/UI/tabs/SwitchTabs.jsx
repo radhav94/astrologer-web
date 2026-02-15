@@ -1,13 +1,19 @@
 // src/components/common/SwitchTabs.jsx
-import React, { useState } from "react";
+import { useState } from "react";
 import styles from "./Switchtabs.module.scss";
 
 /**
  * Reusable SwitchTabs Component
  * @param {Array} tabs - Array of { label: string, value: string, component: ReactNode }
  * @param {string} defaultTab - (optional) The tab value to select by default
+ * @param {Object} customStyles - (optional) Custom CSS module classes object
+ *   - container: Custom class for the main container
+ *   - buttonGroup: Custom class for the button group wrapper
+ *   - button: Custom class for individual tab buttons
+ *   - activeButton: Custom class for the active tab button
+ *   - content: Custom class for the content wrapper
  */
-const SwitchTabs = ({ tabs = [], defaultTab }) => {
+const SwitchTabs = ({ tabs = [], defaultTab, customStyles = {} }) => {
   const [activeTab, setActiveTab] = useState(defaultTab || tabs[0]?.value);
 
   const handleSelect = (value) => {
@@ -18,15 +24,22 @@ const SwitchTabs = ({ tabs = [], defaultTab }) => {
     (tab) => tab.value === activeTab
   )?.component;
 
+  // Use custom styles if provided, otherwise use default styles
+  const containerClass = customStyles.container || styles.switchTabsContainer;
+  const buttonGroupClass = customStyles.buttonGroup || styles.buttonGroup;
+  const buttonClass = customStyles.button || styles.toggleButton;
+  const activeButtonClass = customStyles.activeButton || styles.active;
+  const contentClass = customStyles.content || styles.tabContent;
+
   return (
-    <div className={styles.switchTabsContainer}>
+    <div className={containerClass}>
       {/* Buttons */}
-      <div className={styles.buttonGroup}>
+      <div className={buttonGroupClass}>
         {tabs.map((tab) => (
           <button
             key={tab.value}
-            className={`${styles.toggleButton} ${
-              activeTab === tab.value ? styles.active : ""
+            className={`${buttonClass} ${
+              activeTab === tab.value ? activeButtonClass : ""
             }`}
             onClick={() => handleSelect(tab.value)}
           >
@@ -36,7 +49,7 @@ const SwitchTabs = ({ tabs = [], defaultTab }) => {
       </div>
 
       {/* Active Tab Content */}
-      <div className={styles.tabContent}>
+      <div className={contentClass}>
         {ActiveComponent ? <ActiveComponent /> : <p>No content found</p>}
       </div>
     </div>

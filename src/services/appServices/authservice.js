@@ -19,16 +19,16 @@ export const registerUser = async (data) => {
 
 export const updateAstrologerStatus = async (status) => {
   try {
-    return await privateRequest.patch(
-      "astrologers/updateStatus",
-      { status : status === "online", activeType : status === "online" ? ['chat', 'video', 'audio'] : [] }
-    );
+    return await privateRequest.patch("astrologers/updateStatus", {
+      status: status === "online",
+      activeType: status === "online" ? ["chat", "video", "audio"] : [],
+    });
   } catch (error) {
     console.error(
       "Update status failed:",
-      error?.response?.data || error.message
+      error?.response?.data || error.message,
     );
-  }    
+  }
 };
 
 export const totalEarning = async () => {
@@ -36,7 +36,6 @@ export const totalEarning = async () => {
     const response = await privateRequest.get("transactions/getTotalEarning");
     return response;
   } catch (error) {
-
     return {
       data: {
         success: false,
@@ -49,7 +48,7 @@ export const totalEarning = async () => {
 export const getAstrologerById = async (id) => {
   try {
     return await privateRequest.get(
-      `astrologers/astrologer?astrologerId=${id}`
+      `astrologers/astrologer?astrologerId=${id}`,
     );
   } catch (error) {
     console.error("Fetch astrologer failed:", error?.response?.status);
@@ -63,7 +62,6 @@ export const getAstrologerById = async (id) => {
   }
 };
 
-
 // 🔴 Stop Live Streaming (Host End Live)
 export const stopLiveStream = async (channel) => {
   try {
@@ -73,7 +71,7 @@ export const stopLiveStream = async (channel) => {
   } catch (error) {
     console.error(
       "Stop live stream failed:",
-      error?.response?.data || error.message
+      error?.response?.data || error.message,
     );
     return {
       data: {

@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icons } from "../../../../components/Icons";
-import { Button, Toggle, SectionHeader } from "./ui";
+import Button from "../../../../components/UI/button/Button"
+import SectionHeader from "../../../../components/UI/sectionHeader/SectionHeader";
+import Toggle from "../../../../components/UI/toggle/Toggle";
 import styles from "./ProfileForms.module.scss";
 import { AppImages } from "../../../../utils/appImages";
 

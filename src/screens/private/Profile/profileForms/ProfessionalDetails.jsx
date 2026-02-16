@@ -2,7 +2,9 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icons } from "../../../../components/Icons";
 import styles from "./ProfileForms.module.scss";
-import { SectionHeader, Chip, Button } from "./ui";
+import Button from "../../../../components/UI/button/Button"
+import SectionHeader from "../../../../components/UI/sectionHeader/SectionHeader";
+import Chip from "../../../../components/UI/chip/Chip";
 
 const ProfessionalProfileDtls = () => {
   const navigate = useNavigate();

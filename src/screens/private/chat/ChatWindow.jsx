@@ -126,14 +126,14 @@ const Message = ({ text, isSender, time, type, giftData }) => {
         <div className="flex flex-col gap-3 min-w-[250px] animate-fadeIn">
           {/* Gift Header */}
           <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
-            <Gift size={18} className="text-orange-500 animate-bounce" />
+            <Gift size={18} className="animate-bounce" style={{ color: '#f75801' }} />
             <span className="text-xs font-semibold text-gray-600 uppercase">
               Gift Received
             </span>
           </div>
           {/* Gift Message */}
           {giftText && (
-            <p className="text-sm text-gray-700 italic bg-gradient-to-r from-orange-50 to-yellow-50 p-3 rounded-lg border-l-4 border-orange-400">
+            <p className="text-sm text-gray-700 italic bg-gradient-to-r from-orange-50 to-yellow-50 p-3 rounded-lg border-l-4" style={{ borderLeftColor: '#f75801' }}>
               "{parts[0]} a gift to you"
             </p>
           )}
@@ -154,7 +154,7 @@ const Message = ({ text, isSender, time, type, giftData }) => {
               <span className="font-bold text-lg text-gray-900">
                 {parsedGiftData?.giftName}
               </span>
-              <span className="text-base font-semibold text-orange-600">
+              <span className="text-base font-semibold" style={{ color: '#f75801' }}>
                 ₹{parsedGiftData?.price?.toLocaleString('en-IN')}
               </span>
             </div>
@@ -288,7 +288,7 @@ const Message = ({ text, isSender, time, type, giftData }) => {
       <div className={`flex items-start gap-2 mb-3 ${isSender ? "justify-end" : "justify-start"}`}>
         {/* Receiver Avatar - Left side */}
         {!isSender && (
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+          <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ background: 'linear-gradient(135deg, #f75801, #d43400)' }}>
             {fullName?.charAt(0)?.toUpperCase() || "A"}
           </div>
         )}
@@ -568,12 +568,13 @@ const ChatWindow = () => {
           <div className="flex items-center gap-3">
             <button
               onClick={() => navigate(-1)}
-              className="w-10 h-10 md:w-9 md:h-9 rounded-full border-2 border-orange-500 md:border-0 md:bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
+              className="w-10 h-10 rounded-full border-2 flex items-center justify-center hover:opacity-80 transition-opacity"
+              style={{ borderColor: '#f75801' }}
             >
-              <ChevronLeft size={20} className="text-orange-500 md:text-gray-700" />
+              <ChevronLeft size={20} style={{ color: '#f75801' }} />
             </button>
 
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-sm">
+            <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm" style={{ background: 'linear-gradient(135deg, #f75801, #d43400)' }}>
               {fullName?.charAt(0)?.toUpperCase() || "U"}
             </div>
 
@@ -587,13 +588,21 @@ const ChatWindow = () => {
 
           {/* Desktop View - Call/Video icons, Timer, End button */}
           <div className="hidden md:flex items-center gap-3">
-            <button className="w-10 h-10 rounded-lg border border-orange-500 bg-orange-50 flex items-center justify-center hover:bg-orange-100 transition-colors">
+            <button className="w-10 h-10 rounded-lg border flex items-center justify-center hover:opacity-90 transition-opacity"
+              style={{ 
+                borderColor: '#f75801'
+              }}
+            >
               <img src={CallIcon} alt="Voice Call" width="20" height="20" />
             </button>
 
             <div className="w-px h-6 bg-gray-300"></div>
 
-            <button className="w-10 h-10 rounded-lg border border-orange-500 bg-orange-50 flex items-center justify-center hover:bg-orange-100 transition-colors">
+            <button className="w-10 h-10 rounded-lg border flex items-center justify-center hover:opacity-90 transition-opacity"
+              style={{ 
+                borderColor: '#f75801'
+              }}
+            >
               <img src={VideocamIcon} alt="Video Call" width="20" height="20" />
             </button>
 
@@ -652,14 +661,18 @@ const ChatWindow = () => {
 
         {/* Mobile Call Buttons - Part of sticky header */}
         <div className="md:hidden flex gap-3 px-4 py-3 bg-[#FFF8F0] border-b border-gray-200">
-          <button className="flex-1 flex items-center justify-center gap-2 py-3 rounded-full border-2 border-orange-500 bg-white hover:bg-orange-50 transition-colors">
+          <button className="flex-1 flex items-center justify-center gap-2 py-3 rounded-full border-2 bg-white hover:opacity-90 transition-opacity"
+            style={{ borderColor: '#f75801' }}
+          >
             <img src={CallIcon} alt="Voice Call" width="20" height="20" />
-            <span className="text-base font-medium text-orange-500">Voice Call</span>
+            <span className="text-base font-medium" style={{ color: '#f75801' }}>Voice Call</span>
           </button>
 
-          <button className="flex-1 flex items-center justify-center gap-2 py-3 rounded-full border-2 border-orange-500 bg-white hover:bg-orange-50 transition-colors">
+          <button className="flex-1 flex items-center justify-center gap-2 py-3 rounded-full border-2 bg-white hover:opacity-90 transition-opacity"
+            style={{ borderColor: '#f75801' }}
+          >
             <img src={VideocamIcon} alt="Video Call" width="20" height="20" />
-            <span className="text-base font-medium text-orange-500">Video Call</span>
+            <span className="text-base font-medium" style={{ color: '#f75801' }}>Video Call</span>
           </button>
         </div>
       </div>
@@ -720,7 +733,8 @@ const ChatWindow = () => {
 
                 <button
                   onClick={handleMicClick}
-                  className="text-orange-500 hover:text-orange-600 transition-colors"
+                  className="hover:opacity-80 transition-opacity"
+                  style={{ color: '#f75801' }}
                 >
                   <Mic size={24} />
                 </button>
@@ -728,7 +742,8 @@ const ChatWindow = () => {
                 <button
                   onClick={handleSend}
                   disabled={!message.trim() || isMessageDisabled}
-                  className="text-orange-500 hover:text-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ color: '#f75801' }}
                 >
                   <Send size={24} />
                 </button>

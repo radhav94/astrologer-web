@@ -99,11 +99,25 @@ const HomeLayout = () => {
       useEffect(() => {
       const handleChatUserAccepted = (data) => {
         console.log("useraccept list update", data);
-        const {astrologerId, roomId, userId} = data
+        const {astrologerId, roomId, userId, user} = data
+        const firstName = user?.firstName?.trim();
+        const lastName = user?.lastName?.trim();
+        
+        // Capitalize first letter of each name
+        const capitalizeFirstLetter = (str) => {
+          if (!str) return '';
+          return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+        };
+        
+        const formattedFirstName = capitalizeFirstLetter(firstName);
+        const formattedLastName = capitalizeFirstLetter(lastName);
+        const customerName = formattedFirstName && formattedLastName 
+          ? `${formattedFirstName} ${formattedLastName}` 
+          : formattedFirstName || "Customer";
         setActiveChat({
               roomId: roomId,
               isUserSide: false,
-              chaterName:"Customer",
+              chaterName: customerName,
               chaterId : userId,
               remainingTime: Number(data?.remainingTime)
             });
@@ -119,7 +133,7 @@ const HomeLayout = () => {
                       state: {
                         userId: userId,
                         astrologerId: astrologerId,
-                        fullName: "Customer",
+                        fullName: customerName,
                         roomId: roomId,
                         isUserSide: false,
                         kundliId:null

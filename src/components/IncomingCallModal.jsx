@@ -1,38 +1,80 @@
 import { useCall } from "../context/CallContext";
 import { voiceSocket } from "../services/appServices/voiceSocketServices";
+import toast from "./toast";
+import { useEffect, useState } from "react";
 
 const IncomingCallModal = () => {
   const { incomingCall, setIncomingCall, setActiveCall } = useCall();
+  const [isAccepting, setIsAccepting] = useState(false);
+
+  // Listen for call accept errors from server
+  useEffect(() => {
+    const handleCallAcceptError = (data) => {
+      console.error("Call accept error:", data);
+      
+      if (data.code === "ALREADY_ACCEPTED") {
+        toast.error(data.message || "This call has already been accepted from another device.");
+      } else {
+        toast.error(data.message || "Failed to accept call");
+      }
+      
+      setIncomingCall(null);
+      setIsAccepting(false);
+    };
+
+    const handleCallAcceptSuccess = (data) => {
+      console.log("Call accepted successfully:", data);
+      
+      // Only set active call when server confirms success
+      if (incomingCall) {
+        setActiveCall({
+          roomId: incomingCall.roomId,
+          agoraToken: incomingCall.agoraToken,
+          isUserSide: false,
+          callType: incomingCall.callType,
+          callerName: incomingCall.callerName,
+          userId: incomingCall.userId,
+          astrologerId: incomingCall.astrologerId,
+          chatRoomId: incomingCall.chatRoomId,
+          kundliId: incomingCall.kundliId,
+          userID: incomingCall.userID
+        });
+        
+        setIncomingCall(null);
+        setIsAccepting(false);
+      }
+    };
+
+    voiceSocket.on("error", handleCallAcceptError);
+    voiceSocket.on("call:accepted", handleCallAcceptSuccess);
+
+    return () => {
+      voiceSocket.off("error", handleCallAcceptError);
+      voiceSocket.off("call:accepted", handleCallAcceptSuccess);
+    };
+  }, [setIncomingCall, incomingCall, setActiveCall]);
+
   if (!incomingCall) return null;
 
   const acceptCall = () => {
-    // voiceSocket.emit("accept_call", {
-    //   roomId: incomingCall.roomId,
-    //   token: incomingCall.agoraToken,
-    //   channelName: incomingCall.roomId,
-    // });
+    if (isAccepting) return; // Prevent multiple clicks
+    setIsAccepting(true);
 
-    voiceSocket.emit("call:accept", {
-      roomId: incomingCall.roomId,
-      token: incomingCall.agoraToken,
-      channelName: incomingCall.roomId,
-      acceptedBy : "ASTROLOGER"
-    });
+    try {
+      voiceSocket.emit("call:accept", {
+        roomId: incomingCall.roomId,
+        token: incomingCall.agoraToken,
+        channelName: incomingCall.roomId,
+        acceptedBy: "ASTROLOGER"
+      });
 
-    setActiveCall({
-      roomId: incomingCall.roomId,
-      agoraToken: incomingCall.agoraToken,
-      isUserSide: false,
-      callType: incomingCall.callType,
-      callerName: incomingCall.callerName,
-      userId: incomingCall.userId,
-      astrologerId: incomingCall.astrologerId,
-      chatRoomId: incomingCall.chatRoomId,
-      kundliId: incomingCall.kundliId,
-      userID: incomingCall.userID
-    });
-
-    setIncomingCall(null);
+      // Don't set active call here - wait for server confirmation
+      // The useEffect will handle setting activeCall on success
+    } catch (error) {
+      console.error("Error accepting call:", error);
+      toast.error(error?.message || "Failed to accept call");
+      setIsAccepting(false);
+    }
   };
 
   const rejectCall = () => {
@@ -78,9 +120,14 @@ const IncomingCallModal = () => {
 
           <button
             onClick={acceptCall}
-            className="flex-1 rounded-xl bg-green-600 py-3 text-white font-semibold hover:bg-green-700 active:scale-95 transition"
+            disabled={isAccepting}
+            className={`flex-1 rounded-xl py-3 text-white font-semibold transition ${
+              isAccepting 
+                ? "bg-green-600/50 cursor-not-allowed" 
+                : "bg-green-600 hover:bg-green-700 active:scale-95"
+            }`}
           >
-            Accept
+            {isAccepting ? "Accepting..." : "Accept"}
           </button>
         </div>
       </div>

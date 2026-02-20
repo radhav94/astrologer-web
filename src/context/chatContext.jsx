@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import { voiceSocket } from "../services/appServices/voiceSocketServices";
 import { useCall } from "./CallContext";
+import toast from "../components/toast";
 
 const ChatContext = createContext();
 
@@ -98,9 +99,10 @@ useEffect(() => {
     });
   };
 
-  const handleChatCanceled = () => {
-    console.log("🚫 Call canceled");
+  const handleChatCanceled = (data) => {
+    console.log("🚫 Call canceled", data);
     setIncomingChat(null);
+    toast.warning(data?.message || "User has cancelled chat request!")
   };
 
   const handleWaitingList = (data) => {

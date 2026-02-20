@@ -73,6 +73,8 @@ const VerifyOtp = () => {
       const payload = { phoneNumber, type, otp: String(otpNumber) };
       const response = await AuthServices.verifyOtp(payload);
 
+      console.log("Response Data:", response)
+
       if (response?.data?.statusCode !== 200 || !response?.data?.success) {
         throw new Error(response?.data?.message || "OTP verification failed");
       }

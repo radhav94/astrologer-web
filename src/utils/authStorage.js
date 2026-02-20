@@ -13,6 +13,7 @@ export const saveUserToStorage = (user) => {
       refreshToken: user.refreshToken,
       isActive: user.isActive
     };
+    
   
     localStorage.setItem("shubhtalk_astrologer_details", JSON.stringify(filteredUser));
   };

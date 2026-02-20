@@ -1,5 +1,5 @@
 // src/components/common/SwitchTabs.jsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import styles from "./Switchtabs.module.scss";
 
 /**
@@ -14,7 +14,23 @@ import styles from "./Switchtabs.module.scss";
  *   - content: Custom class for the content wrapper
  */
 const SwitchTabs = ({ tabs = [], defaultTab, customStyles = {} }) => {
-  const [activeTab, setActiveTab] = useState(defaultTab || tabs[0]?.value);
+  // Determine initial tab: use defaultTab if valid, otherwise first tab
+  const getInitialTab = () => {
+    if (defaultTab && tabs.some(tab => tab.value === defaultTab)) {
+      return defaultTab;
+    }
+    return tabs[0]?.value || null;
+  };
+
+  const [activeTab, setActiveTab] = useState(getInitialTab);
+
+  // Update active tab if defaultTab changes or tabs change
+  useEffect(() => {
+    const newTab = getInitialTab();
+    if (newTab && newTab !== activeTab) {
+      setActiveTab(newTab);
+    }
+  }, [defaultTab, tabs]);
 
   const handleSelect = (value) => {
     setActiveTab(value);

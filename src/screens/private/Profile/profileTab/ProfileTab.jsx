@@ -2,16 +2,32 @@ import { Link } from "react-router-dom";
 import { LuPencilLine } from "react-icons/lu";
 import styles from "./ProfileTab.module.scss";
 import { AppImages } from "../../../../utils/appImages";
+import dayjs from "dayjs";
+import { formatIndianPhone } from "../../../../utils/utlis";
 
-const ProfileTab = () => {
-  const userData = JSON.parse(
-    localStorage.getItem("shubhtalk_astrologer_details"),
-  );
+const ProfileTab = ({ profileData, refetch }) => {
+  if (!profileData) {
+    return <div className={styles.profileTabContainer}>Loading...</div>;
+  }
 
-  const firstName = userData?.firstName?.trim();
-  const lastName = userData?.lastName?.trim();
-  const userName =
-    firstName && lastName ? `${firstName} ${lastName}` : "Unknown";
+  const {
+    name,
+    dateOfBirth,
+    gender,
+    phone,
+    email,
+    profileImage,
+    languages = [],
+    specializations = [],
+    education = [],
+    achievements,
+    achievementImages = [],
+  } = profileData;
+
+  const formattedPhone = formatIndianPhone(phone);
+
+  console.log("profileData",profileData)
+
   return (
     <div className={styles.profileTabContainer}>
       {/* Basic Details */}
@@ -24,15 +40,17 @@ const ProfileTab = () => {
 
         <div className={styles.basicDetailsContent}>
           <img 
-            src={AppImages.Astro1} 
-            alt={userName} 
+            src={profileImage || AppImages.Astro1} 
+            alt={name} 
             className={styles.profileImage}
           />
           <div className={styles.basicInfo}>
-            <h3 className={styles.userName}>{userName}</h3>
-            <p className={styles.userDetail}>01 Jan 1990 • Male</p>
-            <p className={styles.userDetail}>+91 98989 98989</p>
-            <p className={styles.userDetail}>hariprasad@gmail.com</p>
+            <h3 className={styles.userName}>{name}</h3>
+            <p className={styles.userDetail}>
+              {dateOfBirth} {gender ? `• ${gender}` : ''}
+            </p>
+            <p className={styles.userDetail}>{formattedPhone}</p>
+            <p className={styles.userDetail}>{email}</p>
           </div>
         </div>
       </div>
@@ -46,8 +64,13 @@ const ProfileTab = () => {
         <span className={styles.sectionTitle}>Languages</span>
 
         <div className={styles.tagsContainer}>
-          <span className={styles.tag}>Hindi</span>
-          <span className={styles.tag}>English</span>
+          {languages.length > 0 ? (
+            languages.map((lang, index) => (
+              <span key={index} className={styles.tag}>{lang}</span>
+            ))
+          ) : (
+            <span className={styles.tag}>No languages added</span>
+          )}
         </div>
       </div>
 
@@ -60,9 +83,13 @@ const ProfileTab = () => {
         <span className={styles.sectionTitle}>Professional Details</span>
 
         <div className={styles.tagsContainer}>
-          <span className={styles.tag}>Vedic</span>
-          <span className={styles.tag}>Tarot</span>
-          <span className={styles.tag}>KP</span>
+          {specializations.length > 0 ? (
+            specializations.map((spec, index) => (
+              <span key={index} className={styles.tag}>{spec}</span>
+            ))
+          ) : (
+            <span className={styles.tag}>No specializations added</span>
+          )}
         </div>
       </div>
 
@@ -75,9 +102,13 @@ const ProfileTab = () => {
         <span className={styles.sectionTitle}>Educational Details</span>
 
         <div className={styles.tagsContainer}>
-          <span className={styles.tag}>High School</span>
-          <span className={styles.tag}>Undergraduate</span>
-          <span className={styles.tag}>Postgraduate</span>
+          {education.length > 0 ? (
+            education.map((edu, index) => (
+              <span key={index} className={styles.tag}>{edu}</span>
+            ))
+          ) : (
+            <span className={styles.tag}>No education details added</span>
+          )}
         </div>
       </div>
 
@@ -90,28 +121,26 @@ const ProfileTab = () => {
         <span className={styles.sectionTitle}>Achievements</span>
 
         <p className={styles.achievementsText}>
-          With years of dedicated practice, I've guided thousands of
-          individuals across love, career, health, and life direction. My work
-          combines classical Vedic principles with deep intuitive understanding,
-          helping clients receive...{" "}
-          <span className={styles.readMore}>Read More</span>
+          {achievements || 'No achievements added yet.'}
+          {achievements && achievements.length > 100 && (
+            <span className={styles.readMore}> Read More</span>
+          )}
         </p>
 
-        <div className={styles.imagesGrid}>
-          <div className={styles.imageBox}>
-            <img src={AppImages.ProfileAchivment} alt="achievement" />
+        {achievementImages.length > 0 && (
+          <div className={styles.imagesGrid}>
+            {achievementImages.slice(0, 4).map((img, index) => (
+              <div key={index} className={styles.imageBox}>
+                <img src={img} alt={`achievement ${index + 1}`} />
+                {index === 3 && achievementImages.length > 4 && (
+                  <div className={styles.moreImagesOverlay}>
+                    +{achievementImages.length - 4}
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
-          <div className={styles.imageBox}>
-            <img src={AppImages.ProfileAchivment} alt="achievement" />
-          </div>
-          <div className={styles.imageBox}>
-            <img src={AppImages.ProfileAchivment} alt="achievement" />
-          </div>
-          <div className={styles.imageBox}>
-            <img src={AppImages.ProfileAchivment} alt="achievement" />
-            <div className={styles.moreImagesOverlay}>+4</div>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );

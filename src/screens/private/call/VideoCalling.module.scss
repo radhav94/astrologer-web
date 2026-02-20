@@ -420,3 +420,42 @@
 .endBtn:hover {
   background: #d32f2f;
 }
+
+/* ================================================= */
+/* RIPPLE ANIMATION - Same as VoiceCall */
+/* ================================================= */
+
+@keyframes ripple {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(2.5);
+    opacity: 0;
+  }
+}
+
+.rippleRing {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: rgba(75, 160, 29, 0.2);
+  animation: ripple 2s ease-out infinite;
+}
+
+.rippleRing:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.rippleRing:nth-child(2) {
+  animation-delay: 0.3s;
+}
+
+.rippleRing:nth-child(3) {
+  animation-delay: 0.6s;
+}
+
+.rippleRing:nth-child(4) {
+  animation-delay: 0.9s;
+}

@@ -3,10 +3,7 @@ import AgoraRTC from "agora-rtc-sdk-ng";
 import {
   IoMic,
   IoMicOff,
-  IoArrowBack,
-  IoChatbubbleEllipses,
-  IoVideocam,
-  IoVideocamOff
+  IoArrowBack
 } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
 import styles from "./VoiceCall.module.scss";
@@ -17,6 +14,7 @@ import { useCall } from "../../../context/CallContext";
 import { voiceSocket } from "../../../services/appServices/voiceSocketServices";
 import { PATH } from "../../../utils/routes/Paths";
 import { useChat as useChatContext } from "../../../context/chatContext";
+import CallIcon from "../../../assets/chat/Call.svg";
 
 const APP_ID = "5630460abdc141e3b2f8d9597752bd7d";
 
@@ -140,6 +138,7 @@ const AgoraVoiceCalling = ({ callData }) => {
       micTrackRef.current = null;
       clientRef.current = null;
       setActiveCall(null);
+      setActiveChat(null); // Clear active chat when call ends
     }
   };
 
@@ -318,10 +317,21 @@ const AgoraVoiceCalling = ({ callData }) => {
 
       {/* FULL VIEW - NEW DESIGN */}
       {!isMinimized && (
-        <div className="fixed inset-0 z-[99999] flex flex-col bg-white">
+        <div className="fixed inset-0 z-[99999] flex flex-col" style={{ backgroundColor: isRemoteVideo ? 'transparent' : 'white' }}>
           
           {/* HEADER */}
-          <div className="flex items-center justify-between px-4 md:px-6 py-3 border-b border-gray-200">
+          <div 
+            className="flex items-center justify-between px-4 md:px-6 py-3 border-b z-50 transition-all duration-300"
+            style={{
+              position: isRemoteVideo ? 'absolute' : 'relative',
+              top: 0,
+              left: 0,
+              right: 0,
+              backgroundColor: isRemoteVideo ? 'rgba(0, 0, 0, 0.3)' : 'white',
+              backdropFilter: isRemoteVideo ? 'blur(10px)' : 'none',
+              borderColor: isRemoteVideo ? 'rgba(255, 255, 255, 0.2)' : '#e5e7eb'
+            }}
+          >
             <div className="flex items-center gap-3">
               {/* Back Button */}
               <button
@@ -339,8 +349,18 @@ const AgoraVoiceCalling = ({ callData }) => {
 
               {/* User Info */}
               <div className="flex flex-col">
-                <h2 className="text-sm font-semibold text-gray-900">{callerName}</h2>
-                <span className="text-xs text-gray-500">Exp. 1 year</span>
+                <h2 
+                  className="text-sm font-semibold transition-colors duration-300"
+                  style={{ color: isRemoteVideo ? 'white' : '#111827' }}
+                >
+                  {callerName}
+                </h2>
+                <span 
+                  className="text-xs transition-colors duration-300"
+                  style={{ color: isRemoteVideo ? 'rgba(255, 255, 255, 0.8)' : '#6b7280' }}
+                >
+                  Exp. 1 year
+                </span>
               </div>
             </div>
 
@@ -353,7 +373,15 @@ const AgoraVoiceCalling = ({ callData }) => {
                   borderColor: '#f75801'
                 }}
               >
-                <IoChatbubbleEllipses size={20} style={{ color: '#f75801' }} />
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 17 17" fill="none">
+                  <path d="M15 0H1.66667C0.75 0 0.00833333 0.75 0.00833333 1.66667L0 16.6667L3.33333 13.3333H15C15.9167 13.3333 16.6667 12.5833 16.6667 11.6667V1.66667C16.6667 0.75 15.9167 0 15 0ZM4.16667 5.83333H12.5C12.9583 5.83333 13.3333 6.20833 13.3333 6.66667C13.3333 7.125 12.9583 7.5 12.5 7.5H4.16667C3.70833 7.5 3.33333 7.125 3.33333 6.66667C3.33333 6.20833 3.70833 5.83333 4.16667 5.83333ZM9.16667 10H4.16667C3.70833 10 3.33333 9.625 3.33333 9.16667C3.33333 8.70833 3.70833 8.33333 4.16667 8.33333H9.16667C9.625 8.33333 10 8.70833 10 9.16667C10 9.625 9.625 10 9.16667 10ZM12.5 5H4.16667C3.70833 5 3.33333 4.625 3.33333 4.16667C3.33333 3.70833 3.70833 3.33333 4.16667 3.33333H12.5C12.9583 3.33333 13.3333 3.70833 13.3333 4.16667C13.3333 4.625 12.9583 5 12.5 5Z" fill="url(#paint0_linear_desktop_chat_voice)"/>
+                  <defs>
+                    <linearGradient id="paint0_linear_desktop_chat_voice" x1="0" y1="8.33333" x2="16.6667" y2="8.33333" gradientUnits="userSpaceOnUse">
+                      <stop stopColor="#F75801"/>
+                      <stop offset="1" stopColor="#D43400"/>
+                    </linearGradient>
+                  </defs>
+                </svg>
               </button>
 
               <div className="w-px h-6 bg-gray-300"></div>
@@ -365,73 +393,105 @@ const AgoraVoiceCalling = ({ callData }) => {
                   borderColor: '#f75801'
                 }}
               >
-                {isVideo ? <IoVideocamOff size={20} style={{ color: '#f75801' }} /> : <IoVideocam size={20} style={{ color: '#f75801' }} />}
+                {isVideo ? (
+                  <img src={CallIcon} alt="Audio" width="20" height="20" style={{ filter: 'invert(45%) sepia(94%) saturate(2477%) hue-rotate(356deg) brightness(101%) contrast(98%)' }} />
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="13" viewBox="0 0 17 11" fill="none">
+                    <path d="M12.8333 4.125V0.916667C12.8333 0.4125 12.4208 0 11.9167 0H0.916667C0.4125 0 0 0.4125 0 0.916667V10.0833C0 10.5875 0.4125 11 0.916667 11H11.9167C12.4208 11 12.8333 10.5875 12.8333 10.0833V6.875L14.9325 8.97417C15.51 9.55167 16.5 9.13917 16.5 8.32333V2.6675C16.5 1.85167 15.51 1.43917 14.9325 2.01667L12.8333 4.125Z" fill="url(#paint0_linear_desktop_voice)"/>
+                    <defs>
+                      <linearGradient id="paint0_linear_desktop_voice" x1="0" y1="5.5" x2="16.5" y2="5.5" gradientUnits="userSpaceOnUse">
+                        <stop stopColor="#F75801"/>
+                        <stop offset="1" stopColor="#D43400"/>
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                )}
               </button>
 
-              <span className="text-sm font-medium text-gray-700 ml-2">
+              <span 
+                className="text-sm font-medium ml-2 transition-colors duration-300"
+                style={{ color: isRemoteVideo ? 'white' : '#374151' }}
+              >
                 Call Ends in <span className="text-red-500 font-semibold">{formatTime(timer)}</span>
               </span>
 
               <button
-                onClick={endCall}
-                className="px-5 py-2 bg-red-500 text-white rounded-lg text-sm font-semibold hover:bg-red-600 transition-colors flex items-center gap-2"
+                className="px-4 py-2 text-white rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity"
+                style={{ background: 'linear-gradient(135deg, #f75801, #d43400)' }}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <g clipPath="url(#clip0_call_end)">
-                    <path d="M7.12004 8.87333C7.79661 9.5505 8.56125 10.1335 9.39337 10.6067L10.24 9.76C10.4213 9.58076 10.6501 9.45723 10.8994 9.40406C11.1488 9.35089 11.4081 9.3703 11.6467 9.46C12.2516 9.6857 12.88 9.84225 13.52 9.92667C13.8404 9.97195 14.1334 10.1322 14.3443 10.3775C14.5553 10.6228 14.6699 10.9365 14.6667 11.26V13.26C14.6675 13.4457 14.6294 13.6294 14.555 13.7996C14.4807 13.9697 14.3716 14.1224 14.2348 14.2479C14.0979 14.3734 13.9364 14.469 13.7605 14.5285C13.5847 14.588 13.3983 14.61 13.2134 14.5933C11.1619 14.3704 9.19137 13.6694 7.46004 12.5467C6.65688 12.0367 5.91239 11.4398 5.24004 10.7667M3.46004 8.54C2.33727 6.80867 1.63628 4.83811 1.41337 2.78667C1.39671 2.60231 1.41862 2.41651 1.4777 2.24108C1.53679 2.06566 1.63175 1.90446 1.75655 1.76775C1.88134 1.63103 2.03324 1.5218 2.20256 1.44701C2.37189 1.37222 2.55493 1.33351 2.74004 1.33333H4.74004C5.06357 1.33015 5.37723 1.44472 5.62254 1.65569C5.86786 1.86666 6.02809 2.15963 6.07337 2.48C6.15779 3.12004 6.31434 3.74848 6.54004 4.35333C6.62973 4.59195 6.64915 4.85127 6.59597 5.10059C6.5428 5.3499 6.41928 5.57874 6.24004 5.76L5.39337 6.60667" stroke="white" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M14.6666 1.33333L1.33325 14.6667" stroke="white" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
-                  </g>
-                  <defs>
-                    <clipPath id="clip0_call_end">
-                      <rect width="16" height="16" fill="white" />
-                    </clipPath>
-                  </defs>
-                </svg>
-                End
+                View Kundli
               </button>
             </div>
 
-            {/* Mobile View - Timer and End button */}
+            {/* Mobile View - Timer and View Kundli button */}
             <div className="md:hidden flex items-center gap-3">
               <span className="text-sm font-semibold text-red-500">{formatTime(timer)}</span>
               
               <button
-                onClick={endCall}
-                className="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-semibold hover:bg-red-600 transition-colors flex items-center gap-2"
+                className="px-4 py-2 text-white rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity"
+                style={{ background: 'linear-gradient(135deg, #f75801, #d43400)' }}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <g clipPath="url(#clip0_call_end_mobile)">
-                    <path d="M7.12004 8.87333C7.79661 9.5505 8.56125 10.1335 9.39337 10.6067L10.24 9.76C10.4213 9.58076 10.6501 9.45723 10.8994 9.40406C11.1488 9.35089 11.4081 9.3703 11.6467 9.46C12.2516 9.6857 12.88 9.84225 13.52 9.92667C13.8404 9.97195 14.1334 10.1322 14.3443 10.3775C14.5553 10.6228 14.6699 10.9365 14.6667 11.26V13.26C14.6675 13.4457 14.6294 13.6294 14.555 13.7996C14.4807 13.9697 14.3716 14.1224 14.2348 14.2479C14.0979 14.3734 13.9364 14.469 13.7605 14.5285C13.5847 14.588 13.3983 14.61 13.2134 14.5933C11.1619 14.3704 9.19137 13.6694 7.46004 12.5467C6.65688 12.0367 5.91239 11.4398 5.24004 10.7667M3.46004 8.54C2.33727 6.80867 1.63628 4.83811 1.41337 2.78667C1.39671 2.60231 1.41862 2.41651 1.4777 2.24108C1.53679 2.06566 1.63175 1.90446 1.75655 1.76775C1.88134 1.63103 2.03324 1.5218 2.20256 1.44701C2.37189 1.37222 2.55493 1.33351 2.74004 1.33333H4.74004C5.06357 1.33015 5.37723 1.44472 5.62254 1.65569C5.86786 1.86666 6.02809 2.15963 6.07337 2.48C6.15779 3.12004 6.31434 3.74848 6.54004 4.35333C6.62973 4.59195 6.64915 4.85127 6.59597 5.10059C6.5428 5.3499 6.41928 5.57874 6.24004 5.76L5.39337 6.60667" stroke="white" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M14.6666 1.33333L1.33325 14.6667" stroke="white" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
-                  </g>
-                  <defs>
-                    <clipPath id="clip0_call_end_mobile">
-                      <rect width="16" height="16" fill="white" />
-                    </clipPath>
-                  </defs>
-                </svg>
-                End
+                View Kundli
               </button>
             </div>
           </div>
 
           {/* Mobile Chat & Video Buttons - Part of sticky header */}
-          <div className="md:hidden flex gap-3 px-4 py-3 bg-[#FFF8F0] border-b border-gray-200">
+          <div 
+            className="md:hidden flex gap-3 px-4 py-3 border-b z-50 transition-all duration-300"
+            style={{
+              position: isRemoteVideo ? 'absolute' : 'relative',
+              top: isRemoteVideo ? '60px' : 'auto',
+              left: 0,
+              right: 0,
+              backgroundColor: isRemoteVideo ? 'rgba(0, 0, 0, 0.3)' : '#FFF8F0',
+              backdropFilter: isRemoteVideo ? 'blur(10px)' : 'none',
+              borderColor: isRemoteVideo ? 'rgba(255, 255, 255, 0.2)' : '#e5e7eb'
+            }}
+          >
             <button 
               onClick={openChatWithMinimize}
-              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-full border-2 bg-white hover:opacity-90 transition-opacity"
-              style={{ borderColor: '#f75801' }}
+              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-full border-2 hover:opacity-90 transition-all duration-300"
+              style={{ 
+                borderColor: '#f75801',
+                backgroundColor: isRemoteVideo ? 'rgba(255, 255, 255, 0.1)' : 'white',
+                backdropFilter: isRemoteVideo ? 'blur(10px)' : 'none'
+              }}
             >
-              <IoChatbubbleEllipses size={22} style={{ color: '#f75801' }} />
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 17 17" fill="none">
+                <path d="M15 0H1.66667C0.75 0 0.00833333 0.75 0.00833333 1.66667L0 16.6667L3.33333 13.3333H15C15.9167 13.3333 16.6667 12.5833 16.6667 11.6667V1.66667C16.6667 0.75 15.9167 0 15 0ZM4.16667 5.83333H12.5C12.9583 5.83333 13.3333 6.20833 13.3333 6.66667C13.3333 7.125 12.9583 7.5 12.5 7.5H4.16667C3.70833 7.5 3.33333 7.125 3.33333 6.66667C3.33333 6.20833 3.70833 5.83333 4.16667 5.83333ZM9.16667 10H4.16667C3.70833 10 3.33333 9.625 3.33333 9.16667C3.33333 8.70833 3.70833 8.33333 4.16667 8.33333H9.16667C9.625 8.33333 10 8.70833 10 9.16667C10 9.625 9.625 10 9.16667 10ZM12.5 5H4.16667C3.70833 5 3.33333 4.625 3.33333 4.16667C3.33333 3.70833 3.70833 3.33333 4.16667 3.33333H12.5C12.9583 3.33333 13.3333 3.70833 13.3333 4.16667C13.3333 4.625 12.9583 5 12.5 5Z" fill="url(#paint0_linear_mobile_chat_voice)"/>
+                <defs>
+                  <linearGradient id="paint0_linear_mobile_chat_voice" x1="0" y1="8.33333" x2="16.6667" y2="8.33333" gradientUnits="userSpaceOnUse">
+                    <stop stopColor="#F75801"/>
+                    <stop offset="1" stopColor="#D43400"/>
+                  </linearGradient>
+                </defs>
+              </svg>
               <span className="text-base font-medium" style={{ color: '#f75801' }}>Chat</span>
             </button>
 
             <button 
               onClick={toggleCamera}
-              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-full border-2 bg-white hover:opacity-90 transition-opacity"
-              style={{ borderColor: '#f75801' }}
+              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-full border-2 hover:opacity-90 transition-all duration-300"
+              style={{ 
+                borderColor: '#f75801',
+                backgroundColor: isRemoteVideo ? 'rgba(255, 255, 255, 0.1)' : 'white',
+                backdropFilter: isRemoteVideo ? 'blur(10px)' : 'none'
+              }}
             >
-              {isVideo ? <IoVideocamOff size={22} style={{ color: '#f75801' }} /> : <IoVideocam size={22} style={{ color: '#f75801' }} />}
+              {isVideo ? (
+                <img src={CallIcon} alt="Audio" width="22" height="22" style={{ filter: 'invert(45%) sepia(94%) saturate(2477%) hue-rotate(356deg) brightness(101%) contrast(98%)' }} />
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="15" viewBox="0 0 17 11" fill="none">
+                  <path d="M12.8333 4.125V0.916667C12.8333 0.4125 12.4208 0 11.9167 0H0.916667C0.4125 0 0 0.4125 0 0.916667V10.0833C0 10.5875 0.4125 11 0.916667 11H11.9167C12.4208 11 12.8333 10.5875 12.8333 10.0833V6.875L14.9325 8.97417C15.51 9.55167 16.5 9.13917 16.5 8.32333V2.6675C16.5 1.85167 15.51 1.43917 14.9325 2.01667L12.8333 4.125Z" fill="url(#paint0_linear_mobile_voice)"/>
+                  <defs>
+                    <linearGradient id="paint0_linear_mobile_voice" x1="0" y1="5.5" x2="16.5" y2="5.5" gradientUnits="userSpaceOnUse">
+                      <stop stopColor="#F75801"/>
+                      <stop offset="1" stopColor="#D43400"/>
+                    </linearGradient>
+                  </defs>
+                </svg>
+              )}
               <span className="text-base font-medium" style={{ color: '#f75801' }}>{isVideo ? "Audio" : "Video"}</span>
             </button>
           </div>
@@ -449,7 +509,14 @@ const AgoraVoiceCalling = ({ callData }) => {
             {isVideo && (
               <div
                 ref={localVideoRef}
-                className="absolute top-4 right-4 w-32 h-40 rounded-xl overflow-hidden bg-black border-2 border-white shadow-lg z-10"
+                className="absolute rounded-xl overflow-hidden bg-black border-2 border-white shadow-lg"
+                style={{ 
+                  top: isRemoteVideo ? '180px' : '16px',
+                  right: '16px',
+                  width: '128px',
+                  height: '160px',
+                  zIndex: 100 
+                }}
               />
             )}
 
@@ -482,9 +549,24 @@ const AgoraVoiceCalling = ({ callData }) => {
             )}
 
             {/* BOTTOM CONTROLS SECTION - FIXED AT BOTTOM */}
-            <div className="absolute bottom-0 left-0 right-0 pb-8 pt-4 z-20">
-              {/* SUGGEST REMEDY BUTTON */}
-              <div className="flex justify-center mb-6">
+            <div 
+              className="absolute bottom-0 left-0 right-0 z-20"
+              style={{
+                display: 'flex',
+                flexDirection: 'column'
+              }}
+            >
+              {/* SUGGEST REMEDY BUTTON - Blurred Background */}
+              <div 
+                style={{
+                  backdropFilter: isRemoteVideo ? 'blur(20px)' : 'none',
+                  background: isRemoteVideo ? 'rgba(100, 100, 100, 0.4)' : 'transparent',
+                  padding: '20px 0',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  transition: 'all 0.3s'
+                }}
+              >
                 <button className="px-8 py-3 text-white rounded-full text-base font-semibold hover:opacity-90 transition-opacity shadow-lg flex items-center gap-2" style={{ background: 'linear-gradient(135deg, #f75801, #d43400)' }}>
                   Suggest Remedy
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -493,8 +575,15 @@ const AgoraVoiceCalling = ({ callData }) => {
                 </button>
               </div>
 
-              {/* CONTROL BUTTONS */}
-              <div className="flex items-center justify-center gap-6">
+              {/* CONTROL BUTTONS - Solid Black Background */}
+              <div 
+                style={{
+                  background: isRemoteVideo ? 'rgba(0, 0, 0, 0.6)' : 'transparent',
+                  padding: '24px 20px 32px 20px',
+                  transition: 'all 0.3s'
+                }}
+              >
+                <div className="flex items-center justify-center gap-8 md:gap-6">
                 
                 {/* MUTE BUTTON */}
                 <div className="flex flex-col items-center gap-2">
@@ -518,10 +607,10 @@ const AgoraVoiceCalling = ({ callData }) => {
                   <button 
                     className="w-16 h-16 rounded-full bg-red-500 flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors"
                   >
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-                      <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
-                      <line x1="12" y1="9" x2="12" y2="13"/>
-                      <line x1="12" y1="17" x2="12.01" y2="17"/>
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                      <path d="M12 2L2 20h20L12 2z" fill="white"/>
+                      <rect x="11" y="8" width="2" height="6" fill="#ef4444" rx="1"/>
+                      <circle cx="12" cy="17" r="1" fill="#ef4444"/>
                     </svg>
                   </button>
                   <span className={`text-sm font-medium ${isRemoteVideo ? 'text-white' : 'text-gray-600'}`}>Report Caller</span>
@@ -542,8 +631,7 @@ const AgoraVoiceCalling = ({ callData }) => {
                     ) : (
                       <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#f75801" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-                        <line x1="23" y1="9" x2="17" y2="15"/>
-                        <line x1="17" y1="9" x2="23" y2="15"/>
+                        <line x1="2" y1="2" x2="22" y2="22"/>
                       </svg>
                     )}
                   </button>
@@ -554,6 +642,7 @@ const AgoraVoiceCalling = ({ callData }) => {
 
               </div>
             </div>
+          </div>
 
           </div>
         </div>

@@ -16,7 +16,8 @@ import VideoCallChat from "./VideoCallChat";
 import { PATH } from "../../../utils/routes/Paths";
 import CallIcon from "../../../assets/chat/Call.svg";
 
-const APP_ID = "5630460abdc141e3b2f8d9597752bd7d";
+// const APP_ID = "5630460abdc141e3b2f8d9597752bd7d";
+const APP_ID = "c76e3d30a3b6483689dac88ca9f94381";
 
 const VideoCalling = ({ callData }) => {
   const { activeCall, setActiveCall, setReviewData, setOpenReview } = useCall();
@@ -417,11 +418,11 @@ const VideoCalling = ({ callData }) => {
           top: position.y,
           left: position.x,
           display: isMinimized ? "block" : "none",
-          width: '320px',
+          width: '200px',
           background: 'linear-gradient(135deg, rgba(30, 30, 30, 0.95), rgba(50, 50, 50, 0.95))',
           backdropFilter: 'blur(20px)',
-          borderRadius: '20px',
-          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
+          borderRadius: '14px',
+          boxShadow: '0 12px 40px rgba(0, 0, 0, 0.5)',
           overflow: 'hidden',
           zIndex: 100000,
           userSelect: 'none',
@@ -433,7 +434,7 @@ const VideoCalling = ({ callData }) => {
       >
         {/* Header */}
         <div style={{
-          padding: '12px 16px',
+          padding: '8px 10px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -441,19 +442,23 @@ const VideoCalling = ({ callData }) => {
           borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
           cursor: 'grab'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden' }}>
             <span style={{ 
               color: 'white', 
-              fontSize: '14px', 
+              fontSize: '11px', 
               fontWeight: '600',
-              textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+              textShadow: '0 2px 4px rgba(0,0,0,0.3)',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
             }}>
               {callerName || "Video Call"}
             </span>
             <span style={{ 
               color: 'rgba(255, 255, 255, 0.7)', 
-              fontSize: '13px',
-              fontWeight: '500'
+              fontSize: '11px',
+              fontWeight: '500',
+              flexShrink: 0
             }}>
               • {formatTime(callSeconds)}
             </span>
@@ -464,9 +469,9 @@ const VideoCalling = ({ callData }) => {
               setIsMinimized(false);
             }}
             style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '8px',
+              width: '24px',
+              height: '24px',
+              borderRadius: '6px',
               background: 'rgba(255, 255, 255, 0.1)',
               border: 'none',
               color: 'white',
@@ -474,8 +479,9 @@ const VideoCalling = ({ callData }) => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '18px',
-              transition: 'all 0.2s'
+              fontSize: '14px',
+              transition: 'all 0.2s',
+              flexShrink: 0
             }}
             onMouseEnter={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.2)'}
             onMouseLeave={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.1)'}
@@ -487,7 +493,7 @@ const VideoCalling = ({ callData }) => {
         {/* Video */}
         <div style={{
           width: '100%',
-          height: '180px',
+          height: '120px',
           background: '#000',
           position: 'relative'
         }}>
@@ -499,7 +505,7 @@ const VideoCalling = ({ callData }) => {
 
         {/* Controls */}
         <div style={{
-          padding: '16px',
+          padding: '10px',
           display: 'flex',
           justifyContent: 'space-around',
           alignItems: 'center',
@@ -511,8 +517,8 @@ const VideoCalling = ({ callData }) => {
               setMicOn((p) => !p);
             }}
             style={{
-              width: '52px',
-              height: '52px',
+              width: '36px',
+              height: '36px',
               borderRadius: '50%',
               background: 'white',
               border: 'none',
@@ -527,17 +533,17 @@ const VideoCalling = ({ callData }) => {
             onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
           >
             {micOn ? (
-              <IoMic size={24} style={{ color: '#f75801' }} />
+              <IoMic size={16} style={{ color: '#f75801' }} />
             ) : (
-              <IoMicOff size={24} style={{ color: '#f75801' }} />
+              <IoMicOff size={16} style={{ color: '#f75801' }} />
             )}
           </button>
           
           <button 
             onClick={(e) => e.stopPropagation()}
             style={{
-              width: '52px',
-              height: '52px',
+              width: '36px',
+              height: '36px',
               borderRadius: '50%',
               background: '#ef4444',
               border: 'none',
@@ -557,7 +563,7 @@ const VideoCalling = ({ callData }) => {
               e.target.style.background = '#ef4444';
             }}
           >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
               <path d="M12 2L2 20h20L12 2z" fill="white"/>
               <rect x="11" y="8" width="2" height="6" fill="#ef4444" rx="1"/>
               <circle cx="12" cy="17" r="1" fill="#ef4444"/>
@@ -570,8 +576,8 @@ const VideoCalling = ({ callData }) => {
               setSpeakerOn((p) => !p);
             }}
             style={{
-              width: '52px',
-              height: '52px',
+              width: '36px',
+              height: '36px',
               borderRadius: '50%',
               background: 'white',
               border: 'none',
@@ -586,13 +592,13 @@ const VideoCalling = ({ callData }) => {
             onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
           >
             {speakerOn ? (
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f75801" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f75801" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
                 <path d="M15.54 8.46a5 5 0 010 7.07"/>
                 <path d="M19.07 4.93a10 10 0 010 14.14"/>
               </svg>
             ) : (
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f75801" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f75801" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
                 <line x1="2" y1="2" x2="22" y2="22"/>
               </svg>

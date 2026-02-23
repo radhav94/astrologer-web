@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronLeft, Mic, Send, Gift } from "lucide-react";
+import { ChevronLeft, Mic, Send, Gift, Paperclip } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { IoCallOutline, IoVideocamOutline, IoCallSharp } from "react-icons/io5";
 import dayjs from "dayjs";
@@ -18,10 +18,12 @@ import IframeModal from "./IframeModal";
 import { voiceSocket } from "../../../services/appServices/voiceSocketServices";
 import LinkPreview from "./LinkPreview";
 import { detectURL } from "../../../utils/helper/linkPreview";
+import { useFileSelector } from "./filePicker/useFileSelector";
 
 import CallIcon from "../../../../src/assets/chat/Call.svg"
 import VideocamIcon from "../../../../src/assets/chat/Videocam.svg";
 import { useChat as useChatContext } from "../../../context/chatContext";
+import { useCall } from "../../../context/CallContext";
 /* -------------------- Helpers -------------------- */
 
 const formatDate = (date) => dayjs(date).format("DD MMMM YYYY");
@@ -462,6 +464,21 @@ const ChatWindow = () => {
     cancelRecording
   } = useVoiceRecorder();
 
+  const { selecting: attachmentSelecting, openFileSelector } = useFileSelector();
+
+  const handleAttachment = async () => {
+    try {
+      const { blob } = await openFileSelector("image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.txt");
+      const signedUrl = await getS3SignedUrl({ fileType: blob.type }).unwrap();
+      const fileUrl = signedUrl.uploadUrl.split("?")[0];
+      await uploadAudioToS3(signedUrl.uploadUrl, blob);
+      const attachType = getAttachType(blob.type);
+      astroReply(fileUrl, attachType);
+    } catch (err) {
+      console.error("Attachment failed:", err);
+    }
+  };
+
   const handleMicClick = async () => {
     await startRecording();
   };
@@ -558,8 +575,94 @@ const ChatWindow = () => {
 
   /* -------------------- UI -------------------- */
 
+  const [kundliIframeSrc, setKundliIframeSrc] = useState(null);
+
+  const handleViewKundli = () => {
+    if (kundliId) {
+      setKundliIframeSrc(`/kundli/${kundliId}`);
+    }
+  };
+
   const { activeChat } = useChatContext();
+  const { activeCall, setActiveCall, openReview: callReviewOpen } = useCall();
   const isChatActive = activeChat && activeChat?.roomId;
+
+  /* --------- Redirect to chats when call ends and review is done --------- */
+  const hadActiveCallRef = useRef(!!activeCall);
+  useEffect(() => {
+    if (activeCall) {
+      hadActiveCallRef.current = true;
+    }
+  }, [activeCall]);
+
+  useEffect(() => {
+    // Call ended (activeCall is null) + no review pending + we had a call before
+    if (hadActiveCallRef.current && !activeCall && !callReviewOpen) {
+      hadActiveCallRef.current = false;
+      navigate("/chats");
+    }
+  }, [activeCall, callReviewOpen, navigate]);
+
+  /* --------- Local Timer --------- */
+  const [localTimer, setLocalTimer] = useState(0);
+  useEffect(() => {
+    let interval;
+    if (isChatActive) {
+      interval = setInterval(() => setLocalTimer((t) => t + 1), 1000);
+    } else {
+      setLocalTimer(0);
+    }
+    return () => clearInterval(interval);
+  }, [isChatActive]);
+
+  const formatLocalTimer = (sec) =>
+    `${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
+
+  /* --------- Initiate Call from Chat --------- */
+  const handleInitiateCall = (callType) => {
+    if (!roomId || !userId || !astrologerId) {
+      Toast.error("Unable to initiate call. Missing chat details.");
+      return;
+    }
+    if (activeCall) {
+      Toast.error("A call is already active.");
+      return;
+    }
+
+    voiceSocket.emit("call:initiate", {
+      roomId,
+      userId,
+      astrologerId,
+      type: callType,
+    });
+
+    const handleCallInitiated = (data) => {
+      setActiveCall({
+        roomId: data.roomId,
+        agoraToken: data.agoraToken,
+        isUserSide: false,
+        callType: data.type || callType,
+        callerName: fullName,
+        userId,
+        astrologerId,
+        chatRoomId: roomId,
+        kundliId,
+        userID,
+      });
+      voiceSocket.off("call:initiated", handleCallInitiated);
+      voiceSocket.off("call:initiate:error", handleCallError);
+    };
+
+    const handleCallError = (data) => {
+      Toast.error(data?.message || "Failed to initiate call");
+      voiceSocket.off("call:initiated", handleCallInitiated);
+      voiceSocket.off("call:initiate:error", handleCallError);
+    };
+
+    voiceSocket.on("call:initiated", handleCallInitiated);
+    voiceSocket.on("call:initiate:error", handleCallError);
+  };
+
   return (
     <div className="-m-4 max-w-none flex flex-col h-screen bg-gray-50">
       {/* ---------- Header ---------- */}
@@ -588,7 +691,7 @@ const ChatWindow = () => {
 
           {/* Desktop View - Call/Video icons, Timer, End button */}
           <div className="hidden md:flex items-center gap-3">
-            <button className="w-10 h-10 rounded-lg border flex items-center justify-center hover:opacity-90 transition-opacity"
+            <button onClick={() => handleInitiateCall("audio")} className="w-10 h-10 rounded-lg border flex items-center justify-center hover:opacity-90 transition-opacity"
               style={{ 
                 borderColor: '#f75801'
               }}
@@ -598,7 +701,7 @@ const ChatWindow = () => {
 
             <div className="w-px h-6 bg-gray-300"></div>
 
-            <button className="w-10 h-10 rounded-lg border flex items-center justify-center hover:opacity-90 transition-opacity"
+            <button onClick={() => handleInitiateCall("video")} className="w-10 h-10 rounded-lg border flex items-center justify-center hover:opacity-90 transition-opacity"
               style={{ 
                 borderColor: '#f75801'
               }}
@@ -609,66 +712,52 @@ const ChatWindow = () => {
             {isChatActive && (
               <>
                 <span className="text-sm font-medium text-gray-700 ml-2">
-                  Chat Ends in <span className="text-red-500 font-semibold">{formattedTime}</span>
+                  <span className="text-red-500 font-semibold">{formatLocalTimer(localTimer)}</span>
                 </span>
 
-                <button
-                  onClick={handleChatEnd}
-                  className="px-5 py-2 bg-red-500 text-white rounded-lg text-sm font-semibold hover:bg-red-600 transition-colors flex items-center gap-2"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <g clipPath="url(#clip0_8955_984)">
-                      <path d="M7.12004 8.87333C7.79661 9.5505 8.56125 10.1335 9.39337 10.6067L10.24 9.76C10.4213 9.58076 10.6501 9.45723 10.8994 9.40406C11.1488 9.35089 11.4081 9.3703 11.6467 9.46C12.2516 9.6857 12.88 9.84225 13.52 9.92667C13.8404 9.97195 14.1334 10.1322 14.3443 10.3775C14.5553 10.6228 14.6699 10.9365 14.6667 11.26V13.26C14.6675 13.4457 14.6294 13.6294 14.555 13.7996C14.4807 13.9697 14.3716 14.1224 14.2348 14.2479C14.0979 14.3734 13.9364 14.469 13.7605 14.5285C13.5847 14.588 13.3983 14.61 13.2134 14.5933C11.1619 14.3704 9.19137 13.6694 7.46004 12.5467C6.65688 12.0367 5.91239 11.4398 5.24004 10.7667M3.46004 8.54C2.33727 6.80867 1.63628 4.83811 1.41337 2.78667C1.39671 2.60231 1.41862 2.41651 1.4777 2.24108C1.53679 2.06566 1.63175 1.90446 1.75655 1.76775C1.88134 1.63103 2.03324 1.5218 2.20256 1.44701C2.37189 1.37222 2.55493 1.33351 2.74004 1.33333H4.74004C5.06357 1.33015 5.37723 1.44472 5.62254 1.65569C5.86786 1.86666 6.02809 2.15963 6.07337 2.48C6.15779 3.12004 6.31434 3.74848 6.54004 4.35333C6.62973 4.59195 6.64915 4.85127 6.59597 5.10059C6.5428 5.3499 6.41928 5.57874 6.24004 5.76L5.39337 6.60667" stroke="white" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
-                      <path d="M14.6666 1.33333L1.33325 14.6667" stroke="white" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
-                    </g>
-                    <defs>
-                      <clipPath id="clip0_8955_984">
-                        <rect width="16" height="16" fill="white" />
-                      </clipPath>
-                    </defs>
-                  </svg>
-                  End
-                </button>
+                {kundliId && (
+                  <button
+                    onClick={handleViewKundli}
+                    className="px-5 py-2 rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity flex items-center gap-2 text-white"
+                    style={{ backgroundColor: '#f75801' }}
+                  >
+                    <GrReactjs size={16} />
+                    View Kundli
+                  </button>
+                )}
               </>
             )}
           </div>
 
-          {/* Mobile View - Timer and End button */}
+          {/* Mobile View - Timer and View Kundli button */}
           {isChatActive && (
             <div className="md:hidden flex items-center gap-3">
-              <span className="text-sm font-semibold text-red-500">{formattedTime}</span>
+              <span className="text-sm font-semibold text-red-500">{formatLocalTimer(localTimer)}</span>
               
-              <button
-                onClick={handleChatEnd}
-                className="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-semibold hover:bg-red-600 transition-colors flex items-center gap-2"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <g clipPath="url(#clip0_8955_984_mobile)">
-                    <path d="M7.12004 8.87333C7.79661 9.5505 8.56125 10.1335 9.39337 10.6067L10.24 9.76C10.4213 9.58076 10.6501 9.45723 10.8994 9.40406C11.1488 9.35089 11.4081 9.3703 11.6467 9.46C12.2516 9.6857 12.88 9.84225 13.52 9.92667C13.8404 9.97195 14.1334 10.1322 14.3443 10.3775C14.5553 10.6228 14.6699 10.9365 14.6667 11.26V13.26C14.6675 13.4457 14.6294 13.6294 14.555 13.7996C14.4807 13.9697 14.3716 14.1224 14.2348 14.2479C14.0979 14.3734 13.9364 14.469 13.7605 14.5285C13.5847 14.588 13.3983 14.61 13.2134 14.5933C11.1619 14.3704 9.19137 13.6694 7.46004 12.5467C6.65688 12.0367 5.91239 11.4398 5.24004 10.7667M3.46004 8.54C2.33727 6.80867 1.63628 4.83811 1.41337 2.78667C1.39671 2.60231 1.41862 2.41651 1.4777 2.24108C1.53679 2.06566 1.63175 1.90446 1.75655 1.76775C1.88134 1.63103 2.03324 1.5218 2.20256 1.44701C2.37189 1.37222 2.55493 1.33351 2.74004 1.33333H4.74004C5.06357 1.33015 5.37723 1.44472 5.62254 1.65569C5.86786 1.86666 6.02809 2.15963 6.07337 2.48C6.15779 3.12004 6.31434 3.74848 6.54004 4.35333C6.62973 4.59195 6.64915 4.85127 6.59597 5.10059C6.5428 5.3499 6.41928 5.57874 6.24004 5.76L5.39337 6.60667" stroke="white" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M14.6666 1.33333L1.33325 14.6667" stroke="white" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
-                  </g>
-                  <defs>
-                    <clipPath id="clip0_8955_984_mobile">
-                      <rect width="16" height="16" fill="white" />
-                    </clipPath>
-                  </defs>
-                </svg>
-                End
-              </button>
+              {kundliId && (
+                <button
+                  onClick={handleViewKundli}
+                  className="px-4 py-2 rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity flex items-center gap-2 text-white"
+                  style={{ backgroundColor: '#f75801' }}
+                >
+                  <GrReactjs size={16} />
+                  View Kundli
+                </button>
+              )}
             </div>
           )}
         </div>
 
         {/* Mobile Call Buttons - Part of sticky header */}
         <div className="md:hidden flex gap-3 px-4 py-3 bg-[#FFF8F0] border-b border-gray-200">
-          <button className="flex-1 flex items-center justify-center gap-2 py-3 rounded-full border-2 bg-white hover:opacity-90 transition-opacity"
+          <button onClick={() => handleInitiateCall("audio")} className="flex-1 flex items-center justify-center gap-2 py-3 rounded-full border-2 bg-white hover:opacity-90 transition-opacity"
             style={{ borderColor: '#f75801' }}
           >
             <img src={CallIcon} alt="Voice Call" width="20" height="20" />
             <span className="text-base font-medium" style={{ color: '#f75801' }}>Voice Call</span>
           </button>
 
-          <button className="flex-1 flex items-center justify-center gap-2 py-3 rounded-full border-2 bg-white hover:opacity-90 transition-opacity"
+          <button onClick={() => handleInitiateCall("video")} className="flex-1 flex items-center justify-center gap-2 py-3 rounded-full border-2 bg-white hover:opacity-90 transition-opacity"
             style={{ borderColor: '#f75801' }}
           >
             <img src={VideocamIcon} alt="Video Call" width="20" height="20" />
@@ -725,11 +814,15 @@ const ChatWindow = () => {
               />
 
               <div className="flex items-center gap-3 ml-3 border-l border-gray-300 pl-3">
-                {/* <button className="text-gray-400 hover:text-gray-600 transition-colors">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/>
-                  </svg>
-                </button> */}
+                <button
+                  onClick={handleAttachment}
+                  disabled={attachmentSelecting}
+                  className="hover:opacity-80 transition-opacity disabled:opacity-50"
+                  style={{ color: '#f75801' }}
+                  aria-label="Attach file"
+                >
+                  <Paperclip size={24} />
+                </button>
 
                 <button
                   onClick={handleMicClick}
@@ -770,6 +863,11 @@ const ChatWindow = () => {
         />
       )}
       {/* 👇 Modal */}
+      <IframeModal
+        open={!!kundliIframeSrc}
+        src={kundliIframeSrc}
+        onClose={() => setKundliIframeSrc(null)}
+      />
     </div>
   );
 };

@@ -10,7 +10,8 @@ import {
 } from "agora-rtc-react";
 import { getAgoraToken } from "../../services/appServices/getLiveStreamService";
 
-const APP_ID = "5630460abdc141e3b2f8d9597752bd7d";
+// const APP_ID = "5630460abdc141e3b2f8d9597752bd7d";
+const APP_ID = "c76e3d30a3b6483689dac88ca9f94381";
 export const useLiveStreaming = (client, ROLE) => {
   const [calling, setCalling] = useState(true);
     const [token, setToken] = useState(null);

@@ -16,7 +16,8 @@ import VideoCallChat from "./VideoCallChat";
 import { PATH } from "../../../utils/routes/Paths";
 import CallIcon from "../../../assets/chat/Call.svg";
 
-const APP_ID = "5630460abdc141e3b2f8d9597752bd7d";
+// const APP_ID = "5630460abdc141e3b2f8d9597752bd7d";
+const APP_ID = "c76e3d30a3b6483689dac88ca9f94381";
 
 const VideoCalling = ({ callData }) => {
   const { activeCall, setActiveCall, setReviewData, setOpenReview } = useCall();

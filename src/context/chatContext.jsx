@@ -95,7 +95,8 @@ useEffect(() => {
       roomId: data.roomId,
       chaterrId: data.user?._id,
       chaterType: data.type || "chat",
-      chaterName:data?.user?.firstName
+      chaterName:data?.user?.firstName,
+      userID: data?.user?.user_ID
     });
   };
 

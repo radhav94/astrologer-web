@@ -696,7 +696,7 @@ const ChatWindow = () => {
 
           {/* Desktop View - Call/Video icons, Timer, End button */}
           <div className="hidden md:flex items-center gap-3">
-            <button onClick={() => handleInitiateCall("audio")} className="w-10 h-10 rounded-lg border flex items-center justify-center hover:opacity-90 transition-opacity"
+            {/* <button onClick={() => handleInitiateCall("audio")} className="w-10 h-10 rounded-lg border flex items-center justify-center hover:opacity-90 transition-opacity"
               style={{ 
                 borderColor: '#f75801'
               }}
@@ -712,7 +712,7 @@ const ChatWindow = () => {
               }}
             >
               <img src={VideocamIcon} alt="Video Call" width="20" height="20" />
-            </button>
+            </button> */}
 
             {(isChatActive || activeCall) && (
               <>

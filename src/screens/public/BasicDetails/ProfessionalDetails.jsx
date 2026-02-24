@@ -1,5 +1,9 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useFormik } from "formik";
+import { useDispatch } from "react-redux";
+import * as Yup from "yup";
+import { updateRegisterData, setCurrentStep } from "../../../reducer/registerSlice";
+import { createDropdownValidation, createMultiSelectValidation } from "../../../utils/utlis";
 
 const EXPERTISE_LIST = [
   "Vedic",
@@ -18,19 +22,55 @@ const EXPERIENCE_LIST = Array.from({ length: 51 }, (_, i) => i); // 0 to 50
 
 const ProfessionalDetails = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
-  const [experience, setExperience] = useState("");
-  const [expertise, setExpertise] = useState([]);
+  // Validation schema using reusable utilities from utils.js
+  const validationSchema = Yup.object().shape({
+    experience: createDropdownValidation({
+      fieldName: "Years of experience",
+      validOptions: EXPERIENCE_LIST.map(String),
+      required: true,
+      emptyValue: "",
+    }),
+    expertise: createMultiSelectValidation({
+      fieldName: "Areas of expertise",
+      minSelections: 1,
+      required: true,
+    }),
+  });
+
+  // Formik setup
+  const formik = useFormik({
+    initialValues: {
+      experience: "",
+      expertise: [],
+    },
+    validationSchema,
+    validateOnChange: true,
+    validateOnBlur: true,
+    onSubmit: (values) => {
+      // Dispatch to Redux store
+      dispatch(updateRegisterData({
+        experience: values.experience,
+        expertise: values.expertise,
+      }));
+      
+      // Update current step
+      dispatch(setCurrentStep(3));
+      
+      // Navigate to next step
+      navigate("/language-speak");
+    },
+  });
 
   const toggleExpertise = (item) => {
-    setExpertise((prev) =>
-      prev.includes(item)
-        ? prev.filter((e) => e !== item)
-        : [...prev, item]
-    );
+    const currentExpertise = formik.values.expertise;
+    const newExpertise = currentExpertise.includes(item)
+      ? currentExpertise.filter((e) => e !== item)
+      : [...currentExpertise, item];
+    
+    formik.setFieldValue("expertise", newExpertise);
   };
-
-  const isValid = experience !== "" && expertise.length > 0;
 
   return (
     <div className="min-h-screen bg-white flex justify-center">
@@ -63,13 +103,20 @@ const ProfessionalDetails = () => {
 
         <div className="relative">
             <select
-            value={experience}
-            onChange={(e) => setExperience(e.target.value)}
-            className="
+            name="experience"
+            value={formik.values.experience}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            className={`
                 w-full border rounded-xl px-4 py-4 pr-12 text-sm
                 appearance-none bg-white
-                focus:outline-none focus:ring-1 focus:ring-black
-            "
+                focus:outline-none focus:ring-1
+                ${
+                  formik.touched.experience && formik.errors.experience
+                    ? "border-red-500 focus:ring-red-500"
+                    : "focus:ring-black"
+                }
+            `}
             >
             <option value="">Select experience</option>
             {EXPERIENCE_LIST.map((year) => (
@@ -84,6 +131,9 @@ const ProfessionalDetails = () => {
             ⚙️
             </span>
         </div>
+        {formik.touched.experience && formik.errors.experience && (
+          <p className="text-red-500 text-xs mt-1 text-left">{formik.errors.experience}</p>
+        )}
         </div>  
 
 
@@ -102,7 +152,7 @@ const ProfessionalDetails = () => {
                 className={`
                   px-4 py-2 rounded-full text-sm transition
                   ${
-                    expertise.includes(item)
+                    formik.values.expertise.includes(item)
                       ? "bg-black text-white"
                       : "bg-gray-100 text-gray-700"
                   }
@@ -116,16 +166,20 @@ const ProfessionalDetails = () => {
           <p className="text-xs text-gray-400 mt-3 text-left">
             *You can select more than 1.
           </p>
+          {formik.touched.expertise && formik.errors.expertise && (
+            <p className="text-red-500 text-xs mt-1 text-left">{formik.errors.expertise}</p>
+          )}
         </div>
 
         {/* Next Button */}
         <button
-          disabled={!isValid}
-          onClick={() => navigate("/language-speak")}
+          type="submit"
+          onClick={formik.handleSubmit}
+          disabled={!formik.isValid || formik.isSubmitting}
           className={`
             w-full py-3 rounded-xl font-medium transition
             ${
-              isValid
+              formik.isValid && !formik.isSubmitting
                 ? "bg-black text-white hover:bg-gray-900"
                 : "bg-gray-300 text-gray-600 cursor-not-allowed"
             }

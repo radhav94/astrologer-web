@@ -584,7 +584,7 @@ const ChatWindow = () => {
   };
 
   const { activeChat } = useChatContext();
-  const { activeCall, setActiveCall, openReview: callReviewOpen } = useCall();
+  const { activeCall, setActiveCall, openReview: callReviewOpen, callStartTime } = useCall();
   const isChatActive = activeChat && activeChat?.roomId;
 
   /* --------- Redirect to chats when call ends and review is done --------- */
@@ -607,13 +607,18 @@ const ChatWindow = () => {
   const [localTimer, setLocalTimer] = useState(0);
   useEffect(() => {
     let interval;
-    if (isChatActive) {
+    if (callStartTime) {
+      // Sync with active call timer
+      interval = setInterval(() => {
+        setLocalTimer(Math.floor((Date.now() - callStartTime) / 1000));
+      }, 1000);
+    } else if (isChatActive) {
       interval = setInterval(() => setLocalTimer((t) => t + 1), 1000);
     } else {
       setLocalTimer(0);
     }
     return () => clearInterval(interval);
-  }, [isChatActive]);
+  }, [isChatActive, callStartTime]);
 
   const formatLocalTimer = (sec) =>
     `${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
@@ -709,7 +714,7 @@ const ChatWindow = () => {
               <img src={VideocamIcon} alt="Video Call" width="20" height="20" />
             </button>
 
-            {isChatActive && (
+            {(isChatActive || activeCall) && (
               <>
                 <span className="text-sm font-medium text-gray-700 ml-2">
                   <span className="text-red-500 font-semibold">{formatLocalTimer(localTimer)}</span>
@@ -730,7 +735,7 @@ const ChatWindow = () => {
           </div>
 
           {/* Mobile View - Timer and View Kundli button */}
-          {isChatActive && (
+          {(isChatActive || activeCall) && (
             <div className="md:hidden flex items-center gap-3">
               <span className="text-sm font-semibold text-red-500">{formatLocalTimer(localTimer)}</span>
               

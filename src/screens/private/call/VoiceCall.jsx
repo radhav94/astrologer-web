@@ -15,12 +15,13 @@ import { voiceSocket } from "../../../services/appServices/voiceSocketServices";
 import { PATH } from "../../../utils/routes/Paths";
 import { useChat as useChatContext } from "../../../context/chatContext";
 import CallIcon from "../../../assets/chat/Call.svg";
+import VideoCallChat from "./VideoCallChat";
 
 // const APP_ID = "5630460abdc141e3b2f8d9597752bd7d";
 const APP_ID = "c76e3d30a3b6483689dac88ca9f94381";
 
 const AgoraVoiceCalling = ({ callData }) => {
-  const { activeCall, setActiveCall, setReviewData, setOpenReview } = useCall();
+  const { activeCall, setActiveCall, setReviewData, setOpenReview, callStartTime, setCallStartTime } = useCall();
   const { setActiveChat } = useChatContext();
   const navigate = useNavigate();
 
@@ -40,13 +41,13 @@ const AgoraVoiceCalling = ({ callData }) => {
   const [micOn, setMicOn] = useState(true);
   const [joined, setJoined] = useState(false);
   const [callState, setCallState] = useState("connecting");
-  const [timer, setTimer] = useState(0);
   const [isMinimized, setIsMinimized] = useState(false);
   const [position, setPosition] = useState({ x: 20, y: 20 });
   const [isVideo, setIsVideo] = useState(false);
   const [isRemoteVideo, setIsRemoteVideo] = useState(false);
   const [isVideoMode, setIsVideoMode] = useState(false);
   const [speakerOn, setSpeakerOn] = useState(true);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   /* ================= START CALL ================= */
   useEffect(() => {
@@ -114,13 +115,19 @@ const AgoraVoiceCalling = ({ callData }) => {
   }, [speakerOn]);
 
   /* ================= TIMER ================= */
+  const [timer, setTimer] = useState(0);
   useEffect(() => {
     let interval;
     if (callState === "connected") {
-      interval = setInterval(() => setTimer((t) => t + 1), 1000);
+      if (!callStartTime) setCallStartTime(Date.now());
+      interval = setInterval(() => {
+        if (callStartTime) {
+          setTimer(Math.floor((Date.now() - callStartTime) / 1000));
+        }
+      }, 1000);
     }
     return () => clearInterval(interval);
-  }, [callState]);
+  }, [callState, callStartTime]);
 
   /* ================= CLEANUP ================= */
   const cleanup = async () => {
@@ -138,6 +145,7 @@ const AgoraVoiceCalling = ({ callData }) => {
     } finally {
       micTrackRef.current = null;
       clientRef.current = null;
+      setCallStartTime(null);
       setActiveCall(null);
       setActiveChat(null); // Clear active chat when call ends
     }
@@ -266,6 +274,17 @@ const AgoraVoiceCalling = ({ callData }) => {
       videoTrackRef.current.play(localVideoRef.current);
     }
   }, [isVideo]);
+  /* ================= KUNDLI / CHAT PANEL ================= */
+  const toggleChat = () => setIsChatOpen((prev) => !prev);
+
+  const chatData = {
+    userId: activeCall?.userId,
+    astrologerId: activeCall?.astrologerId,
+    chatRoomId: activeCall?.chatRoomId,
+    kundliId: activeCall?.kundliId,
+    isUserSide: activeCall?.isUserSide,
+  };
+
   /* ================= UI ================= */
   return (
     <>
@@ -415,6 +434,7 @@ const AgoraVoiceCalling = ({ callData }) => {
               </span>
 
               <button
+                onClick={toggleChat}
                 className="px-4 py-2 text-white rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity"
                 style={{ background: 'linear-gradient(135deg, #f75801, #d43400)' }}
               >
@@ -427,6 +447,7 @@ const AgoraVoiceCalling = ({ callData }) => {
               <span className="text-sm font-semibold text-red-500">{formatTime(timer)}</span>
 
               <button
+                onClick={toggleChat}
                 className="px-4 py-2 text-white rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity"
                 style={{ background: 'linear-gradient(135deg, #f75801, #d43400)' }}
               >
@@ -644,6 +665,14 @@ const AgoraVoiceCalling = ({ callData }) => {
             </div>
 
           </div>
+          {/* Kundli / Chat Panel */}
+          {isChatOpen && (
+            <VideoCallChat
+              isOpen={isChatOpen}
+              onClose={() => setIsChatOpen(false)}
+              videoCallData={chatData}
+            />
+          )}
         </div>
       )}
     </>

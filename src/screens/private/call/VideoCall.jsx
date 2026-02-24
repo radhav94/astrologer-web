@@ -20,7 +20,7 @@ import CallIcon from "../../../assets/chat/Call.svg";
 const APP_ID = "c76e3d30a3b6483689dac88ca9f94381";
 
 const VideoCalling = ({ callData }) => {
-  const { activeCall, setActiveCall, setReviewData, setOpenReview } = useCall();
+  const { activeCall, setActiveCall, setReviewData, setOpenReview, callStartTime, setCallStartTime } = useCall();
   const navigate = useNavigate();
 
   if (!activeCall || activeCall.callType !== "video") return null;
@@ -35,6 +35,7 @@ const VideoCalling = ({ callData }) => {
   const [isLocalBig, setIsLocalBig] = useState(false);
 
   const localVideoMiniRef = useRef(null);
+  const remoteVideoMiniRef = useRef(null);
   const remoteVideoRef = useRef(null);
 
   const cleanupRef = useRef(false);
@@ -193,9 +194,7 @@ const VideoCalling = ({ callData }) => {
 
         setJoined(true);
 
-        timerRef.current = setInterval(() => {
-          setCallSeconds((p) => p + 1);
-        }, 1000);
+        if (!callStartTime) setCallStartTime(Date.now());
       } catch (err) {
         console.error("CALL START ERROR", err);
         safeEndCall();
@@ -214,13 +213,46 @@ const VideoCalling = ({ callData }) => {
     if (!joined) return;
 
     if (isMinimized) {
-      playLocalVideo(localVideoMiniRef.current);
+      // Play remote video in mini view
+      if (clientRef.current && remoteVideoMiniRef.current) {
+        clientRef.current.remoteUsers.forEach((user) => {
+          if (user.videoTrack) {
+            try { user.videoTrack.stop(); } catch (e) {}
+            remoteVideoMiniRef.current.innerHTML = "";
+            const div = document.createElement("div");
+            div.style.width = "100%";
+            div.style.height = "100%";
+            remoteVideoMiniRef.current.appendChild(div);
+            setTimeout(() => {
+              try { user.videoTrack.play(div); } catch (e) {}
+            }, 100);
+          }
+        });
+      }
     } else if (isLocalBig) {
       playLocalVideo(remoteVideoRef.current); // local goes big
+      // Replay remote in the other container
+      resumeRemoteTracks();
     } else {
       playLocalVideo(localVideoFullRef.current); // local stays small
+      // Replay remote in main container
+      resumeRemoteTracks();
     }
   }, [joined, isMinimized, isLocalBig]);
+
+  /* ================= CALL TIMER FROM SHARED START TIME ================= */
+  useEffect(() => {
+    if (!callStartTime) return;
+    timerRef.current = setInterval(() => {
+      setCallSeconds(Math.floor((Date.now() - callStartTime) / 1000));
+    }, 1000);
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, [callStartTime]);
 
   useEffect(() => {
     if (!clientRef.current) return;
@@ -300,6 +332,7 @@ const VideoCalling = ({ callData }) => {
 
       setJoined(false);
       setCallSeconds(0);
+      setCallStartTime(null);
       setActiveCall(null);
     }
   };
@@ -418,191 +451,42 @@ const VideoCalling = ({ callData }) => {
           top: position.y,
           left: position.x,
           display: isMinimized ? "block" : "none",
-          width: '200px',
-          background: 'linear-gradient(135deg, rgba(30, 30, 30, 0.95), rgba(50, 50, 50, 0.95))',
-          backdropFilter: 'blur(20px)',
-          borderRadius: '14px',
-          boxShadow: '0 12px 40px rgba(0, 0, 0, 0.5)',
-          overflow: 'hidden',
           zIndex: 100000,
-          userSelect: 'none',
-          border: '1px solid rgba(255, 255, 255, 0.1)'
         }}
+        className="w-48 rounded-2xl bg-[#1e003c]/70 backdrop-blur-xl border border-white/20 shadow-2xl text-white select-none overflow-hidden"
         onMouseDown={startDrag}
         onTouchStart={startDrag}
         onClick={resumeRemoteAudio}
       >
-        {/* Header */}
-        <div style={{
-          padding: '8px 10px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          background: 'rgba(0, 0, 0, 0.3)',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-          cursor: 'grab'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden' }}>
-            <span style={{ 
-              color: 'white', 
-              fontSize: '11px', 
-              fontWeight: '600',
-              textShadow: '0 2px 4px rgba(0,0,0,0.3)',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis'
-            }}>
-              {callerName || "Video Call"}
-            </span>
-            <span style={{ 
-              color: 'rgba(255, 255, 255, 0.7)', 
-              fontSize: '11px',
-              fontWeight: '500',
-              flexShrink: 0
-            }}>
-              • {formatTime(callSeconds)}
+        {/* Remote Video Preview */}
+        <div className="w-full h-40 bg-black relative">
+          <div
+            ref={remoteVideoMiniRef}
+            className="w-full h-full"
+          />
+          {/* Overlay: name + timer */}
+          <div className="absolute bottom-0 left-0 right-0 px-2 py-1 bg-gradient-to-t from-black/70 to-transparent">
+            <p className="text-[10px] font-semibold truncate">{callerName || "Video Call"}</p>
+            <span className="text-[10px] opacity-70">
+              {joined ? formatTime(callSeconds) : "Connecting…"}
             </span>
           </div>
-          <button 
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsMinimized(false);
-            }}
-            style={{
-              width: '24px',
-              height: '24px',
-              borderRadius: '6px',
-              background: 'rgba(255, 255, 255, 0.1)',
-              border: 'none',
-              color: 'white',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '14px',
-              transition: 'all 0.2s',
-              flexShrink: 0
-            }}
-            onMouseEnter={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.2)'}
-            onMouseLeave={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.1)'}
-          >
-            ⤢
-          </button>
-        </div>
-
-        {/* Video */}
-        <div style={{
-          width: '100%',
-          height: '120px',
-          background: '#000',
-          position: 'relative'
-        }}>
-          <div
-            ref={localVideoMiniRef}
-            style={{ width: "100%", height: "100%" }}
-          />
         </div>
 
         {/* Controls */}
-        <div style={{
-          padding: '10px',
-          display: 'flex',
-          justifyContent: 'space-around',
-          alignItems: 'center',
-          background: 'rgba(0, 0, 0, 0.2)'
-        }}>
-          <button 
-            onClick={(e) => {
-              e.stopPropagation();
-              setMicOn((p) => !p);
-            }}
-            style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '50%',
-              background: 'white',
-              border: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
-              transition: 'all 0.2s'
-            }}
-            onMouseEnter={(e) => e.target.style.transform = 'scale(1.05)'}
-            onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
+        <div className="p-2 flex justify-between">
+          <button
+            onClick={(e) => { e.stopPropagation(); setMicOn((p) => !p); }}
+            className={`w-8 h-8 rounded-full flex items-center justify-center ${micOn ? "bg-white/20" : "bg-red-500/80"}`}
           >
-            {micOn ? (
-              <IoMic size={16} style={{ color: '#f75801' }} />
-            ) : (
-              <IoMicOff size={16} style={{ color: '#f75801' }} />
-            )}
+            {micOn ? <IoMic size={14} /> : <IoMicOff size={14} />}
           </button>
-          
-          <button 
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '50%',
-              background: '#ef4444',
-              border: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              boxShadow: '0 4px 12px rgba(239, 68, 68, 0.4)',
-              transition: 'all 0.2s'
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.transform = 'scale(1.05)';
-              e.target.style.background = '#dc2626';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.transform = 'scale(1)';
-              e.target.style.background = '#ef4444';
-            }}
+
+          <button
+            onClick={(e) => { e.stopPropagation(); setIsMinimized(false); }}
+            className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-sm"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <path d="M12 2L2 20h20L12 2z" fill="white"/>
-              <rect x="11" y="8" width="2" height="6" fill="#ef4444" rx="1"/>
-              <circle cx="12" cy="17" r="1" fill="#ef4444"/>
-            </svg>
-          </button>
-          
-          <button 
-            onClick={(e) => {
-              e.stopPropagation();
-              setSpeakerOn((p) => !p);
-            }}
-            style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '50%',
-              background: 'white',
-              border: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
-              transition: 'all 0.2s'
-            }}
-            onMouseEnter={(e) => e.target.style.transform = 'scale(1.05)'}
-            onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
-          >
-            {speakerOn ? (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f75801" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-                <path d="M15.54 8.46a5 5 0 010 7.07"/>
-                <path d="M19.07 4.93a10 10 0 010 14.14"/>
-              </svg>
-            ) : (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f75801" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-                <line x1="2" y1="2" x2="22" y2="22"/>
-              </svg>
-            )}
+            ⤢
           </button>
         </div>
       </div>

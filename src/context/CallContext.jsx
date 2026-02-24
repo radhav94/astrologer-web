@@ -9,6 +9,7 @@ export const CallProvider = ({ children }) => {
   );
 
   const [activeCall, setActiveCall] = useState(null);
+  const [callStartTime, setCallStartTime] = useState(null);
   const [waitingList, setWaitingList] = useState([]);
   const [incomingCall, setIncomingCall] = useState(null);
   const [openReview, setOpenReview] = useState(null);
@@ -118,6 +119,8 @@ export const CallProvider = ({ children }) => {
       value={{
         activeCall,
         setActiveCall,
+        callStartTime,
+        setCallStartTime,
         waitingList,
         setWaitingList,
         incomingCall,

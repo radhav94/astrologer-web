@@ -52,7 +52,8 @@ const IncomingChatModal = () => {
               fullName: incomingChat?.chaterName,
               roomId: incomingChat?.roomId,
               isUserSide: false,
-              kundliId: null
+              kundliId: null,
+              userID: incomingChat?.userID
             },
           }
         );

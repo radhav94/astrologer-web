@@ -44,7 +44,7 @@ export default function useChat({
     socketService.connect({
       onConnected: () => {
         // socketService.joinRoom({ roomId, userId, astrologerId });
-        if(Object.keys(activeChat || {}).length > 0 ) {
+        if(Object.keys(activeChat || {}).length > 0 || (activeCall && activeCall.userId === userId)) {
           startTimer();
           setIsMessageDisabled(false);
         }

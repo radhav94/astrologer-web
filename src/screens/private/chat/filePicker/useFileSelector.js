@@ -37,6 +37,11 @@ export const useFileSelector = () => {
         });
       };
 
+      inputRef.current.oncancel = () => {
+        setSelecting(false);
+        reject("File selection cancelled");
+      };
+
       inputRef.current.click();
     });
 

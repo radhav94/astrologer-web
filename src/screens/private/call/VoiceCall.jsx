@@ -17,10 +17,10 @@ import { useCall } from "../../../context/CallContext";
 import { voiceSocket } from "../../../services/appServices/voiceSocketServices";
 import { PATH } from "../../../utils/routes/Paths";
 
-const APP_ID = "5630460abdc141e3b2f8d9597752bd7d";
+const APP_ID = "c76e3d30a3b6483689dac88ca9f94381";
 
 const AgoraVoiceCalling = ({ callData }) => {
-  const { activeCall, setActiveCall } = useCall();
+  const { activeCall, setActiveCall, sharedAgoraState, setSharedAgoraState } = useCall();
   const navigate = useNavigate();
 
   if (!activeCall || activeCall.callType !== "audio") return null;
@@ -34,6 +34,7 @@ const AgoraVoiceCalling = ({ callData }) => {
   const videoTrackRef = useRef(null);
   const remoteVideoRef = useRef(null);
   const localVideoRef = useRef(null);
+  const isUpgradingRef = useRef(false); // Track if upgrading to video
 
   /* ================= STATE ================= */
   const [micOn, setMicOn] = useState(true);
@@ -74,11 +75,18 @@ const AgoraVoiceCalling = ({ callData }) => {
 
       client.on("user-left", endCall);
 
-      await client.join(APP_ID, roomId, agoraToken, null);
+      await client.join(APP_ID, roomId, agoraToken, "");
 
       micTrackRef.current = await AgoraRTC.createMicrophoneAudioTrack();
       await client.publish([micTrackRef.current]);
-      // videoTrackRef.current = await AgoraRTC.createCameraVideoTrack();
+
+      // Store in shared state for potential upgrade
+      setSharedAgoraState({
+        client: client,
+        micTrack: micTrackRef.current,
+        cameraTrack: null,
+        isUpgrading: false
+      });
 
       setJoined(true);
       setCallState("connected");
@@ -86,9 +94,21 @@ const AgoraVoiceCalling = ({ callData }) => {
 
     startCall();
 
-    return () => cleanup();
+    return () => {
+      // Check ref value at unmount time
+      if (!isUpgradingRef.current) {
+        cleanup();
+      } else {
+        console.log("🔄 Skipping cleanup - upgrading to video");
+      }
+    };
     // eslint-disable-next-line
   }, [roomId]);
+  
+  /* ================= WATCH FOR UPGRADE ================= */
+  useEffect(() => {
+    isUpgradingRef.current = sharedAgoraState.isUpgrading;
+  }, [sharedAgoraState.isUpgrading]);
 
   /* ================= MIC TOGGLE ================= */
   useEffect(() => {
@@ -110,6 +130,13 @@ const AgoraVoiceCalling = ({ callData }) => {
     cleanupRef.current = true;
 
     try {
+      // If upgrading, don't close anything - just hand over to video call
+      if (isUpgradingRef.current) {
+        console.log("🔄 Cleanup skipped - preserving connection for upgrade");
+        return;
+      }
+      
+      // Normal cleanup - close everything
       await micTrackRef.current?.stop();
       await micTrackRef.current?.close();
       await videoTrackRef.current?.stop();
@@ -120,12 +147,28 @@ const AgoraVoiceCalling = ({ callData }) => {
     } finally {
       micTrackRef.current = null;
       clientRef.current = null;
-      setActiveCall(null);
+      
+      // Only clear active call and shared state if not upgrading
+      if (!isUpgradingRef.current) {
+        setActiveCall(null);
+        setSharedAgoraState({
+          client: null,
+          micTrack: null,
+          cameraTrack: null,
+          isUpgrading: false
+        });
+      }
     }
   };
 
   /* ================= END CALL ================= */
   const endCall = async () => {
+    // Don't emit call:end if upgrading
+    if (isUpgradingRef.current) {
+      console.log("🔄 Skipping call:end emit - upgrading to video");
+      return;
+    }
+    
     voiceSocket.emit("call:end", {
       roomId,
       endedBy: isUserSide ? "CUSTOMER" : "ASTROLOGER",
@@ -142,13 +185,13 @@ const AgoraVoiceCalling = ({ callData }) => {
     voiceSocket.on("call:ended", endCall);
     voiceSocket.on("force_call_end", endCall);
     voiceSocket.on("disconnect", endCall);
-    voiceSocket.on("call:canceled", handleCallCanceled);
+    // voiceSocket.on("call:canceled", handleCallCanceled);
 
     return () => {
       voiceSocket.off("call:ended", endCall);
       voiceSocket.off("force_call_end", endCall);
       voiceSocket.off("disconnect", endCall);
-      voiceSocket.off("call:canceled", handleCallCanceled);
+      // voiceSocket.off("call:canceled", handleCallCanceled);
     };
   }, []);
 

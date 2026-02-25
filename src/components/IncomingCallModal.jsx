@@ -4,7 +4,7 @@ import toast from "./toast";
 import { useEffect, useState } from "react";
 
 const IncomingCallModal = () => {
-  const { incomingCall, setIncomingCall, setActiveCall } = useCall();
+  const { incomingCall, setIncomingCall, setActiveCall, activeCall, sharedAgoraState, setSharedAgoraState } = useCall();
   const [isAccepting, setIsAccepting] = useState(false);
 
   // Listen for call accept errors from server
@@ -57,10 +57,21 @@ const IncomingCallModal = () => {
   if (!incomingCall) return null;
 
   const acceptCall = () => {
-    if (isAccepting) return; // Prevent multiple clicks
+    if (isAccepting) return;
     setIsAccepting(true);
 
     try {
+      // Check if upgrading from audio to video
+      const isUpgrading = activeCall && 
+                          activeCall.callType === "audio" && 
+                          incomingCall.callType === "video" &&
+                          sharedAgoraState.client;
+
+      if (isUpgrading) {
+        console.log("🔄 Upgrading audio call to video");
+        setSharedAgoraState(prev => ({ ...prev, isUpgrading: true }));
+      }
+
       voiceSocket.emit("call:accept", {
         roomId: incomingCall.roomId,
         token: incomingCall.agoraToken,
@@ -68,8 +79,6 @@ const IncomingCallModal = () => {
         acceptedBy: "ASTROLOGER"
       });
 
-      // Don't set active call here - wait for server confirmation
-      // The useEffect will handle setting activeCall on success
     } catch (error) {
       console.error("Error accepting call:", error);
       toast.error(error?.message || "Failed to accept call");

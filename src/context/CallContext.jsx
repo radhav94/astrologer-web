@@ -13,6 +13,14 @@ export const CallProvider = ({ children }) => {
   const [incomingCall, setIncomingCall] = useState(null);
   const [openReview, setOpenReview] = useState(null);
   const [reviewData, setReviewData] = useState(null);
+  
+  // Shared Agora state for smooth call upgrades
+  const [sharedAgoraState, setSharedAgoraState] = useState({
+    client: null,
+    micTrack: null,
+    cameraTrack: null,
+    isUpgrading: false
+  });
 
   /* 🔥 Listen to login/logout changes */
   useEffect(() => {
@@ -127,7 +135,9 @@ export const CallProvider = ({ children }) => {
         openReview,
         setOpenReview,
         reviewData,
-        setReviewData
+        setReviewData,
+        sharedAgoraState,
+        setSharedAgoraState
       }}
     >
       {children}

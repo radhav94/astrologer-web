@@ -20,7 +20,7 @@ import { PATH } from "../../../utils/routes/Paths";
 const APP_ID = "c76e3d30a3b6483689dac88ca9f94381";
 
 const AgoraVoiceCalling = ({ callData }) => {
-  const { activeCall, setActiveCall, sharedAgoraState, setSharedAgoraState } = useCall();
+  const { activeCall, setActiveCall, sharedAgoraState, setSharedAgoraState, isUpgradeRejectionProtected, upgradeRejectionRef } = useCall();
   const navigate = useNavigate();
 
   if (!activeCall || activeCall.callType !== "audio") return null;
@@ -73,7 +73,16 @@ const AgoraVoiceCalling = ({ callData }) => {
         }
       });
 
-      client.on("user-left", endCall);
+      client.on("user-left", (user) => {
+        console.log("👤 User left Agora channel:", user.uid);
+        // Check protection before ending call
+        if (upgradeRejectionRef.current) {
+          console.log("⚠️ Ignoring user-left - upgrade rejection protection is active");
+          return;
+        }
+        console.log("📞 Processing user-left - ending call");
+        endCall();
+      });
 
       await client.join(APP_ID, roomId, agoraToken, "");
 
@@ -182,18 +191,65 @@ const AgoraVoiceCalling = ({ callData }) => {
 
   /* ================= SOCKET ================= */
   useEffect(() => {
-    voiceSocket.on("call:ended", endCall);
-    voiceSocket.on("force_call_end", endCall);
-    voiceSocket.on("disconnect", endCall);
-    // voiceSocket.on("call:canceled", handleCallCanceled);
+    const handleCallEnded = (data) => {
+      console.log("📞 call:ended event received:", data);
+      // Check BOTH ref (immediate) and state (reactive)
+      if (upgradeRejectionRef.current || isUpgradeRejectionProtected) {
+        console.log("⚠️ Ignoring call:ended - upgrade rejection protection is active", {
+          refProtected: upgradeRejectionRef.current,
+          stateProtected: isUpgradeRejectionProtected
+        });
+        return;
+      }
+      console.log("📞 Processing call:ended - ending call");
+      endCall();
+    };
+
+    const handleForceCallEnd = (data) => {
+      console.log("📞 force_call_end event received:", data);
+      if (upgradeRejectionRef.current || isUpgradeRejectionProtected) {
+        console.log("⚠️ Ignoring force_call_end - upgrade rejection protection is active");
+        return;
+      }
+      console.log("📞 Processing force_call_end - ending call");
+      endCall();
+    };
+
+    const handleDisconnect = (reason) => {
+      console.log("📞 disconnect event received:", reason);
+      if (upgradeRejectionRef.current || isUpgradeRejectionProtected) {
+        console.log("⚠️ Ignoring disconnect - upgrade rejection protection is active");
+        return;
+      }
+      console.log("📞 Processing disconnect - ending call");
+      endCall();
+    };
+
+    const handleCallRejected = (data) => {
+      console.log("📞 call:rejected event received:", data);
+      if (upgradeRejectionRef.current || isUpgradeRejectionProtected) {
+        console.log("⚠️ Ignoring call:rejected - upgrade rejection protection is active", {
+          refProtected: upgradeRejectionRef.current,
+          stateProtected: isUpgradeRejectionProtected
+        });
+        return;
+      }
+      console.log("📞 Processing call:rejected - ending call");
+      endCall();
+    };
+
+    voiceSocket.on("call:ended", handleCallEnded);
+    voiceSocket.on("force_call_end", handleForceCallEnd);
+    voiceSocket.on("disconnect", handleDisconnect);
+    voiceSocket.on("call:rejected", handleCallRejected);
 
     return () => {
-      voiceSocket.off("call:ended", endCall);
-      voiceSocket.off("force_call_end", endCall);
-      voiceSocket.off("disconnect", endCall);
-      // voiceSocket.off("call:canceled", handleCallCanceled);
+      voiceSocket.off("call:ended", handleCallEnded);
+      voiceSocket.off("force_call_end", handleForceCallEnd);
+      voiceSocket.off("disconnect", handleDisconnect);
+      voiceSocket.off("call:rejected", handleCallRejected);
     };
-  }, []);
+  }, [isUpgradeRejectionProtected]); // Keep state in dependency for reactivity
 
   /* ================= DRAG ================= */
   const dragOffset = useRef({ x: 0, y: 0 });

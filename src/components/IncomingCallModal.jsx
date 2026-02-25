@@ -4,7 +4,7 @@ import toast from "./toast";
 import { useEffect, useState } from "react";
 
 const IncomingCallModal = () => {
-  const { incomingCall, setIncomingCall, setActiveCall, activeCall, sharedAgoraState, setSharedAgoraState } = useCall();
+  const { incomingCall, setIncomingCall, setActiveCall, activeCall, sharedAgoraState, setSharedAgoraState, setIsUpgradeRejectionProtected, upgradeRejectionRef } = useCall();
   const [isAccepting, setIsAccepting] = useState(false);
 
   // Listen for call accept errors from server
@@ -68,8 +68,14 @@ const IncomingCallModal = () => {
                           sharedAgoraState.client;
 
       if (isUpgrading) {
-        console.log("🔄 Upgrading audio call to video");
-        setSharedAgoraState(prev => ({ ...prev, isUpgrading: true }));
+        // Log the state after setting
+        setTimeout(() => {
+          console.log("🔄 Shared state after setting isUpgrading:", {
+            isUpgrading: sharedAgoraState.isUpgrading,
+            hasClient: !!sharedAgoraState.client,
+            hasMicTrack: !!sharedAgoraState.micTrack
+          });
+        }, 100);
       }
 
       voiceSocket.emit("call:accept", {
@@ -87,14 +93,45 @@ const IncomingCallModal = () => {
   };
 
   const rejectCall = () => {
-    // voiceSocket.emit("reject_call", {
-    //   roomId: incomingCall.roomId,
-    // });
+    // Check if this is a video upgrade request during an ongoing audio call
+    const isUpgradeRequest = activeCall && 
+                             activeCall.callType === "audio" && 
+                             incomingCall.callType === "video" &&
+                             activeCall.roomId === incomingCall.roomId;
 
-    voiceSocket.emit("call:reject", {
-      roomId: incomingCall.roomId,
-      rejectedBy: "ASTROLOGER"
-    })
+    if (isUpgradeRequest) {
+      console.log("🚫 Rejecting video upgrade request - keeping audio call active");
+      
+      // Set BOTH ref and state for immediate + reactive protection
+      upgradeRejectionRef.current = true;
+      setIsUpgradeRejectionProtected(true);
+      console.log("🛡️ Upgrade rejection protection ENABLED (ref + state)", {
+        refValue: upgradeRejectionRef.current,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Clear protection after 5 seconds
+      setTimeout(() => {
+        upgradeRejectionRef.current = false;
+        setIsUpgradeRejectionProtected(false);
+        console.log("🛡️ Upgrade rejection protection DISABLED");
+      }, 5000);
+      
+      // Emit regular reject - server will respond with call:rejected
+      console.log("📤 Emitting call:reject for upgrade rejection");
+      voiceSocket.emit("call:reject", {
+        roomId: incomingCall.roomId,
+        rejectedBy: "ASTROLOGER"
+      });
+    } else {
+      console.log("🚫 Rejecting new incoming call");
+      // Regular call rejection - no protection needed
+      voiceSocket.emit("call:reject", {
+        roomId: incomingCall.roomId,
+        rejectedBy: "ASTROLOGER"
+      });
+    }
+    
     setIncomingCall(null);
   };
 
@@ -110,10 +147,14 @@ const IncomingCallModal = () => {
           </div>
           <div>
             <h3 className="text-lg font-semibold text-white">
-              Incoming {incomingCall.callType === "video" ? "Video" : "Audio"} Call
+              {activeCall && activeCall.callType === "audio" && incomingCall.callType === "video" 
+                ? "Switch to Video Call?" 
+                : `Incoming ${incomingCall.callType === "video" ? "Video" : "Audio"} Call`}
             </h3>
             <p className="text-sm text-zinc-400">
-              {incomingCall.callerName || "Someone"} is calling you…
+              {activeCall && activeCall.callType === "audio" && incomingCall.callType === "video"
+                ? `${incomingCall.callerName || "Caller"} wants to switch to video`
+                : `${incomingCall.callerName || "Someone"} is calling you…`}
             </p>
           </div>
         </div>
@@ -124,7 +165,9 @@ const IncomingCallModal = () => {
             onClick={rejectCall}
             className="flex-1 rounded-xl bg-red-600 py-3 text-white font-semibold hover:bg-red-700 active:scale-95 transition"
           >
-            Reject
+            {activeCall && activeCall.callType === "audio" && incomingCall.callType === "video" 
+              ? "Keep Audio Only" 
+              : "Reject"}
           </button>
 
           <button
@@ -136,7 +179,7 @@ const IncomingCallModal = () => {
                 : "bg-green-600 hover:bg-green-700 active:scale-95"
             }`}
           >
-            {isAccepting ? "Accepting..." : "Accept"}
+            {isAccepting ? "Accepting..." : activeCall && activeCall.callType === "audio" && incomingCall.callType === "video" ? "Switch to Video" : "Accept"}
           </button>
         </div>
       </div>

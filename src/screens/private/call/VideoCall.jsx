@@ -146,7 +146,14 @@ const VideoCalling = ({ callData }) => {
     const start = async () => {
       try {
         // Check if we're upgrading from audio call
-        if (sharedAgoraState.isUpgrading && sharedAgoraState.client && sharedAgoraState.micTrack) {
+        // We check for existing client/micTrack even if isUpgrading flag isn't set yet
+        // because state updates are asynchronous
+        const shouldUpgrade = (sharedAgoraState.isUpgrading || 
+                               (sharedAgoraState.client && sharedAgoraState.micTrack)) &&
+                              sharedAgoraState.client && 
+                              sharedAgoraState.micTrack;
+
+        if (shouldUpgrade) {
           console.log("🔄 Upgrading from audio to video - reusing connection");
           
           // Reuse existing client and mic track

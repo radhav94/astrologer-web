@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Upload } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
@@ -5,10 +6,13 @@ import { useDispatch } from "react-redux";
 import * as Yup from "yup";
 import { updateRegisterData, setCurrentStep } from "../../../reducer/registerSlice";
 import { createAchievementsValidation } from "../../../utils/utlis";
+import { useFileUpload } from "../../../hooks/useFileUpload";
 
 const Achievements = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { uploadFile } = useFileUpload();
+  const [uploadingAchievement, setUploadingAchievement] = useState(false);
 
   // Validation schema using reusable utilities from utils.js
   const validationSchema = Yup.object().shape({
@@ -27,7 +31,7 @@ const Achievements = () => {
       achievements: [
         {
           achievementName: "",
-          achievementImgUrl: "dummy-url-for-now",
+          achievementImgUrl: "",
           display: false,
         },
       ],
@@ -53,11 +57,21 @@ const Achievements = () => {
     formik.setFieldValue("achievements.0.achievementName", e.target.value);
   };
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      // For now, just store dummy URL as per requirements
-      formik.setFieldValue("achievements.0.achievementImgUrl", "dummy-url-for-now");
+  const handleFileUpload = async () => {
+    try {
+      setUploadingAchievement(true);
+
+      // Use the custom hook to upload file
+      const fileUrl = await uploadFile("image/*,.pdf");
+
+      if (fileUrl) {
+        // Set the uploaded file URL in Formik
+        formik.setFieldValue("achievements.0.achievementImgUrl", fileUrl);
+      }
+    } catch (error) {
+      console.error("File upload error:", error);
+    } finally {
+      setUploadingAchievement(false);
     }
   };
 
@@ -123,22 +137,23 @@ const Achievements = () => {
         )}
 
         {/* File Upload */}
-        <label className="border rounded-xl px-4 py-3 flex items-center justify-between cursor-pointer mb-8">
+        <button
+          type="button"
+          onClick={handleFileUpload}
+          disabled={uploadingAchievement}
+          className={`w-full border rounded-xl px-4 py-3 flex items-center justify-between mb-8
+            ${uploadingAchievement ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
+          `}
+        >
           <span className="text-sm text-gray-500">
-            {formik.values.achievements[0].achievementImgUrl !== "dummy-url-for-now"
-              ? "Certificate attached"
+            {uploadingAchievement
+              ? "Uploading..."
+              : formik.values.achievements[0].achievementImgUrl
+              ? "Certificate attached ✓"
               : "Add file (.jpg, .png, .pdf)"}
           </span>
-
           <Upload size={18} className="text-gray-500" />
-
-          <input
-            type="file"
-            accept=".jpg,.png,.pdf"
-            className="hidden"
-            onChange={handleFileChange}
-          />
-        </label>
+        </button>
 
         {/* Display on Profile Toggle */}
         <div className="flex items-center gap-3 mb-10">

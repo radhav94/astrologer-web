@@ -20,7 +20,7 @@ const BasicDetails = () => {
     firstName: nameValidationSchemas.firstName,
     lastName: nameValidationSchemas.lastName,
     gender: genderValidationSchema,
-    dob: dobValidationSchema,
+    dateOfBirth: dobValidationSchema,
     email: emailValidationSchema,
   });
 
@@ -29,9 +29,12 @@ const BasicDetails = () => {
     initialValues: {
       firstName: "",
       lastName: "",
-      gender: "Female",
-      dob: "2002-01-01",
+      gender: "female",
+      dateOfBirth: "2002-01-01",
       email: "",
+      role: "ASTROLOGER",
+      phoneNumber: "918989898989",
+      place: "New Delhi, India",
     },
     validationSchema,
     validateOnChange: true,
@@ -41,9 +44,10 @@ const BasicDetails = () => {
       dispatch(updateRegisterData({
         firstName: values.firstName,
         lastName: values.lastName,
-        gender: values.gender,
-        dob: values.dob,
+        gender: values.gender.toLocaleLowerCase(),
+        dateOfBirth: values.dob,
         email: values.email,
+        place: "New Delhi, India",
       }));
       
       // Update current step

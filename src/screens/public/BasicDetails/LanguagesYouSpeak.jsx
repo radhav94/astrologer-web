@@ -14,7 +14,7 @@ const LANGUAGES = [
   "Kannada",
 ];
 
-const LEVELS = ["Basic", "Conversational", "Native", "Fluent"];
+const LEVELS = ["Fluent", "Intermediate", "Beginner"];
 
 const LanguagesYouSpeak = () => {
   const navigate = useNavigate();
@@ -24,7 +24,7 @@ const LanguagesYouSpeak = () => {
   const validationSchema = Yup.object().shape({
     languagePreferences: createLanguagePreferencesValidation({
       minLanguages: 1,
-      validProficiencyLevels: LEVELS,
+      validProficiencyLevels: LEVELS.map(level => level.toLowerCase()),
     }),
     customLanguage: Yup.string().trim(),
   });
@@ -101,7 +101,7 @@ const LanguagesYouSpeak = () => {
     const currentPreferences = formik.values.languagePreferences;
     const updatedPreferences = currentPreferences.map((item) =>
       item.languageName === lang
-        ? { ...item, proficiencyLevel: level }
+        ? { ...item, proficiencyLevel: level.toLowerCase() }
         : item
     );
     formik.setFieldValue("languagePreferences", updatedPreferences);
@@ -205,7 +205,7 @@ const LanguagesYouSpeak = () => {
                   onClick={() => setLevel(langItem.languageName, level)}
                   className={`px-4 py-2 rounded-full text-sm transition
                     ${
-                      langItem.proficiencyLevel === level
+                      langItem.proficiencyLevel === level.toLowerCase()
                         ? "bg-black text-white"
                         : "bg-gray-100 text-gray-800"
                     }`}

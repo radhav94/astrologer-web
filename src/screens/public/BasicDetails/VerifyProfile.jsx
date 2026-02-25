@@ -2,19 +2,21 @@ import { useState } from "react";
 import { Upload } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import * as Yup from "yup";
-import { updateRegisterData, setCurrentStep } from "../../../reducer/registerSlice";
+import { updateRegisterData, setCurrentStep, clearRegisterData } from "../../../reducer/registerSlice";
 import { createFileValidation } from "../../../utils/utlis";
-import { useGetS3SignedUrlMutation } from "../../../redux/s3SignedApi";
-import { useFileSelector } from "../../private/chat/filePicker/useFileSelector";
+import { useFileUpload } from "../../../hooks/useFileUpload";
+import { useRegisterAstrologerMutation } from "../../../redux/register/registerAstroApi";
 import { Toast } from "../../../components";
 
 const VerifyProfile = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const [getS3SignedUrl] = useGetS3SignedUrlMutation();
-  const { openFileSelector } = useFileSelector();
+  const { uploadFile } = useFileUpload();
+  const [registerAstrologer, { isLoading: isRegistering }] = useRegisterAstrologerMutation();
+  const registerData = useSelector((state) => state.register.registerData);
+  
   const [uploading, setUploading] = useState({
     profileImgUrl: false,
     aadharCardImgUrl: false,
@@ -47,68 +49,71 @@ const VerifyProfile = () => {
     validationSchema,
     validateOnChange: true,
     validateOnBlur: true,
-    onSubmit: (values) => {
-      // Dispatch to Redux store
-      dispatch(updateRegisterData({
-        profileImgUrl: values.profileImgUrl,
-        aadharCardImgUrl: values.aadharCardImgUrl,
-        panCardImgUrl: values.panCardImgUrl,
-      }));
-      
-      // Update current step
-      dispatch(setCurrentStep(8));
-      
-      // Navigate to next step
-      navigate("/verificationpending");
+    onSubmit: async (values) => {
+      try {  
+        await registerAstrologer(registerData).unwrap();
+        
+        Toast.success("Registration successful!");
+        dispatch(clearRegisterData());
+        navigate("/verificationpending");
+      } catch (error) {
+        console.error("Registration error:", error);
+        Toast.error(error?.data?.message || "Registration failed. Please try again.");
+      }
     },
   });
-
-  const uploadFileToS3 = async (uploadUrl, blob) => {
-    const res = await fetch(uploadUrl, {
-      method: "PUT",
-      body: blob,
-      headers: {
-        "Content-Type": blob.type,
-      },
-    });
-
-    if (!res.ok) {
-      throw new Error("S3 upload failed");
-    }
-
-    return "success";
-  };
 
   const handleFileUpload = async (fieldName, acceptTypes = "image/*,.pdf") => {
     try {
       setUploading((prev) => ({ ...prev, [fieldName]: true }));
 
-      // Open file selector
-      const { blob } = await openFileSelector(acceptTypes);
+      // Use the custom hook to upload file
+      const fileUrl = await uploadFile(acceptTypes);
 
-      // Get signed URL from API
-      const signedUrl = await getS3SignedUrl({
-        fileType: blob.type,
-      }).unwrap();
+      if (fileUrl) {
+        // Set the uploaded file URL in Formik and trigger validation
+        await formik.setFieldValue(fieldName, fileUrl, true);
+        formik.setFieldTouched(fieldName, true, true);
 
-      const uploadUrl = signedUrl.uploadUrl;
-      const fileUrl = uploadUrl.split("?")[0];
+        // Get current form values with the new file URL
+        const updatedValues = {
+          ...formik.values,
+          [fieldName]: fileUrl,
+        };
 
-      // Upload to S3
-      await uploadFileToS3(uploadUrl, blob);
+        // Check if all files are uploaded
+        if (updatedValues.profileImgUrl && updatedValues.aadharCardImgUrl && updatedValues.panCardImgUrl) {
+          // Dispatch to update registerData state
+          dispatch(updateRegisterData({
+            profileImgUrl: updatedValues.profileImgUrl,
+            aadharCardImgUrl: updatedValues.aadharCardImgUrl,
+            panCardImgUrl: updatedValues.panCardImgUrl,
+            place: "New Delhi, India",
+            password: "test@12389",
+          }));
 
-      // Set the uploaded file URL in Formik and trigger validation
-      await formik.setFieldValue(fieldName, fileUrl, true);
-      formik.setFieldTouched(fieldName, true, true);
-
-      Toast.success("File uploaded successfully");
+          // Update current step
+          dispatch(setCurrentStep(8));
+        }
+      }
     } catch (error) {
       console.error("File upload error:", error);
-      if (error !== "No file selected") {
-        Toast.error("Failed to upload file");
-      }
     } finally {
       setUploading((prev) => ({ ...prev, [fieldName]: false }));
+    }
+  };
+
+  const handleSkip = async () => {
+    try {
+      // Call register API with current registerData (without file uploads)
+      await registerAstrologer(registerData).unwrap();
+      
+      Toast.success("Registration successful!");
+      dispatch(clearRegisterData());
+      navigate("/verificationpending");
+    } catch (error) {
+      console.error("Registration error:", error);
+      Toast.error(error?.data?.message || "Registration failed. Please try again.");
     }
   };
 
@@ -161,8 +166,9 @@ const VerifyProfile = () => {
 
           <button 
             type="button"
-            onClick={() => navigate("/verificationpending")}
-            className="text-sm text-gray-600 underline"
+            onClick={handleSkip}
+            disabled={isRegistering}
+            className="text-sm text-gray-600 underline disabled:opacity-50"
           >
             Skip for Now
           </button>
@@ -197,17 +203,17 @@ const VerifyProfile = () => {
         <button
           type="submit"
           onClick={formik.handleSubmit}
-          disabled={!formik.isValid || formik.isSubmitting}
+          disabled={!formik.isValid || formik.isSubmitting || isRegistering}
           className={`
             w-full py-3 rounded-xl font-medium transition mt-auto
             ${
-              formik.isValid && !formik.isSubmitting
+              formik.isValid && !formik.isSubmitting && !isRegistering
                 ? "bg-black text-white hover:bg-gray-900"
                 : "bg-gray-300 text-gray-600 cursor-not-allowed"
             }
           `}
         >
-          Next
+          {isRegistering ? "Submitting..." : "Submit"}
         </button>
       </div>
     </div>

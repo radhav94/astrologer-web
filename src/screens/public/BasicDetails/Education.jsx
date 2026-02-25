@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { ChevronDown, Upload } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
@@ -5,6 +6,7 @@ import { useDispatch } from "react-redux";
 import * as Yup from "yup";
 import { updateRegisterData, setCurrentStep } from "../../../reducer/registerSlice";
 import { createEducationValidation } from "../../../utils/utlis";
+import { useFileUpload } from "../../../hooks/useFileUpload";
 
 const EDUCATION_LEVELS = [
   "High School",
@@ -16,6 +18,8 @@ const EDUCATION_LEVELS = [
 const Education = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { uploadFile } = useFileUpload();
+  const [uploadingCertificate, setUploadingCertificate] = useState(false);
 
   // Validation schema using reusable utilities from utils.js
   const validationSchema = Yup.object().shape({
@@ -25,7 +29,7 @@ const Education = () => {
       universityRequired: false,
       certificateRequired: false,
     }),
-    educationShowOnProfile: Yup.boolean(),
+    // educationShowOnProfile: Yup.boolean(),
   });
 
   // Formik setup
@@ -35,7 +39,7 @@ const Education = () => {
         {
           qualification: "",
           universityName: "",
-          certificateImgUrl: "dummy-url-for-now",
+          certificateImgUrl: "",
         },
       ],
       educationShowOnProfile: false,
@@ -47,7 +51,7 @@ const Education = () => {
       // Dispatch to Redux store
       dispatch(updateRegisterData({
         education: values.education,
-        educationShowOnProfile: values.educationShowOnProfile,
+        // educationShowOnProfile: values.educationShowOnProfile,
       }));
       
       // Update current step
@@ -66,11 +70,21 @@ const Education = () => {
     formik.setFieldValue("education.0.universityName", e.target.value);
   };
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      // For now, just store dummy URL as per requirements
-      formik.setFieldValue("education.0.certificateImgUrl", "dummy-url-for-now");
+  const handleFileUpload = async () => {
+    try {
+      setUploadingCertificate(true);
+
+      // Use the custom hook to upload file
+      const fileUrl = await uploadFile("image/*,.pdf");
+
+      if (fileUrl) {
+        // Set the uploaded file URL in Formik
+        formik.setFieldValue("education.0.certificateImgUrl", fileUrl);
+      }
+    } catch (error) {
+      console.error("File upload error:", error);
+    } finally {
+      setUploadingCertificate(false);
     }
   };
 
@@ -166,20 +180,23 @@ const Education = () => {
           Attach Certificate <span className="italic text-gray-400">(if any)</span>
         </label>
 
-        <label className="border rounded-xl px-4 py-3 flex items-center justify-between cursor-pointer mb-8">
+        <button
+          type="button"
+          onClick={handleFileUpload}
+          disabled={uploadingCertificate}
+          className={`w-full border rounded-xl px-4 py-3 flex items-center justify-between mb-8
+            ${uploadingCertificate ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
+          `}
+        >
           <span className="text-sm text-gray-500">
-            {formik.values.education[0].certificateImgUrl !== "dummy-url-for-now" 
-              ? "Certificate attached" 
+            {uploadingCertificate
+              ? "Uploading..."
+              : formik.values.education[0].certificateImgUrl 
+              ? "Certificate attached ✓" 
               : "Add file (.jpg, .png, .pdf)"}
           </span>
           <Upload size={18} className="text-gray-500" />
-          <input
-            type="file"
-            accept=".jpg,.png,.pdf"
-            className="hidden"
-            onChange={handleFileChange}
-          />
-        </label>
+        </button>
 
         {/* Display on Profile */}
         <div className="flex items-center gap-3 mb-10">

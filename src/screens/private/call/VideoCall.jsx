@@ -153,6 +153,8 @@ const VideoCalling = ({ callData }) => {
                               sharedAgoraState.client && 
                               sharedAgoraState.micTrack;
 
+        console.log("🔍 Should upgrade?", shouldUpgrade);
+
         if (shouldUpgrade) {
           console.log("🔄 Upgrading from audio to video - reusing connection");
           
@@ -160,9 +162,36 @@ const VideoCalling = ({ callData }) => {
           clientRef.current = sharedAgoraState.client;
           micTrackRef.current = sharedAgoraState.micTrack;
           
+          console.log("📹 Creating camera track...");
           // Only create and publish camera track
           camTrackRef.current = await AgoraRTC.createCameraVideoTrack();
+          
+          console.log("📤 Publishing camera track...");
           await clientRef.current.publish([camTrackRef.current]);
+          
+          console.log("✅ Camera track published successfully");
+          
+          // Add event listeners for video (the audio call client doesn't have these)
+          clientRef.current.on("user-published", async (user, mediaType) => {
+            
+            if (mediaType === "video") {
+              try {
+                await clientRef.current.subscribe(user, mediaType);
+                if (user.videoTrack) {
+                  console.log("📹 [UPGRADE] Playing newly published video track");
+                  safePlayRemoteVideo(user.videoTrack);
+                }
+              } catch (err) {
+                console.error("[UPGRADE] Failed to subscribe to video:", err);
+              }
+            }
+          });
+
+          clientRef.current.on("user-unpublished", (user, mediaType) => {
+            if (mediaType === "video" && remoteVideoRef.current) {
+              remoteVideoRef.current.innerHTML = "";
+            }
+          });
           
           // Update shared state
           setSharedAgoraState(prev => ({

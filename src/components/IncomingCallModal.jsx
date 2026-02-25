@@ -68,6 +68,11 @@ const IncomingCallModal = () => {
                           sharedAgoraState.client;
 
       if (isUpgrading) {
+        setSharedAgoraState(prev => ({ 
+          ...prev, 
+          isUpgrading: true 
+        }));
+        
         // Log the state after setting
         setTimeout(() => {
           console.log("🔄 Shared state after setting isUpgrading:", {

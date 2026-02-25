@@ -11,5 +11,6 @@ export const epicApi = createApi({
       return headers;
     },
   }),
+  tagTypes: ["Astrologer", "Availability", "Price", "Transactions"],
   endpoints: () => ({}),
 });

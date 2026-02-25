@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronLeft, Mic, Send, Gift } from "lucide-react";
+import { ChevronLeft, Mic, Send, Gift, Paperclip } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { IoCallOutline, IoVideocamOutline, IoCallSharp } from "react-icons/io5";
 import dayjs from "dayjs";
@@ -18,10 +18,16 @@ import IframeModal from "./IframeModal";
 import { voiceSocket } from "../../../services/appServices/voiceSocketServices";
 import LinkPreview from "./LinkPreview";
 import { detectURL } from "../../../utils/helper/linkPreview";
+import { useFileSelector } from "./filePicker/useFileSelector";
+
+import CallIcon from "../../../../src/assets/chat/Call.svg"
+import VideocamIcon from "../../../../src/assets/chat/Videocam.svg";
+import { useChat as useChatContext } from "../../../context/chatContext";
+import { useCall } from "../../../context/CallContext";
 /* -------------------- Helpers -------------------- */
 
 const formatDate = (date) => dayjs(date).format("DD MMMM YYYY");
-const formatTime = (date) => dayjs(date).format("HH:mm");
+const formatTime = (date) => dayjs(date).format("hh:mm A");
 const MIN_CHAT_SECONDS = 60;
 
 /* -------------------- Message Bubble -------------------- */
@@ -29,6 +35,15 @@ const MIN_CHAT_SECONDS = 60;
 const Message = ({ text, isSender, time, type, giftData }) => {
   const [iframeSrc, setIframeSrc] = useState(null);
   const [loading, setLoading] = useState(false);
+  
+  const userData = JSON.parse(localStorage.getItem("shubhtalk_astrologer_details"));
+  const firstName = userData?.firstName?.trim();
+  const lastName = userData?.lastName?.trim();
+  const userName = firstName && lastName ? `${firstName} ${lastName}` : "Unknown";
+  
+  const { state } = useLocation();
+  const { fullName } = state || {};
+  
   let message = text;
   let isVoiceMsg = false;
   // Detect voice message (JSON) only if not a special type
@@ -113,14 +128,14 @@ const Message = ({ text, isSender, time, type, giftData }) => {
         <div className="flex flex-col gap-3 min-w-[250px] animate-fadeIn">
           {/* Gift Header */}
           <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
-            <Gift size={18} className="text-orange-500 animate-bounce" />
+            <Gift size={18} className="animate-bounce" style={{ color: '#f75801' }} />
             <span className="text-xs font-semibold text-gray-600 uppercase">
               Gift Received
             </span>
           </div>
           {/* Gift Message */}
           {giftText && (
-            <p className="text-sm text-gray-700 italic bg-gradient-to-r from-orange-50 to-yellow-50 p-3 rounded-lg border-l-4 border-orange-400">
+            <p className="text-sm text-gray-700 italic bg-gradient-to-r from-orange-50 to-yellow-50 p-3 rounded-lg border-l-4" style={{ borderLeftColor: '#f75801' }}>
               "{parts[0]} a gift to you"
             </p>
           )}
@@ -141,7 +156,7 @@ const Message = ({ text, isSender, time, type, giftData }) => {
               <span className="font-bold text-lg text-gray-900">
                 {parsedGiftData?.giftName}
               </span>
-              <span className="text-base font-semibold text-orange-600">
+              <span className="text-base font-semibold" style={{ color: '#f75801' }}>
                 ₹{parsedGiftData?.price?.toLocaleString('en-IN')}
               </span>
             </div>
@@ -271,31 +286,45 @@ const Message = ({ text, isSender, time, type, giftData }) => {
   };
 
   return (
-    <div
-      className={`flex w-full mb-4 ${
-        isSender ? "justify-end" : "justify-start"
-      }`}
-    >
-      <div
-        className={`flex flex-col max-w-[85%] md:max-w-[65%] ${
-          isSender ? "items-end" : "items-start"
-        }`}
-      >
-        <div
-          className={`px-5 py-3 rounded-2xl text-sm md:text-base leading-relaxed shadow-sm
-            ${
+    <>
+      <div className={`flex items-start gap-2 mb-3 ${isSender ? "justify-end" : "justify-start"}`}>
+        {/* Receiver Avatar - Left side */}
+        {!isSender && (
+          <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ background: 'linear-gradient(135deg, #f75801, #d43400)' }}>
+            {fullName?.charAt(0)?.toUpperCase() || "A"}
+          </div>
+        )}
+
+        <div className={`flex flex-col max-w-[70%] ${isSender ? "items-end" : "items-start"}`}>
+          <div
+            className={`px-4 py-3 rounded-2xl text-[15px] leading-relaxed shadow-sm ${
               isSender
-                ? "bg-gray-300 text-gray-900 rounded-tr-sm"
-                : "bg-gray-100 text-gray-800 rounded-tl-sm border border-gray-100"
-            }
-          `}
-        >
-          {renderMessageContent()}
+                ? "bg-[#FFE4BA] text-gray-900 rounded-tr-md"
+                : "bg-white text-gray-800 rounded-tl-md border border-gray-100"
+            }`}
+          >
+            {renderMessageContent()}
+          </div>
+
+          <div className="flex items-center gap-1 mt-1 px-1">
+            <span className="text-[11px] text-gray-400 font-medium">
+              {time}
+            </span>
+            {isSender && (
+              <svg width="14" height="8" viewBox="0 0 14 8" fill="none" className="text-gray-400">
+                <path d="M1 4L4 7L7 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M7 4L10 7L13 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            )}
+          </div>
         </div>
 
-        <span className="text-[10px] text-gray-400 mt-1 px-1 font-medium">
-          {time}
-        </span>
+        {/* Sender Avatar - Right side */}
+        {isSender && (
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+            {userName?.charAt(0)?.toUpperCase() || "Y"}
+          </div>
+        )}
       </div>
 
       <IframeModal
@@ -304,7 +333,7 @@ const Message = ({ text, isSender, time, type, giftData }) => {
         onClose={() => setIframeSrc(null)}
         loading={loading}
       />
-    </div>
+    </>
   );
 };
 
@@ -331,6 +360,7 @@ const ChatWindow = () => {
 
   const [message, setMessage] = useState("");
   const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
 
   /* --------- History --------- */
   const { data } = useGetChatHistoryQuery({ userId: userId }, { refetchOnMountOrArgChange: roomId ? true : false });
@@ -412,7 +442,10 @@ const ChatWindow = () => {
 
   /* --------- Auto Scroll --------- */
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    // Scroll to bottom using scrollTop
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
   }, [messagesWithDate]);
 
   /* --------- Send Message --------- */
@@ -430,6 +463,21 @@ const ChatWindow = () => {
     stopRecording,
     cancelRecording
   } = useVoiceRecorder();
+
+  const { selecting: attachmentSelecting, openFileSelector } = useFileSelector();
+
+  const handleAttachment = async () => {
+    try {
+      const { blob } = await openFileSelector("image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.txt");
+      const signedUrl = await getS3SignedUrl({ fileType: blob.type }).unwrap();
+      const fileUrl = signedUrl.uploadUrl.split("?")[0];
+      await uploadAudioToS3(signedUrl.uploadUrl, blob);
+      const attachType = getAttachType(blob.type);
+      astroReply(fileUrl, attachType);
+    } catch (err) {
+      console.error("Attachment failed:", err);
+    }
+  };
 
   const handleMicClick = async () => {
     await startRecording();
@@ -527,40 +575,204 @@ const ChatWindow = () => {
 
   /* -------------------- UI -------------------- */
 
+  const [kundliIframeSrc, setKundliIframeSrc] = useState(null);
+
+  const handleViewKundli = () => {
+    if (kundliId) {
+      setKundliIframeSrc(`/kundli/${kundliId}`);
+    }
+  };
+
+  const { activeChat } = useChatContext();
+  const { activeCall, setActiveCall, openReview: callReviewOpen, callStartTime } = useCall();
+  const isChatActive = activeChat && activeChat?.roomId;
+
+  /* --------- Redirect to chats when call ends and review is done --------- */
+  const hadActiveCallRef = useRef(!!activeCall);
+  useEffect(() => {
+    if (activeCall) {
+      hadActiveCallRef.current = true;
+    }
+  }, [activeCall]);
+
+  useEffect(() => {
+    // Call ended (activeCall is null) + no review pending + we had a call before
+    if (hadActiveCallRef.current && !activeCall && !callReviewOpen) {
+      hadActiveCallRef.current = false;
+      navigate("/chats");
+    }
+  }, [activeCall, callReviewOpen, navigate]);
+
+  /* --------- Local Timer --------- */
+  const [localTimer, setLocalTimer] = useState(0);
+  useEffect(() => {
+    let interval;
+    if (callStartTime) {
+      // Sync with active call timer
+      interval = setInterval(() => {
+        setLocalTimer(Math.floor((Date.now() - callStartTime) / 1000));
+      }, 1000);
+    } else if (isChatActive) {
+      interval = setInterval(() => setLocalTimer((t) => t + 1), 1000);
+    } else {
+      setLocalTimer(0);
+    }
+    return () => clearInterval(interval);
+  }, [isChatActive, callStartTime]);
+
+  const formatLocalTimer = (sec) =>
+    `${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
+
+  /* --------- Initiate Call from Chat --------- */
+  const handleInitiateCall = (callType) => {
+    if (!roomId || !userId || !astrologerId) {
+      Toast.error("Unable to initiate call. Missing chat details.");
+      return;
+    }
+    if (activeCall) {
+      Toast.error("A call is already active.");
+      return;
+    }
+
+    voiceSocket.emit("call:initiate", {
+      roomId,
+      userId,
+      astrologerId,
+      type: callType,
+    });
+
+    const handleCallInitiated = (data) => {
+      setActiveCall({
+        roomId: data.roomId,
+        agoraToken: data.agoraToken,
+        isUserSide: false,
+        callType: data.type || callType,
+        callerName: fullName,
+        userId,
+        astrologerId,
+        chatRoomId: roomId,
+        kundliId,
+        userID,
+      });
+      voiceSocket.off("call:initiated", handleCallInitiated);
+      voiceSocket.off("call:initiate:error", handleCallError);
+    };
+
+    const handleCallError = (data) => {
+      Toast.error(data?.message || "Failed to initiate call");
+      voiceSocket.off("call:initiated", handleCallInitiated);
+      voiceSocket.off("call:initiate:error", handleCallError);
+    };
+
+    voiceSocket.on("call:initiated", handleCallInitiated);
+    voiceSocket.on("call:initiate:error", handleCallError);
+  };
+
   return (
-    <div className="flex flex-col h-screen bg-white">
+    <div className="-m-4 max-w-none flex flex-col h-screen bg-gray-50">
       {/* ---------- Header ---------- */}
-      <div className="sticky top-0 z-20 flex items-center justify-between p-4 border-b border-gray-100 bg-white">
-        <div className="flex items-center gap-3">
-          <Link
-            to={PATH.privateRoutes.CHAT}
-            className="p-2 bg-gray-100 rounded-xl hover:bg-gray-200"
-          >
-            <ChevronLeft size={20} />
-          </Link>
+      <div className="sticky top-20 z-20 bg-white">
+        <div className="flex items-center justify-between px-4 md:px-6 py-3 border-b border-gray-200">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate(-1)}
+              className="w-10 h-10 rounded-full border-2 flex items-center justify-center hover:opacity-80 transition-opacity"
+              style={{ borderColor: '#f75801' }}
+            >
+              <ChevronLeft size={20} style={{ color: '#f75801' }} />
+            </button>
 
-          <Link to="/client-details">
-            <h2 className="text-lg font-bold text-gray-900">
-              {fullName || ""}
-            </h2>
-          </Link>
-        </div>
+            <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm" style={{ background: 'linear-gradient(135deg, #f75801, #d43400)' }}>
+              {fullName?.charAt(0)?.toUpperCase() || "U"}
+            </div>
 
-        <div className="flex items-center gap-4">
-          <span className="text-sm font-semibold text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
-            ⏱ {formattedTime}
-          </span>
-
-          <div className="flex items-center gap-4 text-red-500 bg-red-50 px-3 py-2 rounded-full">
-            <IoCallOutline size={20} className="cursor-pointer" />
-            <IoVideocamOutline size={20} className="cursor-pointer" />
+            <div className="flex flex-col">
+              <h2 className="text-sm font-semibold text-gray-900">
+                {fullName || "User"}
+              </h2>
+              <span className="text-xs text-gray-500">Exp. 1 year</span>
+            </div>
           </div>
+
+          {/* Desktop View - Call/Video icons, Timer, End button */}
+          <div className="hidden md:flex items-center gap-3">
+            {/* <button onClick={() => handleInitiateCall("audio")} className="w-10 h-10 rounded-lg border flex items-center justify-center hover:opacity-90 transition-opacity"
+              style={{ 
+                borderColor: '#f75801'
+              }}
+            >
+              <img src={CallIcon} alt="Voice Call" width="20" height="20" />
+            </button>
+
+            <div className="w-px h-6 bg-gray-300"></div>
+
+            <button onClick={() => handleInitiateCall("video")} className="w-10 h-10 rounded-lg border flex items-center justify-center hover:opacity-90 transition-opacity"
+              style={{ 
+                borderColor: '#f75801'
+              }}
+            >
+              <img src={VideocamIcon} alt="Video Call" width="20" height="20" />
+            </button> */}
+
+            {(isChatActive || activeCall) && (
+              <>
+                <span className="text-sm font-medium text-gray-700 ml-2">
+                  <span className="text-red-500 font-semibold">{formatLocalTimer(localTimer)}</span>
+                </span>
+
+                {kundliId && (
+                  <button
+                    onClick={handleViewKundli}
+                    className="px-5 py-2 rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity flex items-center gap-2 text-white"
+                    style={{ backgroundColor: '#f75801' }}
+                  >
+                    <GrReactjs size={16} />
+                    View Kundli
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+
+          {/* Mobile View - Timer and View Kundli button */}
+          {(isChatActive || activeCall) && (
+            <div className="md:hidden flex items-center gap-3">
+              <span className="text-sm font-semibold text-red-500">{formatLocalTimer(localTimer)}</span>
+              
+              {kundliId && (
+                <button
+                  onClick={handleViewKundli}
+                  className="px-4 py-2 rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity flex items-center gap-2 text-white"
+                  style={{ backgroundColor: '#f75801' }}
+                >
+                  <GrReactjs size={16} />
+                  View Kundli
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
+        {/* Mobile Call Buttons - Part of sticky header */}
+        <div className="md:hidden flex gap-3 px-4 py-3 bg-[#FFF8F0] border-b border-gray-200">
+          <button onClick={() => handleInitiateCall("audio")} className="flex-1 flex items-center justify-center gap-2 py-3 rounded-full border-2 bg-white hover:opacity-90 transition-opacity"
+            style={{ borderColor: '#f75801' }}
+          >
+            <img src={CallIcon} alt="Voice Call" width="20" height="20" />
+            <span className="text-base font-medium" style={{ color: '#f75801' }}>Voice Call</span>
+          </button>
+
+          <button onClick={() => handleInitiateCall("video")} className="flex-1 flex items-center justify-center gap-2 py-3 rounded-full border-2 bg-white hover:opacity-90 transition-opacity"
+            style={{ borderColor: '#f75801' }}
+          >
+            <img src={VideocamIcon} alt="Video Call" width="20" height="20" />
+            <span className="text-base font-medium" style={{ color: '#f75801' }}>Video Call</span>
+          </button>
+        </div>
       </div>
 
       {/* ---------- Messages ---------- */}
-      <div className="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 md:p-6 pb-8 custom-scrollbar">
         {messagesWithDate.map((msg) =>
           msg.isDate ? (
             <div
@@ -580,60 +792,63 @@ const ChatWindow = () => {
           </div>
         )}
 
-        <div ref={messagesEndRef} />
+        <div ref={messagesEndRef} className="h-4" />
       </div>
 
       {/* ---------- Input ---------- */}
-      {!isMessageDisabled && <div className="sticky bottom-0 z-20 p-4 md:p-6 border-t border-gray-100 bg-white">
-        <div className="flex items-center gap-3">
-          <div className="flex-1 flex items-center bg-white border border-gray-300 rounded-full px-4 h-14">
-            <input
-              type="text"
-              value={message}
-              placeholder="Write a message..."
-              onChange={(e) => {
-                setMessage(e.target.value);
-                sendTyping();
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  handleSend();
-                }
-              }}
-              disabled={isMessageDisabled}
-              className="flex-1 h-full border-none outline-none focus:outline-none text-sm md:text-base"
-            />
+      {!isMessageDisabled && (
+        <div className="sticky bottom-0 z-20 px-4 py-4 bg-white border-t border-gray-200">
+          <div className="flex items-center gap-3">
+            <div className="flex-1 flex items-center bg-white border border-gray-300 rounded-lg px-5 py-3.5 shadow-sm">
+              <input
+                type="text"
+                value={message}
+                placeholder="Type your message here..."
+                onChange={(e) => {
+                  setMessage(e.target.value);
+                  sendTyping();
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleSend();
+                  }
+                }}
+                disabled={isMessageDisabled}
+                className="flex-1 bg-transparent border-none outline-none text-sm text-gray-700 placeholder-gray-400"
+              />
 
-            <div className="flex items-center gap-2 pl-2">
-              <button
-                onClick={handleMicClick}
-                aria-label="Voice message"
-                className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-orange-50 transition-all text-orange-600"
-              >
-                <Mic size={22} />
-              </button>
+              <div className="flex items-center gap-3 ml-3 border-l border-gray-300 pl-3">
+                <button
+                  onClick={handleAttachment}
+                  disabled={attachmentSelecting}
+                  className="hover:opacity-80 transition-opacity disabled:opacity-50"
+                  style={{ color: '#f75801' }}
+                  aria-label="Attach file"
+                >
+                  <Paperclip size={24} />
+                </button>
 
-              <button
-                onClick={handleSend}
-                disabled={!message.trim() || isMessageDisabled}
-                aria-label="Send message"
-                className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-orange-50 transition-all text-orange-600 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Send size={22} />
-              </button>
+                <button
+                  onClick={handleMicClick}
+                  className="hover:opacity-80 transition-opacity"
+                  style={{ color: '#f75801' }}
+                >
+                  <Mic size={24} />
+                </button>
+
+                <button
+                  onClick={handleSend}
+                  disabled={!message.trim() || isMessageDisabled}
+                  className="hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ color: '#f75801' }}
+                >
+                  <Send size={24} />
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* End Call Button */}
-          <button
-            onClick={handleChatEnd}
-            aria-label="End chat"
-            className="w-16 h-16 min-w-[64px] rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 active:scale-95 transition-all shadow-lg"
-            style={{ transform: 'rotate(135deg)' }}
-          >
-            <IoCallSharp size={28} />
-          </button>
           {recording && (
             <VoiceRecorderPopup
               seconds={seconds}
@@ -642,7 +857,7 @@ const ChatWindow = () => {
             />
           )}
         </div>
-      </div>}
+      )}
       {/* Review Modal */}
       {openReview && (
         <ReviewModal
@@ -653,6 +868,11 @@ const ChatWindow = () => {
         />
       )}
       {/* 👇 Modal */}
+      <IframeModal
+        open={!!kundliIframeSrc}
+        src={kundliIframeSrc}
+        onClose={() => setKundliIframeSrc(null)}
+      />
     </div>
   );
 };

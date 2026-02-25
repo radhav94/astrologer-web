@@ -2,6 +2,8 @@ import { Icons } from "../../../../components/Icons";
 import { AppImages } from "../../../../utils/appImages";
 import styles from "./Transactions.module.scss";
 import SwitchTabs from "../../../../components/UI/tabs/SwitchTabs";
+import { useGetTransactionListQuery } from "../../../../redux/profileApi/profileApi";
+import { useRef, useState } from "react";
 
 const TRANSACTIONS = [
   {
@@ -122,9 +124,20 @@ const GIFT_RECEIVED = [
   },
 ];
 
+const LIMIT = 15;
 
 
 export const TransactionHistory = () => {
+  const [page, setPage] = useState(1);
+  const [records, setRecords] = useState([]);
+  const loaderRef = useRef(null);
+
+  const { data:transactionHistory, isFetching } =
+    useGetTransactionListQuery({ page, limit: LIMIT });
+
+    console.log("transactionHistory:",transactionHistory)
+
+
   return (
     <div>
       {TRANSACTIONS.map((item, idx) => (

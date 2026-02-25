@@ -1,0 +1,28 @@
+.container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.backButton {
+  padding: 1rem;
+  background-color: #fff;
+  border-radius: 50px;
+  border: 1px solid #A4A4A4;
+  transition: background-color 0.2s;
+  cursor: pointer;
+  &:hover {
+    background-color: #e5e7eb;
+  }
+}
+
+.icon {
+  color: #633F06;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111827;
+}

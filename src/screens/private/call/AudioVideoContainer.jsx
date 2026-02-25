@@ -4,6 +4,7 @@ import { useCall } from "../../../context/CallContext";
 import VideoCalling from "./VideoCall";
 // import VideoCalling from "./VideoCall";
 import AgoraVoiceCalling from "./VoiceCall";
+import IncomingMessagePopup from "../../../components/IncomingMessagePopup";
 
 
 export default function AudioVideoContainer() {
@@ -12,13 +13,11 @@ export default function AudioVideoContainer() {
   if (!activeCall) return null;
 
   // ⭐ Type based rendering
-  if (activeCall.callType === "video") {
-    return <VideoCalling callData={activeCall} />;
-  }
-
-  if (activeCall.callType === "audio") {
-    return <AgoraVoiceCalling callData={activeCall} />;
-  }
-
-  return null;
+  return (
+    <>
+      <IncomingMessagePopup />
+      {activeCall.callType === "video" && <VideoCalling callData={activeCall} />}
+      {activeCall.callType === "audio" && <AgoraVoiceCalling callData={activeCall} />}
+    </>
+  );
 }

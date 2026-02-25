@@ -5,9 +5,8 @@ import { useCall } from "../context/CallContext";
 const Sidebar = ({ isOpen, onClose }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const {kundliId} = useParams();
-    const { setAstroId } = useCall(); // 🔥 VERY IMPORTANT
-
+  const { kundliId } = useParams();
+  const { setAstroId } = useCall(); // 🔥 VERY IMPORTANT
 
   const handleLogout = () => {
     localStorage.removeItem("shubhtalk_role");
@@ -37,10 +36,10 @@ const Sidebar = ({ isOpen, onClose }) => {
       path: "/consultation-history",
     },
     {
-      icon: Icons.Chats, 
+      icon: Icons.Chats,
       label: "Chats",
       id: "chats",
-      path: "/chats", 
+      path: "/chats",
     },
     {
       icon: Icons.Wallet,
@@ -49,7 +48,12 @@ const Sidebar = ({ isOpen, onClose }) => {
       path: "/recent-activity",
     },
     { icon: Icons.User, label: "Profile", id: "profile", path: "/profile" },
-    { icon: Icons.Radio, label: "Live", id: "live", path: "/astrologer-dashboard/live-streaming" },
+    {
+      icon: Icons.Radio,
+      label: "Live",
+      id: "live",
+      path: "/astrologer-dashboard/live-streaming",
+    },
   ];
 
   return (
@@ -67,7 +71,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       <div
         className={`fixed top-0 left-0 z-50 h-full w-64 bg-white shadow-xl transform transition-transform duration-300 ease-in-out 
         lg:translate-x-0 lg:static lg:shadow-none lg:border-r border-gray-100
-        ${isOpen ? "translate-x-0" : "-translate-x-full"} ${kundliId? 'hidden':'block'}`}
+        ${isOpen ? "translate-x-0" : "-translate-x-full"} ${kundliId ? "hidden" : "block"}`}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-6">

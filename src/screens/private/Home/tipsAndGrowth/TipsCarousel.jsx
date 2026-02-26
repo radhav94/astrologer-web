@@ -1,3 +1,4 @@
+import SectionHeader from "../../../../components/UI/SectionHeader";
 import TipCard from "./TipCard";
 
 const tips = [
@@ -25,12 +26,10 @@ const tips = [
 
 const TipsCarousel = () => {
   return (
-    <div className="w-full max-w-5xl mx-auto py-4">
+    <div className="w-full mx-auto py-4">
       {/* Section Header */}
-      <div className="px-4  text-start md:px-0 mb-4">
-        <h2 className="text-lg md:text-xl font-bold text-gray-900">
-          Tips & Growth
-        </h2>
+      <div className="px-4 text-start md:px-0 mb-4 flex justify-center">
+        <SectionHeader title="TIPS & GROWTH" />
       </div>
 
       {/* 

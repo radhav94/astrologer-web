@@ -1,0 +1,43 @@
+.wrapper {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  width: auto;
+}
+
+/* 🔥 Responsive title */
+.title {
+  margin: 0;
+  font-weight: 600;
+  font-size: clamp(16px, 2vw, 24px);
+  color: #2D2D2D;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Divider container */
+.divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(6px, 1vw, 12px);
+  margin-top: clamp(4px, 0.8vw, 10px);
+  width: 100%;
+}
+
+/* 🔥 Responsive scaling lines */
+.line {
+  flex: 1;
+  height: auto;
+  min-width: 20px; // prevents collapse on very small screens
+  width: 100%;
+  object-fit: contain;
+}
+
+/* 🔥 Responsive moon */
+.moon {
+  width: clamp(8px, 1vw, 8px);
+  height: auto;
+  flex-shrink: 0;
+  object-fit: contain;
+}

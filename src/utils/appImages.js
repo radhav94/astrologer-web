@@ -112,6 +112,14 @@ import Capricorn from "../assets/svg/capricorn.svg";
 import Aquarius from "../assets/svg/aquarius.svg";
 import Pisces from "../assets/svg/pisces.svg";
 import ShubhAstro from "../assets/svg/shubhastro.svg";
+import OngoingCall from "../assets/svg/Ongoing call.svg";
+import Quotes from "../assets/svg/Quotes.svg";
+import ChatIcon from "../assets/svg/Chat.svg";
+import AudioIcon from "../assets/svg/Audio.svg";
+import VideoIcon from "../assets/svg/vector.svg";
+import LeftLine from "../assets/svg/Left Line.svg";
+import RightLine from "../assets/svg/Right Line.svg";
+import Moon from "../assets/svg/Moon.svg";
 
 export const appSvgs = {
   Aries,
@@ -126,5 +134,13 @@ export const appSvgs = {
   Capricorn,
   Aquarius,
   Pisces,
-  ShubhAstro
+  ShubhAstro,
+  OngoingCall,
+  Quotes,
+  ChatIcon,
+  AudioIcon,
+  VideoIcon,
+  LeftLine,
+  RightLine,
+  Moon,
 };

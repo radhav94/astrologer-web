@@ -5,12 +5,15 @@ import * as AuthServices from "../../../services/appServices/authservice";
 import { saveUserToStorage } from "../../../utils/authStorage";
 import { Toast } from "../../../components";
 import { useCall } from "../../../context/CallContext";
+import { updateRegisterData } from "../../../reducer/registerSlice";
+import { useDispatch } from "react-redux";
 
 const OTP_LENGTH = 6;
 
 const VerifyOtp = () => {
   const navigate = useNavigate();
   const { state } = useLocation();
+  const dispatch = useDispatch();
 
   const mobile = state?.mobile || "+91 XXXXX XXXXX";
   const phoneNumber = state?.phoneNumber;
@@ -73,6 +76,8 @@ const VerifyOtp = () => {
       const payload = { phoneNumber, type, otp: String(otpNumber) };
       const response = await AuthServices.verifyOtp(payload);
 
+     
+
       console.log("Response Data:", response)
 
       if (response?.data?.statusCode !== 200 || !response?.data?.success) {
@@ -83,6 +88,12 @@ const VerifyOtp = () => {
 
       const userData = response?.data?.data || {};
       const { isRegister, accessToken, _id } = userData;
+       dispatch(
+         updateRegisterData({
+           role: userData?.role,
+           phoneNumber: userData?.phoneNumber,
+         }),
+       );
 
       saveUserToStorage(userData);
       localStorage.setItem("accessToken", accessToken);

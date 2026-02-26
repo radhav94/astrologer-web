@@ -67,6 +67,8 @@ import Astrologer from "../assets/images/astrologer.png"
 import ProfileAchivment from "../assets/images/profile-achivement.png";
 import Letter1 from "../assets/images/letter1.png";
 import AchivmentImg from "../assets/images/achivments.png"
+import CosmicCircle from "../assets/images/cosmic-circle.png";
+import MobileViewAccount from "../assets/images/mobile-view-account.png"
 
 export const AppImages = {
   Hero,
@@ -90,7 +92,9 @@ export const AppImages = {
   Astrologer,
   ProfileAchivment,
   Letter1,
-  AchivmentImg
+  AchivmentImg,
+  CosmicCircle,
+  MobileViewAccount
 };
 
 //svgs
@@ -107,6 +111,7 @@ import Sagittarius from "../assets/svg/sagittarius.svg";
 import Capricorn from "../assets/svg/capricorn.svg";
 import Aquarius from "../assets/svg/aquarius.svg";
 import Pisces from "../assets/svg/pisces.svg";
+import ShubhAstro from "../assets/svg/shubhastro.svg";
 
 export const appSvgs = {
   Aries,
@@ -121,4 +126,5 @@ export const appSvgs = {
   Capricorn,
   Aquarius,
   Pisces,
+  ShubhAstro
 };

@@ -1,8 +1,15 @@
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import styles from "./Onboarding.module.scss";
+import { AppImages, appSvgs } from "../../../utils/appImages";
+import Modal from "../../../components/UI/modal/Modal";
+import Button from "../../../components/UI/button/Button";
+import { ArrowRight, ChevronRight, MoveRight } from "lucide-react";
+
 
 const Onboarding = () => {
   const navigate = useNavigate();
+  const [isOpen,setIsOpen] = useState(true)
 
   useEffect(() => {
     // Clear all localStorage
@@ -27,45 +34,47 @@ const Onboarding = () => {
   }, []);
 
   return (
-    <div className="relative min-h-screen w-full bg-[#3f5556] overflow-hidden">
+    <div className={styles.onboardingContainer}>
       {/* Background Image */}
       <img
-        src="/shubhastro.svg"
+        src={AppImages.CosmicCircle}
         alt="Onboarding"
         className="absolute inset-0 w-full h-full object-cover sm:object-contain mx-auto"
       />
 
-      {/* Bottom Sheet */}
-      <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-[2.5rem] px-6 pt-8 pb-6 sm:px-10">
-        <div className="max-w-xl mx-auto">
+      <img src={AppImages.MobileViewAccount}  className={styles.mobileAccount} />
+
+      {/* Bottom Sheet Modal */}
+      <Modal 
+        modalOpen={isOpen} 
+        setModalOpen={setIsOpen}
+        doNotClose={true}
+        className={styles.onboardingModal}
+      >
+        <div className={styles.contentWrapper}>
           {/* Title */}
-          <h1 className="text-2xl sm:text-3xl font-bold text-black leading-tight mb-3">
-            Share Your Wisdom <br /> with the World
+          <h1 className={styles.title}>
+            Share Your Wisdom with the World
           </h1>
 
           {/* Description */}
-          <p className="text-gray-600 text-sm sm:text-base mb-6">
+          <p className={styles.description}>
             Join a community of trusted astrologers offering authentic
             consultations to seekers worldwide.
           </p>
 
-          {/* Dots */}
-          <div className="flex items-center gap-2 mb-6">
-            <span className="w-2 h-2 bg-gray-400 rounded-full" />
-            <span className="w-2 h-2 bg-black rounded-full" />
-            <span className="w-2 h-2 bg-gray-400 rounded-full" />
-            <span className="w-2 h-2 bg-gray-400 rounded-full" />
-          </div>
-
-          {/* CTA */}
-          <button
+          
+          {/* CTA Button */}
+          <Button
             onClick={() => navigate("/login")}
-            className="w-full bg-black text-white py-3 rounded-xl text-sm sm:text-base font-medium hover:bg-gray-900 transition"
+            className={styles.ctaButton}
           >
-            Get Started
-          </button>
+            Begin My Journey
+            <span className={styles.arrow}><ChevronRight /></span>
+          </Button>
         </div>
-      </div>
+      </Modal>
+
     </div>
   );
 };

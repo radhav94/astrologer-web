@@ -1,5 +1,9 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useFormik } from "formik";
+import { useDispatch } from "react-redux";
+import * as Yup from "yup";
+import { updateRegisterData, setCurrentStep } from "../../../reducer/registerSlice";
+import { createLanguagePreferencesValidation } from "../../../utils/utlis";
 
 const LANGUAGES = [
   "English",
@@ -10,44 +14,102 @@ const LANGUAGES = [
   "Kannada",
 ];
 
-const LEVELS = ["Basic", "Conversational", "Native", "Fluent"];
+const LEVELS = ["Fluent", "Intermediate", "Beginner"];
 
 const LanguagesYouSpeak = () => {
   const navigate = useNavigate();
-  const [selectedLanguages, setSelectedLanguages] = useState([]);
-  const [customLanguage, setCustomLanguage] = useState("");
-  const [proficiency, setProficiency] = useState({});
+  const dispatch = useDispatch();
+
+  // Validation schema using reusable utilities from utils.js
+  const validationSchema = Yup.object().shape({
+    languagePreferences: createLanguagePreferencesValidation({
+      minLanguages: 1,
+      validProficiencyLevels: LEVELS.map(level => level.toLowerCase()),
+    }),
+    customLanguage: Yup.string().trim(),
+  });
+
+  // Formik setup
+  const formik = useFormik({
+    initialValues: {
+      languagePreferences: [],
+      customLanguage: "",
+    },
+    validationSchema,
+    validateOnChange: true,
+    validateOnBlur: true,
+    onSubmit: (values) => {
+      // Dispatch to Redux store
+      dispatch(updateRegisterData({
+        languagePreferences: values.languagePreferences,
+      }));
+      
+      // Update current step
+      dispatch(setCurrentStep(4));
+      
+      // Navigate to next step
+      navigate("/education");
+    },
+  });
 
   /* Toggle language selection */
   const toggleLanguage = (lang) => {
-    setSelectedLanguages((prev) =>
-      prev.includes(lang)
-        ? prev.filter((l) => l !== lang)
-        : [...prev, lang]
+    const currentPreferences = formik.values.languagePreferences;
+    const existingIndex = currentPreferences.findIndex(
+      (item) => item.languageName === lang
     );
+
+    if (existingIndex !== -1) {
+      // Remove language
+      const newPreferences = currentPreferences.filter((_, idx) => idx !== existingIndex);
+      formik.setFieldValue("languagePreferences", newPreferences);
+    } else {
+      // Add language with empty proficiency
+      formik.setFieldValue("languagePreferences", [
+        ...currentPreferences,
+        { languageName: lang, proficiencyLevel: "" },
+      ]);
+    }
   };
 
   /* Add custom language */
   const addCustomLanguage = () => {
-    if (!customLanguage.trim()) return;
+    const customLang = formik.values.customLanguage.trim();
+    if (!customLang) return;
 
     const lang =
-      customLanguage.charAt(0).toUpperCase() +
-      customLanguage.slice(1).toLowerCase();
+      customLang.charAt(0).toUpperCase() +
+      customLang.slice(1).toLowerCase();
 
-    if (!selectedLanguages.includes(lang)) {
-      setSelectedLanguages([...selectedLanguages, lang]);
+    const currentPreferences = formik.values.languagePreferences;
+    const alreadyExists = currentPreferences.some(
+      (item) => item.languageName === lang
+    );
+
+    if (!alreadyExists) {
+      formik.setFieldValue("languagePreferences", [
+        ...currentPreferences,
+        { languageName: lang, proficiencyLevel: "" },
+      ]);
     }
 
-    setCustomLanguage("");
+    formik.setFieldValue("customLanguage", "");
   };
 
-  /* Set proficiency */
+  /* Set proficiency level for a language */
   const setLevel = (lang, level) => {
-    setProficiency({ ...proficiency, [lang]: level });
+    const currentPreferences = formik.values.languagePreferences;
+    const updatedPreferences = currentPreferences.map((item) =>
+      item.languageName === lang
+        ? { ...item, proficiencyLevel: level.toLowerCase() }
+        : item
+    );
+    formik.setFieldValue("languagePreferences", updatedPreferences);
   };
 
-  const isValid = selectedLanguages.length > 0;
+  const selectedLanguages = formik.values.languagePreferences.map(
+    (item) => item.languageName
+  );
 
   return (
     <div className="min-h-screen bg-white flex justify-center">
@@ -82,6 +144,7 @@ const LanguagesYouSpeak = () => {
           {LANGUAGES.map((lang) => (
             <button
               key={lang}
+              type="button"
               onClick={() => toggleLanguage(lang)}
               className={`px-4 py-2 rounded-full text-sm transition
                 ${
@@ -95,6 +158,7 @@ const LanguagesYouSpeak = () => {
           ))}
 
           <button
+            type="button"
             onClick={addCustomLanguage}
             className="px-4 py-2 rounded-full bg-gray-600 text-white text-sm"
           >
@@ -110,9 +174,10 @@ const LanguagesYouSpeak = () => {
         <input
           type="text"
           placeholder="Enter Language"
-          value={customLanguage}
-          onChange={(e) => setCustomLanguage(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && addCustomLanguage()}
+          name="customLanguage"
+          value={formik.values.customLanguage}
+          onChange={formik.handleChange}
+          onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addCustomLanguage())}
           className="
             w-full border rounded-xl px-4 py-4 mb-8
             focus:outline-none focus:ring-1 focus:ring-black
@@ -124,23 +189,23 @@ const LanguagesYouSpeak = () => {
           Add Proficiency Level
         </label>
 
-        {selectedLanguages.map((lang) => (
-          <div key={lang} className="mb-6">
+        {formik.values.languagePreferences.map((langItem) => (
+          <div key={langItem.languageName} className="mb-6">
             <div className="text-left">
                 <span className="inline-block bg-gray-700 text-white text-xs px-3 py-1 rounded-full mb-3 text-left">
-                    {lang}
+                    {langItem.languageName}
                 </span>
             </div>
-
 
             <div className="flex flex-wrap gap-3 text-left">
               {LEVELS.map((level) => (
                 <button
                   key={level}
-                  onClick={() => setLevel(lang, level)}
+                  type="button"
+                  onClick={() => setLevel(langItem.languageName, level)}
                   className={`px-4 py-2 rounded-full text-sm transition
                     ${
-                      proficiency[lang] === level
+                      langItem.proficiencyLevel === level.toLowerCase()
                         ? "bg-black text-white"
                         : "bg-gray-100 text-gray-800"
                     }`}
@@ -151,16 +216,25 @@ const LanguagesYouSpeak = () => {
             </div>
           </div>
         ))}
+
+        {formik.touched.languagePreferences && formik.errors.languagePreferences && (
+          <p className="text-red-500 text-xs mt-2 text-left">
+            {typeof formik.errors.languagePreferences === 'string' 
+              ? formik.errors.languagePreferences 
+              : "Please complete all language proficiency selections"}
+          </p>
+        )}
       </div>
 
       {/* Fixed Bottom Button */}
       <div className="fixed bottom-0 w-full max-w-md px-6 pb-6 bg-white">
         <button
-        onClick={() => navigate("/education")}
-          disabled={!isValid}
+          type="submit"
+          onClick={formik.handleSubmit}
+          disabled={!formik.isValid || formik.isSubmitting}
           className={`w-full py-4 rounded-xl font-medium transition
             ${
-              isValid
+              formik.isValid && !formik.isSubmitting
                 ? "bg-black text-white"
                 : "bg-gray-300 text-gray-600 cursor-not-allowed"
             }`}

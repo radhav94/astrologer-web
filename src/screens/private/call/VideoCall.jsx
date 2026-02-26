@@ -16,11 +16,10 @@ import VideoCallChat from "./VideoCallChat";
 import { PATH } from "../../../utils/routes/Paths";
 import CallIcon from "../../../assets/chat/Call.svg";
 
-// const APP_ID = "5630460abdc141e3b2f8d9597752bd7d";
 const APP_ID = "c76e3d30a3b6483689dac88ca9f94381";
 
 const VideoCalling = ({ callData }) => {
-  const { activeCall, setActiveCall, setReviewData, setOpenReview, callStartTime, setCallStartTime } = useCall();
+  const { activeCall, setActiveCall, setReviewData, setOpenReview, sharedAgoraState, setSharedAgoraState, callStartTime, setCallStartTime } = useCall();
   const navigate = useNavigate();
 
   if (!activeCall || activeCall.callType !== "video") return null;
@@ -149,6 +148,119 @@ const VideoCalling = ({ callData }) => {
 
     const start = async () => {
       try {
+        // Check if we're upgrading from audio call
+        // We check for existing client/micTrack even if isUpgrading flag isn't set yet
+        // because state updates are asynchronous
+        const shouldUpgrade = (sharedAgoraState.isUpgrading || 
+                               (sharedAgoraState.client && sharedAgoraState.micTrack)) &&
+                              sharedAgoraState.client && 
+                              sharedAgoraState.micTrack;
+
+        console.log("🔍 Should upgrade?", shouldUpgrade);
+
+        if (shouldUpgrade) {
+          console.log("🔄 Upgrading from audio to video - reusing connection");
+          
+          // Reuse existing client and mic track
+          clientRef.current = sharedAgoraState.client;
+          micTrackRef.current = sharedAgoraState.micTrack;
+          
+          console.log("📹 Creating camera track...");
+          // Only create and publish camera track
+          camTrackRef.current = await AgoraRTC.createCameraVideoTrack();
+          
+          console.log("📤 Publishing camera track...");
+          await clientRef.current.publish([camTrackRef.current]);
+          
+          console.log("✅ Camera track published successfully");
+          
+          // Add event listeners for video (the audio call client doesn't have these)
+          clientRef.current.on("user-published", async (user, mediaType) => {
+            console.log(`📹 [UPGRADE] User published ${mediaType}:`, user.uid);
+            
+            if (mediaType === "video") {
+              try {
+                await clientRef.current.subscribe(user, mediaType);
+                if (user.videoTrack) {
+                  console.log("📹 [UPGRADE] Playing newly published video track");
+                  setHasRemoteVideo(true);
+                  safePlayRemoteVideo(user.videoTrack);
+                }
+              } catch (err) {
+                console.error("[UPGRADE] Failed to subscribe to video:", err);
+              }
+            }
+          });
+
+          clientRef.current.on("user-unpublished", (user, mediaType) => {
+            console.log(`📹 [UPGRADE] User unpublished ${mediaType}:`, user.uid);
+            if (mediaType === "video") {
+              setHasRemoteVideo(false);
+              if (remoteVideoRef.current) {
+                remoteVideoRef.current.innerHTML = "";
+              }
+            }
+          });
+          
+          // Update shared state
+          setSharedAgoraState(prev => ({
+            ...prev,
+            cameraTrack: camTrackRef.current,
+            isUpgrading: false
+          }));
+          
+          setJoined(true);
+          
+          timerRef.current = setInterval(() => {
+            setCallSeconds((p) => p + 1);
+          }, 1000);
+          
+          // 🔥 CRITICAL: Check for existing remote users after upgrade
+          setTimeout(async () => {
+            console.log("🔍 [UPGRADE] Checking for existing remote users...");
+            const remoteUsers = clientRef.current.remoteUsers;
+            console.log(`📊 [UPGRADE] Found ${remoteUsers.length} remote users`);
+            
+            for (const user of remoteUsers) {
+              console.log(`👤 [UPGRADE] Remote user ${user.uid}:`, {
+                hasVideo: user.hasVideo,
+                hasAudio: user.hasAudio,
+                videoTrack: !!user.videoTrack,
+                audioTrack: !!user.audioTrack
+              });
+
+              // Subscribe to video if available but not subscribed
+              if (user.hasVideo && !user.videoTrack) {
+                try {
+                  console.log(`📹 [UPGRADE] Subscribing to existing video from user ${user.uid}`);
+                  await clientRef.current.subscribe(user, "video");
+                  if (user.videoTrack) {
+                    console.log("📹 [UPGRADE] Playing existing video track");
+                    setHasRemoteVideo(true);
+                    safePlayRemoteVideo(user.videoTrack);
+                  }
+                } catch (err) {
+                  console.error("[UPGRADE] Failed to subscribe to existing video:", err);
+                }
+              } else if (user.videoTrack) {
+                // Already subscribed, just play it
+                console.log(`📹 [UPGRADE] Playing already-subscribed video from user ${user.uid}`);
+                setHasRemoteVideo(true);
+                safePlayRemoteVideo(user.videoTrack);
+              }
+
+              // Ensure audio is playing
+              if (user.audioTrack) {
+                console.log(`🔊 [UPGRADE] Playing audio from user ${user.uid}`);
+                user.audioTrack.play();
+              }
+            }
+          }, 1000);
+          
+          return;
+        }
+
+        // Fresh video call - normal flow
         if (clientRef.current) {
           await clientRef.current.leave();
           clientRef.current.removeAllListeners();
@@ -159,15 +271,17 @@ const VideoCalling = ({ callData }) => {
         clientRef.current = client;
 
         client.on("user-published", async (user, mediaType) => {
+          console.log(`📹 User published ${mediaType}:`, user.uid);
           await client.subscribe(user, mediaType);
 
           if (mediaType === "video" && user.videoTrack) {
+            console.log("📹 Playing remote video track");
             setHasRemoteVideo(true);
             safePlayRemoteVideo(user.videoTrack);
           }
 
           if (mediaType === "audio" && user.audioTrack) {
-            // ✅ REQUIRED FOR CROSS DEVICE
+            console.log("🔊 Playing remote audio track");
             user.audioTrack.play();
             // Set initial volume based on speaker state
             if (user.audioTrack) {
@@ -177,6 +291,7 @@ const VideoCalling = ({ callData }) => {
         });
 
         client.on("user-unpublished", (user, mediaType) => {
+          console.log(`📹 User unpublished ${mediaType}:`, user.uid);
           if (mediaType === "video") {
             setHasRemoteVideo(false);
             if (remoteVideoRef.current) remoteVideoRef.current.innerHTML = "";
@@ -191,10 +306,75 @@ const VideoCalling = ({ callData }) => {
         camTrackRef.current = await AgoraRTC.createCameraVideoTrack();
 
         await client.publish([micTrackRef.current, camTrackRef.current]);
+        
+        // Store in shared state
+        setSharedAgoraState({
+          client: client,
+          micTrack: micTrackRef.current,
+          cameraTrack: camTrackRef.current,
+          isUpgrading: false
+        });
 
         setJoined(true);
 
         if (!callStartTime) setCallStartTime(Date.now());
+
+        // 🔥 CRITICAL: Check for existing remote users after joining
+        // This handles the case when switching from voice to video call
+        setTimeout(async () => {
+          console.log("🔍 Checking for existing remote users...");
+          const remoteUsers = client.remoteUsers;
+          console.log(`📊 Found ${remoteUsers.length} remote users`);
+          
+          for (const user of remoteUsers) {
+            console.log(`👤 Remote user ${user.uid}:`, {
+              hasVideo: user.hasVideo,
+              hasAudio: user.hasAudio,
+              videoTrack: !!user.videoTrack,
+              audioTrack: !!user.audioTrack
+            });
+
+            // Subscribe to video if available but not subscribed
+            if (user.hasVideo && !user.videoTrack) {
+              try {
+                console.log(`📹 Subscribing to existing video from user ${user.uid}`);
+                await client.subscribe(user, "video");
+                if (user.videoTrack) {
+                  console.log("📹 Playing existing video track");
+                  safePlayRemoteVideo(user.videoTrack);
+                  setHasRemoteVideo(true);
+                }
+              } catch (err) {
+                console.error("Failed to subscribe to existing video:", err);
+              }
+            } else if (user.videoTrack) {
+              // Already subscribed, just play it
+              console.log(`📹 Playing already-subscribed video from user ${user.uid}`);
+              safePlayRemoteVideo(user.videoTrack);
+              setHasRemoteVideo(true);
+            }
+
+            // Subscribe to audio if available but not subscribed
+            if (user.hasAudio && !user.audioTrack) {
+              try {
+                console.log(`🔊 Subscribing to existing audio from user ${user.uid}`);
+                await client.subscribe(user, "audio");
+                if (user.audioTrack) {
+                  console.log("🔊 Playing existing audio track");
+                  user.audioTrack.play();
+                  user.audioTrack.setVolume(speakerOn ? 100 : 0);
+                }
+              } catch (err) {
+                console.error("Failed to subscribe to existing audio:", err);
+              }
+            } else if (user.audioTrack) {
+              // Already subscribed, just play it
+              console.log(`🔊 Playing already-subscribed audio from user ${user.uid}`);
+              user.audioTrack.play();
+              user.audioTrack.setVolume(speakerOn ? 100 : 0);
+            }
+          }
+        }, 1000);
       } catch (err) {
         console.error("CALL START ERROR", err);
         safeEndCall();
@@ -334,11 +514,20 @@ const VideoCalling = ({ callData }) => {
       setCallSeconds(0);
       setCallStartTime(null);
       setActiveCall(null);
+      
+      // Clear shared state
+      setSharedAgoraState({
+        client: null,
+        micTrack: null,
+        cameraTrack: null,
+        isUpgrading: false
+      });
     }
   };
 
   /* ================= SAFE END CALL ================= */
   const safeEndCall = async () => {
+    console.log("Safe call end")
     if (endCallRef.current) return;
     endCallRef.current = true;
     setReviewData({

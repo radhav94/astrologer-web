@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, useRef } from "react";
 import { voiceSocket } from "../services/appServices/voiceSocketServices";
 
 const CallContext = createContext();
@@ -14,6 +14,16 @@ export const CallProvider = ({ children }) => {
   const [incomingCall, setIncomingCall] = useState(null);
   const [openReview, setOpenReview] = useState(null);
   const [reviewData, setReviewData] = useState(null);
+  const [isUpgradeRejectionProtected, setIsUpgradeRejectionProtected] = useState(false);
+  const upgradeRejectionRef = useRef(false); // Immediate protection using ref
+  
+  // Shared Agora state for smooth call upgrades
+  const [sharedAgoraState, setSharedAgoraState] = useState({
+    client: null,
+    micTrack: null,
+    cameraTrack: null,
+    isUpgrading: false
+  });
 
   /* 🔥 Listen to login/logout changes */
   useEffect(() => {
@@ -130,7 +140,12 @@ export const CallProvider = ({ children }) => {
         openReview,
         setOpenReview,
         reviewData,
-        setReviewData
+        setReviewData,
+        sharedAgoraState,
+        setSharedAgoraState,
+        isUpgradeRejectionProtected,
+        setIsUpgradeRejectionProtected,
+        upgradeRejectionRef
       }}
     >
       {children}

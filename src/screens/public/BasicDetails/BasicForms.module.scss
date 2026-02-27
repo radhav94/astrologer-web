@@ -1,0 +1,17 @@
+.container {
+    min-height: 100vh;
+    background-color: #ffffff;
+    display: flex;
+    justify-content: center;
+}
+
+.containerCard {
+    width: 100%;
+    padding: 40px 24px;
+    background-color: #F7F7F7;
+    
+    @media (min-width: 1024px) {
+        max-width: 32rem;
+    }
+
+}

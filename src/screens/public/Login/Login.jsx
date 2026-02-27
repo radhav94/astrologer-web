@@ -6,6 +6,7 @@ import * as AuthServices from "../../../services/appServices/authservice";
 import { AppImages } from "../../../utils/appImages";
 import Modal from "../../../components/UI/modal/Modal";
 import BackButton from "../../../components/UI/backButton/BackButton";
+import Button from "../../../components/UI/button/Button";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -13,6 +14,7 @@ const Login = () => {
   const [mobile, setMobile] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [isInputFocused, setIsInputFocused] = useState(false);
 
   // ✅ Allow numbers only & max 10 digits
   const handleMobileChange = (e) => {
@@ -68,25 +70,27 @@ const Login = () => {
   };
 
   return (
-    <div className={styles.loginContainer}>
+    <div
+      className={`${styles.loginContainer} ${isInputFocused ? styles.keyboardOpen : ""}`}
+    >
       <img
         src={AppImages.CosmicCircle}
         alt="Onboarding"
         className={styles.backgroundImage}
       />
       <img src={AppImages.MobileViewAccount} className={styles.mobileAccount} />
-      
+
       <BackButton onClick={() => navigate(-1)} />
 
-      <Modal modalOpen={isOpen} 
+      <Modal
+        modalOpen={isOpen}
         setModalOpen={setIsOpen}
-        doNotClose={true} 
-        className={styles.onboardingModal}>
-        
+        doNotClose={true}
+        showBackButton={isInputFocused}
+        className={`${styles.onboardingModal} ${isInputFocused ? styles.expanded : ""}`}
+      >
         <div className={styles.modalContent}>
-          <h1 className={styles.heading}>
-            Start your journey
-          </h1>
+          <h1 className={styles.heading}>Start your journey</h1>
           <p className={styles.description}>
             Enter your mobile number to register or log in securely.
           </p>
@@ -99,8 +103,20 @@ const Login = () => {
                 alt="India"
                 className={styles.flagImage}
               />
-              <svg width="12" height="8" viewBox="0 0 12 8" fill="none" className={styles.chevronIcon}>
-                <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <svg
+                width="12"
+                height="8"
+                viewBox="0 0 12 8"
+                fill="none"
+                className={styles.chevronIcon}
+              >
+                <path
+                  d="M1 1.5L6 6.5L11 1.5"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </button>
 
@@ -111,11 +127,11 @@ const Login = () => {
                 onChange={handleMobileChange}
                 placeholder="Enter your Number"
                 onKeyDown={handleKeyDown}
+                onFocus={() => setIsInputFocused(true)}
+                onBlur={() => setIsInputFocused(false)}
                 className={styles.phoneInput}
               />
-              <span className={styles.countryCode}>
-                +91
-              </span>
+              <span className={styles.countryCode}>+91</span>
             </div>
           </div>
 
@@ -123,18 +139,20 @@ const Login = () => {
           {error && <p className={styles.errorText}>{error}</p>}
 
           {/* Get OTP Button */}
-          <button
+          <Button
             onClick={handleGetOtp}
             disabled={!isValidMobile || loading}
             className={`${styles.otpButton} ${isValidMobile ? styles.active : styles.disabled}`}
           >
-            {loading ? "Sending OTP..." : (
+            {loading ? (
+              "Sending OTP..."
+            ) : (
               <>
                 Get OTP
                 <ChevronRight size={18} />
               </>
             )}
-          </button>
+          </Button>
 
           {/* OR Divider */}
           <div className={styles.divider}>
@@ -145,12 +163,8 @@ const Login = () => {
 
           {/* Social Login */}
           <div className={styles.socialButtonsWrapper}>
-            <button className={styles.socialButton}>
-              Sign in with Google
-            </button>
-            <button className={styles.socialButton}>
-              Sign in with Apple
-            </button>
+            <Button className={styles.socialButton}>Sign in with Google</Button>
+            <Button className={styles.socialButton}>Sign in with Apple</Button>
           </div>
 
           <p className={styles.footerText}>

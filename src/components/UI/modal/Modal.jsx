@@ -2,6 +2,8 @@ import { createPortal } from "react-dom";
 import styles from "./Modal.module.scss";
 import { combineClasses } from "../../../utils/utlis";
 import { useEffect } from "react";
+import BackButton from "../backButton/BackButton";
+import { useNavigate } from "react-router-dom";
 
 const Modal = ({
   modalOpen,
@@ -12,7 +14,9 @@ const Modal = ({
   className = "",
   isSubmitting,
   width,
+  showBackButton,
 }) => {
+  const navigate = useNavigate();
   useEffect(() => {
     if (modalOpen) {
       document.body.style.overflow = "hidden";
@@ -37,6 +41,16 @@ const Modal = ({
         if (e.key === "Enter") e.preventDefault();
       }}
     >
+      {showBackButton && (
+        <BackButton
+          className={
+            showBackButton
+              ? "border border-[#F75801] rounded-full shadow-none"
+              : ""
+          }
+          onClick={() => navigate(-1)}
+        />
+      )}
       <div
         className={combineClasses(styles.modalDiv, className)}
         onMouseDown={(e) => e.stopPropagation()}
@@ -51,14 +65,14 @@ const Modal = ({
         <div
           className={combineClasses(
             styles.modalBody,
-            className ? "modalBody" : ""
+            className ? "modalBody" : "",
           )}
         >
           {children}
         </div>
       </div>
     </div>,
-    document.body // ← THIS IS THE FIX
+    document.body, // ← THIS IS THE FIX
   );
 };
 

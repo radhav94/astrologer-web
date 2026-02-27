@@ -1,0 +1,97 @@
+.button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 600;
+  outline: none;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+// Variants
+.primary {
+  background: #FF6B35;
+  color: #ffffff;
+  border-radius: 28px;
+
+  &:hover:not(:disabled) {
+    opacity: 0.9;
+    box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+}
+
+.secondary {
+  background: #f3f4f6;
+  color: #1f2937;
+  border-radius: 28px;
+
+  &:hover:not(:disabled) {
+    background: #e5e7eb;
+  }
+}
+
+.outline {
+  background: transparent;
+  color: #FF6B35;
+  border: 2px solid #FF6B35;
+  border-radius: 28px;
+
+  &:hover:not(:disabled) {
+    background: rgba(255, 107, 53, 0.1);
+  }
+}
+
+// Sizes
+.small {
+  padding: 0.5rem 1rem;
+  font-size: 14px;
+}
+
+.medium {
+  padding: 1rem 1.5rem;
+  font-size: 16px;
+
+  @media (min-width: 768px) {
+    padding: 1rem 2rem;
+    font-size: 17px;
+  }
+}
+
+.large {
+  padding: 1.25rem 2rem;
+  font-size: 18px;
+
+  @media (min-width: 768px) {
+    padding: 1.5rem 2.5rem;
+    font-size: 19px;
+  }
+}
+
+// Width
+.fullWidth {
+  width: 100%;
+}
+
+// Icon
+.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

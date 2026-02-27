@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
 import { useDispatch, useSelector } from "react-redux";
@@ -52,6 +52,7 @@ const VerifyProfile = () => {
     validationSchema,
     validateOnChange: true,
     validateOnBlur: true,
+    validateOnMount: true, // Validate on mount to check initial state
     enableReinitialize: true, // Allow form to reinitialize when Redux state changes
     onSubmit: async () => {
       try {  
@@ -67,6 +68,11 @@ const VerifyProfile = () => {
     },
   });
 
+  // Re-validate form whenever values change to ensure button state is correct
+  useEffect(() => {
+    formik.validateForm();
+  }, [formik.values.profileImgUrl, formik.values.aadharCardImgUrl, formik.values.panCardImgUrl]);
+
   const handleFileUpload = async (fieldName, acceptTypes = "image/*,.pdf") => {
     try {
       setUploading((prev) => ({ ...prev, [fieldName]: true }));
@@ -75,9 +81,14 @@ const VerifyProfile = () => {
       const fileUrl = await uploadFile(acceptTypes);
 
       if (fileUrl) {
-        // Set the uploaded file URL in Formik and trigger validation
-        await formik.setFieldValue(fieldName, fileUrl, true);
-        formik.setFieldTouched(fieldName, true, true);
+        // Set the uploaded file URL in Formik
+        await formik.setFieldValue(fieldName, fileUrl, false);
+        
+        // Mark field as touched to trigger validation
+        await formik.setFieldTouched(fieldName, true, false);
+        
+        // Manually validate the form to update errors state
+        await formik.validateForm();
 
         // Get current form values with the new file URL
         const updatedValues = {
@@ -92,8 +103,7 @@ const VerifyProfile = () => {
             profileImgUrl: updatedValues.profileImgUrl,
             aadharCardImgUrl: updatedValues.aadharCardImgUrl,
             panCardImgUrl: updatedValues.panCardImgUrl,
-            place: "New Delhi, India",
-            password: "test@12389",
+            
           }));
 
           // Update current step

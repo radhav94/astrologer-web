@@ -98,6 +98,13 @@ const Education = () => {
     formik.values.education[0].qualification !== "" &&
     Object.keys(formik.errors).length === 0;
 
+  const handleSkip = () => {
+    // Mark current step as completed and move to next step
+    dispatch(setCurrentStep(5));
+    // Navigate to next step
+    navigate("/achievements");
+  };
+
   return (
     <div className={styles.container}>
       <div className={styles.containerCard}>
@@ -108,7 +115,7 @@ const Education = () => {
 
           <button 
             type="button"
-            onClick={() => navigate("/achievements")}
+            onClick={handleSkip}
             className={styles.skipButton}
           >
             Skip for Now

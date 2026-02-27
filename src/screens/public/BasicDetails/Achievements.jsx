@@ -86,6 +86,13 @@ const Achievements = () => {
     formik.values.achievements[0].achievementName.trim() !== "" &&
     Object.keys(formik.errors).length === 0;
 
+  const handleSkip = () => {
+    // Mark current step as completed and move to next step
+    dispatch(setCurrentStep(6));
+    // Navigate to next step
+    navigate("/areaofexpertise");
+  };
+ 
   return (
     <div className={styles.formLayoutWrapper}>
       <div className={styles.formLayoutContainer}>
@@ -96,7 +103,7 @@ const Achievements = () => {
 
             <button 
               type="button"
-              onClick={() => navigate("/areaofexpertise")} 
+              onClick={handleSkip} 
               className={styles.skipButton}
             >
               Skip for Now

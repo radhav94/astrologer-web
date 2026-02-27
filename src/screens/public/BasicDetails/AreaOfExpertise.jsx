@@ -61,6 +61,13 @@ const AreaOfExpertise = () => {
     formik.values.specialties.length > 0 &&
     Object.keys(formik.errors).length === 0;
 
+  const handleSkip = () => {
+    // Mark current step as completed and move to next step
+    dispatch(setCurrentStep(7));
+    // Navigate to next step
+    navigate("/verifyprofile");
+  };
+
   return (
     <div className={styles.formLayoutWrapper}>
       <div className={styles.formLayoutContainer}>
@@ -71,7 +78,7 @@ const AreaOfExpertise = () => {
 
             <button 
               type="button"
-              onClick={() => navigate("/verifyprofile")} 
+              onClick={handleSkip} 
               className={styles.skipButton}
             >
               Skip for Now

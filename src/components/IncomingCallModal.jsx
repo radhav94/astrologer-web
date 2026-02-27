@@ -141,7 +141,7 @@ const IncomingCallModal = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center pointer-events-none">
+    <div className="fixed inset-0 z-[100001] flex items-end justify-center pointer-events-none">
       {/* Popup */}
       <div className="pointer-events-auto mb-6 w-[90%] max-w-md animate-slideUp rounded-2xl bg-zinc-900/95 p-5 shadow-2xl backdrop-blur-md">
         

@@ -4,7 +4,6 @@ import Sidebar from "../components/Sidebar";
 import { Outlet, useNavigate, useParams } from "react-router-dom";
 import {
   updateAstrologerStatus,
-  getAstrologerById,
 } from "../../src/services/appServices/authservice";
 import AudioVideoContainer from "../screens/private/call/AudioVideoContainer";
 import IncomingChatModal from "../components/IncomingChatModal";
@@ -21,11 +20,13 @@ const HomeLayout = () => {
     localStorage.getItem("shubhtalk_astrologer_details")
   );
   const astrologerId = userData?._id || userData?.id;
-  const { data : astrologerData } = useGetAstrologerByIdQuery(astrologerId);
+  const { data: astrologerResponse } = useGetAstrologerByIdQuery(astrologerId);
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isOnline, setIsOnline] = useState(userData?.isActive === "online");
-  const [loadingStatus, setLoadingStatus] = useState(false);
+  const [statusState, setStatusState] = useState({
+    call: { isOnline: false, loading: false },
+    chat: { isOnline: false, loading: false }
+  });
 
   const firstName = userData?.firstName?.trim();
   const lastName = userData?.lastName?.trim();
@@ -37,34 +38,66 @@ const HomeLayout = () => {
   const {setActiveChat, setChatSeconds} = useChatContext();
   const navigate = useNavigate();
 
-  const handleStatusToggle = async () => {
-    if (loadingStatus) return;
+  const handleStatusToggle = async (type) => {
+    const currentStatus = statusState[type].isOnline;
+    const isLoading = statusState[type].loading;
 
-    const currentStatus = isOnline;
-    const newStatus = currentStatus ? "offline" : "online";
+    if (isLoading) return;
 
+    const newStatus = !currentStatus;
+    
     // Optimistic UI
-    setIsOnline(!currentStatus);
-    setLoadingStatus(true);
+    setStatusState(prev => ({
+      ...prev,
+      [type]: { isOnline: newStatus, loading: true }
+    }));
 
-    const response = await updateAstrologerStatus(newStatus);
+    try {
+      // Determine activeType based on both statuses
+      let activeType = [];
+      
+      if (type === 'call') {
+        if (newStatus) activeType.push('audio', 'video');
+        if (statusState.chat.isOnline) activeType.push('chat');
+      } else {
+        if (statusState.call.isOnline) activeType.push('audio', 'video');
+        if (newStatus) activeType.push('chat');
+      }
 
-    if (!response?.data?.success) {
-      // Revert if API fails
-      setIsOnline(currentStatus);
-    } else {
-      const updatedUser = {
-        ...userData,
-        isActive: newStatus,
-      };
+      const status = activeType.length > 0 ? "online" : "offline";
+      
+      const response = await updateAstrologerStatus(status, activeType);
 
-      localStorage.setItem(
-        "shubhtalk_astrologer_details",
-        JSON.stringify(updatedUser)
-      );
+      if (!response?.data?.success) {
+        // Revert if API fails
+        setStatusState(prev => ({
+          ...prev,
+          [type]: { isOnline: !newStatus, loading: false }
+        }));
+      } else {
+        const updatedUser = {
+          ...userData,
+          isActive: status,
+          activeType: activeType,
+        };
+
+        localStorage.setItem(
+          "shubhtalk_astrologer_details",
+          JSON.stringify(updatedUser)
+        );
+        
+        setStatusState(prev => ({
+          ...prev,
+          [type]: { isOnline: newStatus, loading: false }
+        }));
+      }
+    } catch (error) {
+      console.error(`${type} toggle error:`, error);
+      setStatusState(prev => ({
+        ...prev,
+        [type]: { isOnline: !newStatus, loading: false }
+      }));
     }
-
-    setLoadingStatus(false);
   };
 
   useEffect(() => {
@@ -72,12 +105,26 @@ const HomeLayout = () => {
       if (!astrologerId) return;
 
       try {
-        setLoadingStatus(true);
-        if (astrologerData?.success) {
-          const apiUser = astrologerData.data;
+        setStatusState(prev => ({
+          call: { ...prev.call, loading: true },
+          chat: { ...prev.chat, loading: true }
+        }));
+        
+        if (astrologerResponse?.success) {
+          const apiUser = astrologerResponse.data;
+          const activeType = apiUser?.isActiveType || apiUser?.activeType || [];
 
           // Backend = source of truth
-          setIsOnline(apiUser?.isActive);
+          setStatusState({
+            call: { 
+              isOnline: activeType.includes('audio') || activeType.includes('video'), 
+              loading: false 
+            },
+            chat: { 
+              isOnline: activeType.includes('chat'), 
+              loading: false 
+            }
+          });
 
           // Update localStorage with latest data
           localStorage.setItem(
@@ -87,13 +134,15 @@ const HomeLayout = () => {
         }
       } catch (err) {
         console.error("Status sync failed");
-      } finally {
-        setLoadingStatus(false);
+        setStatusState(prev => ({
+          call: { ...prev.call, loading: false },
+          chat: { ...prev.chat, loading: false }
+        }));
       }
     };
 
     syncAstrologerStatus();
-  }, [astrologerId, astrologerData]);
+  }, [astrologerId, astrologerResponse]);
 
   //Handle if chat accepted by user
       useEffect(() => {
@@ -187,7 +236,7 @@ const HomeLayout = () => {
                     </div>
                     <div
                       className={`absolute bottom-0 right-0 w-3 h-3 ${
-                        isOnline ? "bg-green-500" : "bg-gray-300"
+                        (statusState.call.isOnline || statusState.chat.isOnline) ? "bg-green-500" : "bg-gray-300"
                       } border-2 border-white rounded-full`}
                     ></div>
                   </div>
@@ -207,39 +256,54 @@ const HomeLayout = () => {
             </div>
 
             {/* RIGHT: Followers + Status */}
-            <div className="flex flex-col items-end gap-1">
-              <p className="text-xs text-gray-500">1.15k followers</p>
+            <div className="flex flex-col items-end gap-2">
+              <p className="text-xs text-gray-400">1.15k followers</p>
 
-              <div className="flex justify-start lg:justify-end">
+              <div className="flex gap-2">
+                {/* Call Button */}
                 <button
-                  disabled={loadingStatus}
-                  onClick={handleStatusToggle}
-                  className={`relative flex items-center h-9 w-[92px] rounded-full px-1 transition-colors duration-300
-                   ${isOnline ? "bg-green-600" : "bg-gray-300"}
-                   ${loadingStatus ? "opacity-60 cursor-not-allowed" : ""}
+                  disabled={statusState.call.loading}
+                  onClick={() => handleStatusToggle('call')}
+                  className={`relative flex items-center gap-2 h-10 pl-4 pr-2 rounded-full transition-all duration-300 shadow-sm
+                   ${statusState.call.isOnline 
+                     ? "bg-[#D4F1E8]" 
+                     : "bg-gray-200"}
+                   ${statusState.call.loading ? "opacity-60 cursor-not-allowed" : "hover:shadow-md"}
                  `}
                 >
-                  <span
-                    className={`absolute text-xs font-semibold text-white left-3 transition-opacity ${
-                      isOnline ? "opacity-100" : "opacity-0"
-                    }`}
-                  >
-                    Online
+                  <span className={`text-sm font-semibold ${
+                    statusState.call.isOnline ? "text-[#0D7C59]" : "text-gray-500"
+                  }`}>
+                    Call
                   </span>
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors duration-300 shadow-sm ${
+                    statusState.call.isOnline ? "bg-[#0D7C59]" : "bg-gray-400"
+                  }`}>
+                    <Icons.Phone size={18} className="text-white" strokeWidth={2.5} />
+                  </div>
+                </button>
 
-                  <span
-                    className={`absolute text-xs font-semibold text-white right-3 transition-opacity ${
-                      !isOnline ? "opacity-100" : "opacity-0"
-                    }`}
-                  >
-                    Offline
+                {/* Chat Button */}
+                <button
+                  disabled={statusState.chat.loading}
+                  onClick={() => handleStatusToggle('chat')}
+                  className={`relative flex items-center gap-2 h-10 pl-4 pr-2 rounded-full transition-all duration-300 shadow-sm
+                   ${statusState.chat.isOnline 
+                     ? "bg-[#D4F1E8]" 
+                     : "bg-gray-200"}
+                   ${statusState.chat.loading ? "opacity-60 cursor-not-allowed" : "hover:shadow-md"}
+                 `}
+                >
+                  <span className={`text-sm font-semibold ${
+                    statusState.chat.isOnline ? "text-[#0D7C59]" : "text-gray-500"
+                  }`}>
+                    Chat
                   </span>
-
-                  <span
-                    className={`h-7 w-7 bg-white rounded-full shadow transform transition-transform duration-300 ${
-                      isOnline ? "translate-x-[52px]" : "translate-x-0"
-                    }`}
-                  />
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors duration-300 shadow-sm ${
+                    statusState.chat.isOnline ? "bg-[#0D7C59]" : "bg-gray-400"
+                  }`}>
+                    <Icons.MessageSquare size={18} className="text-white" strokeWidth={2.5} />
+                  </div>
                 </button>
               </div>
             </div>

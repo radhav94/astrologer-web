@@ -4,7 +4,6 @@ import Profile from "../../screens/private/Profile/Profile";
 import RecentActivity from "../../components/RecentActivity";
 import Onboarding from "../../screens/public/Onboarding/Onboarding";
 import Login from "../../screens/public/Login/Login";
-import ChatInterface from "../../screens/private/Home/currentStatus/ChatInterface";
 import Kundli from "../../screens/private/Home/currentStatus/kundli/kundli";
 import SetPrice from "../../screens/private/Home/setPrice/SetPrice";
 import SessionDetails from "../../screens/private/Home/upcomingSessions/SessionDetails";
@@ -64,10 +63,7 @@ export const PATH = {
       path: "/set-your-consultation-price",
       element: SetPrice,
     },
-    CALL_STATUS: {
-      path: "/call-status",
-      element: ChatInterface,
-    },
+
     WITHDRAW_MONEY: {
       path: "/withdraw-money",
       element: WithdrawMoney,

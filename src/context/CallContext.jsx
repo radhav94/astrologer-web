@@ -10,6 +10,7 @@ export const CallProvider = ({ children }) => {
 
   const [activeCall, setActiveCall] = useState(null);
   const [callStartTime, setCallStartTime] = useState(null);
+  const [callTimer, setCallTimer] = useState(0); // Shared timer state
   const [waitingList, setWaitingList] = useState([]);
   const [incomingCall, setIncomingCall] = useState(null);
   const [openReview, setOpenReview] = useState(null);
@@ -24,6 +25,18 @@ export const CallProvider = ({ children }) => {
     cameraTrack: null,
     isUpgrading: false
   });
+
+  /* 🔥 Shared timer that updates every second when call is active */
+  useEffect(() => {
+    if (activeCall && callStartTime) {
+      const interval = setInterval(() => {
+        setCallTimer(Math.floor((Date.now() - callStartTime) / 1000));
+      }, 1000);
+      return () => clearInterval(interval);
+    } else {
+      setCallTimer(0);
+    }
+  }, [activeCall, callStartTime]);
 
   /* 🔥 Listen to login/logout changes */
   useEffect(() => {
@@ -131,6 +144,7 @@ export const CallProvider = ({ children }) => {
         setActiveCall,
         callStartTime,
         setCallStartTime,
+        callTimer,
         waitingList,
         setWaitingList,
         incomingCall,

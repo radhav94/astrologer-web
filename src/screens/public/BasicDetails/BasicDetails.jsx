@@ -1,13 +1,14 @@
 import { Calendar, Mars, Transgender, Venus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import * as Yup from "yup";
 import {
   updateRegisterData,
   setCurrentStep,
 } from "../../../reducer/registerSlice";
 import Button from "../../../components/UI/button/Button";
+import FormStep from "./FormStep";
 import styles from "./BasicForms.module.scss";
 import {
   nameValidationSchemas,
@@ -19,6 +20,7 @@ import {
 const BasicDetails = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const registerData = useSelector((state) => state.register.registerData);
 
   // Validation schema using reusable utilities from utils.js
   const validationSchema = Yup.object().shape({
@@ -29,14 +31,14 @@ const BasicDetails = () => {
     email: emailValidationSchema,
   });
 
-  // Formik setup
+  // Formik setup with Redux state hydration
   const formik = useFormik({
     initialValues: {
-      firstName: "",
-      lastName: "",
-      gender: "female",
-      dateOfBirth: "2002-01-01",
-      email: "",
+      firstName: registerData?.firstName || "",
+      lastName: registerData?.lastName || "",
+      gender: registerData?.gender ? registerData.gender.charAt(0).toUpperCase() + registerData.gender.slice(1) : "Female",
+      dateOfBirth: registerData?.dateOfBirth || "2002-01-01",
+      email: registerData?.email || "",
       role: "ASTROLOGER",
       phoneNumber: "918989898989",
       place: "New Delhi, India",
@@ -44,14 +46,15 @@ const BasicDetails = () => {
     validationSchema,
     validateOnChange: true,
     validateOnBlur: true,
+    enableReinitialize: true, // Allow form to reinitialize when Redux state changes
     onSubmit: (values) => {
       // Dispatch to Redux store
       dispatch(
         updateRegisterData({
           firstName: values.firstName,
           lastName: values.lastName,
-          gender: values.gender.toLocaleLowerCase(),
-          dateOfBirth: values.dob,
+          gender: values.gender.toLowerCase(),
+          dateOfBirth: values.dateOfBirth,
           email: values.email,
           place: "New Delhi, India",
         }),
@@ -71,208 +74,182 @@ const BasicDetails = () => {
     { label: "Others", icon: <Transgender /> },
   ];
 
+  // Check if all required fields are filled and valid
+  const isFormValid = 
+    formik.values.firstName.trim() !== "" &&
+    formik.values.lastName.trim() !== "" &&
+    formik.values.gender !== "" &&
+    formik.values.email.trim() !== "" &&
+    Object.keys(formik.errors).length === 0;
+
   return (
-    <div className={styles.container}>
-      <div className={styles.containerCard}>
-        {/* Progress Dots */}
-        <div className="flex items-center mb-8">
-          {/* Active Step */}
-          <div className="flex items-center">
-            <span className="w-6 h-6 flex items-center justify-center rounded-full border-4 border-[#E64900]">
-              <span className="w-3 h-3 bg-[#FDEFD8] rounded-full"></span>
-            </span>
-          </div>
+    <div className={styles.formLayoutWrapper}>
+      <div className={styles.formLayoutContainer}>
+        <div className={styles.formLayoutContent}>
+          {/* Progress Dots */}
+          <FormStep totalSteps={6} currentStep={1} />
 
-          {/* Connector + Other Steps */}
-          {[...Array(5)].map((_, index) => (
-            <div key={index} className="flex items-center">
-              {/* Line */}
-              <div className="w-4 h-[2px] bg-gray-300 mx-1"></div>
+          {/* Heading */}
+          <h1 className={styles.heading}>Let's Begin</h1>
+          <p className={styles.subheading}>
+            Enter Your Basic details
+          </p>
 
-              {/* Dot */}
-              <span className="w-4 h-4 rounded-full bg-gray-400"></span>
-            </div>
-          ))}
-        </div>
-
-        {/* Heading */}
-        <h1 className="text-3xl font-bold mb-1 mt-8 text-left">Let’s Begin</h1>
-        <p className="text-gray-500 text-sm mb-10 text-left">
-          Enter Your Basic details
-        </p>
-
-        {/* First Name */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium mb-2 text-left">
-            First Name
-          </label>
-          <input
-            type="text"
-            placeholder="Enter here"
-            name="firstName"
-            value={formik.values.firstName}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            className={`w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 ${
-              formik.touched.firstName && formik.errors.firstName
-                ? "border-red-500 focus:ring-red-500"
-                : "focus:ring-black"
-            }`}
-          />
-          {formik.touched.firstName && formik.errors.firstName && (
-            <p className="text-red-500 text-xs mt-1 text-left">
-              {formik.errors.firstName}
-            </p>
-          )}
-        </div>
-
-        {/* Last Name */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium mb-2 text-left">
-            Last Name
-          </label>
-          <input
-            type="text"
-            placeholder="Enter here"
-            name="lastName"
-            value={formik.values.lastName}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            className={`w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 ${
-              formik.touched.lastName && formik.errors.lastName
-                ? "border-red-500 focus:ring-red-500"
-                : "focus:ring-black"
-            }`}
-          />
-          {formik.touched.lastName && formik.errors.lastName && (
-            <p className="text-red-500 text-xs mt-1 text-left">
-              {formik.errors.lastName}
-            </p>
-          )}
-        </div>
-
-        {/* Gender */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium mb-3 text-left">
-            Your Identity
-          </label>
-
-          <div className="grid grid-cols-3 gap-6">
-            {genderOptions.map(({ label, icon }) => {
-              const isActive = formik.values.gender === label;
-
-              return (
-                <button
-                  key={label}
-                  type="button"
-                  onClick={() => formik.setFieldValue("gender", label)}
-                  className={`
-          h-24 rounded-2xl
-          flex flex-col items-center justify-center gap-2
-          text-sm font-medium
-          transition-all duration-200
-          border
-          ${
-            isActive
-              ? "bg-gradient-to-b from-[#FF6A00] to-[#E64900] text-white border-[#E64900] shadow-md"
-              : "bg-[#F5EDE4] text-black border-[#F5B98E] hover:bg-[#FBE5D2]"
-          }
-        `}
-                >
-                  <span className={isActive ? "text-white" : "text-black"}>
-                    {icon}
-                  </span>
-                  <span>{label}</span>
-                </button>
-              );
-            })}
-          </div>
-          {formik.touched.gender && formik.errors.gender && (
-            <p className="text-red-500 text-xs mt-1 text-left">
-              {formik.errors.gender}
-            </p>
-          )}
-        </div>
-
-        {/* DOB */}
-        <div className="mb-10">
-          <label className="block text-sm font-medium mb-2 text-left">
-            Birth Date
-          </label>
-
-          <div className="relative">
+          {/* First Name */}
+          <div className={styles.formGroup}>
+            <label className={styles.label}>
+              First Name
+            </label>
             <input
-              type="date"
-              name="dob"
-              value={formik.values.dob}
+              type="text"
+              placeholder="Enter here"
+              name="firstName"
+              value={formik.values.firstName}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
-              className={`
-      w-full h-14
-      rounded-2xl
-      border border-gray-300
-      bg-white
-      px-4 pr-12
-      text-sm text-gray-700
-      focus:outline-none focus:border-[#F75801]
-      transition-colors duration-200
-      appearance-none
-      ${formik.touched.dob && formik.errors.dob ? "border-red-500" : ""}
-    `}
+              className={`${styles.input} ${
+                formik.touched.firstName && formik.errors.firstName
+                  ? styles.inputError
+                  : ""
+              }`}
             />
-
-            {/* Custom Calendar Icon */}
-            <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-[#F75801]">
-              <Calendar size={20} />
-            </div>
+            {formik.touched.firstName && formik.errors.firstName && (
+              <p className={styles.errorText}>
+                {formik.errors.firstName}
+              </p>
+            )}
           </div>
-          {formik.touched.dob && formik.errors.dob && (
-            <p className="text-red-500 text-xs mt-1 text-left">
-              {formik.errors.dob}
-            </p>
-          )}
+
+          {/* Last Name */}
+          <div className={styles.formGroup}>
+            <label className={styles.label}>
+              Last Name
+            </label>
+            <input
+              type="text"
+              placeholder="Enter here"
+              name="lastName"
+              value={formik.values.lastName}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              className={`${styles.input} ${
+                formik.touched.lastName && formik.errors.lastName
+                  ? styles.inputError
+                  : ""
+              }`}
+            />
+            {formik.touched.lastName && formik.errors.lastName && (
+              <p className={styles.errorText}>
+                {formik.errors.lastName}
+              </p>
+            )}
+          </div>
+
+          {/* Gender */}
+          <div className={styles.formGroup}>
+            <label className={styles.label}>
+              Your Identity
+            </label>
+
+            <div className={styles.genderGrid}>
+              {genderOptions.map(({ label, icon }) => {
+                const isActive = formik.values.gender === label;
+
+                return (
+                  <button
+                    key={label}
+                    type="button"
+                    onClick={() => formik.setFieldValue("gender", label)}
+                    className={`${styles.genderButton} ${
+                      isActive ? styles.genderButtonActive : ""
+                    }`}
+                  >
+                    <span className={styles.genderIcon}>
+                      {icon}
+                    </span>
+                    <span>{label}</span>
+                  </button>
+                );
+              })}
+            </div>
+            {formik.touched.gender && formik.errors.gender && (
+              <p className={styles.errorText}>
+                {formik.errors.gender}
+              </p>
+            )}
+          </div>
+
+          {/* DOB */}
+          <div className={styles.formGroup}>
+            <label className={styles.label}>
+              Birth Date
+            </label>
+
+            <div className={styles.dateInputWrapper}>
+              <input
+                type="date"
+                name="dateOfBirth"
+                value={formik.values.dateOfBirth}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                className={`${styles.dateInput} ${
+                  formik.touched.dateOfBirth && formik.errors.dateOfBirth ? styles.dateInputError : ""
+                }`}
+              />
+
+              {/* Custom Calendar Icon */}
+              <div className={styles.calendarIcon}>
+                <Calendar size={20} />
+              </div>
+            </div>
+            {formik.touched.dateOfBirth && formik.errors.dateOfBirth && (
+              <p className={styles.errorText}>
+                {formik.errors.dateOfBirth}
+              </p>
+            )}
+          </div>
+
+          {/* Email */}
+          <div className={styles.formGroup}>
+            <label className={styles.label}>
+              Email Address
+            </label>
+            <input
+              type="email"
+              placeholder="Enter here"
+              name="email"
+              value={formik.values.email}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              className={`${styles.input} ${
+                formik.touched.email && formik.errors.email
+                  ? styles.inputError
+                  : ""
+              }`}
+            />
+            {formik.touched.email && formik.errors.email && (
+              <p className={styles.errorText}>
+                {formik.errors.email}
+              </p>
+            )}
+          </div>
         </div>
 
-        {/* Email */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium mb-2 text-left">
-            Email Address
-          </label>
-          <input
-            type="email"
-            placeholder="Enter here"
-            name="email"
-            value={formik.values.email}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            className={`w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 ${
-              formik.touched.email && formik.errors.email
-                ? "border-red-500 focus:ring-red-500"
-                : "focus:ring-black"
-            }`}
-          />
-          {formik.touched.email && formik.errors.email && (
-            <p className="text-red-500 text-xs mt-1 text-left">
-              {formik.errors.email}
-            </p>
-          )}
-        </div>
         {/* Next Button */}
-        <Button
-          type="submit"
-          onClick={formik.handleSubmit}
-          disabled={!formik.isValid || formik.isSubmitting}
-          className={`
-            w-full py-3 rounded-full text-sm font-medium transition
-            ${
-              formik.isValid && !formik.isSubmitting
-                ? "bg-gradient-to-b from-[#FF6A00] to-[#E64900] text-white"
-                : "text-white cursor-not-allowed opacity-50"
-            }
-          `}
-        >
-          Next
-        </Button>
+        <div className={styles.formLayoutFooter}>
+          <Button
+            type="submit"
+            onClick={formik.handleSubmit}
+            disabled={!isFormValid || formik.isSubmitting}
+            className={`${styles.formButton} ${
+              !isFormValid || formik.isSubmitting
+                ? styles.formButtonDisabled
+                : ""
+            }`}
+          >
+            Next
+          </Button>
+        </div>
       </div>
     </div>
   );

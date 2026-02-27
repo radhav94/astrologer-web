@@ -112,7 +112,14 @@ import Capricorn from "../assets/svg/capricorn.svg";
 import Aquarius from "../assets/svg/aquarius.svg";
 import Pisces from "../assets/svg/pisces.svg";
 import ShubhAstro from "../assets/svg/shubhastro.svg";
-
+import ExperienceIcon from "../assets/svg/Experience Icon.svg"
+import LoveIcon from "../assets/svg/love.svg";
+import SelfIcon from "../assets/svg/self.svg";
+import OtherIcon from "../assets/svg/other.svg";
+import HealthIcon from "../assets/svg/health.svg";
+import WealthIcon from "../assets/svg/wealth.svg";
+import CareerIcon from "../assets/svg/career.svg";
+import RegisterSuccess from "../assets/svg/registerSuccess.svg"
 export const appSvgs = {
   Aries,
   Taurus,
@@ -126,5 +133,13 @@ export const appSvgs = {
   Capricorn,
   Aquarius,
   Pisces,
-  ShubhAstro
+  ShubhAstro,
+  ExperienceIcon,
+  LoveIcon,
+  SelfIcon,
+  OtherIcon,
+  HealthIcon,
+  WealthIcon,
+  CareerIcon,
+  RegisterSuccess
 };

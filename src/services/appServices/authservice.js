@@ -17,11 +17,11 @@ export const registerUser = async (data) => {
   return await privateRequest.post("astrologers/registerAstrologer", data);
 };
 
-export const updateAstrologerStatus = async (status) => {
+export const updateAstrologerStatus = async (status, activeType = []) => {
   try {
     return await privateRequest.patch("astrologers/updateStatus", {
       status: status === "online",
-      activeType: status === "online" ? ["chat", "video", "audio"] : [],
+      activeType: activeType,
     });
   } catch (error) {
     console.error(

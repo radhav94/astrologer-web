@@ -1,10 +1,13 @@
+import { appSvgs } from "../../../../utils/appImages";
+
+
 const TipCard = ({ tip }) => {
   return (
     <div
       className="
       relative
       min-w-[240px] w-[240px] md:min-w-[280px] md:w-[280px]
-      bg-gray-100 
+      bg-white
       rounded-2xl 
       p-6 
       flex flex-col 
@@ -12,15 +15,17 @@ const TipCard = ({ tip }) => {
       snap-start
       transition-transform duration-300 hover:scale-[1.02]
       cursor-pointer
+      shadow-sm
+      border border-gray-100
     "
     >
       {/* Quote Icon */}
-      <div className="text-4xl text-gray-800 font-serif leading-none mb-3 opacity-80">
-        “
+      <div className="mb-3 opacity-80">
+        <img src={appSvgs.Quotes} alt="Quote" className="w-9 h-7" />
       </div>
 
       {/* Text Content */}
-      <p className="text-sm font-medium text-gray-600 leading-relaxed">
+      <p className="text-sm font-normal text-[#6B7280] leading-relaxed">
         {tip.text}
       </p>
     </div>

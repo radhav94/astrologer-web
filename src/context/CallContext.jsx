@@ -18,6 +18,13 @@ export const CallProvider = ({ children }) => {
   const [isUpgradeRejectionProtected, setIsUpgradeRejectionProtected] = useState(false);
   const [isCallMinimized, setIsCallMinimized] = useState(false);
   const upgradeRejectionRef = useRef(false); // Immediate protection using ref
+
+  // Reset minimized state when call ends
+  useEffect(() => {
+    if (!activeCall) {
+      setIsCallMinimized(false);
+    }
+  }, [activeCall]);
   
   // Shared Agora state for smooth call upgrades
   const [sharedAgoraState, setSharedAgoraState] = useState({

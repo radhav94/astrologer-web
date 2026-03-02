@@ -20,7 +20,7 @@ import VideoCallChat from "./VideoCallChat";
 const APP_ID = "c76e3d30a3b6483689dac88ca9f94381";
 
 const AgoraVoiceCalling = ({ callData }) => {
-  const { activeCall, setActiveCall, sharedAgoraState, setSharedAgoraState, isUpgradeRejectionProtected, upgradeRejectionRef, setReviewData, setOpenReview, callStartTime, setCallStartTime, isCallMinimized, setIsCallMinimized  } = useCall();
+  const { activeCall, setActiveCall, sharedAgoraState, setSharedAgoraState, isUpgradeRejectionProtected, upgradeRejectionRef, setReviewData, setOpenReview, callStartTime, setCallStartTime, isCallMinimized, setIsCallMinimized } = useCall();
   const { setActiveChat } = useChatContext();
   const navigate = useNavigate();
 
@@ -80,13 +80,7 @@ const AgoraVoiceCalling = ({ callData }) => {
 
       client.on("user-left", (user) => {
         console.log("👤 User left Agora channel:", user.uid);
-        // Check protection before ending call
-        if (upgradeRejectionRef.current) {
-          console.log("⚠️ Ignoring user-left - upgrade rejection protection is active");
-          return;
-        }
-        console.log("📞 Processing user-left - ending call");
-        endCall();
+        handleRemoteUserLeft();
       });
 
       await client.join(APP_ID, roomId, agoraToken, "");
@@ -118,7 +112,7 @@ const AgoraVoiceCalling = ({ callData }) => {
     };
     // eslint-disable-next-line
   }, [roomId]);
-  
+
   /* ================= WATCH FOR UPGRADE ================= */
   useEffect(() => {
     isUpgradingRef.current = sharedAgoraState.isUpgrading;
@@ -167,7 +161,7 @@ const AgoraVoiceCalling = ({ callData }) => {
         console.log("🔄 Cleanup skipped - preserving connection for upgrade");
         return;
       }
-      
+
       // Normal cleanup - close everything
       await micTrackRef.current?.stop();
       await micTrackRef.current?.close();
@@ -179,7 +173,7 @@ const AgoraVoiceCalling = ({ callData }) => {
     } finally {
       micTrackRef.current = null;
       clientRef.current = null;
-      
+
       // Only clear active call and shared state if not upgrading
       if (!isUpgradingRef.current) {
         setActiveCall(null);
@@ -196,18 +190,55 @@ const AgoraVoiceCalling = ({ callData }) => {
     }
   };
 
-  /* ================= END CALL ================= */
+  /* ================= END CALL (User initiated) ================= */
   const endCall = async () => {
     // Don't emit call:end if upgrading
     if (isUpgradingRef.current) {
       console.log("🔄 Skipping call:end emit - upgrading to video");
       return;
     }
-    
+
+    console.log("📞 User initiated call end - emitting call:end");
     voiceSocket.emit("call:end", {
       roomId,
       endedBy: isUserSide ? "CUSTOMER" : "ASTROLOGER",
     });
+    setReviewData({
+      userID: activeCall?.userID,
+      fullName: activeCall?.callerName,
+    });
+    setOpenReview(true);
+    await cleanup();
+  };
+
+  /* ================= HANDLE REMOTE USER LEFT (Remote initiated) ================= */
+  const handleRemoteUserLeft = async () => {
+    // Check if we're upgrading - don't end call if upgrading
+    if (isUpgradingRef.current || upgradeRejectionRef.current) {
+      console.log("⚠️ Ignoring remote user left - upgrade in progress");
+      return;
+    }
+
+    console.log("📞 Remote user left - cleaning up without emitting call:end");
+    // Don't emit call:end - the remote user already ended it
+    setReviewData({
+      userID: activeCall?.userID,
+      fullName: activeCall?.callerName,
+    });
+    setOpenReview(true);
+    await cleanup();
+  };
+
+  /* ================= HANDLE SERVER CALL END (Server/Remote initiated) ================= */
+  const handleServerCallEnd = async () => {
+    // Check if we're upgrading - don't end call if upgrading
+    if (isUpgradingRef.current || upgradeRejectionRef.current || isUpgradeRejectionProtected) {
+      console.log("⚠️ Ignoring server call end - upgrade in progress");
+      return;
+    }
+
+    console.log("📞 Server/Remote ended call - cleaning up without emitting call:end");
+    // Don't emit call:end - the server/remote already ended it
     setReviewData({
       userID: activeCall?.userID,
       fullName: activeCall?.callerName,
@@ -224,50 +255,23 @@ const AgoraVoiceCalling = ({ callData }) => {
   useEffect(() => {
     const handleCallEnded = (data) => {
       console.log("📞 call:ended event received:", data);
-      // Check BOTH ref (immediate) and state (reactive)
-      if (upgradeRejectionRef.current || isUpgradeRejectionProtected) {
-        console.log("⚠️ Ignoring call:ended - upgrade rejection protection is active", {
-          refProtected: upgradeRejectionRef.current,
-          stateProtected: isUpgradeRejectionProtected
-        });
-        return;
-      }
-      console.log("📞 Processing call:ended - ending call");
-      endCall();
+      handleServerCallEnd();
     };
 
     const handleForceCallEnd = (data) => {
       console.log("📞 force_call_end event received:", data);
-      if (upgradeRejectionRef.current || isUpgradeRejectionProtected) {
-        console.log("⚠️ Ignoring force_call_end - upgrade rejection protection is active");
-        return;
-      }
-      console.log("📞 Processing force_call_end - ending call");
-      endCall();
+      handleServerCallEnd();
     };
 
     const handleDisconnect = (reason) => {
       console.log("📞 disconnect event received:", reason);
-      if (upgradeRejectionRef.current || isUpgradeRejectionProtected) {
-        console.log("⚠️ Ignoring disconnect - upgrade rejection protection is active");
-        return;
-      }
-      console.log("📞 Processing disconnect - ending call");
-      endCall();
+      handleServerCallEnd();
     };
 
     const handleCallRejected = (data) => {
       console.log("📞 call:rejected event received:", data);
-      if (upgradeRejectionRef.current || isUpgradeRejectionProtected) {
-        console.log("⚠️ Ignoring call:rejected - upgrade rejection protection is active", {
-          refProtected: upgradeRejectionRef.current,
-          stateProtected: isUpgradeRejectionProtected
-        });
-        return;
-      }
-      console.log("📞 Processing call:rejected - ending call");
       if (data.roomId == activeCall?.roomId) {
-         endCall();
+        handleServerCallEnd();
       }
     };
 

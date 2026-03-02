@@ -297,7 +297,7 @@ const VideoCalling = ({ callData }) => {
           }
         });
 
-        client.on("user-left", safeEndCall);
+        client.on("user-left", handleRemoteCallEnd);
 
         await client.join(APP_ID, roomId, agoraToken, null);
 
@@ -524,9 +524,9 @@ const VideoCalling = ({ callData }) => {
     }
   };
 
-  /* ================= SAFE END CALL ================= */
+  /* ================= SAFE END CALL (User initiated) ================= */
   const safeEndCall = async () => {
-    console.log("Safe call end")
+    console.log("📞 User initiated video call end - emitting call:end");
     if (endCallRef.current) return;
     endCallRef.current = true;
     setReviewData({
@@ -543,8 +543,24 @@ const VideoCalling = ({ callData }) => {
     await cleanup();
   };
 
-  /* ================= SAFE END CALL ================= */
+  /* ================= HANDLE REMOTE/SERVER CALL END ================= */
+  const handleRemoteCallEnd = async () => {
+    console.log("📞 Remote/Server ended video call - cleaning up without emitting call:end");
+    if (endCallRef.current) return;
+    endCallRef.current = true;
+    setReviewData({
+      userID: activeCall.userID,
+      fullName: activeCall.callerName,
+    });
+
+    // Don't emit call:end - already ended by remote/server
+    setOpenReview(true);
+    await cleanup();
+  };
+
+  /* ================= HANDLE CALL CANCELED ================= */
   const handleCallCanceled = async () => {
+    console.log("📞 Call canceled");
     if (endCallRef.current) return;
     endCallRef.current = true;
 
@@ -553,15 +569,13 @@ const VideoCalling = ({ callData }) => {
 
   /* ================= SOCKET ================= */
   useEffect(() => {
-    voiceSocket.on("call:ended", safeEndCall);
-    voiceSocket.on("force_call_end", safeEndCall);
-    voiceSocket.on("disconnect", safeEndCall);
+    voiceSocket.on("call:ended", handleRemoteCallEnd);
+    voiceSocket.on("disconnect", handleRemoteCallEnd);
     voiceSocket.on("call:canceled", handleCallCanceled);
 
     return () => {
-      voiceSocket.off("call:ended", safeEndCall);
-      voiceSocket.off("force_call_end", safeEndCall);
-      voiceSocket.off("disconnect", safeEndCall);
+      voiceSocket.off("call:ended", handleRemoteCallEnd);
+      voiceSocket.off("disconnect", handleRemoteCallEnd);
       voiceSocket.off("call:canceled", handleCallCanceled);
     };
   }, []);

@@ -1,12 +1,18 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { IoClose } from "react-icons/io5";
+import { useNavigate } from "react-router-dom";
 import { voiceSocket } from "../services/appServices/voiceSocketServices";
 import { useCall } from "../context/CallContext";
+import { useChat as useChatContext } from "../context/chatContext";
+import { PATH } from "../utils/routes/Paths";
+import { detectURL, isImageURL, extractDomain } from "../utils/helper/linkPreview";
 
 const GRACE_PERIOD_MS = 5000; // Skip messages in first 5s after call connects
 
 const IncomingMessagePopup = () => {
-  const { activeCall } = useCall();
+  const { activeCall, setIsCallMinimized } = useCall();
+  const { setActiveChat } = useChatContext();
+  const navigate = useNavigate();
   const [popup, setPopup] = useState(null);
   const [visible, setVisible] = useState(false);
   const callStartTimeRef = useRef(null);
@@ -25,6 +31,34 @@ const IncomingMessagePopup = () => {
     setTimeout(() => setPopup(null), 300);
   }, []);
 
+  const handlePopupClick = useCallback(() => {
+    if (!activeCall) return;
+
+    setActiveChat({
+      roomId: activeCall.chatRoomId,
+      userId: activeCall.userId,
+      astrologerId: activeCall.astrologerId,
+      remainingTime: activeCall.remainingTime || 0,
+    });
+
+    setIsCallMinimized(true);
+
+    navigate(
+      PATH.privateRoutes.CHAT_WINDOW.path.replace(":chatId", activeCall.userId),
+      {
+        state: {
+          roomId: activeCall.chatRoomId,
+          userId: activeCall.userId,
+          astrologerId: activeCall.astrologerId,
+          kundliId: activeCall.kundliId,
+          fullName: activeCall.callerName,
+        },
+      }
+    );
+
+    dismiss();
+  }, [activeCall, navigate, setActiveChat, setIsCallMinimized, dismiss]);
+
   useEffect(() => {
     if (!activeCall) return;
 
@@ -35,17 +69,33 @@ const IncomingMessagePopup = () => {
       // Skip messages during grace period (auto-sent kundli/messages on call connect)
       if (callStartTimeRef.current && Date.now() - callStartTimeRef.current < GRACE_PERIOD_MS) return;
 
+      const msgType = data?.type || "message";
       let text = data.message || "";
-      // Try to detect voice messages (JSON with audioUrl)
-      try {
-        if (typeof text === "string") {
-          const parsed = JSON.parse(text);
-          if (parsed && typeof parsed === "object" && parsed.audioUrl) {
-            text = "🎤 Voice message";
+
+      // Handle special message types
+      const typeLabels = {
+        audio: "🎤 Voice message",
+        video: "🎥 Video message",
+        kundli: "📜 Kundli shared",
+        image: "🖼️ Image shared",
+        attachment: "📎 Attachment shared",
+        gift: "🎁 Gift received",
+      };
+
+      if (typeLabels[msgType]) {
+        text = typeLabels[msgType];
+      } else {
+        // Try to detect voice messages (JSON with audioUrl)
+        try {
+          if (typeof text === "string") {
+            const parsed = JSON.parse(text);
+            if (parsed && typeof parsed === "object" && parsed.audioUrl) {
+              text = "🎤 Voice message";
+            }
           }
+        } catch {
+          // not JSON, keep as-is
         }
-      } catch {
-        // not JSON, keep as-is
       }
 
       if (!text || typeof text !== "string") {
@@ -54,10 +104,12 @@ const IncomingMessagePopup = () => {
 
       // Truncate long messages
       const displayText = text.length > 100 ? text.slice(0, 100) + "…" : text;
+      const detectedUrl = detectURL(text);
 
       setPopup({
         senderName: activeCall.callerName || "User",
         message: displayText,
+        url: detectedUrl,
       });
       setVisible(true);
     };
@@ -93,6 +145,7 @@ const IncomingMessagePopup = () => {
       }}
     >
       <div
+        onClick={handlePopupClick}
         style={{
           display: "flex",
           alignItems: "flex-start",
@@ -101,6 +154,7 @@ const IncomingMessagePopup = () => {
           borderRadius: 16,
           backgroundColor: "#FFF8EE",
           boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+          cursor: "pointer",
         }}
       >
         {/* Avatar */}
@@ -149,11 +203,70 @@ const IncomingMessagePopup = () => {
           >
             {popup.message}
           </p>
+
+          {/* URL Preview */}
+          {popup.url && (
+            <a
+              href={popup.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                display: "block",
+                marginTop: 8,
+                borderRadius: 10,
+                overflow: "hidden",
+                border: "1px solid #e5e7eb",
+                backgroundColor: "#fff",
+                textDecoration: "none",
+                color: "inherit",
+              }}
+            >
+              {isImageURL(popup.url) && (
+                <img
+                  src={popup.url}
+                  alt="Preview"
+                  style={{
+                    width: "100%",
+                    maxHeight: 120,
+                    objectFit: "cover",
+                    display: "block",
+                  }}
+                  onError={(e) => { e.target.style.display = "none"; }}
+                />
+              )}
+              <div
+                style={{
+                  padding: "6px 10px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#E85D04" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" />
+                  <polyline points="15 3 21 3 21 9" />
+                  <line x1="10" y1="14" x2="21" y2="3" />
+                </svg>
+                <span
+                  style={{
+                    fontSize: 12,
+                    color: "#E85D04",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {extractDomain(popup.url)}
+                </span>
+              </div>
+            </a>
+          )}
         </div>
 
         {/* Close button */}
         <button
-          onClick={dismiss}
+          onClick={(e) => { e.stopPropagation(); dismiss(); }}
           style={{
             background: "none",
             border: "none",

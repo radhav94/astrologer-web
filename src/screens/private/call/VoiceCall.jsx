@@ -20,7 +20,7 @@ import VideoCallChat from "./VideoCallChat";
 const APP_ID = "c76e3d30a3b6483689dac88ca9f94381";
 
 const AgoraVoiceCalling = ({ callData }) => {
-  const { activeCall, setActiveCall, sharedAgoraState, setSharedAgoraState, isUpgradeRejectionProtected, upgradeRejectionRef, setReviewData, setOpenReview, callStartTime, setCallStartTime  } = useCall();
+  const { activeCall, setActiveCall, sharedAgoraState, setSharedAgoraState, isUpgradeRejectionProtected, upgradeRejectionRef, setReviewData, setOpenReview, callStartTime, setCallStartTime, isCallMinimized, setIsCallMinimized  } = useCall();
   const { setActiveChat } = useChatContext();
   const navigate = useNavigate();
 
@@ -41,7 +41,6 @@ const AgoraVoiceCalling = ({ callData }) => {
   const [micOn, setMicOn] = useState(true);
   const [joined, setJoined] = useState(false);
   const [callState, setCallState] = useState("connecting");
-  const [isMinimized, setIsMinimized] = useState(false);
   const [position, setPosition] = useState({ x: 20, y: 20 });
   const [isVideo, setIsVideo] = useState(false);
   const [isRemoteVideo, setIsRemoteVideo] = useState(false);
@@ -267,7 +266,9 @@ const AgoraVoiceCalling = ({ callData }) => {
         return;
       }
       console.log("📞 Processing call:rejected - ending call");
-      endCall();
+      if (data.roomId == activeCall?.roomId) {
+         endCall();
+      }
     };
 
     voiceSocket.on("call:ended", handleCallEnded);
@@ -324,7 +325,7 @@ const AgoraVoiceCalling = ({ callData }) => {
       remainingTime: activeCall.remainingTime || 0
     });
 
-    setIsMinimized(true);
+    setIsCallMinimized(true);
     navigate(
       PATH.privateRoutes.CHAT_WINDOW.path.replace(
         ":chatId",
@@ -388,7 +389,7 @@ const AgoraVoiceCalling = ({ callData }) => {
   return (
     <>
       {/* MINI VIEW */}
-      {isMinimized && (
+      {isCallMinimized && (
         <div
           onMouseDown={startDrag}
           onTouchStart={startDrag}
@@ -406,7 +407,7 @@ const AgoraVoiceCalling = ({ callData }) => {
               className="w-10 h-10 rounded-full border border-white/50"
             />
             <div>
-              <p className="text-sm font-semibold">{callerName}</p>
+              <p className="text-sm font-semibold capitalize truncate max-w-[120px]">{callerName}</p>
               <span className="text-xs opacity-70">
                 {joined ? formatTime(timer) : "Calling…"}
               </span>
@@ -423,7 +424,7 @@ const AgoraVoiceCalling = ({ callData }) => {
             </button>
 
             <button
-              onClick={() => setIsMinimized(false)}
+              onClick={() => setIsCallMinimized(false)}
               className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center"
             >
               ⤢
@@ -433,7 +434,7 @@ const AgoraVoiceCalling = ({ callData }) => {
       )}
 
       {/* FULL VIEW - NEW DESIGN */}
-      {!isMinimized && (
+      {!isCallMinimized && (
         <div className="fixed inset-0 z-[99999] flex flex-col" style={{ backgroundColor: isRemoteVideo ? 'transparent' : 'white' }}>
 
           {/* HEADER */}
@@ -452,7 +453,7 @@ const AgoraVoiceCalling = ({ callData }) => {
             <div className="flex items-center gap-3">
               {/* Back Button */}
               <button
-                onClick={() => setIsMinimized(true)}
+                onClick={() => setIsCallMinimized(true)}
                 className="w-10 h-10 rounded-full border-2 flex items-center justify-center hover:opacity-80 transition-opacity"
                 style={{ borderColor: '#f75801' }}
               >
@@ -467,17 +468,11 @@ const AgoraVoiceCalling = ({ callData }) => {
               {/* User Info */}
               <div className="flex flex-col">
                 <h2
-                  className="text-sm font-semibold transition-colors duration-300"
+                  className="text-sm font-semibold transition-colors duration-300 capitalize truncate max-w-[150px]"
                   style={{ color: isRemoteVideo ? 'white' : '#111827' }}
                 >
                   {callerName}
                 </h2>
-                <span
-                  className="text-xs transition-colors duration-300"
-                  style={{ color: isRemoteVideo ? 'rgba(255, 255, 255, 0.8)' : '#6b7280' }}
-                >
-                  Exp. 1 year
-                </span>
               </div>
             </div>
 
@@ -622,6 +617,7 @@ const AgoraVoiceCalling = ({ callData }) => {
             <div
               ref={remoteVideoRef}
               className={`absolute inset-0 bg-black ${isRemoteVideo ? "block" : "hidden"}`}
+              style={{ transform: 'scaleX(-1)' }}
             />
 
             {/* LOCAL VIDEO (PiP) */}
@@ -643,7 +639,7 @@ const AgoraVoiceCalling = ({ callData }) => {
             {!isRemoteVideo && (
               <div className="flex-1 flex flex-col items-center justify-center px-4">
                 {/* AVATAR WITH ACTIVE RIPPLE EFFECT */}
-                <div className="relative mb-12">
+                <div className="relative mb-3">
                   {/* Active ripple rings */}
                   <div className={styles.rippleRing}></div>
                   <div className={styles.rippleRing}></div>
@@ -651,7 +647,7 @@ const AgoraVoiceCalling = ({ callData }) => {
                   <div className={styles.rippleRing}></div>
 
                   {/* Avatar with green border */}
-                  <div className="relative w-64 h-64 rounded-full overflow-hidden shadow-2xl bg-white z-10" style={{ border: '12px solid #b7d9a5' }}>
+                  <div className="relative w-40 h-40 md:w-64 md:h-64 rounded-full overflow-hidden shadow-2xl bg-white z-10" style={{ border: '8px solid #b7d9a5' }}>
                     <img
                       src="https://cdn-icons-png.flaticon.com/512/149/149071.png"
                       alt="avatar"
@@ -660,8 +656,13 @@ const AgoraVoiceCalling = ({ callData }) => {
                   </div>
                 </div>
 
+                {/* CALLER NAME */}
+                <p className="text-xl font-semibold text-gray-900 capitalize whitespace-nowrap">
+                  {callerName}
+                </p>
+
                 {/* CALL TIMER TEXT */}
-                <h3 className="text-2xl font-semibold text-gray-900 mb-16">
+                <h3 className="text-lg font-medium text-gray-500 mb-2">
                   {formatTime(timer)}
                 </h3>
               </div>
@@ -669,7 +670,7 @@ const AgoraVoiceCalling = ({ callData }) => {
 
             {/* BOTTOM CONTROLS SECTION - FIXED AT BOTTOM */}
             <div
-              className="absolute bottom-0 left-0 right-0 z-20"
+              className={`${isRemoteVideo ? 'absolute bottom-0' : ''} left-0 right-0 z-20`}
               style={{
                 display: 'flex',
                 flexDirection: 'column'

@@ -728,6 +728,7 @@ const AgoraVoiceCalling = ({ callData }) => {
                   {/* REPORT CALLER BUTTON */}
                   <div className="flex flex-col items-center gap-2">
                     <button
+                      onClick={endCall}
                       className="w-16 h-16 rounded-full bg-red-500 flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors"
                     >
                       <svg width="28" height="28" viewBox="0 0 24 24" fill="none">

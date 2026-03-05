@@ -19,7 +19,7 @@ import CallIcon from "../../../assets/chat/Call.svg";
 const APP_ID = "c76e3d30a3b6483689dac88ca9f94381";
 
 const VideoCalling = ({ callData }) => {
-  const { activeCall, setActiveCall, setReviewData, setOpenReview, sharedAgoraState, setSharedAgoraState, callStartTime, setCallStartTime } = useCall();
+  const { activeCall, setActiveCall, setReviewData, setOpenReview, sharedAgoraState, setSharedAgoraState, callStartTime, setCallStartTime, isCallMinimized, setIsCallMinimized } = useCall();
   const navigate = useNavigate();
 
   if (!activeCall || activeCall.callType !== "video") return null;
@@ -44,7 +44,6 @@ const VideoCalling = ({ callData }) => {
   const [micOn, setMicOn] = useState(true);
   const [cameraOn, setCameraOn] = useState(true);
   const [speakerOn, setSpeakerOn] = useState(true);
-  const [isMinimized, setIsMinimized] = useState(false);
   const [position, setPosition] = useState({ x: 20, y: 20 });
 
   const [callSeconds, setCallSeconds] = useState(0);
@@ -392,7 +391,7 @@ const VideoCalling = ({ callData }) => {
   useEffect(() => {
     if (!joined) return;
 
-    if (isMinimized) {
+    if (isCallMinimized) {
       // Play remote video in mini view
       if (clientRef.current && remoteVideoMiniRef.current) {
         clientRef.current.remoteUsers.forEach((user) => {
@@ -418,7 +417,7 @@ const VideoCalling = ({ callData }) => {
       // Replay remote in main container
       resumeRemoteTracks();
     }
-  }, [joined, isMinimized, isLocalBig]);
+  }, [joined, isCallMinimized, isLocalBig]);
 
   /* ================= CALL TIMER FROM SHARED START TIME ================= */
   useEffect(() => {
@@ -613,7 +612,7 @@ const VideoCalling = ({ callData }) => {
   };
 
   const openChatWithMinimize = () => {
-    setIsMinimized(true);
+    setIsCallMinimized(true);
     navigate(
       PATH.privateRoutes.CHAT_WINDOW.path.replace(
         ":chatId",
@@ -653,7 +652,7 @@ const VideoCalling = ({ callData }) => {
           position: 'fixed',
           top: position.y,
           left: position.x,
-          display: isMinimized ? "block" : "none",
+          display: isCallMinimized ? "block" : "none",
           zIndex: 100000,
         }}
         className="w-48 rounded-2xl bg-[#1e003c]/70 backdrop-blur-xl border border-white/20 shadow-2xl text-white select-none overflow-hidden"
@@ -666,10 +665,11 @@ const VideoCalling = ({ callData }) => {
           <div
             ref={remoteVideoMiniRef}
             className="w-full h-full"
+            style={{ transform: 'scaleX(-1)' }}
           />
           {/* Overlay: name + timer */}
           <div className="absolute bottom-0 left-0 right-0 px-2 py-1 bg-gradient-to-t from-black/70 to-transparent">
-            <p className="text-[10px] font-semibold truncate">{callerName || "Video Call"}</p>
+            <p className="text-[10px] font-semibold truncate capitalize">{callerName || "Video Call"}</p>
             <span className="text-[10px] opacity-70">
               {joined ? formatTime(callSeconds) : "Connecting…"}
             </span>
@@ -686,7 +686,7 @@ const VideoCalling = ({ callData }) => {
           </button>
 
           <button
-            onClick={(e) => { e.stopPropagation(); setIsMinimized(false); }}
+            onClick={(e) => { e.stopPropagation(); setIsCallMinimized(false); }}
             className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-sm"
           >
             ⤢
@@ -698,7 +698,7 @@ const VideoCalling = ({ callData }) => {
       <div
         className="fixed inset-0 z-[99999] flex flex-col"
         style={{ 
-          visibility: isMinimized ? "hidden" : "visible",
+          visibility: isCallMinimized ? "hidden" : "visible",
           backgroundColor: hasRemoteVideo ? 'transparent' : 'white'
         }}
       >
@@ -718,7 +718,7 @@ const VideoCalling = ({ callData }) => {
           <div className="flex items-center gap-3">
             {/* Back Button */}
             <button
-              onClick={() => setIsMinimized(true)}
+              onClick={() => setIsCallMinimized(true)}
               className="w-10 h-10 rounded-full border-2 flex items-center justify-center hover:opacity-80 transition-opacity"
               style={{ borderColor: '#f75801' }}
             >
@@ -733,17 +733,11 @@ const VideoCalling = ({ callData }) => {
             {/* User Info */}
             <div className="flex flex-col">
               <h2 
-                className="text-sm font-semibold transition-colors duration-300"
+                className="text-sm font-semibold transition-colors duration-300 capitalize truncate max-w-[150px]"
                 style={{ color: hasRemoteVideo ? 'white' : '#111827' }}
               >
                 {callerName}
               </h2>
-              <span 
-                className="text-xs transition-colors duration-300"
-                style={{ color: hasRemoteVideo ? 'rgba(255, 255, 255, 0.8)' : '#6b7280' }}
-              >
-                Exp. 1 year
-              </span>
             </div>
           </div>
 
@@ -894,14 +888,14 @@ const VideoCalling = ({ callData }) => {
             }}
           >
             {/* REMOTE VIDEO */}
-            <div ref={remoteVideoRef} className="absolute inset-0 w-full h-full" />
+            <div ref={remoteVideoRef} className="absolute inset-0 w-full h-full" style={{ transform: 'scaleX(-1)' }} />
 
             {/* SHOW AVATAR WHEN REMOTE USER CAMERA IS OFF */}
             {!hasRemoteVideo && (
               <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-gray-50 to-white">
                 <div className="flex-1 flex flex-col items-center justify-center px-4">
                   {/* AVATAR WITH ACTIVE RIPPLE EFFECT */}
-                  <div className="relative mb-12">
+                  <div className="relative mb-3">
                     {/* Active ripple rings */}
                     <div className={styles.rippleRing}></div>
                     <div className={styles.rippleRing}></div>
@@ -909,7 +903,7 @@ const VideoCalling = ({ callData }) => {
                     <div className={styles.rippleRing}></div>
                     
                     {/* Avatar with green border */}
-                    <div className="relative w-64 h-64 rounded-full overflow-hidden shadow-2xl bg-white z-10" style={{ border: '12px solid #b7d9a5' }}>
+                    <div className="relative w-40 h-40 md:w-64 md:h-64 rounded-full overflow-hidden shadow-2xl bg-white z-10" style={{ border: '8px solid #b7d9a5' }}>
                       <img
                         src="https://cdn-icons-png.flaticon.com/512/149/149071.png"
                         alt="avatar"
@@ -917,6 +911,16 @@ const VideoCalling = ({ callData }) => {
                       />
                     </div>
                   </div>
+
+                  {/* CALLER NAME */}
+                  <p className="text-xl font-semibold text-gray-900 capitalize whitespace-nowrap">
+                    {callerName}
+                  </p>
+
+                  {/* CALL TIMER TEXT */}
+                  <h3 className="text-lg font-medium text-gray-500 mb-2">
+                    {formatTime(callSeconds)}
+                  </h3>
                 </div>
               </div>
             )}

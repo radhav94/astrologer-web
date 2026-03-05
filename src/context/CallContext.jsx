@@ -16,7 +16,15 @@ export const CallProvider = ({ children }) => {
   const [openReview, setOpenReview] = useState(null);
   const [reviewData, setReviewData] = useState(null);
   const [isUpgradeRejectionProtected, setIsUpgradeRejectionProtected] = useState(false);
+  const [isCallMinimized, setIsCallMinimized] = useState(false);
   const upgradeRejectionRef = useRef(false); // Immediate protection using ref
+
+  // Reset minimized state when call ends
+  useEffect(() => {
+    if (!activeCall) {
+      setIsCallMinimized(false);
+    }
+  }, [activeCall]);
   
   // Shared Agora state for smooth call upgrades
   const [sharedAgoraState, setSharedAgoraState] = useState({
@@ -82,7 +90,7 @@ export const CallProvider = ({ children }) => {
         agoraToken: data.agoraToken,
         callerId: data.callerId,
         callType: data.type || "audio",
-        callerName: data?.callerDetail?.firstName,
+        callerName: [data?.callerDetail?.firstName, data?.callerDetail?.lastName].filter(Boolean).join(' '),
         userId: data.userId || data.callerId,
         astrologerId: data.astrologerId || astroId,
         chatRoomId: data.chatRoomId || data.roomId,
@@ -97,7 +105,7 @@ export const CallProvider = ({ children }) => {
         agoraToken: data.agoraToken,
         callerId: data.callerId,
         callType: data.type || "audio",
-        callerName: data?.callerDetail?.firstName,
+        callerName: [data?.callerDetail?.firstName, data?.callerDetail?.lastName].filter(Boolean).join(' '),
         userId: data.userId || data.callerId,
         astrologerId: data.astrologerId || astroId,
         chatRoomId: data.chatRoomId || data.roomId,
@@ -159,7 +167,9 @@ export const CallProvider = ({ children }) => {
         setSharedAgoraState,
         isUpgradeRejectionProtected,
         setIsUpgradeRejectionProtected,
-        upgradeRejectionRef
+        upgradeRejectionRef,
+        isCallMinimized,
+        setIsCallMinimized
       }}
     >
       {children}

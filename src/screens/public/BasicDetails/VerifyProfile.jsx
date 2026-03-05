@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { Upload } from "lucide-react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
 import { useDispatch, useSelector } from "react-redux";
@@ -9,6 +8,10 @@ import { createFileValidation } from "../../../utils/utlis";
 import { useFileUpload } from "../../../hooks/useFileUpload";
 import { useRegisterAstrologerMutation } from "../../../redux/register/registerAstroApi";
 import { Toast } from "../../../components";
+import Button from "../../../components/UI/button/Button";
+import FormStep from "./FormStep";
+import FileUploadInput from "../../../components/UI/fileUploadInput/FileUploadInput";
+import styles from "./BasicForms.module.scss";
 
 const VerifyProfile = () => {
   const navigate = useNavigate();
@@ -39,17 +42,19 @@ const VerifyProfile = () => {
     }),
   });
 
-  // Formik setup
+  // Formik setup with Redux state hydration
   const formik = useFormik({
     initialValues: {
-      profileImgUrl: "",
-      aadharCardImgUrl: "",
-      panCardImgUrl: "",
+      profileImgUrl: registerData?.profileImgUrl || "",
+      aadharCardImgUrl: registerData?.aadharCardImgUrl || "",
+      panCardImgUrl: registerData?.panCardImgUrl || "",
     },
     validationSchema,
     validateOnChange: true,
     validateOnBlur: true,
-    onSubmit: async (values) => {
+    validateOnMount: true, // Validate on mount to check initial state
+    enableReinitialize: true, // Allow form to reinitialize when Redux state changes
+    onSubmit: async () => {
       try {  
         await registerAstrologer(registerData).unwrap();
         
@@ -63,6 +68,11 @@ const VerifyProfile = () => {
     },
   });
 
+  // Re-validate form whenever values change to ensure button state is correct
+  useEffect(() => {
+    formik.validateForm();
+  }, [formik.values.profileImgUrl, formik.values.aadharCardImgUrl, formik.values.panCardImgUrl]);
+
   const handleFileUpload = async (fieldName, acceptTypes = "image/*,.pdf") => {
     try {
       setUploading((prev) => ({ ...prev, [fieldName]: true }));
@@ -71,9 +81,14 @@ const VerifyProfile = () => {
       const fileUrl = await uploadFile(acceptTypes);
 
       if (fileUrl) {
-        // Set the uploaded file URL in Formik and trigger validation
-        await formik.setFieldValue(fieldName, fileUrl, true);
-        formik.setFieldTouched(fieldName, true, true);
+        // Set the uploaded file URL in Formik
+        await formik.setFieldValue(fieldName, fileUrl, false);
+        
+        // Mark field as touched to trigger validation
+        await formik.setFieldTouched(fieldName, true, false);
+        
+        // Manually validate the form to update errors state
+        await formik.validateForm();
 
         // Get current form values with the new file URL
         const updatedValues = {
@@ -88,8 +103,7 @@ const VerifyProfile = () => {
             profileImgUrl: updatedValues.profileImgUrl,
             aadharCardImgUrl: updatedValues.aadharCardImgUrl,
             panCardImgUrl: updatedValues.panCardImgUrl,
-            place: "New Delhi, India",
-            password: "test@12389",
+            
           }));
 
           // Update current step
@@ -117,104 +131,90 @@ const VerifyProfile = () => {
     }
   };
 
-  const UploadBox = ({ label, fieldName }) => (
-    <div className="mb-6">
-      <label className="block text-sm font-medium mb-2 text-left">
-        {label}
-      </label>
-
-      <button
-        type="button"
-        onClick={() => handleFileUpload(fieldName)}
-        disabled={uploading[fieldName]}
-        className={`w-full border rounded-xl px-4 py-3 flex items-center justify-between cursor-pointer
-          ${formik.touched[fieldName] && formik.errors[fieldName] ? "border-red-500" : ""}
-          ${uploading[fieldName] ? "opacity-50 cursor-not-allowed" : ""}
-        `}
-      >
-        <span className="text-sm text-gray-500 truncate">
-          {uploading[fieldName]
-            ? "Uploading..."
-            : formik.values[fieldName]
-            ? "File uploaded ✓"
-            : "Add file (.jpg, .png, .pdf)"}
-        </span>
-
-        <Upload size={18} className="text-gray-600" />
-      </button>
-      {formik.touched[fieldName] && formik.errors[fieldName] && (
-        <p className="text-red-500 text-xs mt-1">{formik.errors[fieldName]}</p>
-      )}
-    </div>
-  );
+  // Check if all required fields are filled and valid
+  const isFormValid = 
+    formik.values.profileImgUrl !== "" &&
+    formik.values.aadharCardImgUrl !== "" &&
+    formik.values.panCardImgUrl !== "" &&
+    Object.keys(formik.errors).length === 0;
 
   return (
-    <div className="min-h-screen bg-white flex justify-center text-left">
-      <div className="w-full max-w-md px-6 pt-10 pb-10 flex flex-col">
+    <div className={styles.formLayoutWrapper}>
+      <div className={styles.formLayoutContainer}>
+        <div className={styles.formLayoutContent}>
+          {/* Progress + Skip */}
+          <div className={styles.progressWithSkip}>
+            <FormStep totalSteps={6} currentStep={6} />
 
-        {/* Progress + Skip */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex gap-2">
-            <span className="w-2 h-2 bg-gray-400 rounded-full" />
-            <span className="w-2 h-2 bg-gray-400 rounded-full" />
-            <span className="w-2 h-2 bg-gray-400 rounded-full" />
-            <span className="w-2 h-2 bg-gray-400 rounded-full" />
-            <span className="w-2 h-2 bg-gray-400 rounded-full" />
-            <span className="w-2 h-2 bg-black rounded-full" />
-            <span className="w-2 h-2 bg-gray-300 rounded-full" />
+            <button 
+              type="button"
+              onClick={handleSkip}
+              disabled={isRegistering}
+              className={styles.skipButton}
+            >
+              Skip for Now
+            </button>
           </div>
 
-          <button 
-            type="button"
-            onClick={handleSkip}
-            disabled={isRegistering}
-            className="text-sm text-gray-600 underline disabled:opacity-50"
-          >
-            Skip for Now
-          </button>
+          {/* Heading */}
+          <h1 className={styles.heading}>
+            Verify Your Profile
+          </h1>
+          <p className={styles.subheading}>
+            Help us ensure authenticity. Verified astrologers
+            gain more visibility and trust from clients.
+          </p>
+
+          {/* Upload Fields */}
+          <FileUploadInput
+            label="Profile Photo"
+            optionalText=""
+            accept="image/*"
+            value={formik.values.profileImgUrl}
+            isUploading={uploading.profileImgUrl}
+            onUpload={() => handleFileUpload("profileImgUrl", "image/*")}
+            uploadText="Tap here to add file"
+            uploadSubtext="(.jpg, .png)"
+          />
+
+          <FileUploadInput
+            label="Aadhar Card"
+            optionalText=""
+            accept="image/*,.pdf"
+            value={formik.values.aadharCardImgUrl}
+            isUploading={uploading.aadharCardImgUrl}
+            onUpload={() => handleFileUpload("aadharCardImgUrl")}
+            uploadText="Tap here to add file"
+            uploadSubtext="(.jpg, .png, .pdf)"
+          />
+
+          <FileUploadInput
+            label="PAN Card"
+            optionalText=""
+            accept="image/*,.pdf"
+            value={formik.values.panCardImgUrl}
+            isUploading={uploading.panCardImgUrl}
+            onUpload={() => handleFileUpload("panCardImgUrl")}
+            uploadText="Tap here to add file"
+            uploadSubtext="(.jpg, .png, .pdf)"
+          />
         </div>
 
-        {/* Heading */}
-        <h1 className="text-3xl font-bold mb-2">
-          Verify Your Profile
-        </h1>
-        <p className="text-gray-500 text-sm mb-8">
-          Help us ensure authenticity. Verified astrologers
-          gain more visibility and trust from clients.
-        </p>
-
-        {/* Upload Fields */}
-        <UploadBox
-          label="Profile Photo"
-          fieldName="profileImgUrl"
-        />
-
-        <UploadBox
-          label="Aadhar Card"
-          fieldName="aadharCardImgUrl"
-        />
-
-        <UploadBox
-          label="PAN Card"
-          fieldName="panCardImgUrl"
-        />
-
-        {/* Next Button */}
-        <button
-          type="submit"
-          onClick={formik.handleSubmit}
-          disabled={!formik.isValid || formik.isSubmitting || isRegistering}
-          className={`
-            w-full py-3 rounded-xl font-medium transition mt-auto
-            ${
-              formik.isValid && !formik.isSubmitting && !isRegistering
-                ? "bg-black text-white hover:bg-gray-900"
-                : "bg-gray-300 text-gray-600 cursor-not-allowed"
-            }
-          `}
-        >
-          {isRegistering ? "Submitting..." : "Submit"}
-        </button>
+        {/* Submit Button */}
+        <div className={styles.formLayoutFooter}>
+          <Button
+            type="submit"
+            onClick={formik.handleSubmit}
+            disabled={!isFormValid || formik.isSubmitting || isRegistering}
+            className={`${styles.formButton} ${
+              !isFormValid || formik.isSubmitting || isRegistering
+                ? styles.formButtonDisabled
+                : ""
+            }`}
+          >
+            {isRegistering ? "Submitting..." : "Submit"}
+          </Button>
+        </div>
       </div>
     </div>
   );

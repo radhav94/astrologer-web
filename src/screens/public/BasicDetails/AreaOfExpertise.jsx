@@ -1,22 +1,18 @@
 import { useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import * as Yup from "yup";
 import { updateRegisterData, setCurrentStep } from "../../../reducer/registerSlice";
 import { createMultiSelectValidation } from "../../../utils/utlis";
-
-const EXPERTISE_AREAS = [
-  "Love & Relationships",
-  "Career & Growth",
-  "Wealth & Finances",
-  "Health & Well-Being",
-  "Self-Understanding",
-  "Psychology",
-];
+import { EXPERTISE_AREAS } from "../../../utils/config";
+import Button from "../../../components/UI/button/Button";
+import FormStep from "./FormStep";
+import styles from "./BasicForms.module.scss";
 
 const AreaOfExpertise = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const registerData = useSelector((state) => state.register.registerData);
 
   // Validation schema using reusable utilities from utils.js
   const validationSchema = Yup.object().shape({
@@ -28,14 +24,15 @@ const AreaOfExpertise = () => {
     }),
   });
 
-  // Formik setup
+  // Formik setup with Redux state hydration
   const formik = useFormik({
     initialValues: {
-      specialties: [],
+      specialties: registerData?.specialties || [],
     },
     validationSchema,
     validateOnChange: true,
     validateOnBlur: true,
+    enableReinitialize: true, // Allow form to reinitialize when Redux state changes
     onSubmit: (values) => {
       // Dispatch to Redux store
       dispatch(updateRegisterData({
@@ -52,95 +49,105 @@ const AreaOfExpertise = () => {
 
   const toggleSelect = (item) => {
     const currentSpecialties = formik.values.specialties;
-    const newSpecialties = currentSpecialties.includes(item)
-      ? currentSpecialties.filter((i) => i !== item)
-      : [...currentSpecialties, item];
+    const newSpecialties = currentSpecialties.includes(item.title)
+      ? currentSpecialties.filter((i) => i !== item.title)
+      : [...currentSpecialties, item.title];
     
     formik.setFieldValue("specialties", newSpecialties);
   };
 
-  return (
-    <div className="min-h-screen bg-white flex justify-center text-left">
-      <div className="w-full max-w-md px-6 pt-10 pb-10 flex flex-col">
+  // Check if all required fields are filled and valid
+  const isFormValid = 
+    formik.values.specialties.length > 0 &&
+    Object.keys(formik.errors).length === 0;
 
-        {/* Progress + Skip */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex gap-2">
-            <span className="w-2 h-2 bg-gray-400 rounded-full" />
-            <span className="w-2 h-2 bg-gray-400 rounded-full" />
-            <span className="w-2 h-2 bg-gray-400 rounded-full" />
-            <span className="w-2 h-2 bg-gray-400 rounded-full" />
-            <span className="w-2 h-2 bg-black rounded-full" />
-            <span className="w-2 h-2 bg-gray-300 rounded-full" />
-            <span className="w-2 h-2 bg-gray-300 rounded-full" />
+  const handleSkip = () => {
+    // Mark current step as completed and move to next step
+    dispatch(setCurrentStep(7));
+    // Navigate to next step
+    navigate("/verifyprofile");
+  };
+
+  return (
+    <div className={styles.formLayoutWrapper}>
+      <div className={styles.formLayoutContainer}>
+        <div className={styles.formLayoutContent}>
+          {/* Progress + Skip */}
+          <div className={styles.progressWithSkip}>
+            <FormStep totalSteps={6} currentStep={6} />
+
+            <button 
+              type="button"
+              onClick={handleSkip} 
+              className={styles.skipButton}
+            >
+              Skip for Now
+            </button>
           </div>
 
-          <button 
-            type="button"
-            onClick={() => navigate("/verifyprofile")} 
-            className="text-sm text-gray-600 underline"
-          >
-            Skip for Now
-          </button>
+          {/* Heading */}
+          <h1 className={styles.heading}>
+            Area of Expertise
+          </h1>
+          <p className={styles.subheading}>
+            Help users find you for the guidance you're best at,
+            choose the life areas you specialize in.
+          </p>
+
+          {/* Cards Grid */}
+          <div className={styles.formGroup}>
+            <div className={styles.expertiseGridFigma}>
+              {EXPERTISE_AREAS.map((item) => {
+                const active = formik.values.specialties.includes(item.title);
+
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => toggleSelect(item)}
+                    className={`${styles.expertiseCardFigma} ${
+                      active ? styles.expertiseCardFigmaActive : ""
+                    }`}
+                    style={{ background: item.bgGradient }}
+                  >
+                    <div className={styles.expertiseCardContent}>
+                      <h3 className={styles.expertiseCardTitle}>{item.title}</h3>
+                      <div 
+                        className={styles.expertiseIconCircle}
+                        style={{ backgroundColor: item.iconBgColor }}
+                      >
+                        <img 
+                          src={item.icon} 
+                          alt={item.title}
+                          className={styles.expertiseIcon}
+                        />
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+            {formik.touched.specialties && formik.errors.specialties && (
+              <p className={styles.errorText}>{formik.errors.specialties}</p>
+            )}
+          </div>
         </div>
-
-        {/* Heading */}
-        <h1 className="text-3xl font-bold mb-2">
-          Area of Expertise
-        </h1>
-        <p className="text-gray-500 text-sm mb-8">
-          Help users find you for the guidance you’re best at,
-          choose the life areas you specialize in.
-        </p>
-
-        {/* Cards Grid */}
-        <div className="grid grid-cols-2 gap-4 mb-2">
-          {EXPERTISE_AREAS.map((item) => {
-            const active = formik.values.specialties.includes(item);
-
-            return (
-              <button
-                key={item}
-                type="button"
-                onClick={() => toggleSelect(item)}
-                className={`
-                  h-28 rounded-2xl p-4 text-left font-semibold text-sm
-                  transition flex items-start
-                  ${
-                    active
-                      ? "bg-black text-white"
-                      : "bg-gray-800 text-white opacity-90"
-                  }
-                `}
-              >
-                {item}
-              </button>
-            );
-          })}
-        </div>
-        {formik.touched.specialties && formik.errors.specialties && (
-          <p className="text-red-500 text-xs mt-1 mb-10">{formik.errors.specialties}</p>
-        )}
-        {!formik.touched.specialties && (
-          <div className="mb-10"></div>
-        )}
 
         {/* Next Button */}
-        <button
-          type="submit"
-          onClick={formik.handleSubmit}
-          disabled={!formik.isValid || formik.isSubmitting}
-          className={`
-            w-full py-3 rounded-xl font-medium transition mt-auto
-            ${
-              formik.isValid && !formik.isSubmitting
-                ? "bg-black text-white hover:bg-gray-900"
-                : "bg-gray-300 text-gray-600 cursor-not-allowed"
-            }
-          `}
-        >
-          Next
-        </button>
+        <div className={styles.formLayoutFooter}>
+          <Button
+            type="submit"
+            onClick={formik.handleSubmit}
+            disabled={!isFormValid || formik.isSubmitting}
+            className={`${styles.formButton} ${
+              !isFormValid || formik.isSubmitting
+                ? styles.formButtonDisabled
+                : ""
+            }`}
+          >
+            Next
+          </Button>
+        </div>
       </div>
     </div>
   );

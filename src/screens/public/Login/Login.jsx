@@ -141,6 +141,7 @@ const Login = () => {
           {/* Get OTP Button */}
           <Button
             onClick={handleGetOtp}
+            variant="primary"
             disabled={!isValidMobile || loading}
             className={`${styles.otpButton} ${isValidMobile ? styles.active : styles.disabled}`}
           >

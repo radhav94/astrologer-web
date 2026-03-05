@@ -9,9 +9,729 @@
     width: 100%;
     padding: 40px 24px;
     background-color: #F7F7F7;
+
+    @media (min-width: 1024px) {
+        max-width: 32rem;
+    }
+}
+
+// Reusable Form Layout Structure
+.formLayoutWrapper {
+    min-height: 100vh;
+    min-height: 100dvh; // Dynamic viewport height for mobile
+    background-color: #ffffff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.formLayoutContainer {
+    width: 100%;
+    max-width: 32rem;
+    height: 100vh;
+    height: 100dvh; // Dynamic viewport height for mobile
+    background-color: #F7F7F7;
+    display: flex;
+    flex-direction: column;
+    padding: 24px;
+    overflow-y: auto;
     
     @media (min-width: 1024px) {
         max-width: 32rem;
     }
+}
 
+.formLayoutContent {
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: 1rem;
+}
+
+.formLayoutFooter {
+    flex-shrink: 0;
+    padding-top: 1.5rem;
+    padding-bottom: env(safe-area-inset-bottom, 1rem); // Safe area for mobile notches
+    background-color: #F7F7F7;
+}
+
+// Progress Indicator
+.progressWrapper {
+    display: flex;
+    align-items: center;
+    margin-bottom: 2rem;
+    gap: 0;
+}
+
+.progressItem {
+    display: flex;
+    align-items: center;
+    transition: opacity 0.2s ease;
+
+    &[role="button"] {
+        &:hover {
+            .progressDotCompleted {
+                transform: scale(1.1);
+                box-shadow: 0 2px 8px rgba(230, 73, 0, 0.3);
+            }
+        }
+
+        &:focus {
+            outline: 2px solid #E64900;
+            outline-offset: 2px;
+            border-radius: 50%;
+        }
+    }
+}
+
+.progressDotActive {
+    width: 1.5rem;
+    height: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 4px solid #E64900;
+    transition: all 0.3s ease;
+}
+
+.progressDotInner {
+    width: 0.75rem;
+    height: 0.75rem;
+    background-color: #FDEFD8;
+    border-radius: 50%;
+}
+
+.progressLine {
+    width: 1rem;
+    height: 2px;
+    background-color: #d1d5db;
+    margin: 0 0.25rem;
+}
+
+.progressDot {
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    background-color: #9ca3af;
+    transition: all 0.3s ease;
+}
+
+.progressDotCompleted {
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    background-color: #E64900;
+    transition: all 0.3s ease;
+    cursor: pointer;
+
+    &:hover {
+        transform: scale(1.1);
+    }
+}
+
+// Headings
+.heading {
+    font-size: 1.875rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    margin-top: 2rem;
+    text-align: left;
+}
+
+.subheading {
+    color: #6b7280;
+    font-size: 0.875rem;
+    margin-bottom: 2.5rem;
+    text-align: left;
+}
+
+// Form Elements
+.formGroup {
+    margin-bottom: 1.5rem;
+}
+
+.label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    text-align: left;
+}
+
+.input {
+    width: 100%;
+    border: 1px solid #d1d5db;
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    outline: none;
+    transition: all 0.2s;
+
+    &:focus {
+        border-color: #000000;
+        box-shadow: 0 0 0 1px #000000;
+    }
+
+    &::placeholder {
+        color: #9ca3af;
+    }
+}
+
+.textarea {
+    width: 100%;
+    border: 1px solid #d1d5db;
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    outline: none;
+    transition: all 0.2s;
+    resize: none;
+
+    &:focus {
+        border-color: #000000;
+        box-shadow: 0 0 0 1px #000000;
+    }
+
+    &::placeholder {
+        color: #9ca3af;
+    }
+}
+
+.inputError {
+    border-color: #ef4444;
+
+    &:focus {
+        border-color: #ef4444;
+        box-shadow: 0 0 0 1px #ef4444;
+    }
+}
+
+.errorText {
+    color: #ef4444;
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+    text-align: left;
+}
+
+// Gender Selection
+.genderGrid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.genderButton {
+    height: 6rem;
+    border-radius: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    border: 1px solid #F5B98E;
+    background-color: #F5EDE4;
+    color: #000000;
+    cursor: pointer;
+
+    &:hover {
+        background-color: #FBE5D2;
+    }
+}
+
+.genderButtonActive {
+    background: linear-gradient(90deg, #F75801 0%, #D43400 100%);
+    color: #ffffff;
+    border-color: #E64900;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+    .genderIcon {
+        color: #ffffff;
+    }
+
+    &:hover {
+        background: linear-gradient(90deg, #F75801 0%, #D43400 100%);
+    }
+}
+
+.genderIcon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #000000;
+}
+
+// Date Input
+.dateInputWrapper {
+    position: relative;
+}
+
+.datePickerWrapper {
+    width: 100%;
+}
+
+.dateInput {
+    width: 100%;
+    height: 3.5rem;
+    border-radius: 1rem;
+    border: 1px solid #d1d5db;
+    background-color: #ffffff;
+    padding: 0 1rem;
+    padding-right: 3rem;
+    font-size: 0.875rem;
+    color: #374151;
+    outline: none;
+    transition: all 0.2s;
+    cursor: pointer;
+    appearance: none;
+
+    &:focus {
+        border-color: #F75801;
+    }
+
+    &::placeholder {
+        color: #9ca3af;
+    }
+
+    &::-webkit-calendar-picker-indicator {
+        opacity: 0;
+        display: none;
+    }
+}
+
+.dateInputError {
+    border-color: #ef4444;
+}
+
+.calendarIcon {
+    pointer-events: none;
+    position: absolute;
+    top: 0;
+    right: 1rem;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    color: #F75801;
+}
+
+// Submit Button
+.formButton {
+    width: 100%;
+    padding: 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    background: linear-gradient(90deg, #F75801 0%, #D43400 100%);
+    color: #ffffff;
+    border: none;
+    cursor: pointer;
+
+    &:hover {
+        opacity: 0.9;
+    }
+}
+
+.formButtonDisabled {
+    color: #ffffff;
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+// Select Dropdown
+.selectWrapper {
+    position: relative;
+}
+
+.select {
+    width: 100%;
+    border: 1px solid #d1d5db;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    padding-right: 3rem;
+    font-size: 0.875rem;
+    outline: none;
+    transition: all 0.2s;
+    appearance: none;
+    background-color: #ffffff;
+    cursor: pointer;
+
+    &:focus {
+        border-color: #000000;
+        box-shadow: 0 0 0 1px #000000;
+    }
+}
+
+.selectIcon {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+    pointer-events: none;
+}
+
+// Chip/Tag Selection
+.chipContainer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.chip {
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    transition: all 0.2s;
+    background-color: #f3f4f6;
+    color: #F75801;
+    border: none;
+    cursor: pointer;
+    border: 1px solid #BBBBBB;
+    background-color: #FEFEFE;
+
+    &:hover {
+        background-color: #e5e7eb;
+    }
+}
+
+.chipActive {
+    background: linear-gradient(90deg, #F75801 0%, #D43400 100%);
+    color: #ffffff;
+    border: none;
+
+    &:hover {
+        background-color: #1f2937;
+    }
+}
+
+// Helper Text
+.helperText {
+    font-size: 0.75rem;
+    color: #9ca3af;
+    margin-top: 0.75rem;
+    text-align: left;
+}
+
+// Add Language Button
+.chipAdd {
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    transition: all 0.2s;
+    background: linear-gradient(90deg, #F75801 0%, #D43400 100%);
+    color: #ffffff;
+    border: none;
+    cursor: pointer;
+
+    &:hover {
+        background-color: #374151;
+    }
+}
+
+// Language Item (for proficiency selection)
+.languageItem {
+    margin-bottom: 1.5rem;
+}
+
+.languageBadgeWrapper {
+    text-align: left;
+    margin-bottom: 0.75rem;
+}
+
+.languageBadge {
+    display: inline-block;
+    color: #030303;
+    font-size: 0.89rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-weight: 600;
+
+}
+
+
+// Progress with Skip Button
+.progressWithSkip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+}
+
+.skipButton {
+    font-size: 0.875rem;
+    background: linear-gradient(90deg, #F75801 0%, #D43400 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 2rem;
+    text-decoration: underline;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+
+    &:hover {
+        opacity: 0.8;
+    }
+}
+
+// Optional Text
+.optionalText {
+    font-style: italic;
+    // color: #9ca3af;
+    font-weight: normal;
+}
+
+// Toggle Switch
+.toggleWrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 2.5rem;
+}
+
+.toggle {
+    width: 3rem;
+    height: 1.75rem;
+    border-radius: 9999px;
+    display: flex;
+    align-items: center;
+    padding: 0 0.25rem;
+    transition: all 0.2s;
+    background-color: #d1d5db;
+    border: none;
+    cursor: pointer;
+}
+
+.toggleActive {
+    background-color: #000000;
+    justify-content: flex-end;
+}
+
+.toggleThumb {
+    width: 1.25rem;
+    height: 1.25rem;
+    background-color: #ffffff;
+    border-radius: 50%;
+}
+
+.toggleLabel {
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+// Expertise Cards Grid
+.expertiseGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.expertiseCard {
+    height: 7rem;
+    border-radius: 1rem;
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.875rem;
+    transition: all 0.2s;
+    display: flex;
+    align-items: flex-start;
+    background-color: #1f2937;
+    color: #ffffff;
+    opacity: 0.9;
+    border: none;
+    cursor: pointer;
+
+    &:hover {
+        opacity: 1;
+    }
+}
+
+.expertiseCardActive {
+    background-color: #000000;
+    opacity: 1;
+}
+
+// Expertise Cards Grid (Figma Design)
+.expertiseGridFigma {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+
+    @media (max-width: 768px) {
+        grid-template-columns: 1fr;
+    }
+}
+
+.expertiseCardFigma {
+    min-height: 140px;
+    border-radius: 1.5rem;
+    padding: 1.2rem;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    &:active {
+        transform: translateY(0);
+    }
+}
+
+.expertiseCardFigmaActive {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    transform: scale(1.02);
+
+    &:hover {
+        transform: scale(1.02) translateY(-2px);
+    }
+}
+
+.expertiseCardContent {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    height: 100%;
+}
+
+.expertiseCardTitle {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1f2937;
+    text-align: left;
+    line-height: 1.4;
+    margin: 0;
+    max-width: 60%;
+}
+
+.expertiseIconCircle {
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.expertiseIcon {
+    width: 2rem;
+    height: 2rem;
+    object-fit: contain;
+    filter: brightness(0) invert(1);
+}
+
+// Verification Pending Page
+.verificationContainer {
+    min-height: 100vh;
+    min-height: 100dvh; // Dynamic viewport height for mobile
+    background-color: #ffffff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.verificationWrapper {
+    width: 100%;
+    max-width: 32rem;
+    height: 100vh;
+    height: 100dvh; // Dynamic viewport height for mobile
+    background-color: #F7F7F7;
+    display: flex;
+    flex-direction: column;
+    padding: 24px;
+    
+    @media (min-width: 1024px) {
+        max-width: 32rem;
+    }
+}
+
+.statusSpacer {
+    height: 1.5rem;
+    flex-shrink: 0;
+}
+
+.verificationContent {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    flex: 1;
+    justify-content: center;
+    padding: 1rem 0;
+}
+
+.verificationIllustration {
+    margin-bottom: 2rem;
+    
+    img {
+        max-width: 100%;
+        height: auto;
+    }
+}
+
+.verificationHeading {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    line-height: 1.4;
+}
+
+.verificationDescription {
+    color: #6b7280;
+    font-size: 0.875rem;
+    line-height: 1.6;
+    max-width: 20rem;
+}
+
+.verificationButtonsWrapper {
+    flex-shrink: 0;
+    padding-top: 1.5rem;
+    padding-bottom: env(safe-area-inset-bottom, 1rem); // Safe area for mobile notches
+}
+
+.verificationButtons {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.verificationButtonOutline {
+    flex: 1;
+    border: 1px solid #000000 !important;
+    padding: 0.75rem 1rem !important;
+    border-radius: 9999px !important;
+    font-weight: 500;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    cursor: pointer;
+    transition: all 0.2s;
+    height: 3rem;
+    min-width: 0;
+
+    &:hover {
+        background-color: #f9fafb !important;
+    }
+}
+
+.verificationButtonPrimary {
+    flex: 1;
+    padding: 0.75rem 1rem !important;
+    border-radius: 9999px !important;
+    font-weight: 500;
+    height: 3rem;
+    min-width: 0;
 }

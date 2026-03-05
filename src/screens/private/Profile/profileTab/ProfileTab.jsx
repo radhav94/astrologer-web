@@ -26,7 +26,7 @@ const ProfileTab = ({ profileData, refetch }) => {
 
   const formattedPhone = formatIndianPhone(phone);
 
-  console.log("profileData",profileData)
+  console.log("profileDataTab::",profileData)
 
   return (
     <div className={styles.profileTabContainer}>
@@ -104,7 +104,7 @@ const ProfileTab = ({ profileData, refetch }) => {
         <div className={styles.tagsContainer}>
           {education.length > 0 ? (
             education.map((edu, index) => (
-              <span key={index} className={styles.tag}>{edu}</span>
+              <span key={index} className={styles.tag}>{edu?.qualification}</span>
             ))
           ) : (
             <span className={styles.tag}>No education details added</span>
@@ -123,7 +123,7 @@ const ProfileTab = ({ profileData, refetch }) => {
         <p className={styles.achievementsText}>
           {achievements || 'No achievements added yet.'}
           {achievements && achievements.length > 100 && (
-            <span className={styles.readMore}> Read More</span>
+            <span className={styles.readMore}>...Read More</span>
           )}
         </p>
 

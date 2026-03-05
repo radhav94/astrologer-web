@@ -8,6 +8,14 @@ export const selectAstrologerProfile = (apiData) => {
 
   console.log(astrologer?.languagePreference)
   
+  // Transform education array to normalize field names
+  const normalizedEducation = (astrologer.education || astrologer.qualifications || []).map(edu => ({
+    qualification: edu.qualification || edu.levelOfEducation || '',
+    universityName: edu.universityName || '',
+    certificateImgUrl: edu.certificateImgUrl || '',
+    display: edu.display || false,
+  }));
+  
   return {
     id: astrologer._id || astrologer.id,
     firstName: astrologer.firstName || '',
@@ -22,7 +30,7 @@ export const selectAstrologerProfile = (apiData) => {
     wallet: astrologer.wallet || astrologer.balance || 0,
     languages: astrologer?.languagePreference || [],
     specializations: astrologer.specializations || astrologer.specialties || [],
-    education: astrologer.education || astrologer.qualifications || [],
+    education: normalizedEducation,
     achievements: astrologer.description || '',
     achievementImages: astrologer.achievementImages || [],
   };

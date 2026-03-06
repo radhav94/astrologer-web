@@ -17,8 +17,8 @@
 .backButton {
   width: 48px;
   height: 48px;
-  background-color: #ffffff;
-  border: 1px solid #E5E5E5;
+  background-color: var(--white-color);
+  border: 1px solid var(--main-primary-start);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -26,11 +26,15 @@
   cursor: pointer;
   transition: all 0.2s ease;
   flex-shrink: 0;
-  
+
   &:hover {
-    background-color: #F9F9F9;
-    border-color: #D1D1D1;
+    background-color: var(--card-2);
+    border-color: var(--primary-300);
   }
+}
+
+.backIcon {
+  color: var(--main-primary-start);
 }
 
 .userInfo {
@@ -73,14 +77,18 @@
 
 // Balance Card
 .balanceCard {
-  background: linear-gradient(135deg, #8B5A2B 0%, #6B4423 50%, #5A3A1F 100%);
+  background: linear-gradient(
+    90deg,
+    var(--main-primary-start) 0%,
+    var(--main-primary-end) 100%
+  );
   border-radius: 24px;
   padding: 32px;
   margin-bottom: 32px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 8px 24px var(--boxShadow);
   position: relative;
   overflow: hidden;
   min-height: 160px;

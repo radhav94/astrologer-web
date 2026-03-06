@@ -56,7 +56,9 @@ const isMountedRef = useRef(false);
     messages,
     chatInput,
     setChatInput,
-    channelName
+    channelName,
+    participantCount,
+    endRoom,
   } = props;
 
 
@@ -64,10 +66,11 @@ const isMountedRef = useRef(false);
   if (ROLE !== "host") return;
 
   try {
+    // End socket live room
+    endRoom?.();
     await stopLiveStream(channelName);
     Toast.success("Live ended successfully");
 
-    // ✅ Navigate AFTER successful API call
     navigate("/astrologer-dashboard", { replace: true });
 
   } catch (e) {
@@ -75,7 +78,7 @@ const isMountedRef = useRef(false);
   } finally {
     setCalling(false);
   }
-}, [ROLE, channelName, setCalling, navigate]);
+}, [ROLE, channelName, setCalling, navigate, endRoom]);
 
 const endLiveSafely = useCallback(async () => {
   if (ROLE !== "host") return;
@@ -84,6 +87,7 @@ const endLiveSafely = useCallback(async () => {
   hasEndedRef.current = true;
 
   try {
+    endRoom?.();
     await stopLiveStream(channelName);
     Toast.success("Live ended");
   } catch (e) {
@@ -91,14 +95,14 @@ const endLiveSafely = useCallback(async () => {
   } finally {
     setCalling(false);
   }
-}, [ROLE, channelName, setCalling]);
+}, [ROLE, channelName, setCalling, endRoom]);
 
 
 
 
 
   const isHost = ROLE === "host";
-  const viewerCount = (remoteUsers?.length || 0) + 1;
+  const viewerCount = participantCount || (remoteUsers?.length || 0) + 1;
 
   const {
     messagesEndRef,

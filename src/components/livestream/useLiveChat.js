@@ -1,121 +1,205 @@
+import { useEffect, useRef, useState, useCallback } from "react";
+import { io } from "socket.io-client";
+import { getUserFromStorage } from "../../utils/authStorage";
+import { getLiveUsers } from "../../services/appServices/getLiveStreamService";
 
-// src/components/LiveStreaming/useLiveChat.js
-import { useEffect, useRef, useState } from "react";
-import AgoraRTM from "agora-rtm-sdk";
+const SOCKET_URL = import.meta.env.VITE_APP_API_BASE_URL;
 
-const APP_ID = "b7bd8229702e4ec3b0938ea15f23a39c";
-const CHANNEL_NAME = "testnewchannellive";
-
-/**
- * NOTE:
- * Replace these with the tokens FROM AGORA CONSOLE
- * based on the exact UID format below
- */
-const HOST_RTM_TOKEN = "0065630460abdc141e3b2f8d9597752bd7dIADWzrD7oASi2gMLqybOgCjqGZOY7q9WkCai4M1xSw4OUZO2XjoAAAAAEABWKbNQJ3pPaQEA6AMnek9p";
-const AUDIENCE_RTM_TOKEN = "0065630460abdc141e3b2f8d9597752bd7dIAChnA1JbYYqFn8fs85PGwvG6DR/D2nuI2a7rof3YMbJQwLXAzAAAAAAEABWKbNQFnpPaQEA6AMVek9p";
-
-export const useLiveChat = (ROLE) => {
-  const rtmClientRef = useRef(null);
-  const rtmChannelRef = useRef(null);
+export const useLiveChat = (agoraChannel) => {
+  const socketRef = useRef(null);
+  const roomIdRef = useRef(null);
 
   const [messages, setMessages] = useState([]);
   const [chatInput, setChatInput] = useState("");
+  const [participantCount, setParticipantCount] = useState(0);
+  const [isConnected, setIsConnected] = useState(false);
+  const [roomId, setRoomId] = useState(null);
 
-  /**
-   * Generate UID based on role
-   * AND must match the UID used when generating the token in Agora Console
-   */
-  const rtmUid = ROLE === "host" ? "host-234" : "test-123";
-
-  // Select correct token for login
-  const selectedRTMToken =
-    ROLE === "host" ? HOST_RTM_TOKEN : AUDIENCE_RTM_TOKEN;
+  const user = getUserFromStorage();
+  const userId = user?.astrologer_id || "";
+  const userName = user?.firstName
+    ? `${user.firstName} ${user.lastName || ""}`.trim()
+    : "Unknown";
 
   useEffect(() => {
-    const initRTM = async () => {
-      try {
-        console.log("RTM → init");
+    console.log("LiveChat → Init", { userId, userName, agoraChannel, SOCKET_URL });
 
-        const client = AgoraRTM.createInstance(APP_ID);
-        rtmClientRef.current = client;
-
-        // LOGIN WITH TOKEN
-        await client.login({
-          uid: rtmUid,
-          token: selectedRTMToken,
-        });
-        console.log("RTM → Login Success:", rtmUid);
-
-        const rtmChannel = client.createChannel(CHANNEL_NAME);
-        rtmChannelRef.current = rtmChannel;
-
-        await rtmChannel.join();
-        console.log("RTM → Channel Join Success:", CHANNEL_NAME);
-
-        // Receive message
-        rtmChannel.on("ChannelMessage", (message, senderId) => {
-          console.log("RTM → New Msg:", message.text, "sender:", senderId);
-
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: Date.now(),
-              sender: senderId,
-              text: message.text,
-              role: senderId.startsWith("host") ? "host" : "audience",
-              isSelf: senderId === rtmUid,
-            },
-          ]);
-        });
-      } catch (err) {
-        console.error("RTM → ERROR:", err);
-      }
-    };
-
-    initRTM();
-
-    return () => {
-      if (rtmChannelRef.current) rtmChannelRef.current.leave();
-      if (rtmClientRef.current) rtmClientRef.current.logout();
-      console.log("RTM → Cleanup Done");
-    };
-  }, [rtmUid, selectedRTMToken]);
-
-  // SEND MESSAGE
-  const sendChatMessage = async () => {
-    const msg = chatInput.trim();
-    if (!msg) return;
-
-    if (!rtmChannelRef.current) {
-      console.warn("RTM → Channel not ready yet");
+    if (!userId || !agoraChannel) {
+      console.warn("LiveChat → Missing userId or agoraChannel, skipping");
       return;
     }
 
-    try {
-      await rtmChannelRef.current.sendMessage({ text: msg });
-      console.log("RTM → Message Sent:", msg);
+    let socket = null;
 
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now(),
-          sender: rtmUid,
-          text: msg,
-          role: ROLE,
-          isSelf: true,
+    const initChat = async () => {
+      // Fetch chatRoomId by matching the agora channel
+      let chatRoomId = null;
+      try {
+        const res = await getLiveUsers();
+        const liveUsers = res.data?.data || [];
+        const session = liveUsers.find(
+          (u) => u.channel === agoraChannel || u.agoraChannel === agoraChannel
+        );
+        chatRoomId = session?.chatRoomId;
+        console.log("LiveChat → Fetched chatRoomId:", chatRoomId);
+      } catch (err) {
+        console.error("LiveChat → Failed to fetch chatRoomId:", err);
+      }
+
+      if (!chatRoomId) {
+        console.warn("LiveChat → No chatRoomId found for channel:", agoraChannel);
+        return;
+      }
+
+      setRoomId(chatRoomId);
+      roomIdRef.current = chatRoomId;
+
+      socket = io(SOCKET_URL, {
+        transports: ["websocket"],
+        query: {
+          role: "ASTROLOGER",
+          astrologerId: userId,
         },
-      ]);
+        auth: {
+          role: "ASTROLOGER",
+          astrologerId: userId,
+        },
+      });
+      socketRef.current = socket;
 
-      setChatInput("");
-    } catch (err) {
-      console.error("RTM → Send Fail:", err);
-    }
-  };
+      socket.on("connect", () => {
+        console.log("LiveChat → Connected, socketId:", socket.id);
+        setIsConnected(true);
+
+        // Host creates the chat room using chatRoomId from API
+        console.log("LiveChat → Creating room:", chatRoomId);
+        socket.emit("live:create_room", {
+          roomId: chatRoomId,
+          hostId: userId,
+          hostName: userName,
+          hostType: "astrologer",
+        });
+      });
+
+      socket.on("disconnect", () => {
+        console.log("LiveChat → Disconnected");
+        setIsConnected(false);
+      });
+
+      socket.on("connect_error", (err) => {
+        console.error("LiveChat → Connection error:", err.message);
+      });
+
+      // Room created confirmation — host is automatically in the room
+      socket.on("live:room_created", (data) => {
+        console.log("LiveChat → Room created:", data);
+      });
+
+      socket.on("live:joined", (data) => {
+        console.log("LiveChat → Joined:", data);
+        setParticipantCount(data.participantCount || 0);
+      });
+
+      socket.on("live:recent_messages", (data) => {
+        if (data?.messages?.length) {
+          setMessages(
+            data.messages.map((msg) => ({
+              id: msg.id,
+              sender: msg.userId,
+              senderName: msg.userName,
+              text: msg.message,
+              role: msg.userType === "host" ? "host" : "audience",
+              isSelf: msg.userId === userId,
+              timestamp: msg.timestamp,
+            }))
+          );
+        }
+      });
+
+      socket.on("live:message", (msg) => {
+        console.log("LiveChat → Received message:", JSON.stringify(msg));
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: msg.id || `msg_${Date.now()}`,
+            sender: msg.userId,
+            senderName: msg.userName,
+            text: msg.message,
+            role: msg.userType === "host" ? "host" : "audience",
+            isSelf: msg.userId === userId,
+            timestamp: msg.timestamp,
+          },
+        ]);
+      });
+
+      socket.on("live:user_joined", (data) => {
+        setParticipantCount(data.participantCount || 0);
+      });
+
+      socket.on("live:user_left", (data) => {
+        setParticipantCount(data.participantCount || 0);
+      });
+
+      socket.on("live:error", (data) => {
+        console.error("LiveChat → Error:", data.message);
+      });
+
+      socket.on("live:room_ended", (data) => {
+        console.log("LiveChat → Room ended:", data);
+        setIsConnected(false);
+      });
+
+      socket.on("live:session_ended", (data) => {
+        console.log("LiveChat → Session ended:", data);
+      });
+    };
+
+    initChat();
+
+    return () => {
+      if (roomIdRef.current && socketRef.current) {
+        socketRef.current.emit("live:leave_room", {
+          roomId: roomIdRef.current,
+          userId,
+          userName,
+        });
+      }
+      socketRef.current?.disconnect();
+      console.log("LiveChat → Cleanup done");
+    };
+  }, [userId, userName, agoraChannel]);
+
+  const sendChatMessage = useCallback(() => {
+    const msg = chatInput.trim();
+    if (!msg || !socketRef.current?.connected || !roomIdRef.current) return;
+
+    socketRef.current.emit("live:send_message", {
+      roomId: roomIdRef.current,
+      userId,
+      userName,
+      message: msg,
+      userType: "host",
+    });
+
+    setChatInput("");
+  }, [chatInput, userId, userName]);
+
+  const endRoom = useCallback(() => {
+    if (!socketRef.current?.connected || !roomIdRef.current) return;
+    socketRef.current.emit("live:end_room", {
+      roomId: roomIdRef.current,
+      hostId: userId,
+    });
+  }, [userId]);
 
   return {
     messages,
     chatInput,
     setChatInput,
     sendChatMessage,
+    participantCount,
+    isConnected,
+    endRoom,
+    roomId,
   };
 };

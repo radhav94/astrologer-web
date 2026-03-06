@@ -39,6 +39,7 @@ export const useLiveStreaming = (client, ROLE) => {
       const fetchAgoraToken = async () => {
         try {
           const res = await getAgoraToken();
+          console.log("🔹 Agora token response:", JSON.stringify(res.data?.data));
           setToken(res.data?.data?.token);
           setChannelName(res.data?.data?.channel);
           setUid(res.data?.data?.uid);

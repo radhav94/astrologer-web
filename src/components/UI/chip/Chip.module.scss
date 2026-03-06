@@ -1,0 +1,110 @@
+.chip {
+  align-items: center;
+  padding: 10px 20px;
+  border-radius: 50px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  background-color: var(--card-2);
+  color: var(--dark-color);
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid var(--primary-300);
+  white-space: nowrap;
+
+  &:hover:not(.disabled) {
+    background-color: var(--card-2);
+  }
+
+  &.selected {
+    background: linear-gradient(90deg, var(--main-primary-start) 0%, var(--main-primary-end) 100%);;
+    color: var(--white-color);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+
+    &:hover:not(.disabled) {
+      background-color: var(--card-2);
+    }
+  }
+
+  &.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+// Variants
+.primary {
+  background: linear-gradient(90deg, var(--main-primary-start) 0%, var(--main-primary-end) 100%);
+  color: var(--white-color);
+
+  &:hover:not(.disabled) {
+    opacity: 0.9;
+  }
+
+  &.selected {
+    box-shadow: 0 4px 12px rgba(247, 88, 1, 0.3);
+  }
+}
+
+.secondary {
+  background-color: var(--card-2);
+  color: var(--title);
+  border: 1px solid var(--border-color-1);
+
+  &:hover:not(.disabled) {
+    background-color: #FFE8D1;
+  }
+
+  &.selected {
+    background: linear-gradient(90deg, var(--main-primary-start) 0%, var(--main-primary-end) 100%);
+    color: var(--white-color);
+    border-color: transparent;
+  }
+}
+
+.outline {
+  background-color: transparent;
+  border: 1.5px solid #E5E5E5;
+  color: var(--title);
+
+  &:hover:not(.disabled) {
+    border-color: var(--title);
+    background-color: #F9F9F9;
+  }
+
+  &.selected {
+    background-color: var(--title);
+    border-color: var(--title);
+    color: var(--white-color);
+  }
+}
+
+// Sizes
+.small {
+  padding: 6px 12px;
+  font-size: 12px;
+  gap: 6px;
+}
+
+.medium {
+  padding: 8px 16px;
+  font-size: 14px;
+  gap: 8px;
+}
+
+.large {
+  padding: 10px 20px;
+  font-size: 16px;
+  gap: 10px;
+}
+
+// Elements
+.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.label {
+  line-height: 1;
+}

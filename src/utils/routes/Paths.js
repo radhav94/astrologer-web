@@ -22,6 +22,7 @@ import InteractiveLiveStreaming from "../../components/livestream/InteractiveLiv
 import ChatWindow from "../../screens/private/chat/ChatWindow";
 import ChatPage from "../../screens/private/chat/ChatPage";
 import AgoraVoiceCalling from "../../screens/private/call/VoiceCall";
+import EducationDetails from "../../screens/private/Profile/profileForms/EducationDetails";
 
 export const PATH = {
   publicRoutes: {
@@ -106,7 +107,7 @@ export const PATH = {
     },
     EDUCATIONAL_DETAILS: {
       path: "/profile/educational-details",
-      element: ProfessionalProfileDtls,
+      element: EducationDetails,
     },
     ACHIEVEMENTS_PROFILE: {
       path: "/profile/achievements",

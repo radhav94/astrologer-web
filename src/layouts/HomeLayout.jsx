@@ -7,6 +7,7 @@ import {
 } from "../../src/services/appServices/authservice";
 import AudioVideoContainer from "../screens/private/call/AudioVideoContainer";
 import IncomingChatModal from "../components/IncomingChatModal";
+import StickyChatFooter from "../components/StickyChatFooter";
 import { voiceSocket } from "../services/appServices/voiceSocketServices";
 import { useChat as useChatContext } from "../context/chatContext";
 import { PATH } from "../utils/routes/Paths";
@@ -168,10 +169,11 @@ const HomeLayout = () => {
               isUserSide: false,
               chaterName: customerName,
               chaterId : userId,
+              userID: user?.user_ID,
               remainingTime: Number(data?.remainingTime)
             });
-        if(data?.remainingTime)
-        setChatSeconds(Number(data?.remainingTime)*60)
+        // Start timer from 0
+        setChatSeconds(0)
         
             navigate(
                     PATH.privateRoutes.CHAT_WINDOW.path.replace(
@@ -320,6 +322,7 @@ const HomeLayout = () => {
         <div className="h-1"></div>
         <AudioVideoContainer />
         <IncomingChatModal />
+        <StickyChatFooter />
         <StickyReviewFooter/>
       </main>
     </div>

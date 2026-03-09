@@ -27,7 +27,7 @@ export const ChatProvider = ({ children }) => {
   const startTimer = () => {
     if (timerRef.current) return;
     timerRef.current = setInterval(() => {
-      setChatSeconds((s) => s - 1);
+      setChatSeconds((s) => s + 1);
     }, 1000);
   };
 
@@ -111,15 +111,15 @@ useEffect(() => {
     setWaitingList(data?.list || []);
   };
 
-  const handleActivity = (data) => {
-    if(data?.remainingTime){
-      resetTimer(); // Reset the timer
-      setChatSeconds(data?.remainingTime*60); // Use data.remainingTime if provided
-      startTimer(); // Start the timer again
-    }
-  }
+  // const handleActivity = (data) => {
+  //   if(data?.remainingTime){
+  //     resetTimer(); // Reset the timer
+  //     setChatSeconds(data?.remainingTime*60); // Use data.remainingTime if provided
+  //     startTimer(); // Start the timer again
+  //   }
+  // }
 
-  voiceSocket.on("activity", handleActivity);
+  // voiceSocket.on("activity", handleActivity);
   voiceSocket.on("incoming", handleIncomingChat);
   voiceSocket.on("chat:canceled", handleChatCanceled);
   voiceSocket.on("waiting_list", handleWaitingList);
@@ -130,7 +130,7 @@ useEffect(() => {
     voiceSocket.off("disconnect", onDisconnect);
     voiceSocket.off("connect_error", onConnectError);
 
-    voiceSocket.off("activity", handleActivity);
+    // voiceSocket.off("activity", handleActivity);
     voiceSocket.off("incoming", handleIncomingChat);
     voiceSocket.off("chat:canceled", handleChatCanceled);
     voiceSocket.off("waiting_list", handleWaitingList);

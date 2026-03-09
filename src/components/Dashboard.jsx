@@ -1,10 +1,12 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { useGetAstrologerByIdQuery, useGetMonthlyOverviewQuery } from "../redux/astrologer/astrologerApi";
 import * as AuthServices from "../../src/services/appServices/authservice";
 import { useCall } from "../context/CallContext";
 import { useChat } from "../context/chatContext";
 import { SECTION_TYPES } from "../constants/sectionTypes";
 import { useHomepageSections } from "../hooks/useHomepageSections";
+import { PATH } from "../utils/routes/Paths";
 import TipsCarousel from "../screens/private/Home/tipsAndGrowth/TipsCarousel";
 import PrimaryLoader from "./UI/PrimaryLoader";
 
@@ -23,6 +25,7 @@ import {
  * Sections are dynamically shown/hidden and ordered via homepage API
  */
 const Dashboard = () => {
+  const navigate = useNavigate();
   const userData = JSON.parse(
     localStorage.getItem("shubhtalk_astrologer_details")
   );
@@ -50,9 +53,9 @@ const Dashboard = () => {
   
   // Format session duration
   const formatDuration = useCallback((seconds) => {
-    if (!seconds || seconds <= 0) return "00:00";
-    const mins = Math.floor(Math.abs(seconds) / 60);
-    const secs = Math.abs(seconds) % 60;
+    if (!seconds || seconds < 0) return "00:00";
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
     return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
   }, []);
   
@@ -78,7 +81,7 @@ const Dashboard = () => {
     if (activeChat) {
       const customerName = activeChat.chaterName || "Customer";
       const sessionType = "Chat";
-      const userId = activeChat.userID || activeChat.chaterrId || "";
+      const userId = activeChat.userID || activeChat.chaterId || "";
       return { customerName, sessionType, userId, type: "chat" };
     }
     return { customerName: "No Active Session", sessionType: "", userId: "", type: null };
@@ -88,9 +91,41 @@ const Dashboard = () => {
 
   // Handle click on Current Status card
   const handleCurrentStatusClick = useCallback(() => {
-    if (!isActiveSession) return;
-    return;
-  }, [isActiveSession]);
+    
+    if (!isActiveSession) {
+      console.log("⚠️ No active session");
+      return;
+    }
+    
+    // If there's an active chat, navigate to chat window with proper state
+    if (activeChat) {
+      // chaterId is the MongoDB _id, userID is the numeric user_ID
+      const chatId = activeChat.chaterId || activeChat.userId;
+      const userID = activeChat.userID;
+      
+      
+      if (chatId) {
+        navigate(
+          PATH.privateRoutes.CHAT_WINDOW.path.replace(":chatId", chatId),
+          {
+            state: {
+              userId: chatId,
+              astrologerId: astrologerId,
+              fullName: activeChat.chaterName || "Customer",
+              roomId: activeChat.roomId,
+              isUserSide: false,
+              kundliId: null,
+              userID: userID
+            },
+          }
+        );
+      } else {
+        console.log("❌ No chatId found in activeChat");
+      }
+    } else {
+      console.log("ℹ️ Active call detected, not navigating (call UI already visible)");
+    }
+  }, [isActiveSession, activeChat, navigate, astrologerId]);
 
   // Monthly overview state
   const currentDate = new Date();

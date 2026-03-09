@@ -377,7 +377,6 @@ const ChatWindow = () => {
     astroReply,
     sendTyping,
     isMessageDisabled,
-    formattedTime,
     chatSeconds,
     remainingTime,
     handleChatEndedFromServer
@@ -535,7 +534,7 @@ const ChatWindow = () => {
   };
 
   const handleChatEnd = () => {
-    if (remainingTime * 60 - chatSeconds < MIN_CHAT_SECONDS) {
+    if (chatSeconds < MIN_CHAT_SECONDS) {
       Toast.error("Chat cannot be ended before 1 minute");
       return false;
     }
@@ -603,25 +602,25 @@ const ChatWindow = () => {
     }
   }, [activeCall, callReviewOpen, navigate]);
 
-  /* --------- Local Timer --------- */
-  const [localTimer, setLocalTimer] = useState(0);
+  /* --------- Timer Logic --------- */
+  // For calls: use local timer synced with callStartTime
+  const [localCallTimer, setLocalCallTimer] = useState(0);
   useEffect(() => {
-    let interval;
     if (callStartTime) {
-      // Sync with active call timer
-      interval = setInterval(() => {
-        setLocalTimer(Math.floor((Date.now() - callStartTime) / 1000));
+      const interval = setInterval(() => {
+        setLocalCallTimer(Math.floor((Date.now() - callStartTime) / 1000));
       }, 1000);
-    } else if (isChatActive) {
-      interval = setInterval(() => setLocalTimer((t) => t + 1), 1000);
+      return () => clearInterval(interval);
     } else {
-      setLocalTimer(0);
+      setLocalCallTimer(0);
     }
-    return () => clearInterval(interval);
-  }, [isChatActive, callStartTime]);
+  }, [callStartTime]);
 
-  const formatLocalTimer = (sec) =>
+  const formatTimer = (sec) =>
     `${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
+
+  // Use localCallTimer for active calls, chatSeconds for active chats
+  const displayTimer = activeCall ? localCallTimer : chatSeconds;
 
   /* --------- Initiate Call from Chat --------- */
   const handleInitiateCall = (callType) => {
@@ -717,7 +716,7 @@ const ChatWindow = () => {
             {(isChatActive || activeCall) && (
               <>
                 <span className="text-sm font-medium text-gray-700 ml-2">
-                  <span className="text-red-500 font-semibold">{formatLocalTimer(localTimer)}</span>
+                  <span className="text-red-500 font-semibold">{formatTimer(displayTimer)}</span>
                 </span>
 
                 {kundliId && (
@@ -737,7 +736,7 @@ const ChatWindow = () => {
           {/* Mobile View - Timer and View Kundli button */}
           {(isChatActive || activeCall) && (
             <div className="md:hidden flex items-center gap-3">
-              <span className="text-sm font-semibold text-red-500">{formatLocalTimer(localTimer)}</span>
+              <span className="text-sm font-semibold text-red-500">{formatTimer(displayTimer)}</span>
               
               {kundliId && (
                 <button

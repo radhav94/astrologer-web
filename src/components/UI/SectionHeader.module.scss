@@ -10,7 +10,7 @@
   margin: 0;
   font-weight: 600;
   font-size: clamp(16px, 2vw, 24px);
-  color: #2D2D2D;
+  color: var(--title);
   text-align: center;
   white-space: nowrap;
 }

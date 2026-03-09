@@ -7,7 +7,7 @@ import SectionHeader from "../../UI/SectionHeader";
 const MilestonesSection = () => {
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-center">
+      <div className="flex">
         <SectionHeader title="MILESTONES" />
       </div>
 

@@ -97,6 +97,15 @@ export const AppImages = {
   MobileViewAccount
 };
 
+
+// default Image
+
+import DefaultAstrologer from "../assets/images/astrologer-1.jpg";
+
+export const AppDefaultImg = {
+  DefaultAstrologer,
+}
+
 //svgs
 
 import Aries from "../assets/svg/aries.svg";

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Icons } from "./Icons";
+import { Icons } from "../../../components/Icons";
 import { Link } from "react-router";
-import { useGetRecentAstrologerActivitiesQuery } from "../redux/recentActivities/recentActivities";
+import { useGetRecentAstrologerActivitiesQuery } from "../../../redux/recentActivities/recentActivities";
 
 const LIMIT = 5;
 

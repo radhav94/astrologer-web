@@ -18,7 +18,7 @@ const TodaysUpdatesSection = ({
 }) => {
   return (
     <div>
-      <div className="flex items-center justify-center mb-6">
+      <div className="flex mb-6">
         <SectionHeader title="TODAY'S UPDATE" />
       </div>
 

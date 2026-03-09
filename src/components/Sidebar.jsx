@@ -1,6 +1,7 @@
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Icons } from "./Icons";
 import { useCall } from "../context/CallContext";
+import { Toast } from "../components";
 
 const Sidebar = ({ isOpen, onClose }) => {
   const location = useLocation();
@@ -9,13 +10,15 @@ const Sidebar = ({ isOpen, onClose }) => {
   const { setAstroId } = useCall(); // 🔥 VERY IMPORTANT
 
   const handleLogout = () => {
-    localStorage.removeItem("shubhtalk_role");
-    localStorage.removeItem("shubhtalk_astro_id");
-    localStorage.removeItem("shubhtalk_astro_token");
-    localStorage.removeItem("shubhtalk_astrologer_details");
-    localStorage.removeItem("accessToken");
+    // localStorage.removeItem("shubhtalk_role");
+    // localStorage.removeItem("shubhtalk_astro_id");
+    // localStorage.removeItem("shubhtalk_astro_token");
+    // localStorage.removeItem("shubhtalk_astrologer_details");
+    // localStorage.removeItem("accessToken");
+    localStorage.clear();
     sessionStorage.removeItem("otpSession");
     // navigate("/");
+    Toast.success("You have been logged out successfully.");
 
     setAstroId(null);
 

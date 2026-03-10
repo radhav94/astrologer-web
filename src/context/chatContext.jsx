@@ -22,10 +22,12 @@ export const ChatProvider = ({ children }) => {
   // ✅ GLOBAL incoming call
   const [incomingChat, setIncomingChat] = useState(null);
   const [chatSeconds, setChatSeconds] = useState(0);
+  const [chatStartTime, setChatStartTime] = useState(null);
   const timerRef = useRef(null);
 
   const startTimer = () => {
     if (timerRef.current) return;
+    if (!chatStartTime) setChatStartTime(Date.now());
     timerRef.current = setInterval(() => {
       setChatSeconds((s) => s - 1);
     }, 1000);
@@ -39,6 +41,7 @@ export const ChatProvider = ({ children }) => {
   const resetTimer = () => {
     stopTimer();
     setChatSeconds(0);
+    setChatStartTime(null);
   };
 
 
@@ -95,7 +98,7 @@ useEffect(() => {
       roomId: data.roomId,
       chaterrId: data.user?._id,
       chaterType: data.type || "chat",
-      chaterName:data?.user?.firstName,
+      chaterName: `${data?.user?.firstName} ${data?.user?.lastName}`,
       userID: data?.user?.user_ID
     });
   };
@@ -151,7 +154,8 @@ useEffect(() => {
         stopTimer,
         resetTimer,
         chatSeconds,
-        setChatSeconds
+        setChatSeconds,
+        chatStartTime
       }}
     >
       {children}

@@ -5,7 +5,7 @@ import * as AuthServices from "../../../services/appServices/authservice";
 import { saveUserToStorage } from "../../../utils/authStorage";
 import { Toast } from "../../../components";
 import { useCall } from "../../../context/CallContext";
-import { updateRegisterData } from "../../../reducer/registerSlice";
+import { setAstrologerId, updateRegisterData } from "../../../reducer/registerSlice";
 import { useDispatch } from "react-redux";
 import BackButton from "../../../components/UI/backButton/BackButton";
 import Button from "../../../components/UI/button/Button";
@@ -93,6 +93,9 @@ const VerifyOtp = () => {
           phoneNumber: userData?.phoneNumber,
         }),
       );
+      dispatch(
+        setAstrologerId(userData?._id)
+      )
 
       saveUserToStorage(userData);
       localStorage.setItem("accessToken", accessToken);

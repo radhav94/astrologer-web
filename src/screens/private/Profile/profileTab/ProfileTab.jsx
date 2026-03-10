@@ -26,7 +26,7 @@ const ProfileTab = ({ profileData, refetch }) => {
 
   const formattedPhone = formatIndianPhone(phone);
 
-  console.log("profileDataTab::",profileData)
+  console.log("profileDataTab::",achievements)
 
   return (
     <div className={styles.profileTabContainer}>
@@ -67,7 +67,7 @@ const ProfileTab = ({ profileData, refetch }) => {
           {languages.length > 0 ? (
             languages.map((lang, index) => (
               <span key={index} className={styles.tag}>
-                {lang}
+                {lang?.languageName}
               </span>
             ))
           ) : (
@@ -129,26 +129,30 @@ const ProfileTab = ({ profileData, refetch }) => {
 
         <span className={styles.sectionTitle}>Achievements</span>
 
-        <p className={styles.achievementsText}>
-          {achievements || "No achievements added yet."}
-          {achievements && achievements.length > 100 && (
-            <span className={styles.readMore}>...Read More</span>
-          )}
-        </p>
+        {achievements.length > 0 ? (
+          achievements.map((achievement, index) => (
+            <div key={index}>
+              <p className={styles.achievementsText}>
+                {achievement?.achievementName || "No achievements added yet."}
 
-        {achievementImages.length > 0 && (
-          <div className={styles.imagesGrid}>
-            {achievementImages.slice(0, 4).map((img, index) => (
-              <div key={index} className={styles.imageBox}>
-                <img src={img} alt={`achievement ${index + 1}`} />
-                {index === 3 && achievementImages.length > 4 && (
-                  <div className={styles.moreImagesOverlay}>
-                    +{achievementImages.length - 4}
-                  </div>
-                )}
+                {achievement?.achievementName &&
+                  achievement.achievementName.length > 100 && (
+                    <span className={styles.readMore}>...Read More</span>
+                  )}
+              </p>
+
+              <div className={styles.imagesGrid}>
+                <div className={styles.imageBox}>
+                  <img
+                    src={achievement?.achievementImgUrl}
+                    alt={`achievement ${index + 1}`}
+                  />
+                </div>
               </div>
-            ))}
-          </div>
+            </div>
+          ))
+        ) : (
+          <p className={styles.achievementsText}>No achievements added yet.</p>
         )}
       </div>
     </div>

@@ -10,9 +10,17 @@ import Button from "../../../../components/UI/button/Button";
 import SectionHeader from "../../../../components/UI/sectionHeader/SectionHeader";
 import Chip from "../../../../components/UI/chip/Chip";
 import { createLanguagePreferencesValidation } from "../../../../utils/utlis";
+import { useSetAstroEditProfileMutation } from "../../../../redux/profileApi/profileApi";
+import toast from "../../../../components/toast";
+import { useSelector } from "react-redux";
 
 const Languages = () => {
   const navigate = useNavigate();
+  const [setAstroEditProfile, { isLoading: isUpdating }] = useSetAstroEditProfileMutation();
+  const astrologerIdFromRedux = useSelector((state) => state.register.astrologerId);
+  
+  const astrologerId = astrologerIdFromRedux;
+  
   const [myLanguages] = useState([
     { id: "1", name: "Hindi", level: "Beginner", symbol: AppImages.Letter1 },
     { id: "2", name: "English", level: "Beginner", symbol: AppImages.Letter1 },
@@ -47,10 +55,22 @@ const Languages = () => {
     validationSchema,
     validateOnChange: true,
     validateOnBlur: true,
-    onSubmit: (values) => {
-      // Save logic here
-      console.log("Form values:", values);
+    onSubmit: async (values) => {
+      try {
+
+      await setAstroEditProfile({
+        id: astrologerId,
+        languagePreferences: values.languagePreferences,
+      }).unwrap();
+
+      toast.success("Languages updated successfully");
+
       navigate("/profile");
+    } catch (error) {
+        // Handle error
+        console.error("Failed to update languages:", error);
+        toast.error(error?.data?.message || "Failed to update languages. Please try again.");
+      }
     },
   });
 
@@ -113,6 +133,8 @@ const Languages = () => {
   const isFormValid =
     formik.values.languagePreferences.length > 0 &&
     Object.keys(formik.errors).length === 0;
+
+  const isButtonDisabled = !isFormValid || formik.isSubmitting || isUpdating;
 
   return (
     <div className={styles.basicContainer}>
@@ -211,9 +233,9 @@ const Languages = () => {
         type="submit"
         onClick={formik.handleSubmit}
         className={styles.saveButton}
-        disabled={!isFormValid || formik.isSubmitting}
+        disabled={isButtonDisabled}
       >
-        Save <Icons.ChevronRight size={20} />
+        {isUpdating ? "Saving..." : "Save"} <Icons.ChevronRight size={20} />
       </Button>
     </div>
   );

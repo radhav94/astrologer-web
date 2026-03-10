@@ -6,7 +6,7 @@ export const selectAstrologerProfile = (apiData) => {
   
   const astrologer = apiData.data;
 
-  console.log(astrologer?.languagePreference)
+  console.log("Seprate Date:",apiData,astrologer)
   
   // Transform education array to normalize field names
   const normalizedEducation = (astrologer.education || astrologer.qualifications || []).map(edu => ({
@@ -28,10 +28,10 @@ export const selectAstrologerProfile = (apiData) => {
     profileImage: astrologer.profilePicture || astrologer.avatar || astrologer.imageUrl || '',
     experience: astrologer.experience || astrologer.experienceYears || 0,
     wallet: astrologer.wallet || astrologer.balance || 0,
-    languages: astrologer?.languagePreference || [],
+    languages: astrologer?.languagePreferences || [],
     specializations: astrologer.specializations || astrologer.specialties || [],
     education: normalizedEducation,
-    achievements: astrologer.description || '',
+    achievements: astrologer.achievements || [],
     achievementImages: astrologer.achievementImages || [],
   };
 };
@@ -53,7 +53,7 @@ export const selectProfileTabData = (apiData) => {
   const profile = selectAstrologerProfile(apiData);
   if (!profile) return null;
 
-  console.log("profile:",profile)
+  // console.log("profile:",profile,apiData)
   
   return {
     name: profile.name,

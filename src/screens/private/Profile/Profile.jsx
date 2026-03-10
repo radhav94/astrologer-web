@@ -8,7 +8,7 @@ import Support from "./support/Support.jsx";
 import BackButton from "../../../components/UI/backButton/BackButton.jsx";
 import { AppIcons, AppImages } from "../../../utils/appImages.js";
 import styles from "./Profile.module.scss";
-import { useGetAstrologerByIdQuery } from "../../../redux/astrologer/astrologerApi.js";
+import { useGetAstrologerByIdQuery } from "../../../redux/profileApi/profileApi.js";
 import { selectBasicInfo, selectProfileTabData } from "../../../utils/astrologerSelectors.js";
 
 const Profile = ({ onBack }) => {
@@ -31,7 +31,7 @@ const Profile = ({ onBack }) => {
   const experience = basicInfo?.experience || 0;
   const wallet = basicInfo?.wallet || 0;
 
-  console.log("first",basicInfo,profileTabData)
+  // console.log("first",profileTabData)
 
   const tabs = [
     {

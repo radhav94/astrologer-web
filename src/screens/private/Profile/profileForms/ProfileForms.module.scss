@@ -58,6 +58,21 @@
   }
 }
 
+.achievementFileUpload{
+    width: 100%;
+    min-height: 200px;
+    border: 2px solid #e5e7eb;
+    border-radius: 1rem;
+    background-color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    padding: 2rem;
+
+}
+
 .formGroup {
   margin-bottom: 24px;
 }

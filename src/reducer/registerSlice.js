@@ -5,6 +5,7 @@ const registerSlice = createSlice({
   initialState: {
     registerData: null,
     currentStep: 1,
+    astrologerId: null,
   },
   reducers: {
     setRegisterData: (state, action) => {
@@ -20,8 +21,11 @@ const registerSlice = createSlice({
       state.registerData = null;
       state.currentStep = 1;
     },
+    setAstrologerId:(state,action) => {
+      state.astrologerId = action.payload;
+    },
   },
 });
 
-export const { setRegisterData, updateRegisterData, setCurrentStep, clearRegisterData } = registerSlice.actions;
+export const { setRegisterData, updateRegisterData, setCurrentStep, clearRegisterData,setAstrologerId } = registerSlice.actions;
 export default registerSlice.reducer;

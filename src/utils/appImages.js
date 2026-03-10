@@ -104,10 +104,12 @@ export const AppImages = {
 
 // default Image
 
-import DefaultAstrologer from "../assets/images/astrologer-1.jpg";
+import DefaultMaleAstrologer from "../assets/default-img/astrologer male_v.1.png";
+import DefaultFemaleAstrologer from "../assets/default-img/astrologer female_v.1.png";
 
 export const AppDefaultImg = {
-  DefaultAstrologer,
+  DefaultMaleAstrologer,
+  DefaultFemaleAstrologer
 }
 
 //svgs

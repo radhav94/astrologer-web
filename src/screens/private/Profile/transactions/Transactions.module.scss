@@ -110,9 +110,15 @@
 
 .transactionTitle {
   font-size: 18px;
-  font-weight: 600;
+  font-weight: 400;
   color: var(--title);
   margin: 0;
+}
+
+.displayProfile{
+  text-transform: capitalize;
+  font-weight: 600;
+  color: var(--title);
 }
 
 // Gift Received Item

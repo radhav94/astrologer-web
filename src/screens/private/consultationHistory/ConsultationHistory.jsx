@@ -308,7 +308,7 @@ const ConsultationHistory = () => {
                             <img
                               src={
                                 item.displayProfile?.profileImage ||
-                                AppDefaultImg.DefaultAstrologer
+                                AppDefaultImg.DefaultMaleAstrologer
                               }
                               alt={item.displayProfile?.name || "User"}
                               onError={(e) => {

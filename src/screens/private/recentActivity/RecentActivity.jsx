@@ -2,6 +2,9 @@ import React, { useEffect, useRef, useState } from "react";
 import { Icons } from "../../../components/Icons";
 import { Link } from "react-router";
 import { useGetRecentAstrologerActivitiesQuery } from "../../../redux/recentActivities/recentActivities";
+import SectionHeader from "../../../components/UI/SectionHeader";
+import styles from "./RecentActivity.module.scss";
+import dayjs from "dayjs";
 
 const LIMIT = 5;
 
@@ -38,66 +41,59 @@ const RecentActivity = ({ onBack }) => {
     return () => observer.disconnect();
   }, [data, isFetching]);
 
-  console.log("recordsssssssss",records);
+  // console.log("recordsssssssss",records);
 
   return (
-    <div className="h-full flex flex-col text-start">
+    
+    <div className={styles.container}>
       {/* HEADER */}
-      <div className="flex items-center gap-4 mb-6">
-        <button
-          onClick={onBack}
-          className="p-2 bg-gray-100 rounded-xl"
-        >
-          <Link to="/dashboard">
-            <Icons.ChevronLeft size={20} />
-          </Link>
-        </button>
-        <h1 className="text-xl font-bold">Recent Activity</h1>
+     <div className={styles.headerWrapper}>
+        <SectionHeader title={"Recent Activity"} />
       </div>
 
       {/* CONTENT */}
-      <div className="space-y-6 pb-20">
+      <div className={styles.content}>
         {records.map((group) => (
-          <div key={group.date}>
-            <h3 className="text-sm font-semibold mb-3 border-b pb-2">
-              {group.date}
+          <div key={group.date} className={styles.dateGroup}>
+            <h3 className={styles.dateHeader}>
+              {dayjs(group?.date).format("DD/MM/YYYY")}
             </h3>
 
-            <div className="space-y-3">
+            <div className={styles.transactionsList}>
               {group.transactions.map((tx) => (
                 <div
                   key={tx._id}
-                  className="bg-[#EAEAEA] rounded-xl p-4 flex justify-between"
+                  className={styles.transactionCard}
                 >
-                  <div className="flex gap-4">
-                    <div className="w-12 h-12">
+                  <div className={styles.transactionLeft}>
+                    <div className={styles.profileImageContainer}>
                       <img
-                        className="rounded-full"
+                        className={styles.profileImage}
                         src={`https://picsum.photos/seed/${tx.userId}/200`}
                         alt=""
                       />
                     </div>
 
-                    <div>
-                      <p className="text-sm font-medium">
+                    <div className={styles.transactionDetails}>
+                      <p className={styles.transactionMessage}>
                         {tx.message}
                       </p>
 
                       {tx.reason === "call_billing" && (
-                        <span className="inline-block mt-1 px-2 py-0.5 border rounded-full text-[10px]">
+                        <span className={styles.callBadge}>
                           Call
                         </span>
                       )}
                     </div>
                   </div>
 
-                  <div className="text-right flex flex-col justify-between">
-                    <p className="text-xs text-gray-400">
-                      {new Date(tx.createdAt).toLocaleTimeString()}
+                  <div className={styles.transactionRight}>
+                    <p className={styles.transactionTime}>
+                      {dayjs(tx.createdAt).format("MMM D, YYYY")}
                     </p>
 
                     {tx.amount > 0 && (
-                      <p className="text-green-600 font-bold text-sm">
+                      <p className={styles.transactionAmount}>
                         + ₹{tx.amount}
                       </p>
                     )}
@@ -110,14 +106,15 @@ const RecentActivity = ({ onBack }) => {
 
         {/* LOAD MORE */}
         {data?.data?.pagination?.hasNextPage && (
-          <div ref={loaderRef} className="h-10 flex justify-center">
+          <div ref={loaderRef} className={styles.loadMoreContainer}>
             {isFetching && (
-              <p className="text-sm text-gray-400">Loading...</p>
+              <p className={styles.loadingText}>Loading...</p>
             )}
           </div>
         )}
       </div>
     </div>
+    
   );
 };
 

@@ -44,12 +44,12 @@ const Sidebar = ({ isOpen, onClose }) => {
       id: "chats",
       path: "/chats",
     },
-    {
-      icon: Icons.Wallet,
-      label: "Recent Activity",
-      id: "activity",
-      path: "/recent-activity",
-    },
+    // {
+    //   icon: Icons.Wallet,
+    //   label: "Recent Activity",
+    //   id: "activity",
+    //   path: "/recent-activity",
+    // },
     { icon: Icons.User, label: "Profile", id: "profile", path: "/profile" },
     {
       icon: Icons.Radio,

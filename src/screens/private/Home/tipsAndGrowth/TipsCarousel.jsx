@@ -36,7 +36,7 @@ const TipsCarousel = ({ tips = DEFAULT_TIPS }) => {
   return (
     <div className="w-full mx-auto py-4">
       {/* Section Header */}
-      <div className="px-4 text-start md:px-0 mb-4 flex justify-center">
+      <div className="px-4 md:px-0 mb-4 flex">
         <SectionHeader title="TIPS & GROWTH" />
       </div>
 

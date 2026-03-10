@@ -1,7 +1,7 @@
-import ConsultationHistory from "../../components/ConsultationHistory";
-import Dashboard from "../../components/Dashboard";
+import ConsultationHistory from "../../screens/private/consultationHistory/ConsultationHistory";
+import Dashboard from "../../screens/private/dashboard/Dashboard";
 import Profile from "../../screens/private/Profile/Profile";
-import RecentActivity from "../../components/RecentActivity";
+import RecentActivity from "../../screens/private/recentActivity/RecentActivity";
 import Onboarding from "../../screens/public/Onboarding/Onboarding";
 import Login from "../../screens/public/Login/Login";
 import Kundli from "../../screens/private/Home/currentStatus/kundli/kundli";
@@ -40,7 +40,7 @@ export const PATH = {
       path: "/dashboard",
       element: Dashboard,
     },
-    CONSULTATION_HOSTORY: {
+    CONSULTATION_HISTORY: {
       path: "/consultation-history",
       element: ConsultationHistory,
     },

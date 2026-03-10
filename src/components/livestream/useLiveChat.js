@@ -5,7 +5,7 @@ import { getLiveUsers } from "../../services/appServices/getLiveStreamService";
 
 const SOCKET_URL = import.meta.env.VITE_APP_API_BASE_URL;
 
-export const useLiveChat = (agoraChannel) => {
+export const useLiveChat = (agoraChannel, isReconnect = false) => {
   const socketRef = useRef(null);
   const roomIdRef = useRef(null);
 
@@ -71,14 +71,25 @@ export const useLiveChat = (agoraChannel) => {
         console.log("LiveChat → Connected, socketId:", socket.id);
         setIsConnected(true);
 
-        // Host creates the chat room using chatRoomId from API
-        console.log("LiveChat → Creating room:", chatRoomId);
-        socket.emit("live:create_room", {
-          roomId: chatRoomId,
-          hostId: userId,
-          hostName: userName,
-          hostType: "astrologer",
-        });
+        if (isReconnect) {
+          // Reconnecting after page refresh — rejoin existing room
+          console.log("LiveChat → Rejoining room (reconnect):", chatRoomId);
+          socket.emit("live:join_room", {
+            roomId: chatRoomId,
+            userId,
+            userName,
+            userType: "host",
+          });
+        } else {
+          // First time — create the chat room
+          console.log("LiveChat → Creating room:", chatRoomId);
+          socket.emit("live:create_room", {
+            roomId: chatRoomId,
+            hostId: userId,
+            hostName: userName,
+            hostType: "astrologer",
+          });
+        }
       });
 
       socket.on("disconnect", () => {
@@ -167,7 +178,7 @@ export const useLiveChat = (agoraChannel) => {
       socketRef.current?.disconnect();
       console.log("LiveChat → Cleanup done");
     };
-  }, [userId, userName, agoraChannel]);
+  }, [userId, userName, agoraChannel, isReconnect]);
 
   const sendChatMessage = useCallback(() => {
     const msg = chatInput.trim();

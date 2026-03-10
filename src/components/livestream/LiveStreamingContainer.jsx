@@ -7,7 +7,7 @@ const LiveStreamingContainer = ({ client }) => {
   const ROLE = "host";
 
   const live = useLiveStreaming(client, ROLE);
-  const chat = useLiveChat(live.channelName);
+  const chat = useLiveChat(live.channelName, live.isReconnect);
 
   return (
     <div className="live-container">

@@ -52,7 +52,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       icon: Icons.Radio,
       label: "Live",
       id: "live",
-      path: "/astrologer-dashboard/live-streaming",
+      path: "/live-preview",
     },
   ];
 

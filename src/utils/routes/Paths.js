@@ -19,6 +19,7 @@ import RecentTickets from "../../screens/private/Profile/support/tickets/RecentT
 import WithdrawMoney from "../../screens/private/Profile/withdraw/WithdrawMoney";
 import Basic from "../../screens/private/Profile/profileForms/Basic";
 import InteractiveLiveStreaming from "../../components/livestream/InteractiveLiveStreaming";
+import LivePreview from "../../components/livestream/LivePreview";
 import ChatWindow from "../../screens/private/chat/ChatWindow";
 import ChatPage from "../../screens/private/chat/ChatPage";
 import AgoraVoiceCalling from "../../screens/private/call/VoiceCall";
@@ -124,6 +125,10 @@ export const PATH = {
     CHAT_WINDOW: {
       path: "/chat/:chatId",
       element: ChatWindow,
+    },
+    LIVE_PREVIEW: {
+      path: "/live-preview",
+      element: LivePreview,
     },
     ASTRO_LIVE_STREAMING: {
       path: "/astrologer-dashboard/live-streaming",

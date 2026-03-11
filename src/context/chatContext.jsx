@@ -94,11 +94,19 @@ useEffect(() => {
   // 📞 EVENTS
   const handleIncomingChat = (data) => {
     if(data.type != "chat") return;
+    
+    // Handle null/undefined firstName and lastName
+    const firstName = data?.user?.firstName?.trim() || "";
+    const lastName = data?.user?.lastName?.trim() || "";
+    const chaterName = firstName && lastName 
+      ? `${firstName} ${lastName}` 
+      : firstName || lastName || "Customer";
+    
     setIncomingChat({
       roomId: data.roomId,
       chaterrId: data.user?._id,
       chaterType: data.type || "chat",
-      chaterName: `${data?.user?.firstName} ${data?.user?.lastName}`,
+      chaterName: chaterName,
       userID: data?.user?.user_ID
     });
   };

@@ -185,8 +185,8 @@ const AgoraVoiceCalling = ({ callData }) => {
         });
       }
       setCallStartTime(null);
-      setActiveCall(null);
-      setActiveChat(null); // Clear active chat when call ends
+      // setActiveCall(null);
+      // setActiveChat(null); // Clear active chat when call ends
     }
   };
 

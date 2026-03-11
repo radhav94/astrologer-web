@@ -1,9 +1,390 @@
-import React from 'react'
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useFormik } from "formik";
+import { useSelector } from "react-redux";
+import * as Yup from "yup";
+import { ChevronDown, Plus } from "lucide-react";
+import { Icons } from "../../../../components/Icons";
+import Button from "../../../../components/UI/button/Button";
+import SectionHeader from "../../../../components/UI/sectionHeader/SectionHeader";
+import Toggle from "../../../../components/UI/toggle/Toggle";
+import FileUploadInput from "../../../../components/UI/fileUploadInput/FileUploadInput";
+import styles from "./ProfileForms.module.scss";
+import { createEducationValidation } from "../../../../utils/utlis";
+import { useFileUpload } from "../../../../hooks/useFileUpload";
+import { useSetAstroEditProfileMutation } from "../../../../redux/profileApi/profileApi";
+import toast from "../../../../components/toast";
+import { AppIcons } from "../../../../utils/appImages";
+
+const EDUCATION_LEVELS = [
+  "High School",
+  "Undergraduate",
+  "Postgraduate",
+  "Prefer not to say",
+];
+
+const UNIVERSITIES = [
+  "Delhi University",
+  "Mumbai University",
+  "Pune University",
+  "Banaras Hindu University",
+  "Jawaharlal Nehru University",
+  "Other",
+];
 
 const EducationDetails = () => {
-  return (
-    <div>EducationDetails</div>
-  )
-}
+  const navigate = useNavigate();
+  const { uploadFile } = useFileUpload();
+  const [setAstroEditProfile, { isLoading: isUpdating }] =
+    useSetAstroEditProfileMutation();
 
-export default EducationDetails
+  // Get astrologer details from Redux state
+  const astrologerDetails = useSelector(
+    (state) => state.register.astrologerDetails,
+  );
+  const astrologerIdFromRedux = useSelector(
+    (state) => state.register.astrologerId,
+  );
+
+  // Fallback to localStorage if Redux doesn't have the ID
+  const userData = JSON.parse(
+    localStorage.getItem("shubhtalk_astrologer_details") || "{}",
+  );
+  const astrologerId = astrologerIdFromRedux || userData?._id;
+
+  // Use Redux state as primary source for prefilling form
+  const existingData = astrologerDetails || userData;
+
+  // Get existing education from Redux
+  const existingEducation = existingData?.education || [];
+
+  const [uploadingCertificate, setUploadingCertificate] = useState(false);
+  const [isAddingNew, setIsAddingNew] = useState(false);
+  const [editingIndex, setEditingIndex] = useState(null);
+  const [viewingAttachments, setViewingAttachments] = useState(null);
+
+  // 🔥 FORCE SCROLL TO TOP
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+
+    const scrollables = document.querySelectorAll("*");
+    scrollables.forEach((el) => {
+      if (el.scrollTop) el.scrollTop = 0;
+    });
+  }, []);
+
+  // Validation schema
+  const validationSchema = Yup.object().shape({
+    education: createEducationValidation({
+      required: true,
+      minEntries: 1,
+      universityRequired: false,
+      certificateRequired: false,
+    }),
+  });
+
+  // Formik setup
+  const formik = useFormik({
+    initialValues: {
+      qualification: "",
+      universityName: "",
+      certificateImgUrl: "",
+      display: false,
+    },
+    validationSchema: Yup.object().shape({
+      qualification: Yup.string().required("Qualification is required"),
+      universityName: Yup.string(),
+      certificateImgUrl: Yup.string(),
+      display: Yup.boolean(),
+    }),
+    validateOnChange: true,
+    validateOnBlur: true,
+    onSubmit: async (values) => {
+      try {
+        let updatedEducation;
+
+        if (editingIndex !== null) {
+          // Update existing education entry
+          updatedEducation = [...existingEducation];
+          updatedEducation[editingIndex] = {
+            qualification: values.qualification,
+            universityName: values.universityName,
+            certificateImgUrl: values.certificateImgUrl,
+            display: values.display,
+          };
+        } else {
+          // Add new education entry
+          updatedEducation = [
+            ...existingEducation,
+            {
+              qualification: values.qualification,
+              universityName: values.universityName,
+              certificateImgUrl: values.certificateImgUrl,
+              display: values.display,
+            },
+          ];
+        }
+
+        // Call the mutation API
+        await setAstroEditProfile({
+          id: astrologerId,
+          education: updatedEducation,
+        }).unwrap();
+
+        // Show success message
+        toast.success("Education details updated successfully");
+
+        // Reset form and state
+        formik.resetForm();
+        setIsAddingNew(false);
+        setEditingIndex(null);
+      } catch (error) {
+        console.error("Failed to update education:", error);
+        toast.error(
+          error?.data?.message ||
+            "Failed to update education. Please try again.",
+        );
+      }
+    },
+  });
+
+  const handleAddNew = () => {
+    setIsAddingNew(true);
+    setEditingIndex(null);
+    formik.resetForm();
+  };
+
+  const handleEdit = (index) => {
+    const edu = existingEducation[index];
+    setEditingIndex(index);
+    setIsAddingNew(true);
+    formik.setValues({
+      qualification: edu.qualification || "",
+      universityName: edu.universityName || "",
+      certificateImgUrl: edu.certificateImgUrl || "",
+      display: edu.display || false,
+    });
+  };
+
+  const handleCancel = () => {
+    setIsAddingNew(false);
+    setEditingIndex(null);
+    formik.resetForm();
+  };
+
+  const handleFileUpload = async () => {
+    try {
+      setUploadingCertificate(true);
+      const fileUrl = await uploadFile("image/*,.pdf");
+
+      if (fileUrl) {
+        formik.setFieldValue("certificateImgUrl", fileUrl);
+      }
+    } catch (error) {
+      console.error("File upload error:", error);
+    } finally {
+      setUploadingCertificate(false);
+    }
+  };
+
+  const handleSaveAndReturn = async () => {
+    // Navigate back to profile
+    navigate("/profile");
+  };
+
+  const isFormValid =
+    formik.values.qualification.trim() !== "" && formik.isValid;
+
+  const isButtonDisabled = !isFormValid || formik.isSubmitting || isUpdating;
+
+  return (
+    <div className={styles.basicContainer}>
+      <SectionHeader title="Educational Details" />
+
+      <div className={styles.formContent}>
+        {/* Education Grid Container */}
+        {!isAddingNew && (
+          <>
+          <div className={styles.educationList}>
+            {/* Existing Education Cards */}
+            {existingEducation.length > 0 && existingEducation.map((edu, index) => (
+              <div key={index} className={styles.educationCard}>
+                <div className={styles.educationCardHeader}>
+                  <span className={styles.educationLevel}>
+                    {edu.qualification}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleEdit(index)}
+                    className={styles.editIconButton}
+                  >
+                    <img src={AppIcons.EditIcon} alt="Edit Icons" />
+                  </button>
+                </div>
+                <h3 className={styles.universityName}>
+                  {edu.universityName || "No university specified"}
+                </h3>
+                {edu.certificateImgUrl && (
+                  <button
+                    type="button"
+                    onClick={() => setViewingAttachments(edu.certificateImgUrl)}
+                    className={styles.viewAttachmentsButton}
+                  >
+                    View Attachments
+                  </button>
+                )}
+              </div>
+            ))}
+
+            
+          </div>
+          {/* Add New Button */}
+            <button
+              type="button"
+              onClick={handleAddNew}
+              className={styles.addQualificationButton}
+            >
+              <Plus size={20} />
+              Add Qualification
+            </button>
+
+            </>
+        )}
+
+        {/* Add/Edit Form */}
+        {isAddingNew && (
+          <div className={styles.educationForm}>
+            {/* Qualification Level */}
+            <div className={styles.formGroup}>
+              <label className={styles.label}>Level of Education</label>
+              <div className={styles.chipContainer}>
+                {EDUCATION_LEVELS.map((level) => (
+                  <button
+                    key={level}
+                    type="button"
+                    onClick={() => formik.setFieldValue("qualification", level)}
+                    className={`${styles.chip} ${
+                      formik.values.qualification === level
+                        ? styles.chipActive
+                        : ""
+                    }`}
+                  >
+                    {level}
+                  </button>
+                ))}
+              </div>
+              {formik.touched.qualification && formik.errors.qualification && (
+                <p className={styles.errorText}>{formik.errors.qualification}</p>
+              )}
+            </div>
+
+            {/* University */}
+            <div className={styles.formGroup}>
+              <label className={styles.label}>
+                Select University{" "}
+                <span className={styles.optionalText}>(if any)</span>
+              </label>
+              <div className={styles.selectWrapper}>
+                <select
+                  name="universityName"
+                  value={formik.values.universityName}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  className={styles.select}
+                >
+                  <option value="">Select</option>
+                  {UNIVERSITIES.map((uni) => (
+                    <option key={uni} value={uni}>
+                      {uni}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className={styles.selectIcon} />
+              </div>
+            </div>
+
+            {/* Certificate Upload */}
+            <FileUploadInput
+              label="Attach Certificate"
+              optionalText="(if any)"
+              accept="image/*,.pdf"
+              value={formik.values.certificateImgUrl}
+              isUploading={uploadingCertificate}
+              onUpload={handleFileUpload}
+              uploadText="Tap here to add file"
+              uploadSubtext="(.jpg, .png, .pdf)"
+            />
+
+            {/* Display on Profile Toggle */}
+            <div className="mb-6 flex">
+              <Toggle
+                label="Display on Profile"
+                checked={formik.values.display}
+                onChange={(value) => formik.setFieldValue("display", value)}
+              />
+            </div>
+
+            {/* Form Actions */}
+            <div className={styles.formActions}>
+              <button
+                type="button"
+                onClick={handleCancel}
+                className={styles.cancelButton}
+              >
+                Cancel
+              </button>
+              <Button
+                type="submit"
+                onClick={formik.handleSubmit}
+                disabled={isButtonDisabled}
+                className={styles.saveFormButton}
+              >
+                {isUpdating ? "Saving..." : editingIndex !== null ? "Update" : "Add"}
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Save and Return Button - Only show when not adding/editing */}
+      {!isAddingNew && existingEducation.length > 0 && (
+        <Button
+          type="button"
+          onClick={handleSaveAndReturn}
+          className={styles.saveButton}
+        >
+          Save <Icons.ChevronRight size={20} />
+        </Button>
+      )}
+
+      {/* Attachment Viewer Modal */}
+      {viewingAttachments && (
+        <div
+          className={styles.attachmentModal}
+          onClick={() => setViewingAttachments(null)}
+        >
+          <div
+            className={styles.attachmentModalContent}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className={styles.closeModal}
+              onClick={() => setViewingAttachments(null)}
+            >
+              ×
+            </button>
+            <img
+              src={viewingAttachments}
+              alt="Certificate"
+              className={styles.attachmentImage}
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default EducationDetails;

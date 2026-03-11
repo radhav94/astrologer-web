@@ -20,6 +20,7 @@ const EXPERTISE_LIST = [
   "Psychic",
   "Vastu",
   "Face Reading",
+  "Numerology",
 ];
 
 const EXPERIENCE_LIST = Array.from({ length: 51 }, (_, i) => i); // 0 to 50

@@ -9,7 +9,6 @@ import SectionHeader from "../../../../components/UI/sectionHeader/SectionHeader
 import Toggle from "../../../../components/UI/toggle/Toggle";
 import FileUploadInput from "../../../../components/UI/fileUploadInput/FileUploadInput";
 import styles from "./ProfileForms.module.scss";
-import { AppImages } from "../../../../utils/appImages";
 import { createAchievementsValidation } from "../../../../utils/utlis";
 import { useFileUpload } from "../../../../hooks/useFileUpload";
 import { useSetAstroEditProfileMutation } from "../../../../redux/profileApi/profileApi";
@@ -20,20 +19,47 @@ const AchievementsProfile = () => {
   const { uploadFile } = useFileUpload();
   const [setAstroEditProfile, { isLoading: isUpdating }] =
     useSetAstroEditProfileMutation();
+
+  // Get astrologer details from Redux state
+  const astrologerDetails = useSelector(
+    (state) => state.register.astrologerDetails,
+  );
   const astrologerIdFromRedux = useSelector(
     (state) => state.register.astrologerId,
   );
 
   // Fallback to localStorage if Redux doesn't have the ID
   const userData = JSON.parse(
-    localStorage.getItem("shubhtalk_astrologer_details"),
+    localStorage.getItem("shubhtalk_astrologer_details") || "{}",
   );
   const astrologerId = astrologerIdFromRedux || userData?._id;
 
+  // Use Redux state as primary source for prefilling form
+  const existingData = astrologerDetails || userData;
+
+  // Get existing achievements from Redux
+  const existingAchievements = existingData?.achievements || [];
+  
+  // Extract unique achievement name and display status from existing data
+  const achievementName = existingAchievements.length > 0 
+    ? existingAchievements[0].achievementName 
+    : "";
+  const displayStatus = existingAchievements.length > 0 
+    ? existingAchievements[0].display 
+    : false;
+
   const [uploadingAchievement, setUploadingAchievement] = useState(false);
-  const [attachments, setAttachments] = useState([
-    
-  ]);
+  
+  // Initialize attachments with all existing achievement images
+  const [attachments, setAttachments] = useState(() => {
+    return existingAchievements
+      .filter(ach => ach.achievementImgUrl)
+      .map((ach, index) => ({
+        id: index + 1,
+        image: ach.achievementImgUrl,
+        isExisting: true
+      }));
+  });
 
   // 🔥 FORCE SCROLL TO TOP – WORKS IN ALL DASHBOARD LAYOUTS
   useEffect(() => {
@@ -65,24 +91,27 @@ const AchievementsProfile = () => {
   // Formik setup
   const formik = useFormik({
     initialValues: {
-      achievements: [
-        {
-          achievementName: "",
-          achievementImgUrl: "",
-          display: false,
-        },
-      ],
+      achievementName: achievementName,
+      display: displayStatus,
     },
     validationSchema,
     validateOnChange: true,
     validateOnBlur: true,
+    validateOnMount: true,
     onSubmit: async (values) => {
       try {
+        // Build achievements array from attachments
+        // Each attachment becomes a separate achievement object with the same name and display value
+        const achievementsArray = attachments.map(att => ({
+          achievementName: values.achievementName,
+          achievementImgUrl: att.image,
+          display: values.display,
+        }));
+
         // Call the mutation API with the correct body format
-        // The API spreads ...body, so we pass achievements directly
         await setAstroEditProfile({
           id: astrologerId,
-          achievements: values.achievements,
+          achievements: achievementsArray,
         }).unwrap();
 
         // Show success message
@@ -102,7 +131,7 @@ const AchievementsProfile = () => {
   });
 
   const handleDescriptionChange = (e) => {
-    formik.setFieldValue("achievements.0.achievementName", e.target.value);
+    formik.setFieldValue("achievementName", e.target.value);
   };
 
   const handleFileUpload = async () => {
@@ -113,13 +142,10 @@ const AchievementsProfile = () => {
       const fileUrl = await uploadFile("image/*,.pdf");
 
       if (fileUrl) {
-        // Set the uploaded file URL in Formik
-        formik.setFieldValue("achievements.0.achievementImgUrl", fileUrl);
-        
         // Add the uploaded file URL to attachments for preview
         setAttachments((prev) => [
           ...prev,
-          { id: prev.length + 1, image: fileUrl },
+          { id: Date.now(), image: fileUrl, isExisting: false },
         ]);
       }
     } catch (error) {
@@ -131,8 +157,9 @@ const AchievementsProfile = () => {
 
   // Check if all required fields are filled and valid
   const isFormValid =
-    formik.values.achievements[0].achievementName.trim() !== "" &&
-    Object.keys(formik.errors).length === 0;
+    formik.values.achievementName.trim() !== "" &&
+    attachments.length > 0 &&
+    formik.isValid;
 
   const isButtonDisabled = !isFormValid || formik.isSubmitting || isUpdating;
 
@@ -144,12 +171,12 @@ const AchievementsProfile = () => {
         {/* Bio Textarea */}
         <div className={styles.formGroup}>
           <textarea
-            name="achievements.0.achievementName"
-            value={formik.values.achievements[0].achievementName}
+            name="achievementName"
+            value={formik.values.achievementName}
             onChange={handleDescriptionChange}
             onBlur={formik.handleBlur}
             className={`${styles.bioTextarea} ${
-              formik.touched.achievements?.[0]?.achievementName &&
+              formik.touched.achievementName &&
               formik.errors.achievements?.[0]?.achievementName
                 ? styles.inputError
                 : ""
@@ -157,7 +184,7 @@ const AchievementsProfile = () => {
             placeholder="For eg: With years of dedicated practice, I've guided thousands of individuals across love, career, health, and life direction. My work combines classical Vedic principles with deep intuitive understanding, helping clients receive guidance."
             rows={6}
           />
-          {formik.touched.achievements?.[0]?.achievementName &&
+          {formik.touched.achievementName &&
             formik.errors.achievements?.[0]?.achievementName && (
               <p className={styles.errorText}>
                 {formik.errors.achievements[0].achievementName}
@@ -182,18 +209,15 @@ const AchievementsProfile = () => {
                 )}
               </div>
             ))}
-            {!attachments.length && (
-              <FileUploadInput
-                optionalText="(if any)"
-                accept="image/*,.pdf"
-                value={formik.values.achievements[0].achievementImgUrl}
-                isUploading={uploadingAchievement}
-                onUpload={handleFileUpload}
-                uploadText="Add"
-                uploadSubtext="(.jpg, .png, .pdf)"
-                cla
-              />
-            )}
+            <FileUploadInput
+              optionalText="(if any)"
+              accept="image/*,.pdf"
+              value=""
+              isUploading={uploadingAchievement}
+              onUpload={handleFileUpload}
+              uploadText="Add"
+              uploadSubtext="(.jpg, .png, .pdf)"
+            />
           </div>
         </div>
 
@@ -202,9 +226,9 @@ const AchievementsProfile = () => {
           <Toggle
             label="Display on Profile"
             className="flex-inline"
-            checked={formik.values.achievements[0].display}
+            checked={formik.values.display}
             onChange={(value) =>
-              formik.setFieldValue("achievements.0.display", value)
+              formik.setFieldValue("display", value)
             }
           />
         </div>

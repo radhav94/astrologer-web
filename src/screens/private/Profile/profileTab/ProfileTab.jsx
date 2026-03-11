@@ -1,11 +1,11 @@
 import { Link } from "react-router-dom";
 import { LuPencilLine } from "react-icons/lu";
 import styles from "./ProfileTab.module.scss";
-import { AppImages } from "../../../../utils/appImages";
+import { AppDefaultImg, AppImages } from "../../../../utils/appImages";
 import dayjs from "dayjs";
 import { formatIndianPhone } from "../../../../utils/utlis";
 
-const ProfileTab = ({ profileData, refetch }) => {
+const ProfileTab = ({ profileData }) => {
   if (!profileData) {
     return <div className={styles.profileTabContainer}>Loading...</div>;
   }
@@ -18,7 +18,7 @@ const ProfileTab = ({ profileData, refetch }) => {
     email,
     profileImage,
     languages = [],
-    specializations = [],
+    expertise = [],
     education = [],
     achievements,
     achievementImages = [],
@@ -26,7 +26,7 @@ const ProfileTab = ({ profileData, refetch }) => {
 
   const formattedPhone = formatIndianPhone(phone);
 
-  console.log("profileDataTab::",achievements)
+  console.log("profileDataTab::", achievements);
 
   return (
     <div className={styles.profileTabContainer}>
@@ -40,7 +40,7 @@ const ProfileTab = ({ profileData, refetch }) => {
 
         <div className={styles.basicDetailsContent}>
           <img
-            src={profileImage || AppImages.Astro1}
+            src={profileImage || getDefaultImgBasedOnGender(gender)}
             alt={name}
             className={styles.profileImage}
           />
@@ -85,14 +85,14 @@ const ProfileTab = ({ profileData, refetch }) => {
         <span className={styles.sectionTitle}>Professional Details</span>
 
         <div className={styles.tagsContainer}>
-          {specializations.length > 0 ? (
-            specializations.map((spec, index) => (
+          {expertise.length > 0 ? (
+            expertise.map((expert, index) => (
               <span key={index} className={styles.tag}>
-                {spec}
+                {expert}
               </span>
             ))
           ) : (
-            <span className={styles.tag}>No specializations added</span>
+            <span className={styles.tag}>No expertise added</span>
           )}
         </div>
       </div>
@@ -129,31 +129,32 @@ const ProfileTab = ({ profileData, refetch }) => {
 
         <span className={styles.sectionTitle}>Achievements</span>
 
+        <p className={styles.achievementsText}>
+          {achievements[0]?.achievementName || "No achievements added yet."}
+
+          {achievements[0]?.achievementName &&
+            achievements[0].achievementName.length > 100 && (
+              <span className={styles.readMore}>...Read More</span>
+            )}
+        </p>
+        <div className={styles.imagesGrid}>
         {achievements.length > 0 ? (
           achievements.map((achievement, index) => (
             <div key={index}>
-              <p className={styles.achievementsText}>
-                {achievement?.achievementName || "No achievements added yet."}
-
-                {achievement?.achievementName &&
-                  achievement.achievementName.length > 100 && (
-                    <span className={styles.readMore}>...Read More</span>
-                  )}
-              </p>
-
-              <div className={styles.imagesGrid}>
+              
                 <div className={styles.imageBox}>
                   <img
                     src={achievement?.achievementImgUrl}
                     alt={`achievement ${index + 1}`}
                   />
                 </div>
-              </div>
+              
             </div>
           ))
         ) : (
           <p className={styles.achievementsText}>No achievements added yet.</p>
         )}
+        </div>
       </div>
     </div>
   );

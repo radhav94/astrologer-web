@@ -1,11 +1,9 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, Mic, Send, Gift, Paperclip } from "lucide-react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { IoCallOutline, IoVideocamOutline, IoCallSharp } from "react-icons/io5";
+import { useLocation, useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import { useGetChatHistoryQuery } from "../../../redux/activity/chatApi";
 import useChat from "../../../hooks/useChatWindow";
-import { PATH } from "../../../utils/routes/Paths";
 import VoiceMessage from "./voiceChat/VoiceMessage";
 import { useVoiceRecorder } from "./voiceChat/useVoiceRecorder";
 import VoiceRecorderPopup from "./voiceChat/VoiceRecorderPopup";
@@ -358,7 +356,10 @@ const ChatWindow = () => {
     userID
   } = state || {};
 
-  const { activeChat, chatStartTime: ctxChatStartTime } = useChatContext();
+  const { activeChat } = useChatContext();
+  const { activeCall, setActiveCall, openReview: callReviewOpen } = useCall();
+  const isChatActive = activeChat && activeChat?.roomId;
+  
   // Fall back to activeChat's roomId if state didn't carry one (e.g. navigating back)
   const roomId = stateRoomId || activeChat?.roomId || null;
 
@@ -381,7 +382,6 @@ const ChatWindow = () => {
     astroReply,
     sendTyping,
     isMessageDisabled,
-    formattedTime,
     chatSeconds,
     remainingTime,
     handleChatEndedFromServer
@@ -539,7 +539,7 @@ const ChatWindow = () => {
   };
 
   const handleChatEnd = () => {
-    if (remainingTime * 60 - chatSeconds < MIN_CHAT_SECONDS) {
+    if (chatSeconds < MIN_CHAT_SECONDS) {
       Toast.error("Chat cannot be ended before 1 minute");
       return false;
     }
@@ -587,9 +587,6 @@ const ChatWindow = () => {
     }
   };
 
-  const { activeCall, setActiveCall, openReview: callReviewOpen, callStartTime } = useCall();
-  const isChatActive = activeChat && activeChat?.roomId;
-
   /* --------- Redirect to chats when call ends and review is done --------- */
   const hadActiveCallRef = useRef(!!activeCall);
   useEffect(() => {
@@ -606,25 +603,12 @@ const ChatWindow = () => {
     }
   }, [activeCall, callReviewOpen, navigate]);
 
-  /* --------- Local Timer --------- */
-  const [localTimer, setLocalTimer] = useState(0);
-
-  useEffect(() => {
-    const startTime = callStartTime || (isChatActive ? ctxChatStartTime : null);
-    if (!startTime) {
-      setLocalTimer(0);
-      return;
-    }
-    // Immediately sync so there's no flicker
-    setLocalTimer(Math.floor((Date.now() - startTime) / 1000));
-    const interval = setInterval(() => {
-      setLocalTimer(Math.floor((Date.now() - startTime) / 1000));
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [callStartTime, isChatActive, ctxChatStartTime]);
-
-  const formatLocalTimer = (sec) =>
+  /* --------- Timer Logic --------- */
+  const formatTimer = (sec) =>
     `${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
+
+  // Use chatSeconds for both chat and call (they share the same session timer)
+  const displayTimer = chatSeconds;
 
   /* --------- Initiate Call from Chat --------- */
   const handleInitiateCall = (callType) => {
@@ -720,7 +704,7 @@ const ChatWindow = () => {
             {(isChatActive || activeCall) && (
               <>
                 <span className="text-sm font-medium text-gray-700 ml-2">
-                  <span className="text-red-500 font-semibold">{formatLocalTimer(localTimer)}</span>
+                  <span className="text-red-500 font-semibold">{formatTimer(displayTimer)}</span>
                 </span>
 
                 {kundliId && (
@@ -740,7 +724,7 @@ const ChatWindow = () => {
           {/* Mobile View - Timer and View Kundli button */}
           {(isChatActive || activeCall) && (
             <div className="md:hidden flex items-center gap-3">
-              <span className="text-sm font-semibold text-red-500">{formatLocalTimer(localTimer)}</span>
+              <span className="text-sm font-semibold text-red-500">{formatTimer(displayTimer)}</span>
               
               {kundliId && (
                 <button

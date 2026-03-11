@@ -1,14 +1,14 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { useGetAstrologerByIdQuery, useGetMonthlyOverviewQuery } from "../redux/astrologer/astrologerApi";
-import * as AuthServices from "../../src/services/appServices/authservice";
-import { useCall } from "../context/CallContext";
-import { useChat } from "../context/chatContext";
-import { SECTION_TYPES } from "../constants/sectionTypes";
-import { useHomepageSections } from "../hooks/useHomepageSections";
-import { PATH } from "../utils/routes/Paths";
-import TipsCarousel from "../screens/private/Home/tipsAndGrowth/TipsCarousel";
-import PrimaryLoader from "./UI/PrimaryLoader";
+import { useGetAstrologerByIdQuery, useGetMonthlyOverviewQuery } from "../../../redux/astrologer/astrologerApi";
+import * as AuthServices from "../../../services/appServices/authservice";
+import { useCall } from "../../../context/CallContext";
+import { useChat } from "../../../context/chatContext";
+import { SECTION_TYPES } from "../../../constants/sectionTypes";
+import { useHomepageSections } from "../../../hooks/useHomepageSections";
+import { PATH } from "../../../utils/routes/Paths";
+import TipsCarousel from "../../../screens/private/Home/tipsAndGrowth/TipsCarousel";
+import PrimaryLoader from "../../../components/UI/PrimaryLoader";
 
 // Import section components
 import {
@@ -18,7 +18,7 @@ import {
   AvailabilityScheduleSection,
   MonthlyOverviewSection,
   MilestonesSection,
-} from "./Dashboard/sections";
+} from "../../../components/Dashboard/sections";
 
 /**
  * Dashboard Component

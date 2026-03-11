@@ -19,6 +19,8 @@ import CopyLink from "../assets/icons/link.png";
 import Verified from "../assets/icons/Verified.png"
 import Coin from "../assets/icons/coin.png";
 import TwinkleStar from "../assets/icons/twinkle star.png"
+import Call1 from "../assets/icons/call-1.png";
+import Chat1 from "../assets/icons/chat-1.png";
 
 export const AppIcons = {
   Logo,
@@ -41,7 +43,9 @@ export const AppIcons = {
   CopyLink,
   Verified,
   Coin,
-  TwinkleStar
+  TwinkleStar,
+  Call1,
+  Chat1,
 };
 
 //appImages
@@ -96,6 +100,17 @@ export const AppImages = {
   CosmicCircle,
   MobileViewAccount
 };
+
+
+// default Image
+
+import DefaultMaleAstrologer from "../assets/default-img/astrologer male_v.1.png";
+import DefaultFemaleAstrologer from "../assets/default-img/astrologer female_v.1.png";
+
+export const AppDefaultImg = {
+  DefaultMaleAstrologer,
+  DefaultFemaleAstrologer
+}
 
 //svgs
 

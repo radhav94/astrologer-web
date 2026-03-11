@@ -125,7 +125,7 @@ const ChatPage = ({ onBack }) => {
                       userId: item?.userId,
                       astrologerId: astroIdLocal,
                       fullName: item?.title,
-                      roomId: activeChat?.chaterId === item.id ? activeChat?.roomId : null,
+                      roomId: activeChat?.chaterId === item.userId ? activeChat?.roomId : null,
                       isUserSide: false,
                       kundliId:null,
                       userID: item?.userID
@@ -135,7 +135,7 @@ const ChatPage = ({ onBack }) => {
               }
                 className={`rounded-xl p-4 flex items-center justify-between cursor-pointer transition-all
                             ${
-                              activeChat?.chaterId === item.id
+                              activeChat?.chaterId === item.userId
                                 ? "bg-blue-100 ring-2 ring-blue-400"
                                 : "bg-[#EAEAEA] hover:bg-gray-200"
                             }`}

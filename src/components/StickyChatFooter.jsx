@@ -40,19 +40,19 @@ const StickyChatFooter = () => {
   };
 
   return (
-    <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 animate-slideUp">
-      <div className="flex items-center gap-4 rounded-2xl bg-zinc-900/95 px-5 py-4 shadow-2xl backdrop-blur-md border border-zinc-800">
-        <div className="flex items-center gap-3 text-white">
-          <span className="text-xl">💬</span>
-          <div>
-            <p className="text-sm font-medium">Chat ongoing</p>
-            <p className="text-xs text-zinc-400">
+    <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 animate-slideUp w-[90%] max-w-md md:max-w-lg">
+      <div className="flex items-center gap-3 md:gap-4 rounded-2xl bg-zinc-900/95 px-4 py-3 md:px-5 md:py-4 shadow-2xl backdrop-blur-md border border-zinc-800">
+        <div className="flex items-center gap-2 md:gap-3 text-white flex-1 min-w-0">
+          <span className="text-lg md:text-xl flex-shrink-0">💬</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs md:text-sm font-medium truncate">Chat ongoing</p>
+            <p className="text-[10px] md:text-xs text-zinc-400 truncate">
               With {activeChat.chaterName || "Customer"} • {formatTime(chatSeconds)}
             </p>
           </div>
           <button
             onClick={handleOpenChat}
-            className="ml-3 rounded-xl bg-gradient-to-r from-[#F75801] to-[#D43400] px-4 py-2 text-sm font-semibold text-white hover:from-[#E54E00] hover:to-[#C32F00] active:scale-95 transition-all shadow-lg"
+            className="ml-2 md:ml-3 rounded-lg md:rounded-xl bg-gradient-to-r from-[#F75801] to-[#D43400] px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm font-semibold text-white hover:from-[#E54E00] hover:to-[#C32F00] active:scale-95 transition-all shadow-lg whitespace-nowrap flex-shrink-0"
           >
             Open Chat
           </button>

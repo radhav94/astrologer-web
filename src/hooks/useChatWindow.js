@@ -27,6 +27,14 @@ export default function useChat({
     setMessages((prev) => [...prev, msg]);
   };
 
+  // Helper to check if this chat/call is currently active
+  const isChatOrCallActive = () => {
+    const activeChatUserId = activeChat?.userId || activeChat?.chaterId;
+    const isInActiveChat = activeChatUserId === userId || activeChat?.roomId === roomId;
+    const isInActiveCall = activeCall?.userId === userId;
+    return isInActiveChat || isInActiveCall;
+  };
+
   const handleChatEndedFromServer = () => {
     setIsMessageDisabled(true);
     setOpenReview(true);
@@ -34,15 +42,20 @@ export default function useChat({
     setActiveChat(null);
   };
 
+  // Derive disabled state from activeChat / activeCall
   useEffect(() => {
-    // Disable messages only if userId is not in activeCall AND not in activeChat
-    if(activeChat?.userId !== userId && activeCall?.userId !== userId) {
+    if (isChatOrCallActive()) {
+      setIsMessageDisabled(false);
+    } else {
       setIsMessageDisabled(true);
     }
+  }, [activeChat, activeCall, userId, roomId]);
+
+  // Socket connection & listeners — separate effect, runs once per roomId
+  useEffect(() => {
     if(!roomId || !userId || !astrologerId) return;
     socketService.connect({
       onConnected: () => {
-        // socketService.joinRoom({ roomId, userId, astrologerId });
         if(Object.keys(activeChat || {}).length > 0 || (activeCall && activeCall.userId === userId)) {
           startTimer();
           setIsMessageDisabled(false);
@@ -94,7 +107,7 @@ export default function useChat({
       voiceSocket.off("typing", handleTyping);
       voiceSocket.off("chat:ended", handleChatEndedFromServer);
     }
-  }, [roomId, activeChat]);
+  }, [roomId]);
 
   // ASTRO SEND
   const astroReply = (text, type = "message") => {

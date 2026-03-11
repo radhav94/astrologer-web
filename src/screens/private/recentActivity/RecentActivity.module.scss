@@ -1,0 +1,110 @@
+// Main Container
+.container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  text-align: start;
+}
+
+// Header
+.headerWrapper {
+  padding-bottom: 1.5rem;
+}
+
+// Content
+.content {
+  padding-bottom: 0.75rem 1.25rem;
+}
+
+.dateGroup {
+  margin-bottom: 1.5rem;
+}
+
+.dateHeader {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 0.5rem;
+}
+
+.transactionsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+// Transaction Card
+.transactionCard {
+  background-color: var(--white-color);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+}
+
+.transactionLeft {
+  display: flex;
+  gap: 1rem;
+}
+
+.profileImageContainer {
+  width: 4rem;
+  height: 4rem;
+}
+
+.profileImage {
+  border-radius: 10px;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.transactionDetails {
+  display: flex;
+  flex-direction: column;
+}
+
+.transactionMessage {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.callBadge {
+  display: inline-block;
+  margin-top: 0.25rem;
+  padding: 0.125rem 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 9999px;
+  font-size: 10px;
+}
+
+.transactionRight {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.transactionTime {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.transactionAmount {
+  color: #16a34a;
+  font-weight: 700;
+  font-size: 0.875rem;
+}
+
+// Load More
+.loadMoreContainer {
+  height: 2.5rem;
+  display: flex;
+  justify-content: center;
+}
+
+.loadingText {
+  font-size: 0.875rem;
+  color: #9ca3af;
+}

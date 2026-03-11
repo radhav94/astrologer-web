@@ -4,72 +4,73 @@ import styles from "./Transactions.module.scss";
 import SwitchTabs from "../../../../components/UI/tabs/SwitchTabs";
 import { useGetTransactionListQuery } from "../../../../redux/profileApi/profileApi";
 import { useRef, useState } from "react";
+import dayjs from "dayjs";
 
-const TRANSACTIONS = [
-  {
-    id: 1,
-    title: "Call with #1876",
-    date: "Oct 01, 2025 • 04:36 PM",
-    amount: 200,
-    isCredit: true,
-  },
-  {
-    id: 2,
-    title: "Withdrawal to bank",
-    date: "Oct 01, 2025 • 04:36 PM",
-    amount: 5000,
-    isCredit: false,
-  },
-  {
-    id: 3,
-    title: "Call with #1876",
-    date: "Oct 01, 2025 • 04:36 PM",
-    amount: 200,
-    isCredit: true,
-  },
-  {
-    id: 4,
-    title: "Call with #1876",
-    date: "Oct 01, 2025 • 04:36 PM",
-    amount: 200,
-    isCredit: true,
-  },
-  {
-    id: 5,
-    title: "Call with #1876",
-    date: "Oct 01, 2025 • 04:36 PM",
-    amount: 200,
-    isCredit: true,
-  },
-  {
-    id: 6,
-    title: "Withdrawal to bank",
-    date: "Oct 01, 2025 • 04:36 PM",
-    amount: 5000,
-    isCredit: false,
-  },
-  {
-    id: 7,
-    title: "Call with #1876",
-    date: "Oct 01, 2025 • 04:36 PM",
-    amount: 200,
-    isCredit: true,
-  },
-  {
-    id: 8,
-    title: "Call with #1876",
-    date: "Oct 01, 2025 • 04:36 PM",
-    amount: 200,
-    isCredit: true,
-  },
-  {
-    id: 9,
-    title: "Call with #1876",
-    date: "Oct 01, 2025 • 04:36 PM",
-    amount: 200,
-    isCredit: true,
-  },
-];
+// const TRANSACTIONS = [
+//   {
+//     id: 1,
+//     title: "Call with #1876",
+//     date: "Oct 01, 2025 • 04:36 PM",
+//     amount: 200,
+//     isCredit: true,
+//   },
+//   {
+//     id: 2,
+//     title: "Withdrawal to bank",
+//     date: "Oct 01, 2025 • 04:36 PM",
+//     amount: 5000,
+//     isCredit: false,
+//   },
+//   {
+//     id: 3,
+//     title: "Call with #1876",
+//     date: "Oct 01, 2025 • 04:36 PM",
+//     amount: 200,
+//     isCredit: true,
+//   },
+//   {
+//     id: 4,
+//     title: "Call with #1876",
+//     date: "Oct 01, 2025 • 04:36 PM",
+//     amount: 200,
+//     isCredit: true,
+//   },
+//   {
+//     id: 5,
+//     title: "Call with #1876",
+//     date: "Oct 01, 2025 • 04:36 PM",
+//     amount: 200,
+//     isCredit: true,
+//   },
+//   {
+//     id: 6,
+//     title: "Withdrawal to bank",
+//     date: "Oct 01, 2025 • 04:36 PM",
+//     amount: 5000,
+//     isCredit: false,
+//   },
+//   {
+//     id: 7,
+//     title: "Call with #1876",
+//     date: "Oct 01, 2025 • 04:36 PM",
+//     amount: 200,
+//     isCredit: true,
+//   },
+//   {
+//     id: 8,
+//     title: "Call with #1876",
+//     date: "Oct 01, 2025 • 04:36 PM",
+//     amount: 200,
+//     isCredit: true,
+//   },
+//   {
+//     id: 9,
+//     title: "Call with #1876",
+//     date: "Oct 01, 2025 • 04:36 PM",
+//     amount: 200,
+//     isCredit: true,
+//   },
+// ];
 
 const GIFT_RECEIVED = [
   {
@@ -124,7 +125,7 @@ const GIFT_RECEIVED = [
   },
 ];
 
-const LIMIT = 15;
+const LIMIT = 10;
 
 
 export const TransactionHistory = () => {
@@ -135,26 +136,34 @@ export const TransactionHistory = () => {
   const { data:transactionHistory, isFetching } =
     useGetTransactionListQuery({ page, limit: LIMIT });
 
-    console.log("transactionHistory:",transactionHistory)
+    // console.log("transactionHistory:",transactionHistory?.data?.transactions)
 
 
   return (
     <div>
-      {TRANSACTIONS.map((item, idx) => (
+      {transactionHistory?.data?.transactions?.map((item, idx) => (
         <div key={`${item.id}-${idx}`} className={styles.transactionItem}>
           <div className={styles.transactionHeader}>
             <span className={styles.transactionId}>
-              #{item.id} • {item.date}
+              #{idx+1} • {dayjs(item.createdAt).format("MMM DD, YYYY")} • {dayjs(item.createdAt).format("hh:mm A")}
             </span>
             <span
               className={`${styles.transactionAmount} ${
-                item.isCredit ? styles.credit : styles.debit
+                item?.billing?.astrologer?.action == "credit"
+                  ? styles.credit
+                  : styles.debit
               }`}
             >
-              {item.isCredit ? "+" : "-"} ₹{item.amount}
+              {item?.billing?.astrologer?.action == "credit" ? "+" : "-"} ₹
+              {item?.billing?.astrologer?.creditAmount}
             </span>
           </div>
-          <h4 className={styles.transactionTitle}>{item.title}</h4>
+          <h4 className={styles.transactionTitle}>
+            {item.description}{" "}
+            <span className={styles.displayProfile}>
+              {item?.displayProfile?.name}
+            </span>
+          </h4>
         </div>
       ))}
     </div>

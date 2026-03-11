@@ -1,11 +1,9 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, Mic, Send, Gift, Paperclip } from "lucide-react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { IoCallOutline, IoVideocamOutline, IoCallSharp } from "react-icons/io5";
+import { useLocation, useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import { useGetChatHistoryQuery } from "../../../redux/activity/chatApi";
 import useChat from "../../../hooks/useChatWindow";
-import { PATH } from "../../../utils/routes/Paths";
 import VoiceMessage from "./voiceChat/VoiceMessage";
 import { useVoiceRecorder } from "./voiceChat/useVoiceRecorder";
 import VoiceRecorderPopup from "./voiceChat/VoiceRecorderPopup";
@@ -351,12 +349,19 @@ const ChatWindow = () => {
   const {
     userId,
     astrologerId,
-    roomId,
+    roomId: stateRoomId,
     fullName,
     isUserSide,
     kundliId,
     userID
   } = state || {};
+
+  const { activeChat } = useChatContext();
+  const { activeCall, setActiveCall, openReview: callReviewOpen } = useCall();
+  const isChatActive = activeChat && activeChat?.roomId;
+  
+  // Fall back to activeChat's roomId if state didn't carry one (e.g. navigating back)
+  const roomId = stateRoomId || activeChat?.roomId || null;
 
   const [message, setMessage] = useState("");
   const messagesEndRef = useRef(null);
@@ -582,10 +587,6 @@ const ChatWindow = () => {
     }
   };
 
-  const { activeChat } = useChatContext();
-  const { activeCall, setActiveCall, openReview: callReviewOpen, callStartTime } = useCall();
-  const isChatActive = activeChat && activeChat?.roomId;
-
   /* --------- Redirect to chats when call ends and review is done --------- */
   const hadActiveCallRef = useRef(!!activeCall);
   useEffect(() => {
@@ -603,24 +604,11 @@ const ChatWindow = () => {
   }, [activeCall, callReviewOpen, navigate]);
 
   /* --------- Timer Logic --------- */
-  // For calls: use local timer synced with callStartTime
-  const [localCallTimer, setLocalCallTimer] = useState(0);
-  useEffect(() => {
-    if (callStartTime) {
-      const interval = setInterval(() => {
-        setLocalCallTimer(Math.floor((Date.now() - callStartTime) / 1000));
-      }, 1000);
-      return () => clearInterval(interval);
-    } else {
-      setLocalCallTimer(0);
-    }
-  }, [callStartTime]);
-
   const formatTimer = (sec) =>
     `${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
 
-  // Use localCallTimer for active calls, chatSeconds for active chats
-  const displayTimer = activeCall ? localCallTimer : chatSeconds;
+  // Use chatSeconds for both chat and call (they share the same session timer)
+  const displayTimer = chatSeconds;
 
   /* --------- Initiate Call from Chat --------- */
   const handleInitiateCall = (callType) => {
@@ -686,10 +674,10 @@ const ChatWindow = () => {
             </div>
 
             <div className="flex flex-col">
-              <h2 className="text-sm font-semibold text-gray-900">
+              <h2 className="text-sm font-semibold text-gray-900 capitalize">
                 {fullName || "User"}
               </h2>
-              <span className="text-xs text-gray-500">Exp. 1 year</span>
+              {/* <span className="text-xs text-gray-500">Exp. 1 year</span> */}
             </div>
           </div>
 

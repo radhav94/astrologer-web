@@ -18,6 +18,7 @@ export const useLiveStreaming = (client, ROLE, previewSettings = {}) => {
   const [token, setToken] = useState(null);
   const [channelName, setChannelName] = useState(null);
   const [uid, setUid] = useState(null);
+  const [chatRoomId, setChatRoomId] = useState(null);
   const [isReconnect, setIsReconnect] = useState(false);
 
   const isConnected = useIsConnected();
@@ -45,6 +46,7 @@ export const useLiveStreaming = (client, ROLE, previewSettings = {}) => {
             setToken(session.token);
             setChannelName(session.channel);
             setUid(session.uid);
+            setChatRoomId(session.chatRoomId || null);
             setIsReconnect(true);
             return;
           }
@@ -61,6 +63,7 @@ export const useLiveStreaming = (client, ROLE, previewSettings = {}) => {
         setToken(data?.token);
         setChannelName(data?.channel);
         setUid(data?.uid);
+        setChatRoomId(data?.chatRoomId || null);
         setIsReconnect(false);
 
         // Persist to sessionStorage so refreshes reconnect
@@ -70,6 +73,7 @@ export const useLiveStreaming = (client, ROLE, previewSettings = {}) => {
             token: data?.token,
             channel: data?.channel,
             uid: data?.uid,
+            chatRoomId: data?.chatRoomId || null,
           })
         );
       } catch (err) {
@@ -122,6 +126,7 @@ export const useLiveStreaming = (client, ROLE, previewSettings = {}) => {
     localCameraTrack,
     remoteUsers,
     channelName,
+    chatRoomId,
     isReconnect,
     clearLiveSession,
   };

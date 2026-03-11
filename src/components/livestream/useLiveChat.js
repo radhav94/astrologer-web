@@ -5,55 +5,117 @@ import { getLiveUsers } from "../../services/appServices/getLiveStreamService";
 
 const SOCKET_URL = import.meta.env.VITE_APP_API_BASE_URL;
 
-export const useLiveChat = (agoraChannel) => {
+const CHAT_ROOM_SESSION_KEY = "shubhtalk_live_chat_room";
+const CHAT_MESSAGES_SESSION_KEY = "shubhtalk_live_chat_messages";
+
+export const useLiveChat = (agoraChannel, isReconnect = false, tokenChatRoomId = null) => {
   const socketRef = useRef(null);
   const roomIdRef = useRef(null);
 
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState(() => {
+    // On reconnect, restore cached messages so they show immediately
+    // while waiting for the server's live:recent_messages
+    if (isReconnect) {
+      try {
+        const cached = sessionStorage.getItem(CHAT_MESSAGES_SESSION_KEY);
+        if (cached) return JSON.parse(cached);
+      } catch (e) { /* ignore */ }
+    }
+    return [];
+  });
   const [chatInput, setChatInput] = useState("");
   const [participantCount, setParticipantCount] = useState(0);
   const [isConnected, setIsConnected] = useState(false);
   const [roomId, setRoomId] = useState(null);
 
   const user = getUserFromStorage();
-  const userId = user?.astrologer_id || "";
+  // authStorage saves _id as "id", fall back to the dedicated localStorage key
+  const userId = user?.id || localStorage.getItem("shubhtalk_astro_id") || "";
   const userName = user?.firstName
     ? `${user.firstName} ${user.lastName || ""}`.trim()
     : "Unknown";
 
+  // Persist messages to sessionStorage so host keeps history across refresh
   useEffect(() => {
-    console.log("LiveChat → Init", { userId, userName, agoraChannel, SOCKET_URL });
+    if (messages.length > 0) {
+      try {
+        // Keep last 100 to avoid storage bloat
+        const toCache = messages.slice(-100);
+        sessionStorage.setItem(CHAT_MESSAGES_SESSION_KEY, JSON.stringify(toCache));
+      } catch (e) { /* non-critical */ }
+    }
+  }, [messages]);
 
-    if (!userId || !agoraChannel) {
-      console.warn("LiveChat → Missing userId or agoraChannel, skipping");
+  useEffect(() => {
+    // agoraChannel is null on initial render while useLiveStreaming fetches
+    // the Agora token — silently wait for it to resolve
+    if (!agoraChannel) return;
+
+    if (!userId) {
+      console.warn("LiveChat → No astrologer ID found in storage, cannot connect");
       return;
     }
 
     let socket = null;
 
     const initChat = async () => {
-      // Fetch chatRoomId by matching the agora channel
       let chatRoomId = null;
-      try {
-        const res = await getLiveUsers();
-        const liveUsers = res.data?.data || [];
-        const session = liveUsers.find(
-          (u) => u.channel === agoraChannel || u.agoraChannel === agoraChannel
-        );
-        chatRoomId = session?.chatRoomId;
-        console.log("LiveChat → Fetched chatRoomId:", chatRoomId);
-      } catch (err) {
-        console.error("LiveChat → Failed to fetch chatRoomId:", err);
+
+      // 1. Use chatRoomId from the token response (passed by useLiveStreaming)
+      if (tokenChatRoomId) {
+        chatRoomId = tokenChatRoomId;
       }
 
+      // 2. On reconnect, try to restore from sessionStorage
+      if (!chatRoomId && isReconnect) {
+        try {
+          const saved = sessionStorage.getItem(CHAT_ROOM_SESSION_KEY);
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            if (parsed.chatRoomId && parsed.channel === agoraChannel) {
+              chatRoomId = parsed.chatRoomId;
+            }
+          }
+        } catch (e) {
+          console.warn("LiveChat → Failed to parse saved chatRoomId", e);
+        }
+      }
+
+      // 3. Fall back to getLiveUsers API
       if (!chatRoomId) {
-        console.warn("LiveChat → No chatRoomId found for channel:", agoraChannel);
-        return;
+        try {
+          const res = await getLiveUsers();
+          const liveUsers = res.data?.data || [];
+          const session = liveUsers.find(
+            (u) => u.channel === agoraChannel || u.agoraChannel === agoraChannel
+          );
+          chatRoomId = session?.chatRoomId;
+        } catch (err) {
+          console.error("LiveChat → Failed to fetch chatRoomId:", err);
+        }
+      }
+
+      // 4. Last resort: use the agoraChannel as the roomId
+      //    live:create_room will create a new Redis room with this ID
+      if (!chatRoomId) {
+        chatRoomId = agoraChannel;
+      }
+
+      // Persist chatRoomId so reconnects don't need the API lookup
+      try {
+        sessionStorage.setItem(
+          CHAT_ROOM_SESSION_KEY,
+          JSON.stringify({ chatRoomId, channel: agoraChannel })
+        );
+      } catch (e) {
+        // non-critical
       }
 
       setRoomId(chatRoomId);
       roomIdRef.current = chatRoomId;
 
+      // Connect with both query and auth carrying the astrologer identity
+      // Server reads query for role/userId and auth for host ID resolution
       socket = io(SOCKET_URL, {
         transports: ["websocket"],
         query: {
@@ -67,22 +129,43 @@ export const useLiveChat = (agoraChannel) => {
       });
       socketRef.current = socket;
 
-      socket.on("connect", () => {
-        console.log("LiveChat → Connected, socketId:", socket.id);
-        setIsConnected(true);
+      // Track fallback attempts to avoid infinite loops
+      let didFallbackCreate = false;
+      let didFallbackJoin = false;
 
-        // Host creates the chat room using chatRoomId from API
-        console.log("LiveChat → Creating room:", chatRoomId);
+      const createRoom = () => {
         socket.emit("live:create_room", {
-          roomId: chatRoomId,
+          roomId: roomIdRef.current,
           hostId: userId,
           hostName: userName,
           hostType: "astrologer",
         });
+      };
+
+      const joinRoom = () => {
+        socket.emit("live:join_room", {
+          roomId: roomIdRef.current,
+          userId,
+          userName,
+          userType: "host",
+        });
+      };
+
+      socket.on("connect", () => {
+        setIsConnected(true);
+        didFallbackCreate = false;
+        didFallbackJoin = false;
+
+        if (isReconnect) {
+          // On refresh the room likely still exists (backend grace period),
+          // so join it to get recent messages and participant count
+          joinRoom();
+        } else {
+          createRoom();
+        }
       });
 
       socket.on("disconnect", () => {
-        console.log("LiveChat → Disconnected");
         setIsConnected(false);
       });
 
@@ -90,34 +173,49 @@ export const useLiveChat = (agoraChannel) => {
         console.error("LiveChat → Connection error:", err.message);
       });
 
-      // Room created confirmation — host is automatically in the room
+      // Room created/reused confirmation
+      // Always use the server-returned roomId — it may differ if the server
+      // reused an existing room after a refresh/reconnect
       socket.on("live:room_created", (data) => {
-        console.log("LiveChat → Room created:", data);
+        if (data?.roomId) {
+          roomIdRef.current = data.roomId;
+          setRoomId(data.roomId);
+
+          // Update sessionStorage with the canonical roomId
+          try {
+            sessionStorage.setItem(
+              CHAT_ROOM_SESSION_KEY,
+              JSON.stringify({ chatRoomId: data.roomId, channel: agoraChannel })
+            );
+          } catch (e) {
+            // non-critical
+          }
+        }
       });
 
       socket.on("live:joined", (data) => {
-        console.log("LiveChat → Joined:", data);
         setParticipantCount(data.participantCount || 0);
       });
 
       socket.on("live:recent_messages", (data) => {
-        if (data?.messages?.length) {
-          setMessages(
-            data.messages.map((msg) => ({
-              id: msg.id,
-              sender: msg.userId,
-              senderName: msg.userName,
-              text: msg.message,
-              role: msg.userType === "host" ? "host" : "audience",
-              isSelf: msg.userId === userId,
-              timestamp: msg.timestamp,
-            }))
-          );
+        const msgList = Array.isArray(data) ? data : data?.messages;
+        if (msgList?.length) {
+          // Server has messages — use them as the authoritative source
+          const mapped = msgList.map((msg) => ({
+            id: msg.id,
+            sender: msg.userId,
+            senderName: msg.userName,
+            text: msg.message,
+            role: msg.userType === "host" ? "host" : "audience",
+            isSelf: msg.userId === userId,
+            timestamp: msg.timestamp,
+          }));
+          setMessages(mapped);
         }
+        // If server sends 0 messages, keep whatever we have (cached from sessionStorage)
       });
 
       socket.on("live:message", (msg) => {
-        console.log("LiveChat → Received message:", JSON.stringify(msg));
         setMessages((prev) => [
           ...prev,
           {
@@ -140,18 +238,51 @@ export const useLiveChat = (agoraChannel) => {
         setParticipantCount(data.participantCount || 0);
       });
 
+      // Broadcast when a live session starts (informational for host)
+      socket.on("live:session_started", () => {});
+
+      // Live status push — only relevant for customer sockets, but listen
+      // defensively so the host app doesn't break if the server sends it
+      socket.on("live:astrologer_status", () => {});
+
       socket.on("live:error", (data) => {
+        const msg = data.message?.toLowerCase() || "";
+        const code = data.code || "";
+
+        // "Room already exists" → create_room failed because room survived
+        // the refresh. Fall back to join_room to rejoin and get recent messages.
+        if (
+          !didFallbackJoin &&
+          (msg.includes("already exist") || code === "ROOM_EXISTS")
+        ) {
+          didFallbackJoin = true;
+          joinRoom();
+          return;
+        }
+
+        // "Room not found / ended" → join_room failed because Redis cleaned
+        // up the room. Fall back to create_room with a fresh ID.
+        if (
+          !didFallbackCreate &&
+          (msg.includes("not found") || msg.includes("ended") ||
+           code === "ROOM_NOT_FOUND" || code === "ROOM_ENDED")
+        ) {
+          didFallbackCreate = true;
+          chatRoomId = agoraChannel;
+          roomIdRef.current = chatRoomId;
+          setRoomId(chatRoomId);
+          createRoom();
+          return;
+        }
+
         console.error("LiveChat → Error:", data.message);
       });
 
-      socket.on("live:room_ended", (data) => {
-        console.log("LiveChat → Room ended:", data);
+      socket.on("live:room_ended", () => {
         setIsConnected(false);
       });
 
-      socket.on("live:session_ended", (data) => {
-        console.log("LiveChat → Session ended:", data);
-      });
+      socket.on("live:session_ended", () => {});
     };
 
     initChat();
@@ -165,9 +296,8 @@ export const useLiveChat = (agoraChannel) => {
         });
       }
       socketRef.current?.disconnect();
-      console.log("LiveChat → Cleanup done");
     };
-  }, [userId, userName, agoraChannel]);
+  }, [userId, userName, agoraChannel, isReconnect, tokenChatRoomId]);
 
   const sendChatMessage = useCallback(() => {
     const msg = chatInput.trim();
@@ -190,6 +320,8 @@ export const useLiveChat = (agoraChannel) => {
       roomId: roomIdRef.current,
       hostId: userId,
     });
+    sessionStorage.removeItem(CHAT_ROOM_SESSION_KEY);
+    sessionStorage.removeItem(CHAT_MESSAGES_SESSION_KEY);
   }, [userId]);
 
   return {

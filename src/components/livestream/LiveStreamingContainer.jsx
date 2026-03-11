@@ -10,7 +10,7 @@ const LiveStreamingContainer = ({ client }) => {
   const previewSettings = location.state || {};
 
   const live = useLiveStreaming(client, ROLE, previewSettings);
-  const chat = useLiveChat(live.channelName);
+  const chat = useLiveChat(live.channelName, live.isReconnect, live.chatRoomId);
 
   return (
     <div className="live-container">

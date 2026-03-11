@@ -59,6 +59,7 @@ const isMountedRef = useRef(false);
     channelName,
     participantCount,
     endRoom,
+    clearLiveSession,
   } = props;
 
 
@@ -66,9 +67,9 @@ const isMountedRef = useRef(false);
   if (ROLE !== "host") return;
 
   try {
-    // End socket live room
     endRoom?.();
     await stopLiveStream(channelName);
+    clearLiveSession?.();
     Toast.success("Live ended successfully");
 
     navigate("/astrologer-dashboard", { replace: true });
@@ -78,7 +79,7 @@ const isMountedRef = useRef(false);
   } finally {
     setCalling(false);
   }
-}, [ROLE, channelName, setCalling, navigate, endRoom]);
+}, [ROLE, channelName, setCalling, navigate, endRoom, clearLiveSession]);
 
 const endLiveSafely = useCallback(async () => {
   if (ROLE !== "host") return;
@@ -89,13 +90,14 @@ const endLiveSafely = useCallback(async () => {
   try {
     endRoom?.();
     await stopLiveStream(channelName);
+    clearLiveSession?.();
     Toast.success("Live ended");
   } catch (e) {
     console.error("Failed to end live", e);
   } finally {
     setCalling(false);
   }
-}, [ROLE, channelName, setCalling, endRoom]);
+}, [ROLE, channelName, setCalling, endRoom, clearLiveSession]);
 
 
 
@@ -176,7 +178,7 @@ const endLiveSafely = useCallback(async () => {
               key={m.id}
               className={`chat-message ${m.isSelf ? "self" : ""}`}
             >
-              <b>{m.role === "host" ? "Astrologer" : "User"}:</b> {m.text}
+              <b>{m.role === "host" ? "You" : m.senderName}:</b> {m.text}
             </div>
           ))}
           <div ref={messagesEndRef} />

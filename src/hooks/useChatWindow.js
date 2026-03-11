@@ -3,7 +3,6 @@ import socketService from "../services/appServices/socketService";
 import { voiceSocket } from "../services/appServices/voiceSocketServices";
 import toast from "../components/toast";
 import {useChat as useChatContext} from "../context/chatContext"
-import { formatTimer } from "../utils/timeFormat";
 import { useCall } from "../context/CallContext";
 
 export default function useChat({
@@ -142,7 +141,6 @@ export default function useChat({
     sendTyping,
     isMessageDisabled,
     setIsMessageDisabled,
-    formattedTime: formatTimer(chatSeconds),
     chatSeconds,
     remainingTime: activeChat?.remainingTime || 0,
     handleChatEndedFromServer

@@ -37,7 +37,8 @@ const IncomingChatModal = () => {
           isUserSide: false,
           chaterType: incomingChat.chaterType,
           chaterName: incomingChat.chaterName,
-          chaterId: incomingChat?.chaterId
+          chaterId: incomingChat?.chaterrId,
+          userID: incomingChat?.userID
         });
 
         navigate(

@@ -25,6 +25,11 @@ export const astrologerApi = epicApi.injectEndpoints({
         url: `astrologers/astrologer?astrologerId=${id}`,
         method: "GET",
       }),
+      providesTags: (result, error, id) => [
+        { type: "Astrologer", id },
+        "Availability",
+        "Price",
+      ],
     }),
 
     getMonthlyOverview: builder.query({

@@ -1,18 +1,37 @@
-const Chip = ({ label, selected, onClick, icon }) => {
+import styles from "./Chip.module.scss";
+
+const Chip = ({ 
+  label, 
+  selected = false, 
+  onClick, 
+  icon,
+  iconPosition = "left",
+  variant = "default",
+  size = "medium",
+  disabled = false,
+  className = "",
+  ...props 
+}) => {
+  const chipClasses = [
+    styles.chip,
+    selected && styles.selected,
+    styles[variant],
+    styles[size],
+    disabled && styles.disabled,
+    className
+  ].filter(Boolean).join(" ");
+
   return (
     <button
       onClick={onClick}
-      className={`
-        inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all
-        ${
-          selected
-            ? "bg-gray-800 text-white shadow-md"
-            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-        }
-      `}
+      className={chipClasses}
+      disabled={disabled}
+      type="button"
+      {...props}
     >
-      {icon && <span>{icon}</span>}
-      {label}
+      {icon && iconPosition === "left" && <span className={styles.icon}>{icon}</span>}
+      <span className={styles.label}>{label}</span>
+      {icon && iconPosition === "right" && <span className={styles.icon}>{icon}</span>}
     </button>
   );
 };

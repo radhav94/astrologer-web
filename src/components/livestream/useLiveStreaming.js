@@ -13,7 +13,7 @@ import { getAgoraToken } from "../../services/appServices/getLiveStreamService";
 const APP_ID = "c76e3d30a3b6483689dac88ca9f94381";
 const SESSION_KEY = "shubhtalk_live_session";
 
-export const useLiveStreaming = (client, ROLE) => {
+export const useLiveStreaming = (client, ROLE, previewSettings = {}) => {
   const [calling, setCalling] = useState(true);
   const [token, setToken] = useState(null);
   const [channelName, setChannelName] = useState(null);
@@ -21,8 +21,8 @@ export const useLiveStreaming = (client, ROLE) => {
   const [isReconnect, setIsReconnect] = useState(false);
 
   const isConnected = useIsConnected();
-  const [micOn, setMic] = useState(true);
-  const [cameraOn, setCamera] = useState(true);
+  const [micOn, setMic] = useState(previewSettings.micOn ?? true);
+  const [cameraOn, setCamera] = useState(previewSettings.cameraOn ?? true);
 
   useEffect(() => {
     if (client) {

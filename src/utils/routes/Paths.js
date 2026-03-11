@@ -1,7 +1,7 @@
-import ConsultationHistory from "../../components/ConsultationHistory";
-import Dashboard from "../../components/Dashboard";
+import ConsultationHistory from "../../screens/private/consultationHistory/ConsultationHistory";
+import Dashboard from "../../screens/private/dashboard/Dashboard";
 import Profile from "../../screens/private/Profile/Profile";
-import RecentActivity from "../../components/RecentActivity";
+import RecentActivity from "../../screens/private/recentActivity/RecentActivity";
 import Onboarding from "../../screens/public/Onboarding/Onboarding";
 import Login from "../../screens/public/Login/Login";
 import Kundli from "../../screens/private/Home/currentStatus/kundli/kundli";
@@ -19,9 +19,11 @@ import RecentTickets from "../../screens/private/Profile/support/tickets/RecentT
 import WithdrawMoney from "../../screens/private/Profile/withdraw/WithdrawMoney";
 import Basic from "../../screens/private/Profile/profileForms/Basic";
 import InteractiveLiveStreaming from "../../components/livestream/InteractiveLiveStreaming";
+import LivePreview from "../../components/livestream/LivePreview";
 import ChatWindow from "../../screens/private/chat/ChatWindow";
 import ChatPage from "../../screens/private/chat/ChatPage";
 import AgoraVoiceCalling from "../../screens/private/call/VoiceCall";
+import EducationDetails from "../../screens/private/Profile/profileForms/EducationDetails";
 
 export const PATH = {
   publicRoutes: {
@@ -39,7 +41,7 @@ export const PATH = {
       path: "/dashboard",
       element: Dashboard,
     },
-    CONSULTATION_HOSTORY: {
+    CONSULTATION_HISTORY: {
       path: "/consultation-history",
       element: ConsultationHistory,
     },
@@ -106,7 +108,7 @@ export const PATH = {
     },
     EDUCATIONAL_DETAILS: {
       path: "/profile/educational-details",
-      element: ProfessionalProfileDtls,
+      element: EducationDetails,
     },
     ACHIEVEMENTS_PROFILE: {
       path: "/profile/achievements",
@@ -123,6 +125,10 @@ export const PATH = {
     CHAT_WINDOW: {
       path: "/chat/:chatId",
       element: ChatWindow,
+    },
+    LIVE_PREVIEW: {
+      path: "/live-preview",
+      element: LivePreview,
     },
     ASTRO_LIVE_STREAMING: {
       path: "/astrologer-dashboard/live-streaming",

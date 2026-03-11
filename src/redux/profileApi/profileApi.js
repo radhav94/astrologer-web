@@ -9,8 +9,6 @@ export const profileApi = epicApi.injectEndpoints({
       }),
       providesTags: (result, error, { id }) => [
         { type: "Astrologer", id },
-        "Availability",
-        "Price",
       ],
     }),
     getTransactionList: builder.query({
@@ -21,7 +19,16 @@ export const profileApi = epicApi.injectEndpoints({
       }),
       providesTags: ["Transactions"],
     }),
+    setAstroEditProfile: builder.mutation({
+      query: ({ id, ...body }) => ({
+        url: "astrologers/editProfileData",
+        method: "PUT",
+        body,
+      }),
+      invalidatesTags: (result, error, { id }) => 
+        id ? [{ type: "Astrologer", id }] : ["Astrologer"],
+    }),
   }),
 });
 
-export const { useGetAstrologerByIdQuery, useGetTransactionListQuery } = profileApi;
+export const { useGetAstrologerByIdQuery, useGetTransactionListQuery,useSetAstroEditProfileMutation } = profileApi;

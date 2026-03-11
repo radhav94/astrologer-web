@@ -26,7 +26,7 @@ const ProfileTab = ({ profileData, refetch }) => {
 
   const formattedPhone = formatIndianPhone(phone);
 
-  console.log("profileDataTab::",profileData)
+  console.log("profileDataTab::",achievements)
 
   return (
     <div className={styles.profileTabContainer}>
@@ -39,15 +39,15 @@ const ProfileTab = ({ profileData, refetch }) => {
         <span className={styles.sectionTitle}>Basic Details</span>
 
         <div className={styles.basicDetailsContent}>
-          <img 
-            src={profileImage || AppImages.Astro1} 
-            alt={name} 
+          <img
+            src={profileImage || AppImages.Astro1}
+            alt={name}
             className={styles.profileImage}
           />
           <div className={styles.basicInfo}>
             <h3 className={styles.userName}>{name}</h3>
             <p className={styles.userDetail}>
-              {dateOfBirth} {gender ? `• ${gender}` : ''}
+              {dateOfBirth} {gender ? `• ${gender}` : ""}
             </p>
             <p className={styles.userDetail}>{formattedPhone}</p>
             <p className={styles.userDetail}>{email}</p>
@@ -66,7 +66,9 @@ const ProfileTab = ({ profileData, refetch }) => {
         <div className={styles.tagsContainer}>
           {languages.length > 0 ? (
             languages.map((lang, index) => (
-              <span key={index} className={styles.tag}>{lang}</span>
+              <span key={index} className={styles.tag}>
+                {lang?.languageName}
+              </span>
             ))
           ) : (
             <span className={styles.tag}>No languages added</span>
@@ -85,7 +87,9 @@ const ProfileTab = ({ profileData, refetch }) => {
         <div className={styles.tagsContainer}>
           {specializations.length > 0 ? (
             specializations.map((spec, index) => (
-              <span key={index} className={styles.tag}>{spec}</span>
+              <span key={index} className={styles.tag}>
+                {spec}
+              </span>
             ))
           ) : (
             <span className={styles.tag}>No specializations added</span>
@@ -102,10 +106,15 @@ const ProfileTab = ({ profileData, refetch }) => {
         <span className={styles.sectionTitle}>Educational Details</span>
 
         <div className={styles.tagsContainer}>
-          {education.length > 0 ? (
-            education.map((edu, index) => (
-              <span key={index} className={styles.tag}>{edu?.qualification}</span>
-            ))
+          {education?.length > 0 &&
+          education?.some((edu) => edu?.qualification) ? (
+            education
+              .filter((edu) => edu?.qualification)
+              .map((edu, index) => (
+                <span key={index} className={styles.tag}>
+                  {edu.qualification}
+                </span>
+              ))
           ) : (
             <span className={styles.tag}>No education details added</span>
           )}
@@ -120,26 +129,30 @@ const ProfileTab = ({ profileData, refetch }) => {
 
         <span className={styles.sectionTitle}>Achievements</span>
 
-        <p className={styles.achievementsText}>
-          {achievements || 'No achievements added yet.'}
-          {achievements && achievements.length > 100 && (
-            <span className={styles.readMore}>...Read More</span>
-          )}
-        </p>
+        {achievements.length > 0 ? (
+          achievements.map((achievement, index) => (
+            <div key={index}>
+              <p className={styles.achievementsText}>
+                {achievement?.achievementName || "No achievements added yet."}
 
-        {achievementImages.length > 0 && (
-          <div className={styles.imagesGrid}>
-            {achievementImages.slice(0, 4).map((img, index) => (
-              <div key={index} className={styles.imageBox}>
-                <img src={img} alt={`achievement ${index + 1}`} />
-                {index === 3 && achievementImages.length > 4 && (
-                  <div className={styles.moreImagesOverlay}>
-                    +{achievementImages.length - 4}
-                  </div>
-                )}
+                {achievement?.achievementName &&
+                  achievement.achievementName.length > 100 && (
+                    <span className={styles.readMore}>...Read More</span>
+                  )}
+              </p>
+
+              <div className={styles.imagesGrid}>
+                <div className={styles.imageBox}>
+                  <img
+                    src={achievement?.achievementImgUrl}
+                    alt={`achievement ${index + 1}`}
+                  />
+                </div>
               </div>
-            ))}
-          </div>
+            </div>
+          ))
+        ) : (
+          <p className={styles.achievementsText}>No achievements added yet.</p>
         )}
       </div>
     </div>

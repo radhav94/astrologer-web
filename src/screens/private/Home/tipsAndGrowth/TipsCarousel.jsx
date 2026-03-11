@@ -1,7 +1,7 @@
 import SectionHeader from "../../../../components/UI/SectionHeader";
 import TipCard from "./TipCard";
 
-const tips = [
+const DEFAULT_TIPS = [
   {
     id: 1,
     text: "Ratings influence visibility, respond within 10 minutes for higher ranking.",
@@ -24,11 +24,19 @@ const tips = [
   },
 ];
 
-const TipsCarousel = () => {
+/**
+ * TipsCarousel Component
+ * Displays a horizontally scrollable carousel of tips and growth advice
+ * 
+ * @param {Object} props
+ * @param {Array<{id: string|number, text: string, title?: string}>} [props.tips=DEFAULT_TIPS] - Array of tip objects
+ * @returns {JSX.Element}
+ */
+const TipsCarousel = ({ tips = DEFAULT_TIPS }) => {
   return (
     <div className="w-full mx-auto py-4">
       {/* Section Header */}
-      <div className="px-4 text-start md:px-0 mb-4 flex justify-center">
+      <div className="px-4 md:px-0 mb-4 flex">
         <SectionHeader title="TIPS & GROWTH" />
       </div>
 

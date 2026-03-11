@@ -31,12 +31,12 @@
   right: 20px;
   width: 32px;
   height: 32px;
-  background-color: #F3E5D5;
+  background:linear-gradient(90deg, var(--main-primary-start) 0%, var(--main-primary-end) 100%);
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #8B6F47;
+  color: var(--white-color);
   transition: all 0.2s ease;
   
   &:hover {
@@ -48,7 +48,7 @@
 .sectionTitle {
   font-size: 16px;
   font-weight: 500;
-  color: #8B6F47;
+  color: var(--title);
   margin-bottom: 16px;
   display: inline-block;
   background-color: #FAFAFA;
@@ -104,13 +104,13 @@
 }
 
 .tag {
-  background-color: #FFF4E6;
-  color: #8B6F47;
+  background-color: var(--card-2);
+  color: var(--dark-color);
   padding: 8px 20px;
   border-radius: 50px;
   font-size: 14px;
   font-weight: 500;
-  border: 1px solid #F3E5D5;
+  border: 1px solid var(--primary-300);
   white-space: nowrap;
 }
 

@@ -13,6 +13,7 @@ import { PATH } from "../utils/routes/Paths";
 import toast from "../components/toast";
 import { useGetAstrologerByIdQuery } from "../redux/astrologer/astrologerApi";
 import StickyReviewFooter from "../screens/private/chat/review/StickyReviewFooter";
+import { AppDefaultImg } from "../utils/appImages";
 
 const HomeLayout = () => {
   const {kundliId} = useParams();
@@ -229,7 +230,7 @@ const HomeLayout = () => {
                   <div className="relative">
                     <div className="w-12 h-12 rounded-full bg-gray-200 overflow-hidden border-2 border-white shadow-sm">
                       <img
-                        src={avatar}
+                        src={avatar || AppDefaultImg.DefaultAstrologer} 
                         alt="Profile"
                         className="w-full h-full object-cover"
                       />

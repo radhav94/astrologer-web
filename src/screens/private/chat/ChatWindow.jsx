@@ -351,12 +351,16 @@ const ChatWindow = () => {
   const {
     userId,
     astrologerId,
-    roomId,
+    roomId: stateRoomId,
     fullName,
     isUserSide,
     kundliId,
     userID
   } = state || {};
+
+  const { activeChat, chatStartTime: ctxChatStartTime } = useChatContext();
+  // Fall back to activeChat's roomId if state didn't carry one (e.g. navigating back)
+  const roomId = stateRoomId || activeChat?.roomId || null;
 
   const [message, setMessage] = useState("");
   const messagesEndRef = useRef(null);
@@ -583,7 +587,6 @@ const ChatWindow = () => {
     }
   };
 
-  const { activeChat } = useChatContext();
   const { activeCall, setActiveCall, openReview: callReviewOpen, callStartTime } = useCall();
   const isChatActive = activeChat && activeChat?.roomId;
 
@@ -605,20 +608,20 @@ const ChatWindow = () => {
 
   /* --------- Local Timer --------- */
   const [localTimer, setLocalTimer] = useState(0);
+
   useEffect(() => {
-    let interval;
-    if (callStartTime) {
-      // Sync with active call timer
-      interval = setInterval(() => {
-        setLocalTimer(Math.floor((Date.now() - callStartTime) / 1000));
-      }, 1000);
-    } else if (isChatActive) {
-      interval = setInterval(() => setLocalTimer((t) => t + 1), 1000);
-    } else {
+    const startTime = callStartTime || (isChatActive ? ctxChatStartTime : null);
+    if (!startTime) {
       setLocalTimer(0);
+      return;
     }
+    // Immediately sync so there's no flicker
+    setLocalTimer(Math.floor((Date.now() - startTime) / 1000));
+    const interval = setInterval(() => {
+      setLocalTimer(Math.floor((Date.now() - startTime) / 1000));
+    }, 1000);
     return () => clearInterval(interval);
-  }, [isChatActive, callStartTime]);
+  }, [callStartTime, isChatActive, ctxChatStartTime]);
 
   const formatLocalTimer = (sec) =>
     `${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
@@ -687,10 +690,10 @@ const ChatWindow = () => {
             </div>
 
             <div className="flex flex-col">
-              <h2 className="text-sm font-semibold text-gray-900">
+              <h2 className="text-sm font-semibold text-gray-900 capitalize">
                 {fullName || "User"}
               </h2>
-              <span className="text-xs text-gray-500">Exp. 1 year</span>
+              {/* <span className="text-xs text-gray-500">Exp. 1 year</span> */}
             </div>
           </div>
 

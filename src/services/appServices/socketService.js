@@ -6,6 +6,11 @@ class SocketService {
   socket = null;
 
   connect({ onConnected, onDisconnected, onError }) {
+    // Never create a socket connection inside an iframe (e.g. Kundli view)
+    if (window.self !== window.top) {
+      return;
+    }
+
     this.socket = io(BASE_URL, {
       transports: ["websocket"],
       autoConnect: true,

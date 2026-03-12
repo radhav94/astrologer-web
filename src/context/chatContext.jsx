@@ -50,6 +50,12 @@ useEffect(() => {
     if (voiceSocket.connected) voiceSocket.disconnect();
     return;
   }
+
+  // Skip socket connection when running inside an iframe (e.g. Kundli view)
+  if (window.self !== window.top) {
+    return;
+  }
+
   if (voiceSocket.connected) {
       voiceSocket.disconnect();
     }

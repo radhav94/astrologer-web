@@ -161,7 +161,7 @@ const SetPrice = () => {
       price.videoCallRate.amount !== currentVideoRate;
     
     if (!hasChanges) {
-      Toast.info("No changes to save");
+      Toast.warning("No changes to save");
       return;
     }
     

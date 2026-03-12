@@ -47,11 +47,11 @@ const Profile = ({ onBack }) => {
       value: "profile",
       component: () => <ProfileTab profileData={profileTabData} />,
     },
-    {
-      label: "Transactions",
-      value: "transactions",
-      component: Transactions,
-    },
+    // {
+    //   label: "Transactions",
+    //   value: "transactions",
+    //   component: Transactions,
+    // },
     {
       label: "Availability",
       value: "availability",

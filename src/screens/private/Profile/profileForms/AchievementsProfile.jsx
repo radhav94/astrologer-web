@@ -198,6 +198,7 @@ const AchievementsProfile = () => {
           <div className={styles.attachmentsGrid}>
             {attachments.map((att) => (
               <div key={att.id} className={styles.attachmentItem}>
+                
                 {att.image ? (
                   <img
                     src={att.image}

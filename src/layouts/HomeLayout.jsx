@@ -170,53 +170,6 @@ const HomeLayout = () => {
   }, [astrologerId, astrologerResponse]);
 
   //Handle if chat accepted by user
-<<<<<<< Updated upstream
-      useEffect(() => {
-      const handleChatUserAccepted = (data) => {
-        console.log("useraccept list update", data);
-        const {astrologerId, roomId, userId, user} = data
-        const firstName = user?.firstName?.trim();
-        const lastName = user?.lastName?.trim();
-        
-        // Capitalize first letter of each name
-        const capitalizeFirstLetter = (str) => {
-          if (!str) return '';
-          return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-        };
-        
-        const formattedFirstName = capitalizeFirstLetter(firstName);
-        const formattedLastName = capitalizeFirstLetter(lastName);
-        const customerName = formattedFirstName && formattedLastName 
-          ? `${formattedFirstName} ${formattedLastName}` 
-          : formattedFirstName || "Customer";
-        setActiveChat({
-              roomId: roomId,
-              isUserSide: false,
-              chaterName: customerName,
-              chaterId : userId,
-              userID: user?.user_ID,
-              remainingTime: Number(data?.remainingTime)
-            });
-        // Start timer from 0
-        setChatSeconds(0)
-        
-            navigate(
-                    PATH.privateRoutes.CHAT_WINDOW.path.replace(
-                      ":chatId",
-                      userId
-                    ),
-                    {
-                      state: {
-                        userId: userId,
-                        astrologerId: astrologerId,
-                        fullName: customerName,
-                        roomId: roomId,
-                        isUserSide: false,
-                        kundliId:null
-                      },
-                    }
-                  )
-=======
   useEffect(() => {
     const handleChatUserAccepted = (data) => {
       console.log("useraccept list update", data);
@@ -228,7 +181,6 @@ const HomeLayout = () => {
       const capitalizeFirstLetter = (str) => {
         if (!str) return "";
         return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
->>>>>>> Stashed changes
       };
 
       const formattedFirstName = capitalizeFirstLetter(firstName);
@@ -406,12 +358,7 @@ const HomeLayout = () => {
         <div className="h-1"></div>
         <AudioVideoContainer />
         <IncomingChatModal />
-<<<<<<< Updated upstream
-        <StickyChatFooter />
-        <StickyReviewFooter/>
-=======
         <StickyReviewFooter />
->>>>>>> Stashed changes
       </main>
     </div>
   );

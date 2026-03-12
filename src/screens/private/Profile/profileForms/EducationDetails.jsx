@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
 import { useSelector } from "react-redux";
 import * as Yup from "yup";
-import { ChevronDown, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Icons } from "../../../../components/Icons";
 import Button from "../../../../components/UI/button/Button";
 import SectionHeader from "../../../../components/UI/sectionHeader/SectionHeader";
@@ -21,15 +21,6 @@ const EDUCATION_LEVELS = [
   "Undergraduate",
   "Postgraduate",
   "Prefer not to say",
-];
-
-const UNIVERSITIES = [
-  "Delhi University",
-  "Mumbai University",
-  "Pune University",
-  "Banaras Hindu University",
-  "Jawaharlal Nehru University",
-  "Other",
 ];
 
 const EducationDetails = () => {
@@ -189,11 +180,6 @@ const EducationDetails = () => {
     }
   };
 
-  const handleSaveAndReturn = async () => {
-    // Navigate back to profile
-    navigate("/profile");
-  };
-
   const isFormValid =
     formik.values.qualification.trim() !== "" && formik.isValid;
 
@@ -207,40 +193,41 @@ const EducationDetails = () => {
         {/* Education Grid Container */}
         {!isAddingNew && (
           <>
-          <div className={styles.educationList}>
-            {/* Existing Education Cards */}
-            {existingEducation.length > 0 && existingEducation.map((edu, index) => (
-              <div key={index} className={styles.educationCard}>
-                <div className={styles.educationCardHeader}>
-                  <span className={styles.educationLevel}>
-                    {edu.qualification}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => handleEdit(index)}
-                    className={styles.editIconButton}
-                  >
-                    <img src={AppIcons.EditIcon} alt="Edit Icons" />
-                  </button>
-                </div>
-                <h3 className={styles.universityName}>
-                  {edu.universityName || "No university specified"}
-                </h3>
-                {edu.certificateImgUrl && (
-                  <button
-                    type="button"
-                    onClick={() => setViewingAttachments(edu.certificateImgUrl)}
-                    className={styles.viewAttachmentsButton}
-                  >
-                    View Attachments
-                  </button>
-                )}
-              </div>
-            ))}
-
-            
-          </div>
-          {/* Add New Button */}
+            <div className={styles.educationList}>
+              {/* Existing Education Cards */}
+              {existingEducation.length > 0 &&
+                existingEducation.map((edu, index) => (
+                  <div key={index} className={styles.educationCard}>
+                    <div className={styles.educationCardHeader}>
+                      <span className={styles.educationLevel}>
+                        {edu.qualification}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleEdit(index)}
+                        className={styles.editIconButton}
+                      >
+                        <img src={AppIcons.EditIcon} alt="Edit Icons" />
+                      </button>
+                    </div>
+                    <h3 className={styles.universityName}>
+                      {edu.universityName || "No university specified"}
+                    </h3>
+                    {edu.certificateImgUrl && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setViewingAttachments(edu.certificateImgUrl)
+                        }
+                        className={styles.viewAttachmentsButton}
+                      >
+                        View Attachments
+                      </button>
+                    )}
+                  </div>
+                ))}
+            </div>
+            {/* Add New Button */}
             <button
               type="button"
               onClick={handleAddNew}
@@ -249,8 +236,7 @@ const EducationDetails = () => {
               <Plus size={20} />
               Add Qualification
             </button>
-
-            </>
+          </>
         )}
 
         {/* Add/Edit Form */}
@@ -276,46 +262,55 @@ const EducationDetails = () => {
                 ))}
               </div>
               {formik.touched.qualification && formik.errors.qualification && (
-                <p className={styles.errorText}>{formik.errors.qualification}</p>
+                <p className={styles.errorText}>
+                  {formik.errors.qualification}
+                </p>
               )}
             </div>
 
             {/* University */}
             <div className={styles.formGroup}>
               <label className={styles.label}>
-                Select University{" "}
-                <span className={styles.optionalText}>(if any)</span>
+                University/College Name
+                <span className={styles.optionalText}> (if any)</span>
               </label>
-              <div className={styles.selectWrapper}>
-                <select
-                  name="universityName"
-                  value={formik.values.universityName}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  className={styles.select}
-                >
-                  <option value="">Select</option>
-                  {UNIVERSITIES.map((uni) => (
-                    <option key={uni} value={uni}>
-                      {uni}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className={styles.selectIcon} />
-              </div>
+              <input
+                type="text"
+                name="universityName"
+                value={formik.values.universityName}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                className={styles.input}
+                placeholder="Enter university name"
+              />
             </div>
 
             {/* Certificate Upload */}
-            <FileUploadInput
-              label="Attach Certificate"
-              optionalText="(if any)"
-              accept="image/*,.pdf"
-              value={formik.values.certificateImgUrl}
-              isUploading={uploadingCertificate}
-              onUpload={handleFileUpload}
-              uploadText="Tap here to add file"
-              uploadSubtext="(.jpg, .png, .pdf)"
-            />
+            <div className={styles.formGroup}>
+              <label className={styles.label}>Attachments</label>
+              <div className={styles.attachmentsGrid}>
+                {formik.values.certificateImgUrl && (
+                  <div className={styles.attachmentItem}>
+                   
+                      <img
+                        src={formik.values.certificateImgUrl}
+                        alt="attachment"
+                        className={styles.attachmentImage}
+                      />
+                   
+                  </div>
+                 )}
+                <FileUploadInput
+                  optionalText="(if any)"
+                  accept="image/*,.pdf"
+                  value=""
+                  isUploading={uploadingCertificate}
+                  onUpload={handleFileUpload}
+                  uploadText="Add"
+                  uploadSubtext="(.jpg, .png, .pdf)"
+                />
+              </div>
+            </div>
 
             {/* Display on Profile Toggle */}
             <div className="mb-6 flex">
@@ -341,23 +336,16 @@ const EducationDetails = () => {
                 disabled={isButtonDisabled}
                 className={styles.saveFormButton}
               >
-                {isUpdating ? "Saving..." : editingIndex !== null ? "Update" : "Add"}
+                {isUpdating
+                  ? "Saving..."
+                  : editingIndex !== null
+                    ? "Update"
+                    : "Add"}
               </Button>
             </div>
           </div>
         )}
       </div>
-
-      {/* Save and Return Button - Only show when not adding/editing */}
-      {!isAddingNew && existingEducation.length > 0 && (
-        <Button
-          type="button"
-          onClick={handleSaveAndReturn}
-          className={styles.saveButton}
-        >
-          Save <Icons.ChevronRight size={20} />
-        </Button>
-      )}
 
       {/* Attachment Viewer Modal */}
       {viewingAttachments && (

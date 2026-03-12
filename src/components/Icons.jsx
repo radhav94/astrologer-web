@@ -35,7 +35,8 @@ import {
   Radio,
   MessagesSquare,
   ArrowUpDown,
-  RefreshCw
+  RefreshCw,
+  BookOpen
 } from "lucide-react";
 
 export const Icons = {
@@ -75,5 +76,6 @@ export const Icons = {
   LogOut,
   Radio,
   Chats: MessageSquare,
-  ArrowUpDown
+  ArrowUpDown,
+  BookOpen
 };

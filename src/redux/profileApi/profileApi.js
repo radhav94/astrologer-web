@@ -1,3 +1,4 @@
+import { setAstrologerDetails } from "../../reducer/registerSlice";
 import { epicApi } from "../baseApi/epicApi";
 
 export const profileApi = epicApi.injectEndpoints({
@@ -10,6 +11,15 @@ export const profileApi = epicApi.injectEndpoints({
       providesTags: (result, error, { id }) => [
         { type: "Astrologer", id },
       ],
+      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+    try {
+      const { data } = await queryFulfilled;
+
+      dispatch(setAstrologerDetails(data?.data));
+    } catch (error) {
+      console.error("Failed to store astrologer details:", error);
+    }
+  },
     }),
     getTransactionList: builder.query({
       query: ({ page = 1, limit = 10 } = {}) => ({

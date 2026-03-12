@@ -1,6 +1,251 @@
 $transition-time: 400ms;
 $mobile-screen-width: 500px;
 
+// Main container
+.container {
+  display: flex;
+  height: 100vh;
+  background-color: #F8F9FA;
+  overflow: hidden;
+}
+
+// Main content area
+.main {
+  flex: 1;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+}
+
+// Header
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background-color: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid #f3f4f6;
+  padding: 0.75rem 1rem;
+
+  &.hidden {
+    display: none;
+  }
+}
+
+.headerContent {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+// Left section
+.leftSection {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.menuButton {
+  padding: 0.5rem;
+  margin-left: -0.5rem;
+  color: #4b5563;
+  background: none;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    background-color: #f3f4f6;
+  }
+
+  @media (min-width: 1024px) {
+    display: none;
+  }
+}
+
+.avatarWrapper {
+  position: relative;
+}
+
+.avatarContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.avatarInner {
+  position: relative;
+}
+
+.avatar {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background-color: #e5e7eb;
+  overflow: hidden;
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.statusDot {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 0.75rem;
+  height: 0.75rem;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+
+  &.online {
+    background-color: #22c55e;
+  }
+
+  &.offline {
+    background-color: #d1d5db;
+  }
+}
+
+.userInfo {
+  line-height: 1.25;
+  text-align: start;
+}
+
+.greeting {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.userName {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.date {
+  font-size: 0.75rem;
+  margin-top: 0.5rem;
+  color: #9ca3af;
+}
+
+// Right section
+.rightSection {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.followers {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.statusButtons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.statusButton {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 2.5rem;
+  padding-left: 1rem;
+  padding-right: 0.5rem;
+  border-radius: 9999px;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  border: none;
+  cursor: pointer;
+
+  &.active {
+    background-color: var(--card-2);
+
+    &:hover {
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+  }
+
+  &.inactive {
+    background-color: #e5e7eb;
+
+    &:hover {
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+  }
+
+  &.loading {
+    opacity: 0.6;
+    cursor: not-allowed;
+
+    &:hover {
+      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    }
+  }
+}
+
+.statusLabel {
+  font-size: 0.875rem;
+  font-weight: 600;
+
+  &.active {
+    color: var(--main-primary-start);
+  }
+
+  &.inactive {
+    color: #6b7280;
+  }
+}
+
+.statusIcon {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s ease;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+
+  &.active {
+    background:linear-gradient(90deg, var(--main-primary-start) 0%, var(--main-primary-end) 100%);
+  }
+
+  &.inactive {
+    background-color: #9ca3af;
+  }
+
+  svg {
+    color: #ffffff;
+  }
+}
+
+// Content area
+.content {
+  padding: 1rem;
+  max-width: 80rem;
+  margin-left: auto;
+  margin-right: auto;
+  min-height: calc(100vh - 80px);
+}
+
+// Bottom spacer
+.bottomSpacer {
+  height: 0.25rem;
+}
+
+// Legacy layout styles (keeping for compatibility)
 .layout {
   display: flex;
   flex-direction: column;
@@ -26,13 +271,12 @@ $mobile-screen-width: 500px;
     top: 0;
     width: 100%;
     z-index: 2000;
-
-    background: #ffffff; //  FIX
-    border-bottom: 1px solid #eee; //  Optional but looks premium
+    background: #ffffff;
+    border-bottom: 1px solid #eee;
   }
 
   .topGap {
-    height: 95px; // same as TopBar height
+    height: 95px;
     @media screen and (max-width: 772px) {
       height: 68px;
     }

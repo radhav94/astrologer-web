@@ -2,6 +2,7 @@ import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Icons } from "./Icons";
 import { useCall } from "../context/CallContext";
 import { Toast } from "../components";
+import styles from "./Sidebar.module.scss";
 
 const Sidebar = ({ isOpen, onClose }) => {
   const location = useLocation();
@@ -63,43 +64,36 @@ const Sidebar = ({ isOpen, onClose }) => {
     <>
       {/* Mobile Overlay */}
       <div
-        className={`fixed inset-0 z-40 bg-black/50 transition-opacity lg:hidden ${
-          isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-        }
-        `}
+        className={`${styles.overlay} ${isOpen ? styles.open : styles.closed}`}
         onClick={onClose}
       />
 
       {/* Sidebar */}
       <div
-        className={`fixed top-0 left-0 z-50 h-full w-64 bg-white shadow-xl transform transition-transform duration-300 ease-in-out 
-        lg:translate-x-0 lg:static lg:shadow-none lg:border-r border-gray-100
-        ${isOpen ? "translate-x-0" : "-translate-x-full"} ${kundliId ? "hidden" : "block"}`}
+        className={`${styles.sidebar} ${isOpen ? styles.open : ""} ${kundliId ? styles.hidden : ""}`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">S</span>
+        <div className={styles.header}>
+          <div className={styles.headerContent}>
+            <div className={styles.logo}>
+              <span className={styles.logoText}>S</span>
             </div>
-            <span className="font-bold text-xl text-gray-800">ShubhAstro</span>
+            <span className={styles.brandName}>ShubhAstro</span>
           </div>
-          <button onClick={onClose} className="lg:hidden text-gray-500">
+          <button onClick={onClose} className={styles.closeButton}>
             <Icons.X size={24} />
           </button>
         </div>
 
         {/* Menu */}
-        <nav className="px-4 py-4 space-y-2">
+        <nav className={styles.nav}>
           {menuItems.map((item) => (
             <Link
               key={item.id}
               onClick={onClose}
               to={item.path}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
-                location.pathname === item.path
-                  ? "bg-green-50 text-green-600 font-semibold"
-                  : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
+              className={`${styles.menuItem} ${
+                location.pathname === item.path ? styles.active : ""
               }`}
             >
               <item.icon size={20} />
@@ -110,7 +104,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           {/* Logout Button */}
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500  hover:bg-gray-50 hover:text-gray-900 transition-colors"
+            className={styles.logoutButton}
           >
             <Icons.LogOut size={20} />
             <span>Logout</span>

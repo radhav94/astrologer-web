@@ -33,6 +33,8 @@ const Dashboard = () => {
   const { data } = useGetAstrologerByIdQuery(astrologerId);
   const astrologerData = data?.data || {};
 
+  
+
   // Fetch homepage sections with ordering
   const { orderedSections, tipsContent, isLoading: isSectionsLoading } = useHomepageSections();
 

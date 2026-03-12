@@ -17,10 +17,25 @@ import { useSelector } from "react-redux";
 const Languages = () => {
   const navigate = useNavigate();
   const [setAstroEditProfile, { isLoading: isUpdating }] = useSetAstroEditProfileMutation();
+  
+  // Get astrologer details from Redux state
+  const astrologerDetails = useSelector((state) => state.register.astrologerDetails);
   const astrologerIdFromRedux = useSelector((state) => state.register.astrologerId);
   
-  const astrologerId = astrologerIdFromRedux;
+  // Fallback to localStorage if Redux doesn't have the data
+  const userData = JSON.parse(
+    localStorage.getItem("shubhtalk_astrologer_details") || "{}"
+  );
   
+  const astrologerId = astrologerIdFromRedux || userData?._id;
+  
+  // Use Redux state as primary source for prefilling form
+  const existingData = astrologerDetails || userData;
+  
+  // Get existing language preferences from Redux
+  const existingLanguages = existingData?.languagePreferences || [];
+  
+  // Static language cards for UI design purposes only
   const [myLanguages] = useState([
     { id: "1", name: "Hindi", level: "Beginner", symbol: AppImages.Letter1 },
     { id: "2", name: "English", level: "Beginner", symbol: AppImages.Letter1 },
@@ -49,12 +64,13 @@ const Languages = () => {
   // Formik setup
   const formik = useFormik({
     initialValues: {
-      languagePreferences: [],
+      languagePreferences: existingLanguages,
       customLanguage: "",
     },
     validationSchema,
     validateOnChange: true,
     validateOnBlur: true,
+    validateOnMount: true,
     onSubmit: async (values) => {
       try {
 
@@ -132,7 +148,7 @@ const Languages = () => {
   // Check if all required fields are filled and valid
   const isFormValid =
     formik.values.languagePreferences.length > 0 &&
-    Object.keys(formik.errors).length === 0;
+    formik.isValid;
 
   const isButtonDisabled = !isFormValid || formik.isSubmitting || isUpdating;
 

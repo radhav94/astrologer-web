@@ -1,335 +1,353 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Icons } from "../../../../components/Icons";
-import { Link } from "react-router-dom";
-import { ChevronRight, Calendar } from "lucide-react";
+import { Clock, ChevronUp, ChevronDown, Info } from "lucide-react";
+import { useUpdateAvailabilityMutation, useGetAstrologerByIdQuery } from "../../../../redux/astrologer/astrologerApi";
+import { Toast } from "../../../../components";
+import SectionHeader from "../../../../components/UI/SectionHeader";
 
-const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const CALENDAR_ROWS = 42; // 6 weeks
+const DAYS_OF_WEEK = [
+  { key: "monday", label: "Monday" },
+  { key: "tuesday", label: "Tuesday" },
+  { key: "wednesday", label: "Wednesday" },
+  { key: "thursday", label: "Thursday" },
+  { key: "friday", label: "Friday" },
+  { key: "saturday", label: "Saturday" },
+  { key: "sunday", label: "Sunday" },
+];
 
-const SetAvailability = () => {
-  const [isFlexible, setIsFlexible] = useState(true);
-  const [isSelectingRange, setIsSelectingRange] = useState(false);
+const DEFAULT_START = "09:00";
+const DEFAULT_END = "19:00";
 
-  const today = useMemo(() => new Date(), []);
-  const todaysDate = useMemo(() => today.toISOString().split("T")[0], [today]);
+const formatTime12 = (time24) => {
+  if (!time24) return "";
+  const [h, m] = time24.split(":").map(Number);
+  const period = h >= 12 ? "PM" : "AM";
+  const hour12 = h % 12 || 12;
+  return `${hour12}:${m.toString().padStart(2, "0")} ${period}`;
+};
 
-  const [date, setDate] = useState({
-    startDate: todaysDate,
-    endDate: todaysDate,
+const getInitialSchedule = (availability = []) => {
+  const scheduleFromApi = {};
+  availability.forEach((item) => {
+    const slot = item.slots?.[0];
+    scheduleFromApi[item.day] = {
+      enabled: true,
+      start: slot?.start || DEFAULT_START,
+      end: slot?.end || DEFAULT_END,
+    };
   });
 
-  const [currentMonth, setCurrentMonth] = useState(
-    new Date(today.getFullYear(), today.getMonth(), 1)
+  return DAYS_OF_WEEK.reduce((acc, day) => {
+    acc[day.key] = scheduleFromApi[day.key] || {
+      enabled: false,
+      start: DEFAULT_START,
+      end: DEFAULT_END,
+    };
+    return acc;
+  }, {});
+};
+
+const SetAvailability = () => {
+  const userData = JSON.parse(
+    localStorage.getItem("shubhtalk_astrologer_details")
   );
+  const astrologerId = userData?._id;
+  const { data: astrologerData } = useGetAstrologerByIdQuery(astrologerId);
 
-  /* ================= HELPER FUNCTIONS ================= */
+  const [schedule, setSchedule] = useState(() => getInitialSchedule());
+  const [isScheduleOpen, setIsScheduleOpen] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [updateAvailability, { isLoading }] = useUpdateAvailabilityMutation();
 
-  const formatDateForDisplay = useCallback((dateStr) => {
-    if (!dateStr) return "";
-    const [year, month, day] = dateStr.split('-');
-    return `${month}/${day}/${year}`;
+  // Sync schedule when API data loads
+  useEffect(() => {
+    const availability = astrologerData?.data?.availability;
+    if (availability?.length) {
+      setSchedule(getInitialSchedule(availability));
+    }
+  }, [astrologerData]);
+
+  const toggleDay = useCallback((dayKey) => {
+    setSchedule((prev) => ({
+      ...prev,
+      [dayKey]: { ...prev[dayKey], enabled: !prev[dayKey].enabled },
+    }));
   }, []);
 
-  const formatDateToString = useCallback((dateObj) => {
-    const year = dateObj.getFullYear();
-    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-    const day = String(dateObj.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+  const updateTime = useCallback((dayKey, field, value) => {
+    setSchedule((prev) => ({
+      ...prev,
+      [dayKey]: { ...prev[dayKey], [field]: value },
+    }));
   }, []);
 
-  const isDateInRange = useCallback((checkDate) => {
-    if (!date.startDate || !date.endDate) return false;
-    
-    const start = new Date(date.startDate);
-    const end = new Date(date.endDate);
-    const check = new Date(checkDate);
-    
-    // Reset time parts for accurate comparison
-    start.setHours(0, 0, 0, 0);
-    end.setHours(0, 0, 0, 0);
-    check.setHours(0, 0, 0, 0);
-    
-    return check >= start && check <= end;
-  }, [date.startDate, date.endDate]);
+  // Current online status
+  const now = new Date();
+  const jsDay = now.getDay(); // 0=Sun, 1=Mon, ...
+  const currentDayKey = DAYS_OF_WEEK[jsDay === 0 ? 6 : jsDay - 1]?.key;
+  const todaySchedule = schedule[currentDayKey];
 
-  /* ================= CALENDAR GENERATOR ================= */
+  const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+  const isCurrentlyOnline =
+    todaySchedule?.enabled &&
+    currentTime >= todaySchedule.start &&
+    currentTime <= todaySchedule.end;
+  const offlineTime = todaySchedule?.enabled
+    ? formatTime12(todaySchedule.end)
+    : null;
 
-  const calendarData = useMemo(() => {
-    const year = currentMonth.getFullYear();
-    const month = currentMonth.getMonth();
-
-    const firstDayOfMonth = new Date(year, month, 1);
-    const lastDayOfMonth = new Date(year, month + 1, 0);
-
-    const startDayIndex = (firstDayOfMonth.getDay() + 6) % 7; // Monday start
-    const totalDays = lastDayOfMonth.getDate();
-    const prevMonthLastDay = new Date(year, month, 0).getDate();
-
-    const calendar = [];
-
-    // Previous month days
-    for (let i = startDayIndex - 1; i >= 0; i--) {
-      calendar.push({
-        day: prevMonthLastDay - i,
-        prev: true,
-        date: new Date(year, month - 1, prevMonthLastDay - i),
-      });
-    }
-
-    // Current month days
-    for (let d = 1; d <= totalDays; d++) {
-      const currentDate = new Date(year, month, d);
-      const isToday =
-        d === today.getDate() &&
-        month === today.getMonth() &&
-        year === today.getFullYear();
-
-      const isSelected = isDateInRange(currentDate);
-
-      calendar.push({
-        day: d,
-        today: isToday,
-        selected: isSelected,
-        date: currentDate,
-      });
-    }
-
-    // Next month fillers
-    let nextDay = 1;
-    while (calendar.length < CALENDAR_ROWS) {
-      calendar.push({
-        day: nextDay,
-        next: true,
-        date: new Date(year, month + 1, nextDay),
-      });
-      nextDay++;
-    }
-
-    return calendar;
-  }, [currentMonth, today, isDateInRange]);
-
-  /* ================= EVENT HANDLERS ================= */
-
-  const handleDateClick = useCallback((dateObj) => {
-    if (dateObj.prev || dateObj.next) return;
-    
-    const clickedDate = formatDateToString(dateObj.date);
-    
-    if (!isFlexible) {
-      // Fixed Date: Always set both start and end to the same date
-      setDate({
-        startDate: clickedDate,
-        endDate: clickedDate,
-      });
-      setIsSelectingRange(false);
-    } else {
-      // Flexible Date: Allow range selection
-      if (!isSelectingRange) {
-        // Start new selection
-        setDate({
-          startDate: clickedDate,
-          endDate: clickedDate,
-        });
-        setIsSelectingRange(true);
-      } else {
-        // Complete the range
-        if (clickedDate >= date.startDate) {
-          setDate(prev => ({ ...prev, endDate: clickedDate }));
-        } else {
-          setDate({
-            startDate: clickedDate,
-            endDate: date.startDate,
-          });
-        }
-        setIsSelectingRange(false);
+  const handleSave = useCallback(async () => {
+    try {
+      const enabledDays = DAYS_OF_WEEK.filter((d) => schedule[d.key].enabled);
+      if (enabledDays.length === 0) {
+        Toast.warning("Please enable at least one day");
+        return;
       }
+
+      const payload = enabledDays.map((d) => ({
+        day: d.key,
+        slots: [
+          {
+            start: schedule[d.key].start,
+            end: schedule[d.key].end,
+            timezone: "IST",
+          },
+        ],
+      }));
+
+      await updateAvailability(payload).unwrap();
+      Toast.success("Availability updated successfully");
+      setIsEditing(false);
+    } catch (error) {
+      Toast.error(error?.data?.message || "Failed to update availability");
     }
-  }, [isFlexible, isSelectingRange, date.startDate, formatDateToString]);
-
-  const handlePrevMonth = useCallback(() => {
-    setCurrentMonth(
-      new Date(
-        currentMonth.getFullYear(),
-        currentMonth.getMonth() - 1,
-        1
-      )
-    );
-  }, [currentMonth]);
-
-  const handleNextMonth = useCallback(() => {
-    setCurrentMonth(
-      new Date(
-        currentMonth.getFullYear(),
-        currentMonth.getMonth() + 1,
-        1
-      )
-    );
-  }, [currentMonth]);
+  }, [schedule, updateAvailability]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-2xl mx-auto bg-white min-h-screen md:min-h-0 md:my-8 md:rounded-2xl md:shadow-sm">
-        <div className="px-5 py-6 md:px-8 md:py-8">
-          {/* Header */}
-          <div className="flex items-center gap-4 mb-6">
-            <Link 
-              to="/profile"
-              state={{ data: "availability" }}
-              className="p-2 bg-[#FFF5EC] border border-[#FFE8C5] rounded-xl hover:bg-[#FFEDD5] transition-colors flex-shrink-0"
-            >
-              <Icons.ChevronLeft size={20} className="text-[#F75801]" />
-            </Link>
-            <h1 className="text-xl font-bold text-gray-900">
-              Availability
-            </h1>
-          </div>
-
-          {/* Tabs */}
-          <div className="flex border-b border-gray-200 mb-6">
-            <button
-              onClick={() => setIsFlexible(true)}
-              className={`flex-1 pb-3 text-sm font-semibold transition-colors relative
-                ${isFlexible ? "text-[#F75801]" : "text-gray-400"}`}
-            >
-              Flexible Date
-              {isFlexible && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#F75801]" />
-              )}
-            </button>
-            <button
-              onClick={() => setIsFlexible(false)}
-              className={`flex-1 pb-3 text-sm font-semibold transition-colors relative
-                ${!isFlexible ? "text-[#F75801]" : "text-gray-400"}`}
-            >
-              Fixed Date
-              {!isFlexible && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#F75801]" />
-              )}
-            </button>
-          </div>
-
-          {/* Date Inputs */}
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            <div>
-              <label htmlFor="startDate" className="text-sm font-semibold text-gray-900 mb-2 block">
-                Start Date
-              </label>
-              <div className="relative">
-                <input
-                  id="startDate"
-                  type="text"
-                  value={formatDateForDisplay(date.startDate)}
-                  readOnly
-                  className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm font-medium text-gray-900
-                           focus:outline-none focus:ring-0 focus:border-gray-400 pr-10 bg-white cursor-default"
-                />
-                <Calendar 
-                  size={20} 
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#F75801] pointer-events-none" 
-                />
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="endDate" className="text-sm font-semibold text-gray-900 mb-2 block">
-                End Date
-              </label>
-              <div className="relative">
-                <input
-                  id="endDate"
-                  type="text"
-                  value={formatDateForDisplay(date.endDate)}
-                  readOnly
-                  className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm font-medium text-gray-900
-                           focus:outline-none focus:ring-0 focus:border-gray-400 pr-10 bg-white cursor-default"
-                />
-                <Calendar 
-                  size={20} 
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#F75801] pointer-events-none" 
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Calendar */}
-          <div className="bg-white border border-gray-200 rounded-2xl p-5 mb-6 shadow-sm">
-            {/* Calendar Header */}
-            <div className="flex items-center justify-between mb-6">
-              <button
-                onClick={handlePrevMonth}
-                className="p-2 text-[#F75801] hover:bg-[#FFF5EC] rounded-lg transition-colors"
-                aria-label="Previous month"
-              >
-                <Icons.ChevronLeft size={20} />
-              </button>
-
-              <h2 className="text-base font-bold text-gray-900">
-                {currentMonth.toLocaleString("default", {
-                  month: "long",
-                  year: "numeric",
-                })}
-              </h2>
-
-              <button
-                onClick={handleNextMonth}
-                className="p-2 text-[#F75801] hover:bg-[#FFF5EC] rounded-lg transition-colors"
-                aria-label="Next month"
-              >
-                <Icons.ChevronRight size={20} />
-              </button>
-            </div>
-
-            {/* Day Headers */}
-            <div className="grid grid-cols-7 gap-2 mb-3">
-              {DAYS.map((d) => (
-                <div
-                  key={d}
-                  className="text-center text-xs font-medium text-gray-500"
-                >
-                  {d}
-                </div>
-              ))}
-            </div>
-
-            {/* Calendar Grid */}
-            <div className="grid grid-cols-7 gap-2">
-              {calendarData.map((item, idx) => (
-                <div key={idx} className="flex justify-center items-center">
-                  <button
-                    onClick={() => handleDateClick(item)}
-                    disabled={item.prev || item.next}
-                    className={`w-10 h-10 flex items-center justify-center rounded-full text-sm font-medium transition-all
-                      ${item.selected ? "bg-[#F75801] text-white" : ""}
-                      ${item.today && !item.selected ? "border-2 border-[#F75801] text-gray-900" : ""}
-                      ${item.prev || item.next ? "text-gray-300 cursor-not-allowed" : ""}
-                      ${
-                        !item.prev && !item.next && !item.today && !item.selected
-                          ? "text-gray-900 hover:bg-gray-100"
-                          : ""
-                      }
-                    `}
-                    aria-label={`Select ${item.day}`}
-                  >
-                    {item.day}
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Next Button */}
-          <Link
-            to="/schedule-availablity"
-            state={{ data: date }}
-            className="w-full bg-gradient-to-r from-[#F75801] to-[#D43400] text-white font-semibold py-4 rounded-full
-                     hover:from-[#E54E00] hover:to-[#C32F00] active:scale-[0.98] transition-all shadow-lg
-                     flex items-center justify-center gap-2"
+    <div className="pt-4 pb-6 px-1">
+      {/* ===== BUSINESS HOURS INFO CARD ===== */}
+      <div
+        className="rounded-2xl px-5 py-5 mb-8"
+        style={{ backgroundColor: "#FFF8F0", border: "1px solid #FFE8C5" }}
+      >
+        <div className="flex items-center gap-2.5 mb-2">
+          <div
+            className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
+            style={{ backgroundColor: "#F75801" }}
           >
-            Next
-            <ChevronRight size={20} />
-          </Link>
+            <Info size={14} className="text-white" />
+          </div>
+          <h3
+            className="text-[15px] font-extrabold tracking-wide"
+            style={{ color: "#1A1A1A" }}
+          >
+            BUSINESS HOURS
+          </h3>
         </div>
+        <p className="text-[13px] leading-[1.6] ml-[34px]" style={{ color: "#6B7280" }}>
+          Set your availability for consultations. Clients
+          will only be able to book during these hours.
+        </p>
       </div>
+
+      {/* ===== WEEKLY SCHEDULE HEADING ===== */}
+      <div className="mb-5">
+        <SectionHeader title="Weekly Schedule" />
+      </div>
+
+      {/* ===== SCHEDULE CARD (collapsible) ===== */}
+      <div
+        className="rounded-2xl overflow-hidden mb-8"
+        style={{ border: "1px solid #E5E7EB" }}
+      >
+        {/* Online status toggle bar */}
+        <button
+          onClick={() => setIsScheduleOpen((v) => !v)}
+          className="w-full flex items-center justify-between px-5 py-4 bg-white"
+          style={{ borderBottom: isScheduleOpen ? "1px solid #F3F4F6" : "none" }}
+        >
+          <div className="flex items-center gap-2.5">
+            <Clock size={18} style={{ color: "#9CA3AF" }} />
+            {isCurrentlyOnline ? (
+              <span className="text-[14px]">
+                <span className="font-semibold" style={{ color: "#16A34A" }}>
+                  Online
+                </span>
+                <span style={{ color: "#9CA3AF" }}> • Offline {offlineTime}</span>
+              </span>
+            ) : (
+              <span className="text-[14px] font-medium" style={{ color: "#9CA3AF" }}>
+                Offline
+              </span>
+            )}
+          </div>
+          {isScheduleOpen ? (
+            <ChevronUp size={22} style={{ color: "#F75801" }} />
+          ) : (
+            <ChevronDown size={22} style={{ color: "#F75801" }} />
+          )}
+        </button>
+
+        {/* Day-wise schedule list */}
+        {isScheduleOpen && (
+          <div className="px-5 py-4 bg-white space-y-3">
+            {DAYS_OF_WEEK.map((day, idx) => {
+              const s = schedule[day.key];
+              const isFirst = idx === 0;
+              return (
+                <div
+                  key={day.key}
+                  className="flex items-center justify-between"
+                >
+                  <span
+                    className="text-[14px]"
+                    style={{
+                      color: s.enabled ? "#1A1A1A" : "#9CA3AF",
+                      fontWeight: isFirst && s.enabled ? 700 : s.enabled ? 500 : 400,
+                    }}
+                  >
+                    {day.label} :
+                  </span>
+                  <span
+                    className="text-[14px]"
+                    style={{
+                      color: s.enabled ? "#1A1A1A" : "#9CA3AF",
+                      fontWeight: isFirst && s.enabled ? 700 : s.enabled ? 500 : 400,
+                      fontStyle: s.enabled ? "normal" : "italic",
+                    }}
+                  >
+                    {s.enabled
+                      ? `${formatTime12(s.start)} – ${formatTime12(s.end)}`
+                      : "Offline"}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* ===== EDIT MODE / BUTTON ===== */}
+      {isEditing ? (
+        <>
+          <div className="space-y-4 mb-8">
+            {DAYS_OF_WEEK.map((day) => {
+              const s = schedule[day.key];
+              return (
+                <div
+                  key={day.key}
+                  className="rounded-2xl px-5 py-4 bg-white"
+                  style={{ border: "1px solid #F3F4F6" }}
+                >
+                  {/* Day name + toggle */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span
+                        className="text-[15px] font-semibold block"
+                        style={{ color: "#1A1A1A" }}
+                      >
+                        {day.label}
+                      </span>
+                      {!s.enabled && (
+                        <span className="text-[12px] flex items-center gap-1 mt-0.5" style={{ color: "#9CA3AF" }}>
+                          <Clock size={12} /> Offline
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => toggleDay(day.key)}
+                      className="relative rounded-full transition-colors"
+                      style={{
+                        width: 44,
+                        height: 24,
+                        backgroundColor: s.enabled ? "#F75801" : "#D1D5DB",
+                      }}
+                      aria-label={`Toggle ${day.label}`}
+                    >
+                      <span
+                        className="absolute top-[2px] rounded-full bg-white shadow-sm transition-transform"
+                        style={{
+                          width: 20,
+                          height: 20,
+                          transform: s.enabled ? "translateX(22px)" : "translateX(2px)",
+                        }}
+                      />
+                    </button>
+                  </div>
+
+                  {/* Time pickers */}
+                  {s.enabled && (
+                    <div className="flex items-center gap-3 mt-3">
+                      <div className="flex-1 relative">
+                        <input
+                          type="time"
+                          value={s.start}
+                          onChange={(e) => updateTime(day.key, "start", e.target.value)}
+                          onClick={(e) => e.target.showPicker?.()}
+                          className="w-full rounded-xl px-3 py-2.5 text-[13px] pr-9 focus:outline-none"
+                          style={{ border: "1px solid #E5E7EB", color: "#1A1A1A" }}
+                        />
+                        <Clock
+                          size={16}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                          style={{ color: "#F75801" }}
+                        />
+                      </div>
+                      <span className="text-[13px] font-medium" style={{ color: "#9CA3AF" }}>To</span>
+                      <div className="flex-1 relative">
+                        <input
+                          type="time"
+                          value={s.end}
+                          onChange={(e) => updateTime(day.key, "end", e.target.value)}
+                          onClick={(e) => e.target.showPicker?.()}
+                          className="w-full rounded-xl px-3 py-2.5 text-[13px] pr-9 focus:outline-none"
+                          style={{ border: "1px solid #E5E7EB", color: "#1A1A1A" }}
+                        />
+                        <Clock
+                          size={16}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                          style={{ color: "#F75801" }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Save Button */}
+          <button
+            onClick={handleSave}
+            disabled={isLoading}
+            className="w-full text-white font-semibold py-4 rounded-full
+                       active:scale-[0.98] transition-all
+                       disabled:opacity-50 disabled:cursor-not-allowed
+                       flex items-center justify-center gap-2"
+            style={{
+              background: "linear-gradient(90deg, #F75801 0%, #D43400 100%)",
+              boxShadow: "0 4px 16px rgba(247, 88, 1, 0.3)",
+              fontSize: 16,
+            }}
+          >
+            {isLoading ? "Saving..." : (<>Save <Icons.ChevronRight size={18} /></>)}
+          </button>
+        </>
+      ) : (
+        <button
+          onClick={() => setIsEditing(true)}
+          className="w-full text-white font-semibold py-4 rounded-full
+                     active:scale-[0.98] transition-all
+                     flex items-center justify-center gap-2"
+          style={{
+            background: "linear-gradient(90deg, #F75801 0%, #D43400 100%)",
+            boxShadow: "0 4px 16px rgba(247, 88, 1, 0.3)",
+            fontSize: 16,
+          }}
+        >
+          Edit Availability <Icons.ChevronRight size={18} />
+        </button>
+      )}
     </div>
   );
 };

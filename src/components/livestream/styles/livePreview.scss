@@ -1,0 +1,222 @@
+/* ===============================
+   LIVE PREVIEW — FULLSCREEN
+   =============================== */
+
+.live-preview-fullscreen {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100dvh;
+  overflow: hidden;
+  background: #0a0a0a;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  z-index: 9999;
+}
+
+/* Camera feed fills the entire screen */
+.preview-bg-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+  z-index: 0;
+}
+
+.preview-bg-off {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(160deg, #1a1a2e 0%, #0a0a14 100%);
+  z-index: 0;
+}
+
+/* Dark gradient overlay for readability */
+.preview-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.15) 0%,
+    rgba(0, 0, 0, 0.05) 30%,
+    rgba(0, 0, 0, 0.3) 55%,
+    rgba(0, 0, 0, 0.75) 100%
+  );
+  pointer-events: none;
+}
+
+/* Preview badge — top right */
+.preview-badge {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* Close button — top left */
+.preview-close-btn {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 10;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.preview-close-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.08);
+}
+
+/* Center content */
+.preview-center {
+  position: relative;
+  z-index: 5;
+  text-align: center;
+  padding: 0 32px;
+  margin-bottom: auto;
+  margin-top: auto;
+  /* Push it to roughly 55-60% from top */
+  padding-top: 45vh;
+}
+
+.preview-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 10px;
+  letter-spacing: -0.3px;
+}
+
+.preview-subtitle {
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0;
+  line-height: 1.5;
+  max-width: 280px;
+  margin-inline: auto;
+}
+
+/* Bottom CTA area */
+.preview-bottom {
+  position: relative;
+  z-index: 5;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 24px 40px;
+  gap: 14px;
+}
+
+.preview-hint {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0;
+}
+
+.go-live-btn {
+  padding: 12px 48px;
+  border-radius: 30px;
+  border: none;
+  background: linear-gradient(135deg, #ffa940, #ff6b00, #e85500);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 6px 24px rgba(255, 98, 0, 0.45);
+  transition: all 0.25s ease;
+  letter-spacing: 0.3px;
+}
+
+.go-live-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 32px rgba(255, 98, 0, 0.6);
+}
+
+.go-live-btn:active {
+  transform: translateY(0);
+}
+
+.go-live-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Permission warning */
+.permission-warning {
+  text-align: center;
+  color: #ff6b6b;
+  font-size: 13px;
+  background: rgba(255, 60, 60, 0.15);
+  backdrop-filter: blur(8px);
+  padding: 10px 16px;
+  border-radius: 12px;
+  margin: 0;
+  max-width: 320px;
+}
+
+/* Desktop — constrain to phone-like frame */
+@media (min-width: 769px) {
+  .live-preview-fullscreen {
+    background: #000;
+  }
+
+  .preview-bg-video,
+  .preview-bg-off,
+  .preview-overlay {
+    max-width: 420px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 24px;
+  }
+
+  .preview-bg-video {
+    transform: translateX(-50%) scaleX(-1);
+  }
+
+  .preview-center,
+  .preview-bottom {
+    max-width: 420px;
+  }
+}
+
+/* Safe area for notched phones */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .preview-badge,
+  .preview-toggles {
+    top: calc(16px + env(safe-area-inset-top));
+  }
+
+  .preview-bottom {
+    padding-bottom: calc(40px + env(safe-area-inset-bottom));
+  }
+}

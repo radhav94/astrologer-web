@@ -18,13 +18,44 @@ export const CallProvider = ({ children }) => {
 
   const [activeCall, setActiveCallState] = useState(null);
   const [callStartTime, setCallStartTimeState] = useState(null);
+  const [callTimer, setCallTimer] = useState(0); // Shared timer state
   const [waitingList, setWaitingList] = useState([]);
   const [incomingCall, setIncomingCall] = useState(null);
   const [openReview, setOpenReview] = useState(null);
   const [reviewData, setReviewData] = useState(null);
   const [isReconnecting, setIsReconnecting] = useState(false);
   const [callSeconds, setCallSeconds] = useState(0);
+  const [isUpgradeRejectionProtected, setIsUpgradeRejectionProtected] = useState(false);
+  const [isCallMinimized, setIsCallMinimized] = useState(false);
   const timerRef = useRef(null);
+  const upgradeRejectionRef = useRef(false); // Immediate protection using ref
+
+  // Reset minimized state when call ends
+  useEffect(() => {
+    if (!activeCall) {
+      setIsCallMinimized(false);
+    }
+  }, [activeCall]);
+
+  // Shared Agora state for smooth call upgrades
+  const [sharedAgoraState, setSharedAgoraState] = useState({
+    client: null,
+    micTrack: null,
+    cameraTrack: null,
+    isUpgrading: false
+  });
+
+  /* 🔥 Shared timer that updates every second when call is active */
+  useEffect(() => {
+    if (activeCall && callStartTime) {
+      const interval = setInterval(() => {
+        setCallTimer(Math.floor((Date.now() - callStartTime) / 1000));
+      }, 1000);
+      return () => clearInterval(interval);
+    } else {
+      setCallTimer(0);
+    }
+  }, [activeCall, callStartTime]);
 
   /* ================= TIMER ================= */
   const startTimer = () => {
@@ -204,7 +235,7 @@ export const CallProvider = ({ children }) => {
         agoraToken: data.agoraToken,
         callerId: data.callerId,
         callType: data.type || "audio",
-        callerName: data?.callerDetail?.firstName,
+        callerName: [data?.callerDetail?.firstName, data?.callerDetail?.lastName].filter(Boolean).join(' '),
         userId: data.userId || data.callerId,
         astrologerId: data.astrologerId || astroId,
         chatRoomId: data.chatRoomId || data.roomId,
@@ -219,7 +250,7 @@ export const CallProvider = ({ children }) => {
         agoraToken: data.agoraToken,
         callerId: data.callerId,
         callType: data.type || "audio",
-        callerName: data?.callerDetail?.firstName,
+        callerName: [data?.callerDetail?.firstName, data?.callerDetail?.lastName].filter(Boolean).join(' '),
         userId: data.userId || data.callerId,
         astrologerId: data.astrologerId || astroId,
         chatRoomId: data.chatRoomId || data.roomId,
@@ -297,6 +328,7 @@ export const CallProvider = ({ children }) => {
         setActiveCall,
         callStartTime,
         setCallStartTime,
+        callTimer,
         waitingList,
         setWaitingList,
         incomingCall,
@@ -313,6 +345,13 @@ export const CallProvider = ({ children }) => {
         startTimer,
         stopTimer,
         resetTimer,
+        sharedAgoraState,
+        setSharedAgoraState,
+        isUpgradeRejectionProtected,
+        setIsUpgradeRejectionProtected,
+        upgradeRejectionRef,
+        isCallMinimized,
+        setIsCallMinimized
       }}
     >
       {children}

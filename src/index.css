@@ -12,6 +12,23 @@ body.modal-open {
 
 }
 
+:root {
+  --main-primary-start: #F75801;
+  --main-primary-end: #D43400;
+  --primary-300: #FFC063;
+  --primary-400: #FE9934;
+  --border-color-1:#FFE4BA;
+  --box-shadow:rgba(0, 0, 0, 0.12);
+  --white-color: #fff;
+  --dark-color:#000;
+   --surface: #FEFEFE;
+  --title: #030303;
+  --card-2: #FFF5EC;
+  --grey-color-1:#424242;
+  --green-color-1:#4BA01D;
+  --red-color-1:#E4342F;
+}
+
 ::-webkit-scrollbar {
   width: 5px;
   height: 5px;

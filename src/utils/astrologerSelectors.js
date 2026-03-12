@@ -6,7 +6,15 @@ export const selectAstrologerProfile = (apiData) => {
   
   const astrologer = apiData.data;
 
-  console.log(astrologer?.languagePreference)
+  console.log("Seprate Date:",apiData,astrologer)
+  
+  // Transform education array to normalize field names
+  const normalizedEducation = (astrologer.education || astrologer.qualifications || []).map(edu => ({
+    qualification: edu.qualification || edu.levelOfEducation || '',
+    universityName: edu.universityName || '',
+    certificateImgUrl: edu.certificateImgUrl || '',
+    display: edu.display || false,
+  }));
   
   return {
     id: astrologer._id || astrologer.id,
@@ -20,10 +28,10 @@ export const selectAstrologerProfile = (apiData) => {
     profileImage: astrologer.profilePicture || astrologer.avatar || astrologer.imageUrl || '',
     experience: astrologer.experience || astrologer.experienceYears || 0,
     wallet: astrologer.wallet || astrologer.balance || 0,
-    languages: astrologer?.languagePreference || [],
+    languages: astrologer?.languagePreferences || [],
     specializations: astrologer.specializations || astrologer.specialties || [],
-    education: astrologer.education || astrologer.qualifications || [],
-    achievements: astrologer.description || '',
+    education: normalizedEducation,
+    achievements: astrologer.achievements || [],
     achievementImages: astrologer.achievementImages || [],
   };
 };
@@ -45,7 +53,7 @@ export const selectProfileTabData = (apiData) => {
   const profile = selectAstrologerProfile(apiData);
   if (!profile) return null;
 
-  console.log("profile:",profile)
+  // console.log("profile:",profile,apiData)
   
   return {
     name: profile.name,

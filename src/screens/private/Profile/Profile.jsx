@@ -1,17 +1,19 @@
 import { Icons } from "../../../components/Icons.jsx";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import ProfileTab from "./profileTab/ProfileTab.jsx";
 import SwitchTabs from "../../../components/UI/tabs/SwitchTabs.jsx";
 import Transactions from "./transactions/Transactions.jsx";
 import SetAvailability from "./availability/SetAvailability.jsx";
 import Support from "./support/Support.jsx";
+import BackButton from "../../../components/UI/backButton/BackButton.jsx";
 import { AppIcons, AppImages } from "../../../utils/appImages.js";
 import styles from "./Profile.module.scss";
-import { useGetAstrologerByIdQuery } from "../../../redux/astrologer/astrologerApi.js";
+import { useGetAstrologerByIdQuery } from "../../../redux/profileApi/profileApi.js";
 import { selectBasicInfo, selectProfileTabData } from "../../../utils/astrologerSelectors.js";
 
 const Profile = ({ onBack }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const userData = JSON.parse(
     localStorage.getItem("shubhtalk_astrologer_details"),
   );
@@ -29,7 +31,7 @@ const Profile = ({ onBack }) => {
   const experience = basicInfo?.experience || 0;
   const wallet = basicInfo?.wallet || 0;
 
-  console.log("first",basicInfo,profileTabData)
+  // console.log("first",profileTabData)
 
   const tabs = [
     {
@@ -58,14 +60,14 @@ const Profile = ({ onBack }) => {
       {/* Header Section */}
       <div className={styles.headerSection}>
         <Link to="/dashboard" className={styles.backButton} onClick={onBack}>
-          <Icons.ChevronLeft size={20} className="text-gray-700" />
+          <Icons.ChevronLeft size={20} className={styles.backIcon} />
         </Link>
         <div className={styles.userInfo}>
           <div className={styles.nameRow}>
             <h1 className={styles.userName}>{userName}</h1>
             <img src={AppIcons.Verified} alt="verified" className={styles.verifiedBadge} />
           </div>
-          <p className={styles.userExperience}>Exp. {experience} Years</p>
+          {experience && <p className={styles.userExperience}>Exp. {experience} Years</p>}
         </div>
       </div>
 

@@ -1,28 +1,16 @@
-// src/components/LiveStreaming/LiveStreamingContainer.jsx
-import React from "react";
 import { useLocation } from "react-router-dom";
 import { useLiveStreaming } from "./useLiveStreaming";
 import { useLiveChat } from "./useLiveChat";
 import LiveView from "./LiveView";
-import StartLivePopup from "./StartLivePopup";
 import "./styles/live.scss";
 
 const LiveStreamingContainer = ({ client }) => {
+  const ROLE = "host";
   const location = useLocation();
-  const ROLE = location.pathname.includes("/astrologer-dashboard/live-streaming")
-    ? "host"
-    : "audience";
+  const previewSettings = location.state || {};
 
-  // 🟢 Hooks always called FIRST ✔
-  const live = useLiveStreaming(client, ROLE);
-  const chat = useLiveChat(ROLE);
-
-  const { calling, setCalling } = live;
-
-  // 🟢 UI return is the condition, NOT hook call ✔
-  // if (ROLE === "host" && !calling) {
-  //   return <StartLivePopup onStart={() => setCalling(true)} />;
-  // }
+  const live = useLiveStreaming(client, ROLE, previewSettings);
+  const chat = useLiveChat(live.channelName, live.isReconnect, live.chatRoomId);
 
   return (
     <div className="live-container">
@@ -32,5 +20,3 @@ const LiveStreamingContainer = ({ client }) => {
 };
 
 export default LiveStreamingContainer;
-
-

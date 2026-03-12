@@ -1,15 +1,20 @@
-import { ArrowLeft } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-
-import * as AuthServices from "../../../services/appServices/authservice"
+import styles from "./Login.module.scss";
+import * as AuthServices from "../../../services/appServices/authservice";
+import { AppImages } from "../../../utils/appImages";
+import Modal from "../../../components/UI/modal/Modal";
+import BackButton from "../../../components/UI/backButton/BackButton";
+import Button from "../../../components/UI/button/Button";
 
 const Login = () => {
   const navigate = useNavigate();
-
+  const [isOpen,setIsOpen] = useState(true)
   const [mobile, setMobile] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [isInputFocused, setIsInputFocused] = useState(false);
 
   // ✅ Allow numbers only & max 10 digits
   const handleMobileChange = (e) => {
@@ -26,23 +31,23 @@ const Login = () => {
   // ✅ Get OTP API Call
   const handleGetOtp = async () => {
     if (!isValidMobile) return;
-  
+
     try {
       setLoading(true);
       setError("");
-  
+
       const type = "ASTROLOGER";
-  
+
       const payload = {
-        phoneNumber: '91'+mobile, // 10-digit number
+        phoneNumber: "91" + mobile, // 10-digit number
         type,
       };
-  
+
       const response = await AuthServices.loginWithPhone(payload);
       if (!response?.data?.success) {
         throw new Error(response?.data?.message || "Failed to send OTP");
       }
-  
+
       // ✅ Navigate to OTP verify page
       sessionStorage.setItem("otpSession", "true");
       navigate("/verify-otp", {
@@ -51,7 +56,6 @@ const Login = () => {
           phoneNumber: `91${mobile}`,
         },
       });
-  
     } catch (err) {
       setError(err.message || "Something went wrong");
     } finally {
@@ -64,102 +68,111 @@ const Login = () => {
       handleGetOtp();
     }
   };
-  
 
   return (
-    <div className="min-h-screen bg-white flex justify-center">
-      <div className="w-full max-w-md px-6 pt-6 pb-10 flex flex-col">
+    <div
+      className={`${styles.loginContainer} ${isInputFocused ? styles.keyboardOpen : ""}`}
+    >
+      <img
+        src={AppImages.CosmicCircle}
+        alt="Onboarding"
+        className={styles.backgroundImage}
+      />
+      <img src={AppImages.MobileViewAccount} className={styles.mobileAccount} />
 
-        {/* Top Bar */}
-        <div className="flex items-center mb-12">
-          <button
-            onClick={() => navigate(-1)}
-            className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center"
-          >
-            <ArrowLeft size={18} />
-          </button>
-        </div>
+      <BackButton onClick={() => navigate(-1)} />
 
-        {/* Content */}
-        <div className="flex-1 flex flex-col">
-
-          <h1 className="text-3xl font-bold text-black mb-2">
-            Start your journey
-          </h1>
-          <p className="text-gray-500 text-sm mb-8">
-            Enter your mobile number to register
-            <br />
-            or log in securely.
+      <Modal
+        modalOpen={isOpen}
+        setModalOpen={setIsOpen}
+        doNotClose={true}
+        showBackButton={isInputFocused}
+        className={`${styles.onboardingModal} ${isInputFocused ? styles.expanded : ""}`}
+      >
+        <div className={styles.modalContent}>
+          <h1 className={styles.heading}>Start your journey</h1>
+          <p className={styles.description}>
+            Enter your mobile number to register or log in securely.
           </p>
 
           {/* Phone Input */}
-          <div className="flex gap-3 mb-2">
-            <button className="flex items-center gap-2 border rounded-xl px-3 py-3">
+          <div className={styles.phoneInputWrapper}>
+            <button className={styles.countrySelector}>
               <img
                 src="https://upload.wikimedia.org/wikipedia/en/4/41/Flag_of_India.svg"
                 alt="India"
-                className="w-6 h-4 object-cover"
+                className={styles.flagImage}
               />
-              <span className="text-sm">+91</span>
-              <span className="text-xs">⌄</span>
+              <svg
+                width="12"
+                height="8"
+                viewBox="0 0 12 8"
+                fill="none"
+                className={styles.chevronIcon}
+              >
+                <path
+                  d="M1 1.5L6 6.5L11 1.5"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
             </button>
 
-            <input
-              type="tel"
-              value={mobile}
-              onChange={handleMobileChange}
-              placeholder="Enter your Number"
-              onKeyDown={handleKeyDown} 
-              className="
-                flex-1 border rounded-xl px-4 py-3 text-sm
-                focus:outline-none focus:ring-1 focus:ring-black
-              "
-            />
+            <div className={styles.inputWrapper}>
+              <input
+                type="tel"
+                value={mobile}
+                onChange={handleMobileChange}
+                placeholder="Enter your Number"
+                onKeyDown={handleKeyDown}
+                onFocus={() => setIsInputFocused(true)}
+                onBlur={() => setIsInputFocused(false)}
+                className={styles.phoneInput}
+              />
+              <span className={styles.countryCode}>+91</span>
+            </div>
           </div>
 
           {/* Error */}
-          {error && (
-            <p className="text-red-500 text-xs mb-4">{error}</p>
-          )}
+          {error && <p className={styles.errorText}>{error}</p>}
 
           {/* Get OTP Button */}
-          <button
+          <Button
             onClick={handleGetOtp}
+            variant="primary"
             disabled={!isValidMobile || loading}
-            className={`
-              w-full py-3 rounded-xl text-sm font-medium mb-8 transition
-              ${
-                isValidMobile
-                  ? "bg-black text-white hover:bg-gray-900"
-                  : "bg-gray-300 text-gray-600 cursor-not-allowed"
-              }
-            `}
+            className={`${styles.otpButton} ${isValidMobile ? styles.active : styles.disabled}`}
           >
-            {loading ? "Sending OTP..." : "Send OTP"}
-          </button>
+            {loading ? (
+              "Sending OTP..."
+            ) : (
+              <>
+                Get OTP
+                <ChevronRight size={18} />
+              </>
+            )}
+          </Button>
 
           {/* OR Divider */}
-          {/* <div className="flex items-center gap-4 mb-8">
-            <div className="flex-1 h-px bg-gray-300" />
-            <span className="text-sm text-gray-500">OR</span>
-            <div className="flex-1 h-px bg-gray-300" />
-          </div> */}
+          <div className={styles.divider}>
+            <div className={styles.dividerLine} />
+            <span className={styles.dividerText}>OR</span>
+            <div className={styles.dividerLine} />
+          </div>
 
           {/* Social Login */}
-          {/* <div className="space-y-4">
-            <button className="w-full border rounded-xl py-3 text-sm font-medium">
-              Sign in with Google
-            </button>
-            <button className="w-full border rounded-xl py-3 text-sm font-medium">
-              Sign in with Apple
-            </button>
-          </div> */}
-        </div>
+          <div className={styles.socialButtonsWrapper}>
+            <Button className={styles.socialButton}>Sign in with Google</Button>
+            <Button className={styles.socialButton}>Sign in with Apple</Button>
+          </div>
 
-        <p className="text-xs text-gray-400 text-center mt-8">
-          Your number will be used for secure login and communication only.
-        </p>
-      </div>
+          <p className={styles.footerText}>
+            Your number will be used for secure login and communication only.
+          </p>
+        </div>
+      </Modal>
     </div>
   );
 };

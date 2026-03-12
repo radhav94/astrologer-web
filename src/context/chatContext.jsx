@@ -22,12 +22,14 @@ export const ChatProvider = ({ children }) => {
   // ✅ GLOBAL incoming call
   const [incomingChat, setIncomingChat] = useState(null);
   const [chatSeconds, setChatSeconds] = useState(0);
+  const [chatStartTime, setChatStartTime] = useState(null);
   const timerRef = useRef(null);
 
   const startTimer = () => {
     if (timerRef.current) return;
+    if (!chatStartTime) setChatStartTime(Date.now());
     timerRef.current = setInterval(() => {
-      setChatSeconds((s) => s - 1);
+      setChatSeconds((s) => s + 1);
     }, 1000);
   };
 
@@ -39,6 +41,7 @@ export const ChatProvider = ({ children }) => {
   const resetTimer = () => {
     stopTimer();
     setChatSeconds(0);
+    setChatStartTime(null);
   };
 
 
@@ -91,11 +94,19 @@ useEffect(() => {
   // 📞 EVENTS
   const handleIncomingChat = (data) => {
     if(data.type != "chat") return;
+    
+    // Handle null/undefined firstName and lastName
+    const firstName = data?.user?.firstName?.trim() || "";
+    const lastName = data?.user?.lastName?.trim() || "";
+    const chaterName = firstName && lastName 
+      ? `${firstName} ${lastName}` 
+      : firstName || lastName || "Customer";
+    
     setIncomingChat({
       roomId: data.roomId,
       chaterrId: data.user?._id,
       chaterType: data.type || "chat",
-      chaterName:data?.user?.firstName,
+      chaterName: chaterName,
       userID: data?.user?.user_ID
     });
   };
@@ -111,15 +122,15 @@ useEffect(() => {
     setWaitingList(data?.list || []);
   };
 
-  const handleActivity = (data) => {
-    if(data?.remainingTime){
-      resetTimer(); // Reset the timer
-      setChatSeconds(data?.remainingTime*60); // Use data.remainingTime if provided
-      startTimer(); // Start the timer again
-    }
-  }
+  // const handleActivity = (data) => {
+  //   if(data?.remainingTime){
+  //     resetTimer(); // Reset the timer
+  //     setChatSeconds(data?.remainingTime*60); // Use data.remainingTime if provided
+  //     startTimer(); // Start the timer again
+  //   }
+  // }
 
-  voiceSocket.on("activity", handleActivity);
+  // voiceSocket.on("activity", handleActivity);
   voiceSocket.on("incoming", handleIncomingChat);
   voiceSocket.on("chat:canceled", handleChatCanceled);
   voiceSocket.on("waiting_list", handleWaitingList);
@@ -130,7 +141,7 @@ useEffect(() => {
     voiceSocket.off("disconnect", onDisconnect);
     voiceSocket.off("connect_error", onConnectError);
 
-    voiceSocket.off("activity", handleActivity);
+    // voiceSocket.off("activity", handleActivity);
     voiceSocket.off("incoming", handleIncomingChat);
     voiceSocket.off("chat:canceled", handleChatCanceled);
     voiceSocket.off("waiting_list", handleWaitingList);
@@ -151,7 +162,8 @@ useEffect(() => {
         stopTimer,
         resetTimer,
         chatSeconds,
-        setChatSeconds
+        setChatSeconds,
+        chatStartTime
       }}
     >
       {children}

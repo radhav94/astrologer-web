@@ -7,22 +7,22 @@
 
 .backButton {
   padding: 1rem;
-  background-color: #fff;
+  background-color: var(--white-color);
   border-radius: 50px;
-  border: 1px solid #A4A4A4;
+  border: 1px solid var(--main-primary-start);
   transition: background-color 0.2s;
   cursor: pointer;
   &:hover {
-    background-color: #e5e7eb;
+    background-color: var(--white-color);
   }
 }
 
 .icon {
-  color: #633F06;
+  color: var(--main-primary-start);
 }
 
 .title {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--title);
 }

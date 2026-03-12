@@ -1,0 +1,205 @@
+// Card Container
+.card {
+  background: #F3F4F6;
+  border-radius: 20px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: box-shadow 0.2s ease;
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  }
+
+  // Mobile: Keep horizontal layout but adjust sizes
+  @media (max-width: 639px) {
+    padding: 12px;
+    gap: 12px;
+  }
+}
+
+// Profile Image Container
+.imageContainer {
+  flex-shrink: 0;
+}
+
+.profileImage {
+  width: 110px;
+  height: 130px;
+  border-radius: 16px;
+  object-fit: cover;
+
+  @media (max-width: 639px) {
+    width: 90px;
+    height: 110px;
+  }
+}
+
+.imagePlaceholder {
+  width: 110px;
+  height: 130px;
+  border-radius: 16px;
+  background: #D1D5DB;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  @media (max-width: 639px) {
+    width: 90px;
+    height: 110px;
+  }
+}
+
+.placeholderText {
+  font-size: 32px;
+  font-weight: 700;
+  color: #9CA3AF;
+
+  @media (max-width: 639px) {
+    font-size: 28px;
+  }
+}
+
+// Session Details Section
+.details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.name {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 8px;
+  line-height: 1.2;
+  text-align: left;
+
+  @media (max-width: 639px) {
+    font-size: 18px;
+    margin-bottom: 6px;
+  }
+}
+
+// Info Row (Duration & Time)
+.infoRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 8px;
+
+  @media (max-width: 639px) {
+    gap: 12px;
+    margin-bottom: 6px;
+  }
+}
+
+.infoItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.iconOrange {
+  color: #E56329;
+  flex-shrink: 0;
+}
+
+.infoText {
+  font-size: 15px;
+  color: #6B7280;
+  font-weight: 500;
+  white-space: nowrap;
+
+  @media (max-width: 639px) {
+    font-size: 13px;
+  }
+}
+
+// Session Type
+.sessionType {
+  font-size: 15px;
+  color: #9CA3AF;
+  margin-bottom: 12px;
+  text-align: left;
+
+  @media (max-width: 639px) {
+    font-size: 13px;
+    margin-bottom: 10px;
+  }
+}
+
+.sessionTypeValue {
+  font-weight: 500;
+  color: #6B7280;
+  text-transform: capitalize;
+}
+
+// Action Buttons
+.actions {
+  display: flex;
+  gap: 10px;
+
+  @media (max-width: 639px) {
+    gap: 8px;
+  }
+}
+
+.button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #FFFFFF;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex: 1;
+  white-space: nowrap;
+
+  svg {
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 639px) {
+    padding: 8px 12px;
+    font-size: 13px;
+    gap: 6px;
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.declineButton {
+  background: #FF0000;
+
+  &:hover {
+    background: #E60000;
+  }
+
+  &:active {
+    background: #CC0000;
+  }
+}
+
+.startButton {
+  background: #00A651;
+
+  &:hover {
+    background: #009547;
+  }
+
+  &:active {
+    background: #00843D;
+  }
+}

@@ -2,9 +2,24 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 
 export const DonutChart = ({ data }) => {
   return (
-    <div className="h-32 w-32 relative">
+    <div className="h-24 w-24 sm:h-32 sm:w-32 relative">
       <ResponsiveContainer minWidth="100%" minHeight="100%">
         <PieChart>
+          <Pie
+            data={data}
+            cx="50%"
+            cy="50%"
+            innerRadius={20}
+            outerRadius={30}
+            paddingAngle={0}
+            dataKey="value"
+            stroke="none"
+            className="sm:!hidden"
+          >
+            {data.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={entry.fill} />
+            ))}
+          </Pie>
           <Pie
             data={data}
             cx="50%"
@@ -14,6 +29,7 @@ export const DonutChart = ({ data }) => {
             paddingAngle={0}
             dataKey="value"
             stroke="none"
+            className="!hidden sm:!block"
           >
             {data.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={entry.fill} />
@@ -38,21 +54,12 @@ export const DonutChart = ({ data }) => {
 };
 
 export const Heatmap = ({ data }) => {
-  const getColor = (intensity) => {
-    switch (intensity) {
-      case 0:
-        return "bg-gray-100";
-      case 1:
-        return "bg-green-200";
-      case 2:
-        return "bg-green-300";
-      case 3:
-        return "bg-green-400";
-      case 4:
-        return "bg-green-500";
-      default:
-        return "bg-gray-100";
-    }
+  const getColor = (count) => {
+    if (count === 0) return "bg-[#E8F5E9]";
+    if (count <= 2) return "bg-[#A5D6A7]";
+    if (count <= 5) return "bg-[#66BB6A]";
+    if (count <= 10) return "bg-[#4CAF50]";
+    return "bg-[#2E7D32]";
   };
 
   return (
@@ -61,21 +68,20 @@ export const Heatmap = ({ data }) => {
         {data.map((item, idx) => (
           <div
             key={idx}
-            className={`aspect-square rounded-sm sm:rounded-md ${getColor(
+            className={`aspect-square rounded-md ${getColor(
               item.value
-            )} transition-colors duration-200 hover:opacity-80`}
-            title={`Day ${item.day}: Level ${item.value}`}
+            )} transition-colors duration-200 hover:opacity-80 cursor-pointer`}
+            title={`Day ${item.day}: ${item.value} session${item.value !== 1 ? 's' : ''}`}
           />
         ))}
       </div>
-      <div className="flex items-center gap-2 mt-4 text-xs text-gray-400">
+      <div className="flex items-center gap-2 mt-4 text-xs text-[#9CA3AF]">
         <span>Less</span>
-        <div className="flex gap-1">
-          <div className="w-3 h-3 rounded-full bg-gray-100"></div>
-          <div className="w-3 h-3 rounded-full bg-green-200"></div>
-          <div className="w-3 h-3 rounded-full bg-green-300"></div>
-          <div className="w-3 h-3 rounded-full bg-green-400"></div>
-          <div className="w-3 h-3 rounded-full bg-green-500"></div>
+        <div className="flex gap-1.5">
+          <div className="w-3 h-3 rounded-md bg-[#E8F5E9]"></div>
+          <div className="w-3 h-3 rounded-md bg-[#A5D6A7]"></div>
+          <div className="w-3 h-3 rounded-md bg-[#66BB6A]"></div>
+          <div className="w-3 h-3 rounded-md bg-[#4CAF50]"></div>
         </div>
         <span>Many</span>
       </div>

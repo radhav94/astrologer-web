@@ -16,11 +16,10 @@ import VideoCallChat from "./VideoCallChat";
 import { PATH } from "../../../utils/routes/Paths";
 import CallIcon from "../../../assets/chat/Call.svg";
 
-// const APP_ID = "5630460abdc141e3b2f8d9597752bd7d";
 const APP_ID = "c76e3d30a3b6483689dac88ca9f94381";
 
 const VideoCalling = ({ callData }) => {
-  const { activeCall, setActiveCall, setReviewData, setOpenReview, callStartTime, setCallStartTime } = useCall();
+  const { activeCall, setActiveCall, setReviewData, setOpenReview, sharedAgoraState, setSharedAgoraState, callStartTime, setCallStartTime, isCallMinimized, setIsCallMinimized } = useCall();
   const navigate = useNavigate();
 
   if (!activeCall || activeCall.callType !== "video") return null;
@@ -45,7 +44,6 @@ const VideoCalling = ({ callData }) => {
   const [micOn, setMicOn] = useState(true);
   const [cameraOn, setCameraOn] = useState(true);
   const [speakerOn, setSpeakerOn] = useState(true);
-  const [isMinimized, setIsMinimized] = useState(false);
   const [position, setPosition] = useState({ x: 20, y: 20 });
 
   const [callSeconds, setCallSeconds] = useState(0);
@@ -149,6 +147,119 @@ const VideoCalling = ({ callData }) => {
 
     const start = async () => {
       try {
+        // Check if we're upgrading from audio call
+        // We check for existing client/micTrack even if isUpgrading flag isn't set yet
+        // because state updates are asynchronous
+        const shouldUpgrade = (sharedAgoraState.isUpgrading || 
+                               (sharedAgoraState.client && sharedAgoraState.micTrack)) &&
+                              sharedAgoraState.client && 
+                              sharedAgoraState.micTrack;
+
+        console.log("🔍 Should upgrade?", shouldUpgrade);
+
+        if (shouldUpgrade) {
+          console.log("🔄 Upgrading from audio to video - reusing connection");
+          
+          // Reuse existing client and mic track
+          clientRef.current = sharedAgoraState.client;
+          micTrackRef.current = sharedAgoraState.micTrack;
+          
+          console.log("📹 Creating camera track...");
+          // Only create and publish camera track
+          camTrackRef.current = await AgoraRTC.createCameraVideoTrack();
+          
+          console.log("📤 Publishing camera track...");
+          await clientRef.current.publish([camTrackRef.current]);
+          
+          console.log("✅ Camera track published successfully");
+          
+          // Add event listeners for video (the audio call client doesn't have these)
+          clientRef.current.on("user-published", async (user, mediaType) => {
+            console.log(`📹 [UPGRADE] User published ${mediaType}:`, user.uid);
+            
+            if (mediaType === "video") {
+              try {
+                await clientRef.current.subscribe(user, mediaType);
+                if (user.videoTrack) {
+                  console.log("📹 [UPGRADE] Playing newly published video track");
+                  setHasRemoteVideo(true);
+                  safePlayRemoteVideo(user.videoTrack);
+                }
+              } catch (err) {
+                console.error("[UPGRADE] Failed to subscribe to video:", err);
+              }
+            }
+          });
+
+          clientRef.current.on("user-unpublished", (user, mediaType) => {
+            console.log(`📹 [UPGRADE] User unpublished ${mediaType}:`, user.uid);
+            if (mediaType === "video") {
+              setHasRemoteVideo(false);
+              if (remoteVideoRef.current) {
+                remoteVideoRef.current.innerHTML = "";
+              }
+            }
+          });
+          
+          // Update shared state
+          setSharedAgoraState(prev => ({
+            ...prev,
+            cameraTrack: camTrackRef.current,
+            isUpgrading: false
+          }));
+          
+          setJoined(true);
+          
+          timerRef.current = setInterval(() => {
+            setCallSeconds((p) => p + 1);
+          }, 1000);
+          
+          // 🔥 CRITICAL: Check for existing remote users after upgrade
+          setTimeout(async () => {
+            console.log("🔍 [UPGRADE] Checking for existing remote users...");
+            const remoteUsers = clientRef.current.remoteUsers;
+            console.log(`📊 [UPGRADE] Found ${remoteUsers.length} remote users`);
+            
+            for (const user of remoteUsers) {
+              console.log(`👤 [UPGRADE] Remote user ${user.uid}:`, {
+                hasVideo: user.hasVideo,
+                hasAudio: user.hasAudio,
+                videoTrack: !!user.videoTrack,
+                audioTrack: !!user.audioTrack
+              });
+
+              // Subscribe to video if available but not subscribed
+              if (user.hasVideo && !user.videoTrack) {
+                try {
+                  console.log(`📹 [UPGRADE] Subscribing to existing video from user ${user.uid}`);
+                  await clientRef.current.subscribe(user, "video");
+                  if (user.videoTrack) {
+                    console.log("📹 [UPGRADE] Playing existing video track");
+                    setHasRemoteVideo(true);
+                    safePlayRemoteVideo(user.videoTrack);
+                  }
+                } catch (err) {
+                  console.error("[UPGRADE] Failed to subscribe to existing video:", err);
+                }
+              } else if (user.videoTrack) {
+                // Already subscribed, just play it
+                console.log(`📹 [UPGRADE] Playing already-subscribed video from user ${user.uid}`);
+                setHasRemoteVideo(true);
+                safePlayRemoteVideo(user.videoTrack);
+              }
+
+              // Ensure audio is playing
+              if (user.audioTrack) {
+                console.log(`🔊 [UPGRADE] Playing audio from user ${user.uid}`);
+                user.audioTrack.play();
+              }
+            }
+          }, 1000);
+          
+          return;
+        }
+
+        // Fresh video call - normal flow
         if (clientRef.current) {
           await clientRef.current.leave();
           clientRef.current.removeAllListeners();
@@ -159,15 +270,17 @@ const VideoCalling = ({ callData }) => {
         clientRef.current = client;
 
         client.on("user-published", async (user, mediaType) => {
+          console.log(`📹 User published ${mediaType}:`, user.uid);
           await client.subscribe(user, mediaType);
 
           if (mediaType === "video" && user.videoTrack) {
+            console.log("📹 Playing remote video track");
             setHasRemoteVideo(true);
             safePlayRemoteVideo(user.videoTrack);
           }
 
           if (mediaType === "audio" && user.audioTrack) {
-            // ✅ REQUIRED FOR CROSS DEVICE
+            console.log("🔊 Playing remote audio track");
             user.audioTrack.play();
             // Set initial volume based on speaker state
             if (user.audioTrack) {
@@ -177,13 +290,14 @@ const VideoCalling = ({ callData }) => {
         });
 
         client.on("user-unpublished", (user, mediaType) => {
+          console.log(`📹 User unpublished ${mediaType}:`, user.uid);
           if (mediaType === "video") {
             setHasRemoteVideo(false);
             if (remoteVideoRef.current) remoteVideoRef.current.innerHTML = "";
           }
         });
 
-        client.on("user-left", safeEndCall);
+        client.on("user-left", handleRemoteCallEnd);
 
         await client.join(APP_ID, roomId, agoraToken, null);
 
@@ -191,10 +305,75 @@ const VideoCalling = ({ callData }) => {
         camTrackRef.current = await AgoraRTC.createCameraVideoTrack();
 
         await client.publish([micTrackRef.current, camTrackRef.current]);
+        
+        // Store in shared state
+        setSharedAgoraState({
+          client: client,
+          micTrack: micTrackRef.current,
+          cameraTrack: camTrackRef.current,
+          isUpgrading: false
+        });
 
         setJoined(true);
 
         if (!callStartTime) setCallStartTime(Date.now());
+
+        // 🔥 CRITICAL: Check for existing remote users after joining
+        // This handles the case when switching from voice to video call
+        setTimeout(async () => {
+          console.log("🔍 Checking for existing remote users...");
+          const remoteUsers = client.remoteUsers;
+          console.log(`📊 Found ${remoteUsers.length} remote users`);
+          
+          for (const user of remoteUsers) {
+            console.log(`👤 Remote user ${user.uid}:`, {
+              hasVideo: user.hasVideo,
+              hasAudio: user.hasAudio,
+              videoTrack: !!user.videoTrack,
+              audioTrack: !!user.audioTrack
+            });
+
+            // Subscribe to video if available but not subscribed
+            if (user.hasVideo && !user.videoTrack) {
+              try {
+                console.log(`📹 Subscribing to existing video from user ${user.uid}`);
+                await client.subscribe(user, "video");
+                if (user.videoTrack) {
+                  console.log("📹 Playing existing video track");
+                  safePlayRemoteVideo(user.videoTrack);
+                  setHasRemoteVideo(true);
+                }
+              } catch (err) {
+                console.error("Failed to subscribe to existing video:", err);
+              }
+            } else if (user.videoTrack) {
+              // Already subscribed, just play it
+              console.log(`📹 Playing already-subscribed video from user ${user.uid}`);
+              safePlayRemoteVideo(user.videoTrack);
+              setHasRemoteVideo(true);
+            }
+
+            // Subscribe to audio if available but not subscribed
+            if (user.hasAudio && !user.audioTrack) {
+              try {
+                console.log(`🔊 Subscribing to existing audio from user ${user.uid}`);
+                await client.subscribe(user, "audio");
+                if (user.audioTrack) {
+                  console.log("🔊 Playing existing audio track");
+                  user.audioTrack.play();
+                  user.audioTrack.setVolume(speakerOn ? 100 : 0);
+                }
+              } catch (err) {
+                console.error("Failed to subscribe to existing audio:", err);
+              }
+            } else if (user.audioTrack) {
+              // Already subscribed, just play it
+              console.log(`🔊 Playing already-subscribed audio from user ${user.uid}`);
+              user.audioTrack.play();
+              user.audioTrack.setVolume(speakerOn ? 100 : 0);
+            }
+          }
+        }, 1000);
       } catch (err) {
         console.error("CALL START ERROR", err);
         safeEndCall();
@@ -212,7 +391,7 @@ const VideoCalling = ({ callData }) => {
   useEffect(() => {
     if (!joined) return;
 
-    if (isMinimized) {
+    if (isCallMinimized) {
       // Play remote video in mini view
       if (clientRef.current && remoteVideoMiniRef.current) {
         clientRef.current.remoteUsers.forEach((user) => {
@@ -238,7 +417,7 @@ const VideoCalling = ({ callData }) => {
       // Replay remote in main container
       resumeRemoteTracks();
     }
-  }, [joined, isMinimized, isLocalBig]);
+  }, [joined, isCallMinimized, isLocalBig]);
 
   /* ================= CALL TIMER FROM SHARED START TIME ================= */
   useEffect(() => {
@@ -334,11 +513,20 @@ const VideoCalling = ({ callData }) => {
       setCallSeconds(0);
       setCallStartTime(null);
       setActiveCall(null);
+      
+      // Clear shared state
+      setSharedAgoraState({
+        client: null,
+        micTrack: null,
+        cameraTrack: null,
+        isUpgrading: false
+      });
     }
   };
 
-  /* ================= SAFE END CALL ================= */
+  /* ================= SAFE END CALL (User initiated) ================= */
   const safeEndCall = async () => {
+    console.log("📞 User initiated video call end - emitting call:end");
     if (endCallRef.current) return;
     endCallRef.current = true;
     setReviewData({
@@ -355,8 +543,24 @@ const VideoCalling = ({ callData }) => {
     await cleanup();
   };
 
-  /* ================= SAFE END CALL ================= */
+  /* ================= HANDLE REMOTE/SERVER CALL END ================= */
+  const handleRemoteCallEnd = async () => {
+    console.log("📞 Remote/Server ended video call - cleaning up without emitting call:end");
+    if (endCallRef.current) return;
+    endCallRef.current = true;
+    setReviewData({
+      userID: activeCall.userID,
+      fullName: activeCall.callerName,
+    });
+
+    // Don't emit call:end - already ended by remote/server
+    setOpenReview(true);
+    await cleanup();
+  };
+
+  /* ================= HANDLE CALL CANCELED ================= */
   const handleCallCanceled = async () => {
+    console.log("📞 Call canceled");
     if (endCallRef.current) return;
     endCallRef.current = true;
 
@@ -365,15 +569,13 @@ const VideoCalling = ({ callData }) => {
 
   /* ================= SOCKET ================= */
   useEffect(() => {
-    voiceSocket.on("call:ended", safeEndCall);
-    voiceSocket.on("force_call_end", safeEndCall);
-    voiceSocket.on("disconnect", safeEndCall);
+    voiceSocket.on("call:ended", handleRemoteCallEnd);
+    voiceSocket.on("disconnect", handleRemoteCallEnd);
     voiceSocket.on("call:canceled", handleCallCanceled);
 
     return () => {
-      voiceSocket.off("call:ended", safeEndCall);
-      voiceSocket.off("force_call_end", safeEndCall);
-      voiceSocket.off("disconnect", safeEndCall);
+      voiceSocket.off("call:ended", handleRemoteCallEnd);
+      voiceSocket.off("disconnect", handleRemoteCallEnd);
       voiceSocket.off("call:canceled", handleCallCanceled);
     };
   }, []);
@@ -410,7 +612,7 @@ const VideoCalling = ({ callData }) => {
   };
 
   const openChatWithMinimize = () => {
-    setIsMinimized(true);
+    setIsCallMinimized(true);
     navigate(
       PATH.privateRoutes.CHAT_WINDOW.path.replace(
         ":chatId",
@@ -450,7 +652,7 @@ const VideoCalling = ({ callData }) => {
           position: 'fixed',
           top: position.y,
           left: position.x,
-          display: isMinimized ? "block" : "none",
+          display: isCallMinimized ? "block" : "none",
           zIndex: 100000,
         }}
         className="w-48 rounded-2xl bg-[#1e003c]/70 backdrop-blur-xl border border-white/20 shadow-2xl text-white select-none overflow-hidden"
@@ -463,10 +665,11 @@ const VideoCalling = ({ callData }) => {
           <div
             ref={remoteVideoMiniRef}
             className="w-full h-full"
+            style={{ transform: 'scaleX(-1)' }}
           />
           {/* Overlay: name + timer */}
           <div className="absolute bottom-0 left-0 right-0 px-2 py-1 bg-gradient-to-t from-black/70 to-transparent">
-            <p className="text-[10px] font-semibold truncate">{callerName || "Video Call"}</p>
+            <p className="text-[10px] font-semibold truncate capitalize">{callerName || "Video Call"}</p>
             <span className="text-[10px] opacity-70">
               {joined ? formatTime(callSeconds) : "Connecting…"}
             </span>
@@ -483,7 +686,7 @@ const VideoCalling = ({ callData }) => {
           </button>
 
           <button
-            onClick={(e) => { e.stopPropagation(); setIsMinimized(false); }}
+            onClick={(e) => { e.stopPropagation(); setIsCallMinimized(false); }}
             className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-sm"
           >
             ⤢
@@ -495,7 +698,7 @@ const VideoCalling = ({ callData }) => {
       <div
         className="fixed inset-0 z-[99999] flex flex-col"
         style={{ 
-          visibility: isMinimized ? "hidden" : "visible",
+          visibility: isCallMinimized ? "hidden" : "visible",
           backgroundColor: hasRemoteVideo ? 'transparent' : 'white'
         }}
       >
@@ -515,7 +718,7 @@ const VideoCalling = ({ callData }) => {
           <div className="flex items-center gap-3">
             {/* Back Button */}
             <button
-              onClick={() => setIsMinimized(true)}
+              onClick={() => setIsCallMinimized(true)}
               className="w-10 h-10 rounded-full border-2 flex items-center justify-center hover:opacity-80 transition-opacity"
               style={{ borderColor: '#f75801' }}
             >
@@ -530,17 +733,11 @@ const VideoCalling = ({ callData }) => {
             {/* User Info */}
             <div className="flex flex-col">
               <h2 
-                className="text-sm font-semibold transition-colors duration-300"
+                className="text-sm font-semibold transition-colors duration-300 capitalize truncate max-w-[150px]"
                 style={{ color: hasRemoteVideo ? 'white' : '#111827' }}
               >
                 {callerName}
               </h2>
-              <span 
-                className="text-xs transition-colors duration-300"
-                style={{ color: hasRemoteVideo ? 'rgba(255, 255, 255, 0.8)' : '#6b7280' }}
-              >
-                Exp. 1 year
-              </span>
             </div>
           </div>
 
@@ -691,14 +888,14 @@ const VideoCalling = ({ callData }) => {
             }}
           >
             {/* REMOTE VIDEO */}
-            <div ref={remoteVideoRef} className="absolute inset-0 w-full h-full" />
+            <div ref={remoteVideoRef} className="absolute inset-0 w-full h-full" style={{ transform: 'scaleX(-1)' }} />
 
             {/* SHOW AVATAR WHEN REMOTE USER CAMERA IS OFF */}
             {!hasRemoteVideo && (
               <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-gray-50 to-white">
                 <div className="flex-1 flex flex-col items-center justify-center px-4">
                   {/* AVATAR WITH ACTIVE RIPPLE EFFECT */}
-                  <div className="relative mb-12">
+                  <div className="relative mb-3">
                     {/* Active ripple rings */}
                     <div className={styles.rippleRing}></div>
                     <div className={styles.rippleRing}></div>
@@ -706,7 +903,7 @@ const VideoCalling = ({ callData }) => {
                     <div className={styles.rippleRing}></div>
                     
                     {/* Avatar with green border */}
-                    <div className="relative w-64 h-64 rounded-full overflow-hidden shadow-2xl bg-white z-10" style={{ border: '12px solid #b7d9a5' }}>
+                    <div className="relative w-40 h-40 md:w-64 md:h-64 rounded-full overflow-hidden shadow-2xl bg-white z-10" style={{ border: '8px solid #b7d9a5' }}>
                       <img
                         src="https://cdn-icons-png.flaticon.com/512/149/149071.png"
                         alt="avatar"
@@ -714,6 +911,16 @@ const VideoCalling = ({ callData }) => {
                       />
                     </div>
                   </div>
+
+                  {/* CALLER NAME */}
+                  <p className="text-xl font-semibold text-gray-900 capitalize whitespace-nowrap">
+                    {callerName}
+                  </p>
+
+                  {/* CALL TIMER TEXT */}
+                  <h3 className="text-lg font-medium text-gray-500 mb-2">
+                    {formatTime(callSeconds)}
+                  </h3>
                 </div>
               </div>
             )}
@@ -800,6 +1007,7 @@ const VideoCalling = ({ callData }) => {
                 {/* REPORT CALLER BUTTON */}
                 <div className="flex flex-col items-center gap-2">
                   <button 
+                    onClick={safeEndCall}
                     className="w-16 h-16 rounded-full bg-red-500 flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors"
                   >
                     <svg width="28" height="28" viewBox="0 0 24 24" fill="none">

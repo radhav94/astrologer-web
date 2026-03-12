@@ -34,7 +34,8 @@ import {
   LogOut,
   Radio,
   MessagesSquare,
-  ArrowUpDown
+  ArrowUpDown,
+  RefreshCw
 } from "lucide-react";
 
 export const Icons = {
@@ -52,6 +53,7 @@ export const Icons = {
   Star,
   Clock,
   RotateCcw,
+  RefreshCw,
   MoreHorizontal,
   ChevronLeft,
   ChevronRight,

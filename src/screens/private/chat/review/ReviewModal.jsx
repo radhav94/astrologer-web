@@ -17,7 +17,7 @@ const ReviewModal = ({ onClose, onSubmit, ratedUserName, reviewerName }) => {
         </button>
 
         {/* Header */}
-        <h2 className="text-center text-lg font-semibold">Rate {ratedUserName}</h2>
+        <h2 className="text-center text-lg font-semibold capitalize">Rate {ratedUserName}</h2>
 
         {/* Avatar */}
         <div className="mt-4 flex justify-center">

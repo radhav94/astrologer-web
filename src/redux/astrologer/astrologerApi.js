@@ -30,9 +30,28 @@ export const astrologerApi = epicApi.injectEndpoints({
         "Availability",
         "Price",
       ],
-    })
+    }),
+
+    getMonthlyOverview: builder.query({
+      query: ({ month, year } = {}) => {
+        const params = new URLSearchParams();
+        if (month) params.append("month", month);
+        if (year) params.append("year", year);
+        
+        const queryString = params.toString();
+        return {
+          url: `astrologers/monthly-overview${queryString ? `?${queryString}` : ""}`,
+          method: "GET",
+        };
+      },
+      providesTags: ["MonthlyOverview"],
+    }),
   }),
 });
 
-export const { useUpdateAvailabilityMutation, useSetAstrologerPriceMutation, useGetAstrologerByIdQuery } =
-  astrologerApi;
+export const { 
+  useUpdateAvailabilityMutation, 
+  useSetAstrologerPriceMutation, 
+  useGetAstrologerByIdQuery,
+  useGetMonthlyOverviewQuery 
+} = astrologerApi;

@@ -1,10 +1,31 @@
-const Button = ({ children, className = "", ...props }) => {
+import styles from "./Button.module.scss";
+
+const Button = ({ 
+  children, 
+  className = "", 
+  variant = "", 
+  size = "medium",
+  fullWidth = true,
+  icon,
+  iconPosition = "right",
+  ...props 
+}) => {
+  const buttonClasses = [
+    styles.button,
+    styles[variant],
+    styles[size],
+    fullWidth && styles.fullWidth,
+    className
+  ].filter(Boolean).join(" ");
+
   return (
     <button
-      className={`w-full bg-gray-950 text-white font-medium py-4 px-6 rounded-xl hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 flex items-center justify-center gap-2 ${className}`}
+      className={buttonClasses}
       {...props}
     >
-      {children}
+      {icon && iconPosition === "left" && <span className={styles.icon}>{icon}</span>}
+      <span className={styles.content}>{children}</span>
+      {icon && iconPosition === "right" && <span className={styles.icon}>{icon}</span>}
     </button>
   );
 };

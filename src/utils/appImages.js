@@ -19,6 +19,8 @@ import CopyLink from "../assets/icons/link.png";
 import Verified from "../assets/icons/Verified.png"
 import Coin from "../assets/icons/coin.png";
 import TwinkleStar from "../assets/icons/twinkle star.png"
+import Call1 from "../assets/icons/call-1.png";
+import Chat1 from "../assets/icons/chat-1.png";
 
 export const AppIcons = {
   Logo,
@@ -41,7 +43,9 @@ export const AppIcons = {
   CopyLink,
   Verified,
   Coin,
-  TwinkleStar
+  TwinkleStar,
+  Call1,
+  Chat1,
 };
 
 //appImages
@@ -67,6 +71,8 @@ import Astrologer from "../assets/images/astrologer.png"
 import ProfileAchivment from "../assets/images/profile-achivement.png";
 import Letter1 from "../assets/images/letter1.png";
 import AchivmentImg from "../assets/images/achivments.png"
+import CosmicCircle from "../assets/images/cosmic-circle.png";
+import MobileViewAccount from "../assets/images/mobile-view-account.png"
 
 export const AppImages = {
   Hero,
@@ -90,8 +96,21 @@ export const AppImages = {
   Astrologer,
   ProfileAchivment,
   Letter1,
-  AchivmentImg
+  AchivmentImg,
+  CosmicCircle,
+  MobileViewAccount
 };
+
+
+// default Image
+
+import DefaultMaleAstrologer from "../assets/default-img/astrologer male_v.1.png";
+import DefaultFemaleAstrologer from "../assets/default-img/astrologer female_v.1.png";
+
+export const AppDefaultImg = {
+  DefaultMaleAstrologer,
+  DefaultFemaleAstrologer
+}
 
 //svgs
 
@@ -107,6 +126,23 @@ import Sagittarius from "../assets/svg/sagittarius.svg";
 import Capricorn from "../assets/svg/capricorn.svg";
 import Aquarius from "../assets/svg/aquarius.svg";
 import Pisces from "../assets/svg/pisces.svg";
+import ShubhAstro from "../assets/svg/shubhastro.svg";
+import ExperienceIcon from "../assets/svg/Experience Icon.svg"
+import LoveIcon from "../assets/svg/love.svg";
+import SelfIcon from "../assets/svg/self.svg";
+import OtherIcon from "../assets/svg/other.svg";
+import HealthIcon from "../assets/svg/health.svg";
+import WealthIcon from "../assets/svg/wealth.svg";
+import CareerIcon from "../assets/svg/career.svg";
+import RegisterSuccess from "../assets/svg/registerSuccess.svg"
+import OngoingCall from "../assets/svg/Ongoing call.svg";
+import Quotes from "../assets/svg/Quotes.svg";
+import ChatIcon from "../assets/svg/Chat.svg";
+import AudioIcon from "../assets/svg/Audio.svg";
+import VideoIcon from "../assets/svg/vector.svg";
+import LeftLine from "../assets/svg/Left Line.svg";
+import RightLine from "../assets/svg/Right Line.svg";
+import Moon from "../assets/svg/Moon.svg";
 
 export const appSvgs = {
   Aries,
@@ -121,4 +157,21 @@ export const appSvgs = {
   Capricorn,
   Aquarius,
   Pisces,
+  ShubhAstro,
+  ExperienceIcon,
+  LoveIcon,
+  SelfIcon,
+  OtherIcon,
+  HealthIcon,
+  WealthIcon,
+  CareerIcon,
+  RegisterSuccess,
+  OngoingCall,
+  Quotes,
+  ChatIcon,
+  AudioIcon,
+  VideoIcon,
+  LeftLine,
+  RightLine,
+  Moon,
 };

@@ -1,6 +1,17 @@
 import { useState } from "react";
-import { ChevronDown, Upload } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useFormik } from "formik";
+import { useDispatch } from "react-redux";
+import * as Yup from "yup";
+import { updateRegisterData, setCurrentStep } from "../../../reducer/registerSlice";
+import { createEducationValidation } from "../../../utils/utlis";
+import { useFileUpload } from "../../../hooks/useFileUpload";
+import Button from "../../../components/UI/button/Button";
+import FormStep from "./FormStep";
+import FileUploadInput from "../../../components/UI/fileUploadInput/FileUploadInput";
+import Toggle from "../../../components/UI/toggle/Toggle";
+import styles from "./BasicForms.module.scss";
 
 const EDUCATION_LEVELS = [
   "High School",
@@ -11,135 +22,198 @@ const EDUCATION_LEVELS = [
 
 const Education = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { uploadFile } = useFileUpload();
+  const [uploadingCertificate, setUploadingCertificate] = useState(false);
 
-  const [level, setLevel] = useState("");
-  const [university, setUniversity] = useState("");
-  const [file, setFile] = useState(null);
-  const [showProfile, setShowProfile] = useState(true);
+  // Validation schema using reusable utilities from utils.js
+  const validationSchema = Yup.object().shape({
+    education: createEducationValidation({
+      required: true,
+      minEntries: 1,
+      universityRequired: false,
+      certificateRequired: false,
+    }),
+    // educationShowOnProfile: Yup.boolean(),
+  });
 
-  const isValid = level !== "";
+  // Formik setup
+  const formik = useFormik({
+    initialValues: {
+      education: [
+        {
+          qualification: "",
+          universityName: "",
+          certificateImgUrl: "",
+        },
+      ],
+      educationShowOnProfile: false,
+    },
+    validationSchema,
+    validateOnChange: true,
+    validateOnBlur: true,
+    onSubmit: (values) => {
+      // Dispatch to Redux store
+      dispatch(updateRegisterData({
+        education: values.education,
+        // educationShowOnProfile: values.educationShowOnProfile,
+      }));
+      
+      // Update current step
+      dispatch(setCurrentStep(5));
+      
+      // Navigate to next step
+      navigate("/achievements");
+    },
+  });
+
+  const handleQualificationChange = (value) => {
+    formik.setFieldValue("education.0.qualification", value);
+  };
+
+  const handleUniversityChange = (e) => {
+    formik.setFieldValue("education.0.universityName", e.target.value);
+  };
+
+  const handleFileUpload = async () => {
+    try {
+      setUploadingCertificate(true);
+
+      // Use the custom hook to upload file
+      const fileUrl = await uploadFile("image/*,.pdf");
+
+      if (fileUrl) {
+        // Set the uploaded file URL in Formik
+        formik.setFieldValue("education.0.certificateImgUrl", fileUrl);
+      }
+    } catch (error) {
+      console.error("File upload error:", error);
+    } finally {
+      setUploadingCertificate(false);
+    }
+  };
+
+  // Check if all required fields are filled and valid
+  const isFormValid = 
+    formik.values.education[0].qualification !== "" &&
+    Object.keys(formik.errors).length === 0;
+
+  const handleSkip = () => {
+    // Mark current step as completed and move to next step
+    dispatch(setCurrentStep(5));
+    // Navigate to next step
+    navigate("/achievements");
+  };
 
   return (
-    <div className="min-h-screen bg-white flex justify-center text-left">
-      <div className="w-full max-w-md px-6 pt-10 pb-10 flex flex-col">
+    <div className={styles.container}>
+      <div className={styles.containerCard}>
 
         {/* Progress + Skip */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex gap-2">
-            <span className="w-2 h-2 bg-gray-400 rounded-full" />
-            <span className="w-2 h-2 bg-gray-400 rounded-full" />
-            <span className="w-2 h-2 bg-black rounded-full" />
-            <span className="w-2 h-2 bg-gray-300 rounded-full" />
-            <span className="w-2 h-2 bg-gray-300 rounded-full" />
-          </div>
+        <div className={styles.progressWithSkip}>
+          <FormStep totalSteps={6} currentStep={4} />
 
           <button 
-          onClick={() => navigate("/achievements")}
-          className="text-sm text-gray-600 underline"
+            type="button"
+            onClick={handleSkip}
+            className={styles.skipButton}
           >
             Skip for Now
           </button>
         </div>
 
         {/* Heading */}
-        <h1 className="text-3xl font-bold mb-2">Education</h1>
-        <p className="text-gray-500 text-sm mb-8">
-          What’s the highest level of education you have attained.
+        <h1 className={styles.heading}>Education</h1>
+        <p className={styles.subheading}>
+          What's the highest level of education you have attained.
         </p>
 
         {/* Education Level */}
-        <label className="block text-sm font-medium mb-3">
-          Level of Education
-        </label>
+        <div className={styles.formGroup}>
+          <label className={styles.label}>
+            Level of Education
+          </label>
 
-        <div className="flex flex-wrap gap-3 mb-8">
-          {EDUCATION_LEVELS.map((item) => (
-            <button
-              key={item}
-              onClick={() => setLevel(item)}
-              className={`
-                px-4 py-2 rounded-full text-sm transition
-                ${
-                  level === item
-                    ? "bg-black text-white"
-                    : "bg-gray-100 text-gray-700"
-                }
-              `}
-            >
-              {item}
-            </button>
-          ))}
+          <div className={styles.chipContainer}>
+            {EDUCATION_LEVELS.map((item) => (
+              <button
+                key={item}
+                type="button"
+                onClick={() => handleQualificationChange(item)}
+                className={`${styles.chip} ${
+                  formik.values.education[0].qualification === item
+                    ? styles.chipActive
+                    : ""
+                }`}
+              >
+                {item}
+              </button>
+            ))}
+          </div>
+          {formik.touched.education?.[0]?.qualification && formik.errors.education?.[0]?.qualification && (
+            <p className={styles.errorText}>{formik.errors.education[0].qualification}</p>
+          )}
         </div>
 
         {/* University */}
-        <label className="block text-sm font-medium mb-2">
-          Select University <span className="italic text-gray-400">(if any)</span>
-        </label>
+        <div className={styles.formGroup}>
+          <label className={styles.label}>
+            Select University <span className={styles.optionalText}>(if any)</span>
+          </label>
 
-        <div className="relative mb-8">
-          <select
-            value={university}
-            onChange={(e) => setUniversity(e.target.value)}
-            className="w-full border rounded-xl px-4 py-3 appearance-none focus:outline-none"
-          >
-            <option value="">Select</option>
-            <option>Delhi University</option>
-            <option>Mumbai University</option>
-            <option>Pune University</option>
-            <option>Other</option>
-          </select>
+          <div className={styles.selectWrapper}>
+            <select
+              name="education.0.universityName"
+              value={formik.values.education[0].universityName}
+              onChange={handleUniversityChange}
+              onBlur={formik.handleBlur}
+              className={styles.select}
+            >
+              <option value="">Select</option>
+              <option>Delhi University</option>
+              <option>Mumbai University</option>
+              <option>Pune University</option>
+              <option>Other</option>
+            </select>
 
-          <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" />
+            <ChevronDown className={styles.selectIcon} />
+          </div>
         </div>
 
         {/* Certificate Upload */}
-        <label className="block text-sm font-medium mb-2">
-          Attach Certificate <span className="italic text-gray-400">(if any)</span>
-        </label>
-
-        <label className="border rounded-xl px-4 py-3 flex items-center justify-between cursor-pointer mb-8">
-          <span className="text-sm text-gray-500">
-            {file ? file.name : "Add file (.jpg, .png, .pdf)"}
-          </span>
-          <Upload size={18} className="text-gray-500" />
-          <input
-            type="file"
-            accept=".jpg,.png,.pdf"
-            className="hidden"
-            onChange={(e) => setFile(e.target.files[0])}
-          />
-        </label>
+        <FileUploadInput
+          label="Attach Certificate"
+          optionalText="(if any)"
+          accept="image/*,.pdf"
+          value={formik.values.education[0].certificateImgUrl}
+          isUploading={uploadingCertificate}
+          onUpload={handleFileUpload}
+          uploadText="Tap here to add file"
+          uploadSubtext="(.jpg, .png, .pdf)"
+        />
 
         {/* Display on Profile */}
-        <div className="flex items-center gap-3 mb-10">
-          <button
-            onClick={() => setShowProfile(!showProfile)}
-            className={`
-              w-12 h-7 rounded-full flex items-center px-1 transition
-              ${showProfile ? "bg-black justify-end" : "bg-gray-300"}
-            `}
-          >
-            <span className="w-5 h-5 bg-white rounded-full" />
-          </button>
-
-          <span className="text-sm font-medium">Display on Profile</span>
+        <div className={styles.toggleWrapper}>
+          <Toggle
+            label="Display on Profile"
+            checked={formik.values.educationShowOnProfile}
+            onChange={(value) => formik.setFieldValue("educationShowOnProfile", value)}
+          />
         </div>
 
         {/* Next Button */}
-        <button
-          disabled={!isValid}
-          onClick={() => navigate("/achievements")}
-          className={`
-            w-full py-3 rounded-xl font-medium transition mt-auto
-            ${
-              isValid
-                ? "bg-black text-white hover:bg-gray-900"
-                : "bg-gray-300 text-gray-600 cursor-not-allowed"
-            }
-          `}
+        <Button
+          type="submit"
+          onClick={formik.handleSubmit}
+          disabled={!isFormValid || formik.isSubmitting}
+          className={`${styles.formButton} ${
+            !isFormValid || formik.isSubmitting
+              ? styles.formButtonDisabled
+              : ""
+          }`}
         >
           Next
-        </button>
+        </Button>
       </div>
     </div>
   );

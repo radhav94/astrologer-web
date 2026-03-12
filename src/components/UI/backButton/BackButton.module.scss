@@ -1,0 +1,94 @@
+
+.backButtonWrapper {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  z-index: 10000;
+  pointer-events: auto;
+
+  @media (max-width: 767px) {
+    position: fixed;
+    z-index: 10000;
+  }
+
+  @media (min-width: 640px) {
+    top: 1rem;
+    left: 1rem;
+  }
+
+  @media (min-width: 768px) {
+    top: 1rem;
+    left: 1rem;
+    position: absolute;
+  }
+
+  @media (min-width: 1024px) {
+    top: 2rem;
+    left: 2rem;
+  }
+
+  @media (min-width: 1280px) {
+    top: 2rem;
+    left: 2rem;
+  }
+}
+
+.backButton {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background-color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  border: none;
+  color: #F75801;
+  box-shadow: 0 2px 8px 0 rgba(247, 88, 1, 0.15);
+  transition: all 0.2s ease;
+  padding: 0.5rem;
+  position: relative;
+  z-index: 1;
+  pointer-events: auto;
+  outline: none;
+  
+
+  &:hover:not(:disabled) {
+    background-color: #fff5f0;
+    box-shadow: 0 4px 12px 0 rgba(247, 88, 1, 0.2);
+    cursor: pointer;
+    border-color: #F75801;
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.95);
+    cursor: pointer;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  // When label is present, adjust button width
+  &:has(.label) {
+    width: auto;
+    min-width: 3rem;
+    padding: 0.5rem 1rem;
+    border-radius: 1.5rem;
+  }
+
+  // Ensure icon is clickable
+  svg {
+    pointer-events: none;
+  }
+}
+
+.label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+  pointer-events: none;
+}

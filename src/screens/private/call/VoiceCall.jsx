@@ -17,11 +17,10 @@ import { useChat as useChatContext } from "../../../context/chatContext";
 import CallIcon from "../../../assets/chat/Call.svg";
 import VideoCallChat from "./VideoCallChat";
 
-// const APP_ID = "5630460abdc141e3b2f8d9597752bd7d";
 const APP_ID = "c76e3d30a3b6483689dac88ca9f94381";
 
 const AgoraVoiceCalling = ({ callData }) => {
-  const { activeCall, setActiveCall, setReviewData, setOpenReview, callStartTime, setCallStartTime } = useCall();
+  const { activeCall, setActiveCall, sharedAgoraState, setSharedAgoraState, isUpgradeRejectionProtected, upgradeRejectionRef, setReviewData, setOpenReview, callStartTime, setCallStartTime, isCallMinimized, setIsCallMinimized } = useCall();
   const { setActiveChat } = useChatContext();
   const navigate = useNavigate();
 
@@ -40,12 +39,12 @@ const AgoraVoiceCalling = ({ callData }) => {
   const isRefreshingRef = useRef(false);
   // Track if this mount is a refresh-resume (activeCall restored from sessionStorage)
   const isResumeFromRefresh = useRef(!!sessionStorage.getItem("shubhtalk_active_call"));
+  const isUpgradingRef = useRef(false); // Track if upgrading to video
 
   /* ================= STATE ================= */
   const [micOn, setMicOn] = useState(true);
   const [joined, setJoined] = useState(false);
   const [callState, setCallState] = useState("connecting");
-  const [isMinimized, setIsMinimized] = useState(false);
   const [position, setPosition] = useState({ x: 20, y: 20 });
   const [isVideo, setIsVideo] = useState(false);
   const [isRemoteVideo, setIsRemoteVideo] = useState(false);
@@ -109,11 +108,16 @@ const AgoraVoiceCalling = ({ callData }) => {
 
       // Grace period so a page refresh doesn't kill the call
       client.on("user-left", (user) => {
-        console.log("[VoiceCall] 👋 user-left — uid:", user.uid, "starting 15s grace timer");
+        // If upgrading to video, ignore user-left
+        if (isUpgradingRef.current || upgradeRejectionRef.current) {
+          console.log("⚠️ Ignoring user-left — upgrade in progress");
+          return;
+        }
+        console.log("[VoiceCall] 👋 user-left — uid:", user.uid, "starting 30s grace timer");
         if (userLeftTimerRef.current) clearTimeout(userLeftTimerRef.current);
         userLeftTimerRef.current = setTimeout(() => {
           console.log("[VoiceCall] ⏰ user-left grace timer expired — ending call");
-          endCall();
+          handleRemoteUserLeft();
         }, 30000); // 30s grace period for rejoin
       });
 
@@ -127,7 +131,7 @@ const AgoraVoiceCalling = ({ callData }) => {
         }
       });
 
-      await client.join(APP_ID, roomId, agoraToken, null);
+      await client.join(APP_ID, roomId, agoraToken, "");
 
       // Clear the resume flag now that we've successfully rejoined
       if (isResumeFromRefresh.current) {
@@ -140,7 +144,14 @@ const AgoraVoiceCalling = ({ callData }) => {
 
       micTrackRef.current = await AgoraRTC.createMicrophoneAudioTrack();
       await client.publish([micTrackRef.current]);
-      // videoTrackRef.current = await AgoraRTC.createCameraVideoTrack();
+
+      // Store in shared state for potential upgrade
+      setSharedAgoraState({
+        client: client,
+        micTrack: micTrackRef.current,
+        cameraTrack: null,
+        isUpgrading: false
+      });
 
       setJoined(true);
       setCallState("connected");
@@ -150,6 +161,11 @@ const AgoraVoiceCalling = ({ callData }) => {
 
     return () => {
       console.log("[VoiceCall] 🧹 useEffect cleanup (unmount) — isRefreshing:", isRefreshingRef.current);
+      // If upgrading to video, skip cleanup entirely
+      if (isUpgradingRef.current) {
+        console.log("🔄 Skipping cleanup - upgrading to video");
+        return;
+      }
       if (userLeftTimerRef.current) {
         clearTimeout(userLeftTimerRef.current);
         userLeftTimerRef.current = null;
@@ -171,6 +187,11 @@ const AgoraVoiceCalling = ({ callData }) => {
     };
     // eslint-disable-next-line
   }, [roomId]);
+
+  /* ================= WATCH FOR UPGRADE ================= */
+  useEffect(() => {
+    isUpgradingRef.current = sharedAgoraState.isUpgrading;
+  }, [sharedAgoraState.isUpgrading]);
 
   /* ================= MIC TOGGLE ================= */
   useEffect(() => {
@@ -223,6 +244,13 @@ const AgoraVoiceCalling = ({ callData }) => {
     }
 
     try {
+      // If upgrading, don't close anything - just hand over to video call
+      if (isUpgradingRef.current) {
+        console.log("🔄 Cleanup skipped - preserving connection for upgrade");
+        return;
+      }
+
+      // Normal cleanup - close everything
       await micTrackRef.current?.stop();
       await micTrackRef.current?.close();
       await videoTrackRef.current?.stop();
@@ -235,18 +263,70 @@ const AgoraVoiceCalling = ({ callData }) => {
       clientRef.current = null;
       sessionStorage.removeItem("shubhtalk_active_call");
       sessionStorage.removeItem("shubhtalk_call_start_time");
+
+      // Only clear active call and shared state if not upgrading
+      if (!isUpgradingRef.current) {
+        setActiveCall(null);
+        setSharedAgoraState({
+          client: null,
+          micTrack: null,
+          cameraTrack: null,
+          isUpgrading: false
+        });
+      }
       setCallStartTime(null);
-      setActiveCall(null);
-      setActiveChat(null); // Clear active chat when call ends
     }
   };
 
-  /* ================= END CALL ================= */
+  /* ================= END CALL (User initiated) ================= */
   const endCall = async () => {
+    // Don't emit call:end if upgrading
+    if (isUpgradingRef.current) {
+      console.log("🔄 Skipping call:end emit - upgrading to video");
+      return;
+    }
+
+    console.log("📞 User initiated call end - emitting call:end");
     voiceSocket.emit("call:end", {
       roomId,
       endedBy: isUserSide ? "CUSTOMER" : "ASTROLOGER",
     });
+    setReviewData({
+      userID: activeCall?.userID,
+      fullName: activeCall?.callerName,
+    });
+    setOpenReview(true);
+    await cleanup();
+  };
+
+  /* ================= HANDLE REMOTE USER LEFT (Remote initiated) ================= */
+  const handleRemoteUserLeft = async () => {
+    // Check if we're upgrading - don't end call if upgrading
+    if (isUpgradingRef.current || upgradeRejectionRef.current) {
+      console.log("⚠️ Ignoring remote user left - upgrade in progress");
+      return;
+    }
+
+    console.log("📞 Remote user left - cleaning up without emitting call:end");
+    // Don't emit call:end - the remote user already ended it
+    setReviewData({
+      userID: activeCall?.userID,
+      fullName: activeCall?.callerName,
+    });
+    setOpenReview(true);
+    await cleanup();
+  };
+
+  /* ================= HANDLE SERVER CALL END (Server/Remote initiated) ================= */
+  const handleServerCallEnd = async () => {
+    // Check if we're upgrading - don't end call if upgrading
+    if (isUpgradingRef.current || upgradeRejectionRef.current || isUpgradeRejectionProtected) {
+      console.log("⚠️ Ignoring server call end - upgrade in progress");
+      return;
+    }
+
+    console.log("📞 Server/Remote ended call - cleaning up without emitting call:end");
+    // Don't emit call:end - the server/remote already ended it
     setReviewData({
       userID: activeCall?.userID,
       fullName: activeCall?.callerName,
@@ -261,27 +341,47 @@ const AgoraVoiceCalling = ({ callData }) => {
 
   /* ================= SOCKET ================= */
   useEffect(() => {
-    const handleSocketDisconnect = () => {
+    const handleCallEnded = (data) => {
+      console.log("📞 call:ended event received:", data);
+      handleServerCallEnd();
+    };
+
+    const handleForceCallEnd = (data) => {
+      console.log("📞 force_call_end event received:", data);
+      handleServerCallEnd();
+    };
+
+    const handleDisconnect = (reason) => {
       // Don't end call on socket disconnect if we're refreshing or resuming
       if (isRefreshingRef.current || isResumeFromRefresh.current) {
         console.log("[VoiceCall] 🔄 Ignoring socket disconnect during refresh/resume");
         return;
       }
-      endCall();
+      console.log("📞 disconnect event received:", reason);
+      handleServerCallEnd();
     };
 
-    voiceSocket.on("call:ended", endCall);
-    voiceSocket.on("force_call_end", endCall);
-    voiceSocket.on("disconnect", handleSocketDisconnect);
+    const handleCallRejected = (data) => {
+      console.log("📞 call:rejected event received:", data);
+      if (data.roomId == activeCall?.roomId) {
+        handleServerCallEnd();
+      }
+    };
+
+    voiceSocket.on("call:ended", handleCallEnded);
+    voiceSocket.on("force_call_end", handleForceCallEnd);
+    voiceSocket.on("disconnect", handleDisconnect);
+    voiceSocket.on("call:rejected", handleCallRejected);
     voiceSocket.on("call:canceled", handleCallCanceled);
 
     return () => {
-      voiceSocket.off("call:ended", endCall);
-      voiceSocket.off("force_call_end", endCall);
-      voiceSocket.off("disconnect", handleSocketDisconnect);
+      voiceSocket.off("call:ended", handleCallEnded);
+      voiceSocket.off("force_call_end", handleForceCallEnd);
+      voiceSocket.off("disconnect", handleDisconnect);
+      voiceSocket.off("call:rejected", handleCallRejected);
       voiceSocket.off("call:canceled", handleCallCanceled);
     };
-  }, []);
+  }, [isUpgradeRejectionProtected]); // Keep state in dependency for reactivity
 
   /* ================= DRAG ================= */
   const dragOffset = useRef({ x: 0, y: 0 });
@@ -324,7 +424,7 @@ const AgoraVoiceCalling = ({ callData }) => {
       remainingTime: activeCall.remainingTime || 0
     });
 
-    setIsMinimized(true);
+    setIsCallMinimized(true);
     navigate(
       PATH.privateRoutes.CHAT_WINDOW.path.replace(
         ":chatId",
@@ -388,7 +488,7 @@ const AgoraVoiceCalling = ({ callData }) => {
   return (
     <>
       {/* MINI VIEW */}
-      {isMinimized && (
+      {isCallMinimized && (
         <div
           onMouseDown={startDrag}
           onTouchStart={startDrag}
@@ -406,7 +506,7 @@ const AgoraVoiceCalling = ({ callData }) => {
               className="w-10 h-10 rounded-full border border-white/50"
             />
             <div>
-              <p className="text-sm font-semibold">{callerName}</p>
+              <p className="text-sm font-semibold capitalize truncate max-w-[120px]">{callerName}</p>
               <span className="text-xs opacity-70">
                 {joined ? formatTime(timer) : "Calling…"}
               </span>
@@ -423,7 +523,7 @@ const AgoraVoiceCalling = ({ callData }) => {
             </button>
 
             <button
-              onClick={() => setIsMinimized(false)}
+              onClick={() => setIsCallMinimized(false)}
               className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center"
             >
               ⤢
@@ -433,7 +533,7 @@ const AgoraVoiceCalling = ({ callData }) => {
       )}
 
       {/* FULL VIEW - NEW DESIGN */}
-      {!isMinimized && (
+      {!isCallMinimized && (
         <div className="fixed inset-0 z-[99999] flex flex-col" style={{ backgroundColor: isRemoteVideo ? 'transparent' : 'white' }}>
 
           {/* HEADER */}
@@ -452,7 +552,7 @@ const AgoraVoiceCalling = ({ callData }) => {
             <div className="flex items-center gap-3">
               {/* Back Button */}
               <button
-                onClick={() => setIsMinimized(true)}
+                onClick={() => setIsCallMinimized(true)}
                 className="w-10 h-10 rounded-full border-2 flex items-center justify-center hover:opacity-80 transition-opacity"
                 style={{ borderColor: '#f75801' }}
               >
@@ -467,17 +567,11 @@ const AgoraVoiceCalling = ({ callData }) => {
               {/* User Info */}
               <div className="flex flex-col">
                 <h2
-                  className="text-sm font-semibold transition-colors duration-300"
+                  className="text-sm font-semibold transition-colors duration-300 capitalize truncate max-w-[150px]"
                   style={{ color: isRemoteVideo ? 'white' : '#111827' }}
                 >
                   {callerName}
                 </h2>
-                <span
-                  className="text-xs transition-colors duration-300"
-                  style={{ color: isRemoteVideo ? 'rgba(255, 255, 255, 0.8)' : '#6b7280' }}
-                >
-                  Exp. 1 year
-                </span>
               </div>
             </div>
 
@@ -622,6 +716,7 @@ const AgoraVoiceCalling = ({ callData }) => {
             <div
               ref={remoteVideoRef}
               className={`absolute inset-0 bg-black ${isRemoteVideo ? "block" : "hidden"}`}
+              style={{ transform: 'scaleX(-1)' }}
             />
 
             {/* LOCAL VIDEO (PiP) */}
@@ -643,7 +738,7 @@ const AgoraVoiceCalling = ({ callData }) => {
             {!isRemoteVideo && (
               <div className="flex-1 flex flex-col items-center justify-center px-4">
                 {/* AVATAR WITH ACTIVE RIPPLE EFFECT */}
-                <div className="relative mb-12">
+                <div className="relative mb-3">
                   {/* Active ripple rings */}
                   <div className={styles.rippleRing}></div>
                   <div className={styles.rippleRing}></div>
@@ -651,7 +746,7 @@ const AgoraVoiceCalling = ({ callData }) => {
                   <div className={styles.rippleRing}></div>
 
                   {/* Avatar with green border */}
-                  <div className="relative w-64 h-64 rounded-full overflow-hidden shadow-2xl bg-white z-10" style={{ border: '12px solid #b7d9a5' }}>
+                  <div className="relative w-40 h-40 md:w-64 md:h-64 rounded-full overflow-hidden shadow-2xl bg-white z-10" style={{ border: '8px solid #b7d9a5' }}>
                     <img
                       src="https://cdn-icons-png.flaticon.com/512/149/149071.png"
                       alt="avatar"
@@ -660,8 +755,13 @@ const AgoraVoiceCalling = ({ callData }) => {
                   </div>
                 </div>
 
+                {/* CALLER NAME */}
+                <p className="text-xl font-semibold text-gray-900 capitalize whitespace-nowrap">
+                  {callerName}
+                </p>
+
                 {/* CALL TIMER TEXT */}
-                <h3 className="text-2xl font-semibold text-gray-900 mb-16">
+                <h3 className="text-lg font-medium text-gray-500 mb-2">
                   {formatTime(timer)}
                 </h3>
               </div>
@@ -669,7 +769,7 @@ const AgoraVoiceCalling = ({ callData }) => {
 
             {/* BOTTOM CONTROLS SECTION - FIXED AT BOTTOM */}
             <div
-              className="absolute bottom-0 left-0 right-0 z-20"
+              className={`${isRemoteVideo ? 'absolute bottom-0' : ''} left-0 right-0 z-20`}
               style={{
                 display: 'flex',
                 flexDirection: 'column'
@@ -724,6 +824,7 @@ const AgoraVoiceCalling = ({ callData }) => {
                   {/* REPORT CALLER BUTTON */}
                   <div className="flex flex-col items-center gap-2">
                     <button
+                      onClick={endCall}
                       className="w-16 h-16 rounded-full bg-red-500 flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors"
                     >
                       <svg width="28" height="28" viewBox="0 0 24 24" fill="none">

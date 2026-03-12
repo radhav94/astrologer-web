@@ -155,6 +155,10 @@ const AchievementsProfile = () => {
     }
   };
 
+  const handleRemoveAttachment = (attachmentId) => {
+    setAttachments((prev) => prev.filter((att) => att.id !== attachmentId));
+  };
+
   // Check if all required fields are filled and valid
   const isFormValid =
     formik.values.achievementName.trim() !== "" &&
@@ -196,9 +200,17 @@ const AchievementsProfile = () => {
         <div className={styles.formGroup}>
           <label className={styles.label}>Attachments</label>
           <div className={styles.attachmentsGrid}>
+            {/* attachments preview */}
             {attachments.map((att) => (
               <div key={att.id} className={styles.attachmentItem}>
-                
+                <button
+                  type="button"
+                  onClick={() => handleRemoveAttachment(att.id)}
+                  className={styles.removeAttachmentButton}
+                  aria-label="Remove attachment"
+                >
+                  <Icons.X size={24} />
+                </button>
                 {att.image ? (
                   <img
                     src={att.image}

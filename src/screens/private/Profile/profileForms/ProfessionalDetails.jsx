@@ -32,19 +32,7 @@ const ProfessionalProfileDtls = () => {
   // Use Redux state as primary source for prefilling form
   const existingData = astrologerDetails || userData;
 
-  const baseExpertiseOptions = [
-    "Vedic",
-    "Tarot",
-    "Palmistry",
-    "Life Coach",
-    "KP",
-    "Nadi",
-    "Psychic",
-    "Face Reading",
-    "Vastu",
-    "Prashana",
-    "Numerology",
-  ];
+  const baseExpertiseOptions = ['Tarot', 'Face Reading', 'Vedic', 'Numerology', 'Palmistry'];
 
   // Get existing expertise from Redux
   const existingExpertise =

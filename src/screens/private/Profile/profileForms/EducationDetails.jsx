@@ -7,7 +7,6 @@ import { Plus } from "lucide-react";
 import { Icons } from "../../../../components/Icons";
 import Button from "../../../../components/UI/button/Button";
 import SectionHeader from "../../../../components/UI/sectionHeader/SectionHeader";
-import Toggle from "../../../../components/UI/toggle/Toggle";
 import FileUploadInput from "../../../../components/UI/fileUploadInput/FileUploadInput";
 import styles from "./ProfileForms.module.scss";
 import { createEducationValidation } from "../../../../utils/utlis";
@@ -53,6 +52,8 @@ const EducationDetails = () => {
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [editingIndex, setEditingIndex] = useState(null);
   const [viewingAttachments, setViewingAttachments] = useState(null);
+  const [deletingIndex, setDeletingIndex] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   // 🔥 FORCE SCROLL TO TOP
   useEffect(() => {
@@ -82,13 +83,11 @@ const EducationDetails = () => {
       qualification: "",
       universityName: "",
       certificateImgUrl: "",
-      display: false,
     },
     validationSchema: Yup.object().shape({
       qualification: Yup.string().required("Qualification is required"),
       universityName: Yup.string(),
       certificateImgUrl: Yup.string(),
-      display: Yup.boolean(),
     }),
     validateOnChange: true,
     validateOnBlur: true,
@@ -103,7 +102,6 @@ const EducationDetails = () => {
             qualification: values.qualification,
             universityName: values.universityName,
             certificateImgUrl: values.certificateImgUrl,
-            display: values.display,
           };
         } else {
           // Add new education entry
@@ -113,7 +111,6 @@ const EducationDetails = () => {
               qualification: values.qualification,
               universityName: values.universityName,
               certificateImgUrl: values.certificateImgUrl,
-              display: values.display,
             },
           ];
         }
@@ -155,7 +152,6 @@ const EducationDetails = () => {
       qualification: edu.qualification || "",
       universityName: edu.universityName || "",
       certificateImgUrl: edu.certificateImgUrl || "",
-      display: edu.display || false,
     });
   };
 
@@ -180,6 +176,48 @@ const EducationDetails = () => {
     }
   };
 
+  const handleRemoveCertificate = () => {
+    formik.setFieldValue("certificateImgUrl", "");
+  };
+
+  const handleDeleteClick = (index) => {
+    setDeletingIndex(index);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    try {
+      // Remove the education entry at deletingIndex
+      const updatedEducation = existingEducation.filter(
+        (_, index) => index !== deletingIndex
+      );
+
+      // Call the mutation API
+      await setAstroEditProfile({
+        id: astrologerId,
+        education: updatedEducation,
+      }).unwrap();
+
+      // Show success message
+      toast.success("Education record removed successfully");
+
+      // Close modal and reset state
+      setShowDeleteModal(false);
+      setDeletingIndex(null);
+    } catch (error) {
+      console.error("Failed to delete education:", error);
+      toast.error(
+        error?.data?.message ||
+          "Failed to remove education. Please try again."
+      );
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setShowDeleteModal(false);
+    setDeletingIndex(null);
+  };
+
   const isFormValid =
     formik.values.qualification.trim() !== "" && formik.isValid;
 
@@ -202,13 +240,23 @@ const EducationDetails = () => {
                       <span className={styles.educationLevel}>
                         {edu.qualification}
                       </span>
-                      <button
-                        type="button"
-                        onClick={() => handleEdit(index)}
-                        className={styles.editIconButton}
-                      >
-                        <img src={AppIcons.EditIcon} alt="Edit Icons" />
-                      </button>
+                      <div className={styles.cardActions}>
+                        <button
+                          type="button"
+                          onClick={() => handleEdit(index)}
+                          className={styles.editIconButton}
+                        >
+                          <img src={AppIcons.EditIcon} alt="Edit Icons" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteClick(index)}
+                          className={styles.deleteIconButton}
+                          aria-label="Delete education"
+                        >
+                         <Icons.X size={20} />
+                        </button>
+                      </div>
                     </div>
                     <h3 className={styles.universityName}>
                       {edu.universityName || "No university specified"}
@@ -289,17 +337,24 @@ const EducationDetails = () => {
             <div className={styles.formGroup}>
               <label className={styles.label}>Attachments</label>
               <div className={styles.attachmentsGrid}>
+                {/* attachments preview */}
                 {formik.values.certificateImgUrl && (
                   <div className={styles.attachmentItem}>
-                   
-                      <img
-                        src={formik.values.certificateImgUrl}
-                        alt="attachment"
-                        className={styles.attachmentImage}
-                      />
-                   
+                    <button
+                      type="button"
+                      onClick={handleRemoveCertificate}
+                      className={styles.removeAttachmentButton}
+                      aria-label="Remove certificate"
+                    >
+                    <Icons.X size={24} />
+                    </button>
+                    <img
+                      src={formik.values.certificateImgUrl}
+                      alt="attachment"
+                      className={styles.attachmentImage}
+                    />
                   </div>
-                 )}
+                )}
                 <FileUploadInput
                   optionalText="(if any)"
                   accept="image/*,.pdf"
@@ -310,15 +365,6 @@ const EducationDetails = () => {
                   uploadSubtext="(.jpg, .png, .pdf)"
                 />
               </div>
-            </div>
-
-            {/* Display on Profile Toggle */}
-            <div className="mb-6 flex">
-              <Toggle
-                label="Display on Profile"
-                checked={formik.values.display}
-                onChange={(value) => formik.setFieldValue("display", value)}
-              />
             </div>
 
             {/* Form Actions */}
@@ -361,13 +407,48 @@ const EducationDetails = () => {
               className={styles.closeModal}
               onClick={() => setViewingAttachments(null)}
             >
-              ×
+              <Icons.X size={20} />
             </button>
             <img
               src={viewingAttachments}
               alt="Certificate"
               className={styles.attachmentImage}
             />
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div
+          className={styles.attachmentModal}
+          onClick={handleDeleteCancel}
+        >
+          <div
+            className={styles.deleteModalContent}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className={styles.deleteModalTitle}>Remove Education Record</h3>
+            <p className={styles.deleteModalText}>
+              Are you sure you want to remove this education record? This action cannot be undone.
+            </p>
+            <div className={styles.deleteModalActions}>
+              <button
+                type="button"
+                onClick={handleDeleteCancel}
+                className={styles.cancelButton}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteConfirm}
+                disabled={isUpdating}
+                className={styles.deleteConfirmButton}
+              >
+                {isUpdating ? "Removing..." : "Yes, Remove"}
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -1,11 +1,14 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { LuPencilLine } from "react-icons/lu";
 import styles from "./ProfileTab.module.scss";
 import { AppDefaultImg, AppImages } from "../../../../utils/appImages";
 import dayjs from "dayjs";
-import { formatIndianPhone } from "../../../../utils/utlis";
+import { formatIndianPhone, getDefaultImgBasedOnGender } from "../../../../utils/utlis";
 
 const ProfileTab = ({ profileData }) => {
+  const [isAchievementExpanded, setIsAchievementExpanded] = useState(false);
+
   if (!profileData) {
     return <div className={styles.profileTabContainer}>Loading...</div>;
   }
@@ -130,12 +133,30 @@ const ProfileTab = ({ profileData }) => {
         <span className={styles.sectionTitle}>Achievements</span>
 
         <p className={styles.achievementsText}>
-          {achievements[0]?.achievementName || "No achievements added yet."}
-
-          {achievements[0]?.achievementName &&
-            achievements[0].achievementName.length > 100 && (
-              <span className={styles.readMore}>...Read More</span>
-            )}
+          {achievements[0]?.achievementName ? (
+            <>
+              {isAchievementExpanded
+                ? achievements[0].achievementName
+                : achievements[0].achievementName.length > 100
+                  ? `${achievements[0].achievementName.substring(0, 100)}...`
+                  : achievements[0].achievementName}
+              
+              {!isAchievementExpanded &&
+                achievements[0].achievementName.length > 100 && (
+                  <>
+                    {" "}
+                    <span
+                      className={styles.readMore}
+                      onClick={() => setIsAchievementExpanded(true)}
+                    >
+                      Read More
+                    </span>
+                  </>
+                )}
+            </>
+          ) : (
+            "No achievements added yet."
+          )}
         </p>
         <div className={styles.imagesGrid}>
         {achievements.length > 0 ? (

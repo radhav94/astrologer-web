@@ -9,19 +9,7 @@ import styles from "./BasicForms.module.scss";
 import FormStep from "./FormStep";
 import { appSvgs } from "../../../utils/appImages";
 
-const EXPERTISE_LIST = [
-  "Vedic",
-  "Tarot",
-  "KP",
-  "Life Coach",
-  "Palmistry",
-  "Nadi",
-  "Prashana",
-  "Psychic",
-  "Vastu",
-  "Face Reading",
-  "Numerology",
-];
+const EXPERTISE_LIST = ['Tarot', 'Face Reading', 'Vedic', 'Numerology', 'Palmistry'];
 
 const EXPERIENCE_LIST = Array.from({ length: 51 }, (_, i) => i); // 0 to 50
 

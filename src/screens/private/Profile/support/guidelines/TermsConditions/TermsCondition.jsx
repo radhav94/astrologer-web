@@ -1,33 +1,29 @@
 import { Link } from "react-router-dom";
 import { Icons } from "../../../../../../components/Icons";
+import styles from "./TermsCondition.module.scss";
+import SectionHeader from "../../../../../../components/UI/sectionHeader/SectionHeader";
 
 const TermsConditions = () => {
   return (
-    <div className="h-full flex flex-col max-w-4xl mx-auto text-left">
-      <div className="flex items-center gap-4 mb-8">
-        <button className="p-2 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors">
-          <Link to="/guidelines">
-            <Icons.ChevronLeft size={20} className="text-gray-700" />
-          </Link>
-        </button>
-        <h1 className="text-2xl font-bold text-gray-900">Terms & Conditions</h1>
-      </div>
+    <div className={styles.container}>
+       <SectionHeader title="Terms & Conditions" />
+      
 
-      <div className="bg-white rounded-3xl p-8 md:p-12 shadow-sm border border-gray-100 leading-relaxed text-gray-700 space-y-8">
-        <div>
-          <p className="mb-4">
+      <div className={styles.content}>
+        <div className={styles.section}>
+          <p className={styles.paragraph}>
             Welcome to ShubhAstro. These Terms & Conditions ("Terms") govern
             your use of our mobile application, website, products, and services
             ("Platform"). By accessing or using the Platform, you agree to be
             bound by these Terms.
           </p>
-          <p className="font-bold text-gray-900">
+          <p className={styles.boldText}>
             If you do not agree, please do not use the Platform.
           </p>
         </div>
 
-        <div>
-          <h3 className="font-bold text-gray-900 text-lg mb-3">
+        <div className={styles.section}>
+          <h3 className={styles.sectionTitle}>
             1. Eligibility
           </h3>
           <p>
@@ -37,33 +33,33 @@ const TermsConditions = () => {
           </p>
         </div>
 
-        <div>
-          <h3 className="font-bold text-gray-900 text-lg mb-3">
+        <div className={styles.section}>
+          <h3 className={styles.sectionTitle}>
             2. Nature of Services
           </h3>
-          <p className="mb-2">ShubhAstro provides:</p>
-          <ul className="list-disc pl-5 space-y-1 mb-4 marker:text-gray-400">
+          <p className={styles.paragraph}>ShubhAstro provides:</p>
+          <ul className={styles.list}>
             <li>Access to astrologers for consultations</li>
             <li>Birth chart/Kundli generation</li>
             <li>Tarot, numerology, and related esoteric services</li>
             <li>Content, reports, and predictions</li>
           </ul>
-          <p className="bg-gray-50 p-4 rounded-xl text-sm border-l-4 border-gray-300">
+          <p className={styles.highlightBox}>
             All predictions are advisory in nature. They are not guaranteed
             outcomes and should not replace professional advice such as medical,
             legal, or financial counsel.
           </p>
         </div>
 
-        <div>
-          <h3 className="font-bold text-gray-900 text-lg mb-3">
+        <div className={styles.section}>
+          <h3 className={styles.sectionTitle}>
             3. User Account
           </h3>
-          <p className="mb-2">
+          <p className={styles.paragraph}>
             To use ShubhAstro, you may need to register using your mobile number
             and OTP verification. You are responsible for:
           </p>
-          <ul className="list-disc pl-5 space-y-1 mb-4 marker:text-gray-400">
+          <ul className={styles.list}>
             <li>Maintaining confidentiality of your account</li>
             <li>All activity under your account</li>
             <li>Updating your information whenever necessary</li>
@@ -74,12 +70,12 @@ const TermsConditions = () => {
           </p>
         </div>
 
-        <div>
-          <h3 className="font-bold text-gray-900 text-lg mb-3">
+        <div className={styles.section}>
+          <h3 className={styles.sectionTitle}>
             4. Consultations & Interactions
           </h3>
-          <p className="mb-2">When you book a consultation on ShubhAstro:</p>
-          <ul className="list-disc pl-5 space-y-1 marker:text-gray-400">
+          <p className={styles.paragraph}>When you book a consultation on ShubhAstro:</p>
+          <ul className={styles.list}>
             <li>
               The astrologer is responsible for the quality of insights offered.
             </li>

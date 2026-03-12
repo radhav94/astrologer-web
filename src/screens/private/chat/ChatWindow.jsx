@@ -566,14 +566,16 @@ const ChatWindow = () => {
 
       if (res.success) {
         Toast.success(res.message);
-        navigate(-1)
       } else {
         Toast.error(res.message);
       }
 
       setOpenReview(false);
+      // Navigate to chat list after review submission
+      navigate("/chats");
     } catch (error) {
       console.error("Failed to submit review", error);
+      Toast.error("Failed to submit review");
     }
   }
 
@@ -848,7 +850,11 @@ const ChatWindow = () => {
       {/* Review Modal */}
       {openReview && (
         <ReviewModal
-          onClose={() => setOpenReview(false)}
+          onClose={() => {
+            setOpenReview(false);
+            // Navigate to chat list when closing review without submitting
+            navigate("/chats");
+          }}
           onSubmit={handleReviewSubmit}
           ratedUserName={fullName}
           reviewerName={userName}

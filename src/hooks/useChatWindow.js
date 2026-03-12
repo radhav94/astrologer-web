@@ -4,6 +4,7 @@ import { voiceSocket } from "../services/appServices/voiceSocketServices";
 import toast from "../components/toast";
 import {useChat as useChatContext} from "../context/chatContext"
 import { useCall } from "../context/CallContext";
+import { useNavigate } from "react-router-dom";
 
 export default function useChat({
   userId,
@@ -19,6 +20,7 @@ export default function useChat({
   const [isMessageDisabled, setIsMessageDisabled] = useState(false);
   const {setActiveChat, activeChat, startTimer, stopTimer, chatSeconds} = useChatContext();
   const { activeCall } = useCall();
+  const navigate = useNavigate();
 
   const formatTime = () =>
     new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -68,6 +70,7 @@ export default function useChat({
           setIsMessageDisabled(true);
           stopTimer();
           setActiveChat(null);
+          navigate("/chats");
         }
       },
       onWarn: (msg) => {

@@ -15,6 +15,12 @@ const IncomingChatModal = () => {
   // Listen for chat accept errors and success from server
   useEffect(() => {
     const handleChatAcceptError = (data) => {
+      // Only handle errors that match our chat roomId
+      // This prevents cross-contamination with call errors on the same socket
+      if (!data.roomId || (incomingChat && data.roomId !== incomingChat.roomId)) {
+        return; // Not our error — ignore
+      }
+
       console.error("Chat accept error:", data);
       
       if (data.code === "ALREADY_ACCEPTED") {

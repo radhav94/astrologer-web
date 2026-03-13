@@ -313,7 +313,7 @@ const VideoCalling = ({ callData }) => {
           userLeftTimerRef.current = setTimeout(() => {
             console.log("[VideoCall] ⏰ user-left grace timer expired — ending call");
             handleRemoteCallEnd();
-          }, 30000);
+          }, 60000); // 60s grace period — matches backend disconnect grace
         });
 
         client.on("user-joined", (user) => {

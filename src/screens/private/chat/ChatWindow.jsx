@@ -357,7 +357,7 @@ const ChatWindow = () => {
   } = state || {};
 
   const { activeChat } = useChatContext();
-  const { activeCall, setActiveCall, openReview: callReviewOpen } = useCall();
+  const { activeCall, setActiveCall } = useCall();
   const isChatActive = activeChat && activeChat?.roomId;
   
   // Fall back to activeChat for all values when state is null (e.g. page refresh)
@@ -593,7 +593,7 @@ const ChatWindow = () => {
     }
   };
 
-  /* --------- Redirect to chats when call ends and review is done --------- */
+  /* --------- Redirect when call ends --------- */
   const hadActiveCallRef = useRef(!!activeCall);
   useEffect(() => {
     if (activeCall) {
@@ -602,12 +602,13 @@ const ChatWindow = () => {
   }, [activeCall]);
 
   useEffect(() => {
-    // Call ended (activeCall is null) + no review pending + we had a call before
-    if (hadActiveCallRef.current && !activeCall && !callReviewOpen) {
+    // Call ended (activeCall is null) and we had a call before → navigate away immediately.
+    // StickyReviewFooter (in HomeLayout) handles the review modal on the destination page.
+    if (hadActiveCallRef.current && !activeCall) {
       hadActiveCallRef.current = false;
       navigate("/chats");
     }
-  }, [activeCall, callReviewOpen, navigate]);
+  }, [activeCall, navigate]);
 
   /* --------- Timer Logic --------- */
   const formatTimer = (sec) =>

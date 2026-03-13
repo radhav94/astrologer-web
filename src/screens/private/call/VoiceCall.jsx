@@ -117,7 +117,7 @@ const AgoraVoiceCalling = ({ callData }) => {
         userLeftTimerRef.current = setTimeout(() => {
           console.log("[VoiceCall] ⏰ user-left grace timer expired — ending call");
           handleRemoteUserLeft();
-        }, 30000); // 30s grace period for rejoin
+        }, 60000); // 60s grace period — matches backend disconnect grace
       });
 
       client.on("user-joined", (user) => {

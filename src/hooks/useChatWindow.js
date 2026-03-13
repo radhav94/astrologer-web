@@ -35,11 +35,20 @@ export default function useChat({
     return isInActiveChat || isInActiveCall;
   };
 
+  // Clear messages when chat/call ends
+  useEffect(() => {
+    // If neither chat nor call is active for this user, clear local messages
+    if (!isChatOrCallActive()) {
+      setMessages([]);
+    }
+  }, [activeChat, activeCall]);
+
   const handleChatEndedFromServer = () => {
     setIsMessageDisabled(true);
     setOpenReview(true);
     stopTimer();
     setActiveChat(null);
+    setMessages([]); // Clear local messages — they're now in history
   };
 
   // Derive disabled state from activeChat / activeCall

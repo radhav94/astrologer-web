@@ -4,7 +4,7 @@ import toast from "./toast";
 import { useEffect, useState } from "react";
 
 const IncomingCallModal = () => {
-  const { incomingCall, setIncomingCall, setActiveCall, activeCall, sharedAgoraState, setSharedAgoraState, setIsUpgradeRejectionProtected, upgradeRejectionRef } = useCall();
+  const { incomingCall, setIncomingCall, setActiveCall, activeCall, sharedAgoraState, setSharedAgoraState, setIsUpgradeRejectionProtected, upgradeRejectionRef, isUpgradingRef } = useCall();
   const [isAccepting, setIsAccepting] = useState(false);
 
   // Listen for call accept errors from server
@@ -68,6 +68,9 @@ const IncomingCallModal = () => {
                           sharedAgoraState.client;
 
       if (isUpgrading) {
+        // 🔑 Set ref SYNCHRONOUSLY so VoiceCall cleanup can read it immediately
+        isUpgradingRef.current = true;
+        
         setSharedAgoraState(prev => ({ 
           ...prev, 
           isUpgrading: true 
@@ -76,7 +79,7 @@ const IncomingCallModal = () => {
         // Log the state after setting
         setTimeout(() => {
           console.log("🔄 Shared state after setting isUpgrading:", {
-            isUpgrading: sharedAgoraState.isUpgrading,
+            isUpgradingRef: isUpgradingRef.current,
             hasClient: !!sharedAgoraState.client,
             hasMicTrack: !!sharedAgoraState.micTrack
           });

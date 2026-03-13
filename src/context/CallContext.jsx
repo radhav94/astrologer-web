@@ -8,8 +8,8 @@ const CALL_STORAGE_KEY = "shubhtalk_active_call";
 const CALL_TIMESTAMP_KEY = "shubhtalk_call_timestamp";
 const CALL_EXPIRY_TIME = 30 * 60 * 1000; // 30 minutes
 
-// ⚙️ Feature flag - Set to true when backend implements call:reconnect & call:reconnected
-const RECONNECTION_ENABLED = false;
+// ⚙️ Feature flag - Backend now implements call:reconnect & call:reconnected
+const RECONNECTION_ENABLED = true;
 
 export const CallProvider = ({ children }) => {
   const [astroId, setAstroId] = useState(
@@ -29,6 +29,7 @@ export const CallProvider = ({ children }) => {
   const [isCallMinimized, setIsCallMinimized] = useState(false);
   const timerRef = useRef(null);
   const upgradeRejectionRef = useRef(false); // Immediate protection using ref
+  const isUpgradingRef = useRef(false); // 🔑 Synchronous ref for upgrade-in-progress (readable in cleanup closures)
 
   // Reset minimized state when call ends
   useEffect(() => {
@@ -121,13 +122,22 @@ export const CallProvider = ({ children }) => {
 
   /* ================= SET ACTIVE CALL (wrapper with persistence) ================= */
   const setActiveCall = useCallback((callData) => {
+    const prevCall = activeCall;
     setActiveCallState(callData);
     if (callData) {
+      // Only reset timer if this is a genuinely new call (different roomId),
+      // not an upgrade of the current call (same roomId, different callType)
+      const isSameRoom = prevCall && prevCall.roomId === callData.roomId;
+      if (!isSameRoom) {
+        setCallStartTimeState(null);
+        setCallTimer(0);
+        sessionStorage.removeItem("shubhtalk_call_start_time");
+      }
       persistCallState(callData);
     } else {
       clearPersistedCallState();
     }
-  }, [persistCallState, clearPersistedCallState]);
+  }, [activeCall, persistCallState, clearPersistedCallState]);
 
   /* ================= SET CALL START TIME (wrapper with sessionStorage) ================= */
   const setCallStartTime = useCallback((val) => {
@@ -166,12 +176,21 @@ export const CallProvider = ({ children }) => {
       voiceSocket.off("call:reconnected", onReconnected);
 
       if (data && data.active) {
-        // Call is still active — restore it
-        setActiveCallState({
+        // 🔑 Use backend's type as source of truth — it may have changed
+        // (e.g. audio→video upgrade happened before refresh)
+        const backendCallType = data.type || data.callType || savedCall.callType;
+        console.log("[CallContext] Reconnecting as callType:", backendCallType, "(saved was:", savedCall.callType, ")");
+
+        const restoredCall = {
           ...savedCall,
+          callType: backendCallType,
           agoraToken: data.agoraToken || savedCall.agoraToken,
           remainingTime: data.remainingTime || savedCall.remainingTime,
-        });
+        };
+
+        setActiveCallState(restoredCall);
+        persistCallState(restoredCall); // Update localStorage with correct callType
+
         if (data.remainingTime) {
           setCallSeconds(Number(data.remainingTime) * 60);
         }
@@ -189,7 +208,7 @@ export const CallProvider = ({ children }) => {
       setIsReconnecting(false);
       clearPersistedCallState();
     }, 30000);
-  }, [restoreCallState, clearPersistedCallState]);
+  }, [restoreCallState, clearPersistedCallState, persistCallState]);
 
   /* 🔥 Listen to login/logout changes */
   useEffect(() => {
@@ -350,6 +369,7 @@ export const CallProvider = ({ children }) => {
         isUpgradeRejectionProtected,
         setIsUpgradeRejectionProtected,
         upgradeRejectionRef,
+        isUpgradingRef,
         isCallMinimized,
         setIsCallMinimized
       }}

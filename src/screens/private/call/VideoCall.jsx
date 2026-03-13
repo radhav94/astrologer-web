@@ -19,7 +19,7 @@ import CallIcon from "../../../assets/chat/Call.svg";
 const APP_ID = "c76e3d30a3b6483689dac88ca9f94381";
 
 const VideoCalling = ({ callData }) => {
-  const { activeCall, setActiveCall, setReviewData, setOpenReview, sharedAgoraState, setSharedAgoraState, callStartTime, setCallStartTime, isCallMinimized, setIsCallMinimized } = useCall();
+  const { activeCall, setActiveCall, setReviewData, setOpenReview, sharedAgoraState, setSharedAgoraState, isUpgradingRef, callStartTime, setCallStartTime, isCallMinimized, setIsCallMinimized } = useCall();
   const navigate = useNavigate();
 
   if (!activeCall || activeCall.callType !== "video") return null;
@@ -39,6 +39,7 @@ const VideoCalling = ({ callData }) => {
 
   const cleanupRef = useRef(false);
   const endCallRef = useRef(false);
+  const userLeftTimerRef = useRef(null);
 
   const [joined, setJoined] = useState(false);
   const [micOn, setMicOn] = useState(true);
@@ -207,6 +208,7 @@ const VideoCalling = ({ callData }) => {
             cameraTrack: camTrackRef.current,
             isUpgrading: false
           }));
+          isUpgradingRef.current = false; // Reset synchronous ref
           
           setJoined(true);
           
@@ -271,6 +273,14 @@ const VideoCalling = ({ callData }) => {
 
         client.on("user-published", async (user, mediaType) => {
           console.log(`📹 User published ${mediaType}:`, user.uid);
+          
+          // Cancel any pending end-call grace timer — remote user is back
+          if (userLeftTimerRef.current) {
+            clearTimeout(userLeftTimerRef.current);
+            userLeftTimerRef.current = null;
+            console.log("[VideoCall] ✅ user-published: cancelled pending endCall grace timer");
+          }
+          
           await client.subscribe(user, mediaType);
 
           if (mediaType === "video" && user.videoTrack) {
@@ -297,7 +307,23 @@ const VideoCalling = ({ callData }) => {
           }
         });
 
-        client.on("user-left", handleRemoteCallEnd);
+        client.on("user-left", (user) => {
+          console.log("[VideoCall] 👋 user-left — uid:", user.uid, "starting 30s grace timer");
+          if (userLeftTimerRef.current) clearTimeout(userLeftTimerRef.current);
+          userLeftTimerRef.current = setTimeout(() => {
+            console.log("[VideoCall] ⏰ user-left grace timer expired — ending call");
+            handleRemoteCallEnd();
+          }, 30000);
+        });
+
+        client.on("user-joined", (user) => {
+          console.log("[VideoCall] 🤝 user-joined — uid:", user.uid);
+          if (userLeftTimerRef.current) {
+            clearTimeout(userLeftTimerRef.current);
+            userLeftTimerRef.current = null;
+            console.log("[VideoCall] ✅ user-joined: cancelled pending endCall grace timer");
+          }
+        });
 
         await client.join(APP_ID, roomId, agoraToken, null);
 
@@ -483,6 +509,11 @@ const VideoCalling = ({ callData }) => {
     if (cleanupRef.current) return;
     cleanupRef.current = true;
 
+    if (userLeftTimerRef.current) {
+      clearTimeout(userLeftTimerRef.current);
+      userLeftTimerRef.current = null;
+    }
+
     try {
       micTrackRef.current?.stop();
       micTrackRef.current?.close();
@@ -509,6 +540,9 @@ const VideoCalling = ({ callData }) => {
         remoteVideoRef.current.innerHTML = "";
       }
 
+      sessionStorage.removeItem("shubhtalk_active_call");
+      sessionStorage.removeItem("shubhtalk_call_start_time");
+
       setJoined(false);
       setCallSeconds(0);
       setCallStartTime(null);
@@ -521,6 +555,7 @@ const VideoCalling = ({ callData }) => {
         cameraTrack: null,
         isUpgrading: false
       });
+      isUpgradingRef.current = false;
     }
   };
 
@@ -569,16 +604,47 @@ const VideoCalling = ({ callData }) => {
 
   /* ================= SOCKET ================= */
   useEffect(() => {
-    voiceSocket.on("call:ended", handleRemoteCallEnd);
-    voiceSocket.on("disconnect", handleRemoteCallEnd);
-    voiceSocket.on("call:canceled", handleCallCanceled);
+    const onCallEnded = () => {
+      console.log("📞 call:ended received in VideoCall");
+      if (endCallRef.current || cleanupRef.current) return;
+      endCallRef.current = true;
+      setReviewData({
+        userID: activeCall?.userID,
+        fullName: activeCall?.callerName,
+      });
+      setOpenReview(true);
+      cleanup();
+    };
+
+    const onForceCallEnd = () => {
+      console.log("📞 force_call_end received in VideoCall");
+      if (endCallRef.current || cleanupRef.current) return;
+      endCallRef.current = true;
+      setReviewData({
+        userID: activeCall?.userID,
+        fullName: activeCall?.callerName,
+      });
+      setOpenReview(true);
+      cleanup();
+    };
+
+    const onCallCanceled = () => {
+      console.log("📞 call:canceled received in VideoCall");
+      if (endCallRef.current || cleanupRef.current) return;
+      endCallRef.current = true;
+      cleanup();
+    };
+
+    voiceSocket.on("call:ended", onCallEnded);
+    voiceSocket.on("force_call_end", onForceCallEnd);
+    voiceSocket.on("call:canceled", onCallCanceled);
 
     return () => {
-      voiceSocket.off("call:ended", handleRemoteCallEnd);
-      voiceSocket.off("disconnect", handleRemoteCallEnd);
-      voiceSocket.off("call:canceled", handleCallCanceled);
+      voiceSocket.off("call:ended", onCallEnded);
+      voiceSocket.off("force_call_end", onForceCallEnd);
+      voiceSocket.off("call:canceled", onCallCanceled);
     };
-  }, []);
+  }, [roomId]);
 
   /* ================= DRAG ================= */
   const dragOffset = useRef({ x: 0, y: 0 });

@@ -170,6 +170,7 @@ const HomeLayout = () => {
               isUserSide: false,
               chaterName: customerName,
               chaterId : userId,
+              astrologerId: astrologerId,
               userID: user?.user_ID,
               remainingTime: Number(data?.remainingTime)
             });

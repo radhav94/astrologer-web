@@ -20,7 +20,7 @@ import VideoCallChat from "./VideoCallChat";
 const APP_ID = "c76e3d30a3b6483689dac88ca9f94381";
 
 const AgoraVoiceCalling = ({ callData }) => {
-  const { activeCall, setActiveCall, sharedAgoraState, setSharedAgoraState, isUpgradeRejectionProtected, upgradeRejectionRef, setReviewData, setOpenReview, callStartTime, setCallStartTime, isCallMinimized, setIsCallMinimized } = useCall();
+  const { activeCall, setActiveCall, sharedAgoraState, setSharedAgoraState, isUpgradeRejectionProtected, upgradeRejectionRef, isUpgradingRef, setReviewData, setOpenReview, callStartTime, setCallStartTime, isCallMinimized, setIsCallMinimized } = useCall();
   const { setActiveChat } = useChatContext();
   const navigate = useNavigate();
 
@@ -39,7 +39,6 @@ const AgoraVoiceCalling = ({ callData }) => {
   const isRefreshingRef = useRef(false);
   // Track if this mount is a refresh-resume (activeCall restored from sessionStorage)
   const isResumeFromRefresh = useRef(!!sessionStorage.getItem("shubhtalk_active_call"));
-  const isUpgradingRef = useRef(false); // Track if upgrading to video
 
   /* ================= STATE ================= */
   const [micOn, setMicOn] = useState(true);
@@ -162,7 +161,8 @@ const AgoraVoiceCalling = ({ callData }) => {
     return () => {
       console.log("[VoiceCall] 🧹 useEffect cleanup (unmount) — isRefreshing:", isRefreshingRef.current);
       // If upgrading to video, skip cleanup entirely
-      if (isUpgradingRef.current) {
+      // Check both the ref AND the shared state (ref may not be updated yet due to React batching)
+      if (isUpgradingRef.current || sharedAgoraState.isUpgrading) {
         console.log("🔄 Skipping cleanup - upgrading to video");
         return;
       }
@@ -187,11 +187,6 @@ const AgoraVoiceCalling = ({ callData }) => {
     };
     // eslint-disable-next-line
   }, [roomId]);
-
-  /* ================= WATCH FOR UPGRADE ================= */
-  useEffect(() => {
-    isUpgradingRef.current = sharedAgoraState.isUpgrading;
-  }, [sharedAgoraState.isUpgrading]);
 
   /* ================= MIC TOGGLE ================= */
   useEffect(() => {
@@ -229,6 +224,8 @@ const AgoraVoiceCalling = ({ callData }) => {
           setTimer(Math.floor((Date.now() - callStartTime) / 1000));
         }
       }, 1000);
+    } else {
+      setTimer(0);
     }
     return () => clearInterval(interval);
   }, [callState, callStartTime]);
@@ -281,7 +278,7 @@ const AgoraVoiceCalling = ({ callData }) => {
   /* ================= END CALL (User initiated) ================= */
   const endCall = async () => {
     // Don't emit call:end if upgrading
-    if (isUpgradingRef.current) {
+    if (isUpgradingRef.current || sharedAgoraState.isUpgrading) {
       console.log("🔄 Skipping call:end emit - upgrading to video");
       return;
     }
@@ -302,7 +299,7 @@ const AgoraVoiceCalling = ({ callData }) => {
   /* ================= HANDLE REMOTE USER LEFT (Remote initiated) ================= */
   const handleRemoteUserLeft = async () => {
     // Check if we're upgrading - don't end call if upgrading
-    if (isUpgradingRef.current || upgradeRejectionRef.current) {
+    if (isUpgradingRef.current || upgradeRejectionRef.current || sharedAgoraState.isUpgrading) {
       console.log("⚠️ Ignoring remote user left - upgrade in progress");
       return;
     }
@@ -320,7 +317,7 @@ const AgoraVoiceCalling = ({ callData }) => {
   /* ================= HANDLE SERVER CALL END (Server/Remote initiated) ================= */
   const handleServerCallEnd = async () => {
     // Check if we're upgrading - don't end call if upgrading
-    if (isUpgradingRef.current || upgradeRejectionRef.current || isUpgradeRejectionProtected) {
+    if (isUpgradingRef.current || upgradeRejectionRef.current || isUpgradeRejectionProtected || sharedAgoraState.isUpgrading) {
       console.log("⚠️ Ignoring server call end - upgrade in progress");
       return;
     }

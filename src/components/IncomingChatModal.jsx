@@ -38,6 +38,7 @@ const IncomingChatModal = () => {
           chaterType: incomingChat.chaterType,
           chaterName: incomingChat.chaterName,
           chaterId: incomingChat?.chaterrId,
+          astrologerId: astroIdLocal,
           userID: incomingChat?.userID
         });
 

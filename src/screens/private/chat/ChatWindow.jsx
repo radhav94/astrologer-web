@@ -347,21 +347,27 @@ const ChatWindow = () => {
   const userName =
     firstName && lastName ? `${firstName} ${lastName}` : "Unknown";
   const {
-    userId,
-    astrologerId,
+    userId: stateUserId,
+    astrologerId: stateAstrologerId,
     roomId: stateRoomId,
-    fullName,
-    isUserSide,
-    kundliId,
-    userID
+    fullName: stateFullName,
+    isUserSide: stateIsUserSide,
+    kundliId: stateKundliId,
+    userID: stateUserID
   } = state || {};
 
   const { activeChat } = useChatContext();
   const { activeCall, setActiveCall, openReview: callReviewOpen } = useCall();
   const isChatActive = activeChat && activeChat?.roomId;
   
-  // Fall back to activeChat's roomId if state didn't carry one (e.g. navigating back)
+  // Fall back to activeChat for all values when state is null (e.g. page refresh)
+  const userId = stateUserId || activeChat?.chaterId || activeChat?.userId || null;
+  const astrologerId = stateAstrologerId || activeChat?.astrologerId || userData?._id || userData?.id || null;
   const roomId = stateRoomId || activeChat?.roomId || null;
+  const fullName = stateFullName || activeChat?.chaterName || "User";
+  const isUserSide = stateIsUserSide ?? activeChat?.isUserSide ?? false;
+  const kundliId = stateKundliId || activeChat?.kundliId || null;
+  const userID = stateUserID || activeChat?.userID || null;
 
   const [message, setMessage] = useState("");
   const messagesEndRef = useRef(null);

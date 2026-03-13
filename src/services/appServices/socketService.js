@@ -7,6 +7,11 @@ class SocketService {
   socket = null;
 
   connect({ onConnected, onDisconnected, onError, onWarn }) {
+    // Never create a socket connection inside an iframe (e.g. Kundli view)
+    if (window.self !== window.top) {
+      return;
+    }
+
     // If already connected, just fire the callback
     if (this.socket?.connected) {
       onConnected?.();

@@ -10,6 +10,14 @@ export const getToken = () => {
   return localStorage.getItem("shubhtalk_astro_token");
 };
 
+export const getDefaultImgBasedOnGender = (gender) => {
+  if (gender?.toLowerCase() === "male") {
+    return AppDefaultImg.DefaultMaleAstrologer;
+  }
+
+  return AppDefaultImg.DefaultFemaleAstrologer;
+};
+
 
 export const formatIndianPhone = (phone) => {
   if (!phone) return '';
@@ -42,6 +50,7 @@ export const formatIndianPhone = (phone) => {
 // ============================================
 
 import * as Yup from 'yup';
+import { AppDefaultImg } from './appImages';
 
 /**
  * Create a name validation schema with configurable options
@@ -103,7 +112,7 @@ export const nameValidationSchemas = {
  * Gender validation schema
  */
 export const genderValidationSchema = Yup.string()
-  .oneOf(["Male", "Female", "Others"], "Please select a valid gender")
+  .oneOf(["Male", "Female", "Others", "male", "female", "others"], "Please select a valid gender")
   .required("Gender is required");
 
 /**

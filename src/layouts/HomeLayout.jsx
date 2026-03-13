@@ -1,13 +1,11 @@
 import { Suspense, useState, useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
 import { Icons } from "../components/Icons";
 import Sidebar from "../components/Sidebar";
 import { Outlet, useNavigate, useParams } from "react-router-dom";
-import {
-  updateAstrologerStatus,
-} from "../../src/services/appServices/authservice";
+import { updateAstrologerStatus } from "../../src/services/appServices/authservice";
 import AudioVideoContainer from "../screens/private/call/AudioVideoContainer";
 import IncomingChatModal from "../components/IncomingChatModal";
-import StickyChatFooter from "../components/StickyChatFooter";
 import { voiceSocket } from "../services/appServices/voiceSocketServices";
 import { useChat as useChatContext } from "../context/chatContext";
 import { PATH } from "../utils/routes/Paths";
@@ -15,29 +13,46 @@ import toast from "../components/toast";
 import { useGetAstrologerByIdQuery } from "../redux/astrologer/astrologerApi";
 import StickyReviewFooter from "../screens/private/chat/review/StickyReviewFooter";
 import { AppDefaultImg } from "../utils/appImages";
+import { setAstrologerDetails } from "../reducer/registerSlice";
+import { getDefaultImgBasedOnGender } from "../utils/utlis";
+import styles from "./HomeLayout.module.scss";
 
 const HomeLayout = () => {
-  const {kundliId} = useParams();
-  const userData = JSON.parse(
-    localStorage.getItem("shubhtalk_astrologer_details")
+  const { kundliId } = useParams();
+  const dispatch = useDispatch();
+  
+  // Get astrologer details from Redux state
+  const astrologerDetails = useSelector((state) => state.register.astrologerDetails);
+  const astrologerIdFromRedux = useSelector((state) => state.register.astrologerId);
+  
+  // Fallback to localStorage if Redux doesn't have the data
+  // const userData = JSON.parse(
+  //   localStorage.getItem("shubhtalk_astrologer_details"),
+  // );
+  // const astrologerId = userData?._id || userData?.id;
+  
+  // Use Redux state as primary source
+  const userData = astrologerDetails || JSON.parse(
+    localStorage.getItem("shubhtalk_astrologer_details") || "{}"
   );
-  const astrologerId = userData?._id || userData?.id;
+  const astrologerId = astrologerIdFromRedux || userData?._id || userData?.id;
+  
   const { data: astrologerResponse } = useGetAstrologerByIdQuery(astrologerId);
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [statusState, setStatusState] = useState({
     call: { isOnline: false, loading: false },
-    chat: { isOnline: false, loading: false }
+    chat: { isOnline: false, loading: false },
   });
 
   const firstName = userData?.firstName?.trim();
   const lastName = userData?.lastName?.trim();
   const userName =
     firstName && lastName ? `${firstName} ${lastName}` : "Unknown";
-  const avatar = userData?.imageUrl;
+  const avatar = userData?.profileImgUrl || getDefaultImgBasedOnGender(userData?.gender);
 
   //Chat
-  const {setActiveChat, setChatSeconds} = useChatContext();
+  const { setActiveChat, setChatSeconds } = useChatContext();
   const navigate = useNavigate();
 
   const handleStatusToggle = async (type) => {
@@ -47,34 +62,34 @@ const HomeLayout = () => {
     if (isLoading) return;
 
     const newStatus = !currentStatus;
-    
+
     // Optimistic UI
-    setStatusState(prev => ({
+    setStatusState((prev) => ({
       ...prev,
-      [type]: { isOnline: newStatus, loading: true }
+      [type]: { isOnline: newStatus, loading: true },
     }));
 
     try {
       // Determine activeType based on both statuses
       let activeType = [];
-      
-      if (type === 'call') {
-        if (newStatus) activeType.push('audio', 'video');
-        if (statusState.chat.isOnline) activeType.push('chat');
+
+      if (type === "call") {
+        if (newStatus) activeType.push("audio", "video");
+        if (statusState.chat.isOnline) activeType.push("chat");
       } else {
-        if (statusState.call.isOnline) activeType.push('audio', 'video');
-        if (newStatus) activeType.push('chat');
+        if (statusState.call.isOnline) activeType.push("audio", "video");
+        if (newStatus) activeType.push("chat");
       }
 
       const status = activeType.length > 0 ? "online" : "offline";
-      
+
       const response = await updateAstrologerStatus(status, activeType);
 
       if (!response?.data?.success) {
         // Revert if API fails
-        setStatusState(prev => ({
+        setStatusState((prev) => ({
           ...prev,
-          [type]: { isOnline: !newStatus, loading: false }
+          [type]: { isOnline: !newStatus, loading: false },
         }));
       } else {
         const updatedUser = {
@@ -85,19 +100,22 @@ const HomeLayout = () => {
 
         localStorage.setItem(
           "shubhtalk_astrologer_details",
-          JSON.stringify(updatedUser)
+          JSON.stringify(updatedUser),
         );
-        
-        setStatusState(prev => ({
+
+        // Update Redux state to keep it synchronized with localStorage
+        dispatch(setAstrologerDetails(updatedUser));
+
+        setStatusState((prev) => ({
           ...prev,
-          [type]: { isOnline: newStatus, loading: false }
+          [type]: { isOnline: newStatus, loading: false },
         }));
       }
     } catch (error) {
       console.error(`${type} toggle error:`, error);
-      setStatusState(prev => ({
+      setStatusState((prev) => ({
         ...prev,
-        [type]: { isOnline: !newStatus, loading: false }
+        [type]: { isOnline: !newStatus, loading: false },
       }));
     }
   };
@@ -107,38 +125,43 @@ const HomeLayout = () => {
       if (!astrologerId) return;
 
       try {
-        setStatusState(prev => ({
+        setStatusState((prev) => ({
           call: { ...prev.call, loading: true },
-          chat: { ...prev.chat, loading: true }
+          chat: { ...prev.chat, loading: true },
         }));
-        
+
         if (astrologerResponse?.success) {
+          // alert("HomeLayout")
           const apiUser = astrologerResponse.data;
           const activeType = apiUser?.isActiveType || apiUser?.activeType || [];
 
           // Backend = source of truth
           setStatusState({
-            call: { 
-              isOnline: activeType.includes('audio') || activeType.includes('video'), 
-              loading: false 
+            call: {
+              isOnline:
+                activeType.includes("audio") || activeType.includes("video"),
+              loading: false,
             },
-            chat: { 
-              isOnline: activeType.includes('chat'), 
-              loading: false 
-            }
+            chat: {
+              isOnline: activeType.includes("chat"),
+              loading: false,
+            },
           });
 
           // Update localStorage with latest data
           localStorage.setItem(
             "shubhtalk_astrologer_details",
-            JSON.stringify(apiUser)
+            JSON.stringify(apiUser),
           );
+
+          // Update Redux state to keep it synchronized with localStorage
+          dispatch(setAstrologerDetails(apiUser));
         }
       } catch (err) {
         console.error("Status sync failed");
-        setStatusState(prev => ({
+        setStatusState((prev) => ({
           call: { ...prev.call, loading: false },
-          chat: { ...prev.chat, loading: false }
+          chat: { ...prev.chat, loading: false },
         }));
       }
     };
@@ -147,168 +170,173 @@ const HomeLayout = () => {
   }, [astrologerId, astrologerResponse]);
 
   //Handle if chat accepted by user
-      useEffect(() => {
-      const handleChatUserAccepted = (data) => {
-        console.log("useraccept list update", data);
-        const {astrologerId, roomId, userId, user} = data
-        const firstName = user?.firstName?.trim();
-        const lastName = user?.lastName?.trim();
-        
-        // Capitalize first letter of each name
-        const capitalizeFirstLetter = (str) => {
-          if (!str) return '';
-          return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-        };
-        
-        const formattedFirstName = capitalizeFirstLetter(firstName);
-        const formattedLastName = capitalizeFirstLetter(lastName);
-        const customerName = formattedFirstName && formattedLastName 
-          ? `${formattedFirstName} ${formattedLastName}` 
-          : formattedFirstName || "Customer";
-        setActiveChat({
-              roomId: roomId,
-              isUserSide: false,
-              chaterName: customerName,
-              chaterId : userId,
-              astrologerId: astrologerId,
-              userID: user?.user_ID,
-              remainingTime: Number(data?.remainingTime)
-            });
-        // Start timer from 0
-        setChatSeconds(0)
-        
-            navigate(
-                    PATH.privateRoutes.CHAT_WINDOW.path.replace(
-                      ":chatId",
-                      userId
-                    ),
-                    {
-                      state: {
-                        userId: userId,
-                        astrologerId: astrologerId,
-                        fullName: customerName,
-                        roomId: roomId,
-                        isUserSide: false,
-                        kundliId:null
-                      },
-                    }
-                  )
+  useEffect(() => {
+    const handleChatUserAccepted = (data) => {
+      console.log("useraccept list update", data);
+      const { astrologerId, roomId, userId, user } = data;
+      const firstName = user?.firstName?.trim();
+      const lastName = user?.lastName?.trim();
+
+      // Capitalize first letter of each name
+      const capitalizeFirstLetter = (str) => {
+        if (!str) return "";
+        return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
       };
 
-      const handleChatEnd = () => {
-        toast.warning("Chat has ended");
-        setActiveChat(null);
-      }
+      const formattedFirstName = capitalizeFirstLetter(firstName);
+      const formattedLastName = capitalizeFirstLetter(lastName);
+      const customerName =
+        formattedFirstName && formattedLastName
+          ? `${formattedFirstName} ${formattedLastName}`
+          : formattedFirstName || "Customer";
+      setActiveChat({
+        roomId: roomId,
+        isUserSide: false,
+        chaterName: customerName,
+        chaterId: userId,
+        astrologerId: astrologerId,
+        userID: user?.user_ID,
+        remainingTime: Number(data?.remainingTime),
+      });
+      if (data?.remainingTime) setChatSeconds(Number(data?.remainingTime) * 60);
 
-      // Listen for chat end events
-      voiceSocket.on("chat:accepted", handleChatUserAccepted);
-      voiceSocket.on("chat:ended", handleChatEnd);
-      voiceSocket.on("chat_ended", handleChatEnd); // Alternative event name
+      navigate(PATH.privateRoutes.CHAT_WINDOW.path.replace(":chatId", userId), {
+        state: {
+          userId: userId,
+          astrologerId: astrologerId,
+          fullName: customerName,
+          roomId: roomId,
+          isUserSide: false,
+          kundliId: null,
+        },
+      });
+    };
 
-      return () => {
-        voiceSocket.off("chat:accepted", handleChatUserAccepted);
-        voiceSocket.off("chat:ended", handleChatEnd);
-        voiceSocket.off("chat_ended", handleChatEnd);
-      }
-  }, [])
+    const handleChatEnd = () => {
+      toast.warning("Chat has ended");
+      setActiveChat(null);
+    };
+
+    // Listen for chat end events
+    voiceSocket.on("chat:accepted", handleChatUserAccepted);
+    voiceSocket.on("chat:ended", handleChatEnd);
+    voiceSocket.on("chat_ended", handleChatEnd); // Alternative event name
+
+    return () => {
+      voiceSocket.off("chat:accepted", handleChatUserAccepted);
+      voiceSocket.off("chat:ended", handleChatEnd);
+      voiceSocket.off("chat_ended", handleChatEnd);
+    };
+  }, []);
 
   return (
-    <div className="flex h-screen bg-[#F8F9FA] overflow-hidden" >
+    <div className={styles.container}>
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
-      <main className="flex-1 h-full overflow-y-auto overflow-x-hidden relative">
-      <header className={`sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-gray-100 px-4 py-3 ${kundliId ? 'hidden' : 'block'}`}>
-          <div className="flex items-center justify-between">
+      <main className={styles.main}>
+        <header
+          className={`${styles.header} ${kundliId ? styles.hidden : ""}`}
+        >
+          <div className={styles.headerContent}>
             {/* LEFT: Profile + Info */}
-            <div className="flex items-center gap-3">
+            <div className={styles.leftSection}>
               {/* Mobile menu */}
               <button
                 onClick={() => setIsSidebarOpen(true)}
-                className="lg:hidden p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                className={styles.menuButton}
               >
                 <Icons.Menu size={22} />
               </button>
 
               {/* Avatar */}
-              <div className="relative">
-                <div className="flex items-center gap-3">
-                  <div className="relative">
-                    <div className="w-12 h-12 rounded-full bg-gray-200 overflow-hidden border-2 border-white shadow-sm">
+              <div className={styles.avatarWrapper}>
+                <div className={styles.avatarContainer}>
+                  <div className={styles.avatarInner}>
+                    <div className={styles.avatar}>
                       <img
-                        src={avatar || AppDefaultImg.DefaultAstrologer} 
+                        src={avatar || AppDefaultImg.DefaultMaleAstrologer}
                         alt="Profile"
-                        className="w-full h-full object-cover"
                       />
                     </div>
                     <div
-                      className={`absolute bottom-0 right-0 w-3 h-3 ${
-                        (statusState.call.isOnline || statusState.chat.isOnline) ? "bg-green-500" : "bg-gray-300"
-                      } border-2 border-white rounded-full`}
+                      className={`${styles.statusDot} ${
+                        statusState.call.isOnline || statusState.chat.isOnline
+                          ? styles.online
+                          : styles.offline
+                      }`}
                     ></div>
                   </div>
                 </div>
               </div>
 
               {/* Name + Date */}
-              <div className="leading-tight  text-start">
-                <p className="text-xs  text-gray-500">Namaste</p>
-                <p className="text-sm font-semibold text-gray-900">
+              <div className={styles.userInfo}>
+                <p className={styles.greeting}>Namaste</p>
+                <p className={styles.userName}>
                   {userName}
                 </p>
-                <p className="text-xs mt-2 text-gray-400">
+                <p className={styles.date}>
                   {new Date().toLocaleDateString("en-GB")}
                 </p>
               </div>
             </div>
 
             {/* RIGHT: Followers + Status */}
-            <div className="flex flex-col items-end gap-2">
-              <p className="text-xs text-gray-400">1.15k followers</p>
+            <div className={styles.rightSection}>
+              <p className={styles.followers}>1.15k followers</p>
 
-              <div className="flex gap-2">
+              <div className={styles.statusButtons}>
                 {/* Call Button */}
                 <button
                   disabled={statusState.call.loading}
-                  onClick={() => handleStatusToggle('call')}
-                  className={`relative flex items-center gap-2 h-10 pl-4 pr-2 rounded-full transition-all duration-300 shadow-sm
-                   ${statusState.call.isOnline 
-                     ? "bg-[#D4F1E8]" 
-                     : "bg-gray-200"}
-                   ${statusState.call.loading ? "opacity-60 cursor-not-allowed" : "hover:shadow-md"}
-                 `}
+                  onClick={() => handleStatusToggle("call")}
+                  className={`${styles.statusButton} ${
+                    statusState.call.isOnline ? styles.active : styles.inactive
+                  } ${statusState.call.loading ? styles.loading : ""}`}
                 >
-                  <span className={`text-sm font-semibold ${
-                    statusState.call.isOnline ? "text-[#0D7C59]" : "text-gray-500"
-                  }`}>
+                  <span
+                    className={`${styles.statusLabel} ${
+                      statusState.call.isOnline ? styles.active : styles.inactive
+                    }`}
+                  >
                     Call
                   </span>
-                  <div className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors duration-300 shadow-sm ${
-                    statusState.call.isOnline ? "bg-[#0D7C59]" : "bg-gray-400"
-                  }`}>
-                    <Icons.Phone size={18} className="text-white" strokeWidth={2.5} />
+                  <div
+                    className={`${styles.statusIcon} ${
+                      statusState.call.isOnline ? styles.active : styles.inactive
+                    }`}
+                  >
+                    <Icons.Phone
+                      size={18}
+                      strokeWidth={2.5}
+                    />
                   </div>
                 </button>
 
                 {/* Chat Button */}
                 <button
                   disabled={statusState.chat.loading}
-                  onClick={() => handleStatusToggle('chat')}
-                  className={`relative flex items-center gap-2 h-10 pl-4 pr-2 rounded-full transition-all duration-300 shadow-sm
-                   ${statusState.chat.isOnline 
-                     ? "bg-[#D4F1E8]" 
-                     : "bg-gray-200"}
-                   ${statusState.chat.loading ? "opacity-60 cursor-not-allowed" : "hover:shadow-md"}
-                 `}
+                  onClick={() => handleStatusToggle("chat")}
+                  className={`${styles.statusButton} ${
+                    statusState.chat.isOnline ? styles.active : styles.inactive
+                  } ${statusState.chat.loading ? styles.loading : ""}`}
                 >
-                  <span className={`text-sm font-semibold ${
-                    statusState.chat.isOnline ? "text-[#0D7C59]" : "text-gray-500"
-                  }`}>
+                  <span
+                    className={`${styles.statusLabel} ${
+                      statusState.chat.isOnline ? styles.active : styles.inactive
+                    }`}
+                  >
                     Chat
                   </span>
-                  <div className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors duration-300 shadow-sm ${
-                    statusState.chat.isOnline ? "bg-[#0D7C59]" : "bg-gray-400"
-                  }`}>
-                    <Icons.MessageSquare size={18} className="text-white" strokeWidth={2.5} />
+                  <div
+                    className={`${styles.statusIcon} ${
+                      statusState.chat.isOnline ? styles.active : styles.inactive
+                    }`}
+                  >
+                    <Icons.MessageSquare
+                      size={18}
+                      strokeWidth={2.5}
+                    />
                   </div>
                 </button>
               </div>
@@ -317,17 +345,16 @@ const HomeLayout = () => {
         </header>
 
         <Suspense fallback="..Loading">
-          <div className="p-4  max-w-7xl mx-auto min-h-[calc(100vh-80px)]">
+          <div className={styles.content}>
             <Outlet />
           </div>
         </Suspense>
 
         {/* Bottom padding for mobile nav if needed */}
-        <div className="h-1"></div>
+        <div className={styles.bottomSpacer}></div>
         <AudioVideoContainer />
         <IncomingChatModal />
-        <StickyChatFooter />
-        <StickyReviewFooter/>
+        <StickyReviewFooter />
       </main>
     </div>
   );

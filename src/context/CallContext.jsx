@@ -226,6 +226,11 @@ export const CallProvider = ({ children }) => {
       return;
     }
 
+    // Skip socket connection when running inside an iframe (e.g. Kundli view)
+    if (window.self !== window.top) {
+      return;
+    }
+
     if (voiceSocket.connected) {
       voiceSocket.disconnect();
     }

@@ -1,24 +1,30 @@
 import { Icons } from "../../../components/Icons.jsx";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { useSelector } from "react-redux";
 import ProfileTab from "./profileTab/ProfileTab.jsx";
 import SwitchTabs from "../../../components/UI/tabs/SwitchTabs.jsx";
 import Transactions from "./transactions/Transactions.jsx";
 import SetAvailability from "./availability/SetAvailability.jsx";
 import Support from "./support/Support.jsx";
-import BackButton from "../../../components/UI/backButton/BackButton.jsx";
 import { AppIcons, AppImages } from "../../../utils/appImages.js";
 import styles from "./Profile.module.scss";
-import { useGetAstrologerByIdQuery } from "../../../redux/profileApi/profileApi.js";
 import { selectBasicInfo, selectProfileTabData } from "../../../utils/astrologerSelectors.js";
 
 const Profile = ({ onBack }) => {
   const location = useLocation();
-  const navigate = useNavigate();
-  const userData = JSON.parse(
-    localStorage.getItem("shubhtalk_astrologer_details"),
-  );
-  const astrologerId = userData?._id;
-  const { data: astrologerData, refetch } = useGetAstrologerByIdQuery(astrologerId);
+  
+  // Get astrologer details from Redux state
+  const astrologerDetails = useSelector((state) => state.register.astrologerDetails);
+  
+  // Fallback to localStorage if Redux doesn't have the data (for backward compatibility)
+  // const userData = JSON.parse(
+  //   localStorage.getItem("shubhtalk_astrologer_details"),
+  // );
+  // const astrologerId = userData?._id;
+  // const { data: astrologerData, refetch } = useGetAstrologerByIdQuery(astrologerId);
+  
+  // Use Redux state as primary source
+  const astrologerData = astrologerDetails ? { data: astrologerDetails, success: true } : null;
  
   // Get default tab from location state if provided
   const defaultTab = location.state?.data;
@@ -31,19 +37,21 @@ const Profile = ({ onBack }) => {
   const experience = basicInfo?.experience || 0;
   const wallet = basicInfo?.wallet || 0;
 
+  //  alert("Profile")
+
   // console.log("first",profileTabData)
 
   const tabs = [
     {
       label: "Profile",
       value: "profile",
-      component: () => <ProfileTab profileData={profileTabData} refetch={refetch} />,
+      component: () => <ProfileTab profileData={profileTabData} />,
     },
-    {
-      label: "Transactions",
-      value: "transactions",
-      component: Transactions,
-    },
+    // {
+    //   label: "Transactions",
+    //   value: "transactions",
+    //   component: Transactions,
+    // },
     {
       label: "Availability",
       value: "availability",

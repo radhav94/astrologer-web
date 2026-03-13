@@ -20,7 +20,7 @@ import VideoCallChat from "./VideoCallChat";
 const APP_ID = "c76e3d30a3b6483689dac88ca9f94381";
 
 const AgoraVoiceCalling = ({ callData }) => {
-  const { activeCall, setActiveCall, sharedAgoraState, setSharedAgoraState, isUpgradeRejectionProtected, upgradeRejectionRef, setReviewData, setOpenReview, callStartTime, setCallStartTime, isCallMinimized, setIsCallMinimized } = useCall();
+  const { activeCall, setActiveCall, sharedAgoraState, setSharedAgoraState, isUpgradeRejectionProtected, upgradeRejectionRef, isUpgradingRef, setReviewData, setOpenReview, callStartTime, setCallStartTime, isCallMinimized, setIsCallMinimized } = useCall();
   const { setActiveChat } = useChatContext();
   const navigate = useNavigate();
 
@@ -35,7 +35,10 @@ const AgoraVoiceCalling = ({ callData }) => {
   const videoTrackRef = useRef(null);
   const remoteVideoRef = useRef(null);
   const localVideoRef = useRef(null);
-  const isUpgradingRef = useRef(false); // Track if upgrading to video
+  const userLeftTimerRef = useRef(null);
+  const isRefreshingRef = useRef(false);
+  // Track if this mount is a refresh-resume (activeCall restored from sessionStorage)
+  const isResumeFromRefresh = useRef(!!sessionStorage.getItem("shubhtalk_active_call"));
 
   /* ================= STATE ================= */
   const [micOn, setMicOn] = useState(true);
@@ -48,6 +51,23 @@ const AgoraVoiceCalling = ({ callData }) => {
   const [speakerOn, setSpeakerOn] = useState(true);
   const [isChatOpen, setIsChatOpen] = useState(false);
 
+  /* ================= PREVENT ACCIDENTAL REFRESH & DETECT REFRESH ================= */
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      isRefreshingRef.current = true;
+      // Persist active call and callStartTime for resume after refresh
+      sessionStorage.setItem("shubhtalk_active_call", JSON.stringify(activeCall));
+      if (callStartTime) {
+        sessionStorage.setItem("shubhtalk_call_start_time", String(callStartTime));
+      }
+      console.log("[VoiceCall] 🔄 beforeunload fired — isRefreshing=true, roomId:", roomId);
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [activeCall, callStartTime, roomId]);
+
   /* ================= START CALL ================= */
   useEffect(() => {
     cleanupRef.current = false;
@@ -57,6 +77,13 @@ const AgoraVoiceCalling = ({ callData }) => {
       clientRef.current = client;
 
       client.on("user-published", async (user, mediaType) => {
+        // Cancel any pending end-call grace timer — remote user is back
+        if (userLeftTimerRef.current) {
+          clearTimeout(userLeftTimerRef.current);
+          userLeftTimerRef.current = null;
+          console.log("[VoiceCall] ✅ user-published: cancelled pending endCall grace timer");
+        }
+
         await client.subscribe(user, mediaType);
         if (mediaType === "audio") {
           user.audioTrack?.play();
@@ -78,12 +105,41 @@ const AgoraVoiceCalling = ({ callData }) => {
         }
       });
 
+      // Grace period so a page refresh doesn't kill the call
       client.on("user-left", (user) => {
-        console.log("👤 User left Agora channel:", user.uid);
-        handleRemoteUserLeft();
+        // If upgrading to video, ignore user-left
+        if (isUpgradingRef.current || upgradeRejectionRef.current) {
+          console.log("⚠️ Ignoring user-left — upgrade in progress");
+          return;
+        }
+        console.log("[VoiceCall] 👋 user-left — uid:", user.uid, "starting 30s grace timer");
+        if (userLeftTimerRef.current) clearTimeout(userLeftTimerRef.current);
+        userLeftTimerRef.current = setTimeout(() => {
+          console.log("[VoiceCall] ⏰ user-left grace timer expired — ending call");
+          handleRemoteUserLeft();
+        }, 60000); // 60s grace period — matches backend disconnect grace
+      });
+
+      client.on("user-joined", (user) => {
+        console.log("[VoiceCall] 🤝 user-joined — uid:", user.uid);
+        // User reconnected — cancel the pending end-call
+        if (userLeftTimerRef.current) {
+          clearTimeout(userLeftTimerRef.current);
+          userLeftTimerRef.current = null;
+          console.log("[VoiceCall] ✅ user-joined: cancelled pending endCall grace timer");
+        }
       });
 
       await client.join(APP_ID, roomId, agoraToken, "");
+
+      // Clear the resume flag now that we've successfully rejoined
+      if (isResumeFromRefresh.current) {
+        console.log("[VoiceCall] 🔄 Clearing isResumeFromRefresh flag (Agora joined successfully)");
+        setTimeout(() => {
+          isResumeFromRefresh.current = false;
+          console.log("[VoiceCall] ✅ isResumeFromRefresh cleared");
+        }, 5000);
+      }
 
       micTrackRef.current = await AgoraRTC.createMicrophoneAudioTrack();
       await client.publish([micTrackRef.current]);
@@ -103,20 +159,34 @@ const AgoraVoiceCalling = ({ callData }) => {
     startCall();
 
     return () => {
-      // Check ref value at unmount time
-      if (!isUpgradingRef.current) {
-        cleanup();
-      } else {
+      console.log("[VoiceCall] 🧹 useEffect cleanup (unmount) — isRefreshing:", isRefreshingRef.current);
+      // If upgrading to video, skip cleanup entirely
+      // Check both the ref AND the shared state (ref may not be updated yet due to React batching)
+      if (isUpgradingRef.current || sharedAgoraState.isUpgrading) {
         console.log("🔄 Skipping cleanup - upgrading to video");
+        return;
       }
+      if (userLeftTimerRef.current) {
+        clearTimeout(userLeftTimerRef.current);
+        userLeftTimerRef.current = null;
+      }
+      // On refresh: only release Agora resources, do NOT clear activeCall
+      // so it persists in sessionStorage for reconnect
+      try {
+        micTrackRef.current?.stop();
+        micTrackRef.current?.close();
+        videoTrackRef.current?.stop();
+        videoTrackRef.current?.close();
+        clientRef.current?.leave();
+      } catch (e) {
+        console.warn("[VoiceCall] Voice unmount cleanup error:", e);
+      }
+      micTrackRef.current = null;
+      videoTrackRef.current = null;
+      clientRef.current = null;
     };
     // eslint-disable-next-line
   }, [roomId]);
-
-  /* ================= WATCH FOR UPGRADE ================= */
-  useEffect(() => {
-    isUpgradingRef.current = sharedAgoraState.isUpgrading;
-  }, [sharedAgoraState.isUpgrading]);
 
   /* ================= MIC TOGGLE ================= */
   useEffect(() => {
@@ -135,17 +205,27 @@ const AgoraVoiceCalling = ({ callData }) => {
     });
   }, [speakerOn]);
 
-  /* ================= TIMER ================= */
+  /* ================= TIMER (local count-up) ================= */
   const [timer, setTimer] = useState(0);
   useEffect(() => {
     let interval;
     if (callState === "connected") {
-      if (!callStartTime) setCallStartTime(Date.now());
+      if (!callStartTime) {
+        // Check sessionStorage first (refresh resume)
+        const savedStartTime = sessionStorage.getItem("shubhtalk_call_start_time");
+        if (savedStartTime && Number(savedStartTime) > 0) {
+          setCallStartTime(Number(savedStartTime));
+        } else {
+          setCallStartTime(Date.now());
+        }
+      }
       interval = setInterval(() => {
         if (callStartTime) {
           setTimer(Math.floor((Date.now() - callStartTime) / 1000));
         }
       }, 1000);
+    } else {
+      setTimer(0);
     }
     return () => clearInterval(interval);
   }, [callState, callStartTime]);
@@ -154,6 +234,11 @@ const AgoraVoiceCalling = ({ callData }) => {
   const cleanup = async () => {
     if (cleanupRef.current) return;
     cleanupRef.current = true;
+
+    if (userLeftTimerRef.current) {
+      clearTimeout(userLeftTimerRef.current);
+      userLeftTimerRef.current = null;
+    }
 
     try {
       // If upgrading, don't close anything - just hand over to video call
@@ -173,6 +258,8 @@ const AgoraVoiceCalling = ({ callData }) => {
     } finally {
       micTrackRef.current = null;
       clientRef.current = null;
+      sessionStorage.removeItem("shubhtalk_active_call");
+      sessionStorage.removeItem("shubhtalk_call_start_time");
 
       // Only clear active call and shared state if not upgrading
       if (!isUpgradingRef.current) {
@@ -185,15 +272,13 @@ const AgoraVoiceCalling = ({ callData }) => {
         });
       }
       setCallStartTime(null);
-      // setActiveCall(null);
-      // setActiveChat(null); // Clear active chat when call ends
     }
   };
 
   /* ================= END CALL (User initiated) ================= */
   const endCall = async () => {
     // Don't emit call:end if upgrading
-    if (isUpgradingRef.current) {
+    if (isUpgradingRef.current || sharedAgoraState.isUpgrading) {
       console.log("🔄 Skipping call:end emit - upgrading to video");
       return;
     }
@@ -214,7 +299,7 @@ const AgoraVoiceCalling = ({ callData }) => {
   /* ================= HANDLE REMOTE USER LEFT (Remote initiated) ================= */
   const handleRemoteUserLeft = async () => {
     // Check if we're upgrading - don't end call if upgrading
-    if (isUpgradingRef.current || upgradeRejectionRef.current) {
+    if (isUpgradingRef.current || upgradeRejectionRef.current || sharedAgoraState.isUpgrading) {
       console.log("⚠️ Ignoring remote user left - upgrade in progress");
       return;
     }
@@ -232,7 +317,7 @@ const AgoraVoiceCalling = ({ callData }) => {
   /* ================= HANDLE SERVER CALL END (Server/Remote initiated) ================= */
   const handleServerCallEnd = async () => {
     // Check if we're upgrading - don't end call if upgrading
-    if (isUpgradingRef.current || upgradeRejectionRef.current || isUpgradeRejectionProtected) {
+    if (isUpgradingRef.current || upgradeRejectionRef.current || isUpgradeRejectionProtected || sharedAgoraState.isUpgrading) {
       console.log("⚠️ Ignoring server call end - upgrade in progress");
       return;
     }
@@ -264,6 +349,11 @@ const AgoraVoiceCalling = ({ callData }) => {
     };
 
     const handleDisconnect = (reason) => {
+      // Don't end call on socket disconnect if we're refreshing or resuming
+      if (isRefreshingRef.current || isResumeFromRefresh.current) {
+        console.log("[VoiceCall] 🔄 Ignoring socket disconnect during refresh/resume");
+        return;
+      }
       console.log("📞 disconnect event received:", reason);
       handleServerCallEnd();
     };
@@ -279,12 +369,14 @@ const AgoraVoiceCalling = ({ callData }) => {
     voiceSocket.on("force_call_end", handleForceCallEnd);
     voiceSocket.on("disconnect", handleDisconnect);
     voiceSocket.on("call:rejected", handleCallRejected);
+    voiceSocket.on("call:canceled", handleCallCanceled);
 
     return () => {
       voiceSocket.off("call:ended", handleCallEnded);
       voiceSocket.off("force_call_end", handleForceCallEnd);
       voiceSocket.off("disconnect", handleDisconnect);
       voiceSocket.off("call:rejected", handleCallRejected);
+      voiceSocket.off("call:canceled", handleCallCanceled);
     };
   }, [isUpgradeRejectionProtected]); // Keep state in dependency for reactivity
 

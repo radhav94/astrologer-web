@@ -6,7 +6,6 @@ import { Outlet, useNavigate, useParams } from "react-router-dom";
 import { updateAstrologerStatus } from "../../src/services/appServices/authservice";
 import AudioVideoContainer from "../screens/private/call/AudioVideoContainer";
 import IncomingChatModal from "../components/IncomingChatModal";
-import StickyChatFooter from "../components/StickyChatFooter";
 import { voiceSocket } from "../services/appServices/voiceSocketServices";
 import { useChat as useChatContext } from "../context/chatContext";
 import { PATH } from "../utils/routes/Paths";
@@ -195,6 +194,8 @@ const HomeLayout = () => {
         isUserSide: false,
         chaterName: customerName,
         chaterId: userId,
+        astrologerId: astrologerId,
+        userID: user?.user_ID,
         remainingTime: Number(data?.remainingTime),
       });
       if (data?.remainingTime) setChatSeconds(Number(data?.remainingTime) * 60);
@@ -216,12 +217,15 @@ const HomeLayout = () => {
       setActiveChat(null);
     };
 
+    // Listen for chat end events
     voiceSocket.on("chat:accepted", handleChatUserAccepted);
     voiceSocket.on("chat:ended", handleChatEnd);
+    voiceSocket.on("chat_ended", handleChatEnd); // Alternative event name
 
     return () => {
       voiceSocket.off("chat:accepted", handleChatUserAccepted);
       voiceSocket.off("chat:ended", handleChatEnd);
+      voiceSocket.off("chat_ended", handleChatEnd);
     };
   }, []);
 

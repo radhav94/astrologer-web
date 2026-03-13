@@ -1,33 +1,62 @@
 // socketService.js
 import { io } from "socket.io-client";
 
-const BASE_URL = import.meta.env.VITE_APP_API_BASE_URL
+const BASE_URL = import.meta.env.VITE_APP_API_BASE_URL;
+
 class SocketService {
   socket = null;
 
-  connect({ onConnected, onDisconnected, onError }) {
+  connect({ onConnected, onDisconnected, onError, onWarn }) {
     // Never create a socket connection inside an iframe (e.g. Kundli view)
     if (window.self !== window.top) {
       return;
     }
 
+    // If already connected, just fire the callback
+    if (this.socket?.connected) {
+      onConnected?.();
+      return;
+    }
+
+    // If socket exists but disconnected, reconnect it
+    if (this.socket) {
+      this.socket.removeAllListeners();
+      this.socket.disconnect();
+      this.socket = null;
+    }
+
+    // Get astrologer identity for authentication
+    const role = localStorage.getItem("shubhtalk_role") || "ASTROLOGER";
+    const userData = JSON.parse(
+      localStorage.getItem("shubhtalk_astrologer_details") || "{}"
+    );
+    const astrologerId = userData?._id || userData?.id || "";
+
     this.socket = io(BASE_URL, {
       transports: ["websocket"],
       autoConnect: true,
       reconnection: true,
-      // reconnectionAttempts: 5,
-      // reconnectionDelay: 2000,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      query: {
+        astrologerId,
+        role,
+      },
     });
 
     this.socket.on("connect", () => {
+      console.log("[SocketService] Connected, id:", this.socket.id);
       onConnected?.();
     });
 
     this.socket.on("disconnect", (reason) => {
+      console.log("[SocketService] Disconnected:", reason);
       onDisconnected?.(reason);
     });
 
     this.socket.on("connect_error", (err) => {
+      console.error("[SocketService] Connect error:", err.message);
       onError?.("Unable to connect to server");
     });
 
@@ -39,21 +68,16 @@ class SocketService {
   disconnect() {
     if (this.socket) {
       this.socket.disconnect();
+      this.socket = null;
     }
   }
 
+  isConnected() {
+    return this.socket?.connected || false;
+  }
+
   joinRoom({ roomId, userId, astrologerId }) {
-    // this.socket.emit(
-    //   "joinRoom",
-    //   { roomId, userId, astrologerId },
-    //   (response) => {
-    //     if (response?.error) {
-    //       console.error("JOIN FAILED:", response.error);
-    //     } else {
-    //       console.log("ROOM JOINED SUCCESSFULLY");
-    //     }
-    //   }
-    // );
+    // Reserved for future use
   }
 
   // USER SEND
@@ -90,7 +114,7 @@ class SocketService {
         message,
         sender: "astrologer",
         kundliId,
-        type
+        type,
       });
 
       return { success: true };
@@ -99,19 +123,19 @@ class SocketService {
     }
   }
 
-  // ⭐ TYPING EVENT
+  // TYPING EVENT
   sendTyping({ roomId, sender }) {
     if (this.socket?.connected) {
       this.socket.emit("typing", { roomId, sender });
     }
   }
 
-  // ⭐ LISTEN EVENTS (MESSAGE + TYPING)
+  // LISTEN EVENTS (MESSAGE + TYPING)
   listenEvents(callbacks) {
     const { onMessage, onTyping } = callbacks;
 
     this.socket.on("message:recieved", (data) => {
-      console.log('message', data)
+      console.log("message", data);
       onMessage?.({
         sender: data.sender,
         message: data.message || "",

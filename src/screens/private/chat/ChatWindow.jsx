@@ -347,21 +347,27 @@ const ChatWindow = () => {
   const userName =
     firstName && lastName ? `${firstName} ${lastName}` : "Unknown";
   const {
-    userId,
-    astrologerId,
+    userId: stateUserId,
+    astrologerId: stateAstrologerId,
     roomId: stateRoomId,
-    fullName,
-    isUserSide,
-    kundliId,
-    userID
+    fullName: stateFullName,
+    isUserSide: stateIsUserSide,
+    kundliId: stateKundliId,
+    userID: stateUserID
   } = state || {};
 
   const { activeChat } = useChatContext();
-  const { activeCall, setActiveCall, openReview: callReviewOpen } = useCall();
+  const { activeCall, setActiveCall } = useCall();
   const isChatActive = activeChat && activeChat?.roomId;
   
-  // Fall back to activeChat's roomId if state didn't carry one (e.g. navigating back)
+  // Fall back to activeChat for all values when state is null (e.g. page refresh)
+  const userId = stateUserId || activeChat?.chaterId || activeChat?.userId || null;
+  const astrologerId = stateAstrologerId || activeChat?.astrologerId || userData?._id || userData?.id || null;
   const roomId = stateRoomId || activeChat?.roomId || null;
+  const fullName = stateFullName || activeChat?.chaterName || "User";
+  const isUserSide = stateIsUserSide ?? activeChat?.isUserSide ?? false;
+  const kundliId = stateKundliId || activeChat?.kundliId || null;
+  const userID = stateUserID || activeChat?.userID || null;
 
   const [message, setMessage] = useState("");
   const messagesEndRef = useRef(null);
@@ -589,7 +595,7 @@ const ChatWindow = () => {
     }
   };
 
-  /* --------- Redirect to chats when call ends and review is done --------- */
+  /* --------- Redirect when call ends --------- */
   const hadActiveCallRef = useRef(!!activeCall);
   useEffect(() => {
     if (activeCall) {
@@ -598,12 +604,13 @@ const ChatWindow = () => {
   }, [activeCall]);
 
   useEffect(() => {
-    // Call ended (activeCall is null) + no review pending + we had a call before
-    if (hadActiveCallRef.current && !activeCall && !callReviewOpen) {
+    // Call ended (activeCall is null) and we had a call before → navigate away immediately.
+    // StickyReviewFooter (in HomeLayout) handles the review modal on the destination page.
+    if (hadActiveCallRef.current && !activeCall) {
       hadActiveCallRef.current = false;
       navigate("/chats");
     }
-  }, [activeCall, callReviewOpen, navigate]);
+  }, [activeCall, navigate]);
 
   /* --------- Timer Logic --------- */
   const formatTimer = (sec) =>

@@ -1,37 +1,71 @@
 import { useCall } from "../context/CallContext";
 import { voiceSocket } from "../services/appServices/voiceSocketServices";
 import toast from "./toast";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 const IncomingCallModal = () => {
-  const { incomingCall, setIncomingCall, setActiveCall, activeCall, sharedAgoraState, setSharedAgoraState, setIsUpgradeRejectionProtected, upgradeRejectionRef } = useCall();
+  const { incomingCall, setIncomingCall, setActiveCall, activeCall, sharedAgoraState, setSharedAgoraState, setIsUpgradeRejectionProtected, upgradeRejectionRef, isUpgradingRef } = useCall();
   const [isAccepting, setIsAccepting] = useState(false);
+  const pendingUpgradeRef = useRef(false); // Track if we're waiting for an upgrade accept
 
   // Listen for call accept errors from server
   useEffect(() => {
     const handleCallAcceptError = (data) => {
+      // Only handle errors that have a roomId matching our incomingCall
+      // This prevents cross-contamination with chat errors on the same socket
+      if (!data.roomId || (incomingCall && data.roomId !== incomingCall.roomId)) {
+        return; // Not our error — ignore
+      }
+
       console.error("Call accept error:", data);
-      
+
+      // 🔑 ALREADY_ACCEPTED during an upgrade means the call exists and is active.
+      // The backend rejects call:accept because the audio call was already accepted.
+      // For upgrades, this is expected — proceed with the switch directly.
+      if (data.code === "ALREADY_ACCEPTED" && pendingUpgradeRef.current) {
+        console.log("📹 ALREADY_ACCEPTED during upgrade — proceeding with video switch");
+        pendingUpgradeRef.current = false;
+
+        if (incomingCall) {
+          setActiveCall({
+            ...activeCall,
+            callType: "video",
+            agoraToken: incomingCall.agoraToken || activeCall.agoraToken,
+          });
+          setIncomingCall(null);
+          setIsAccepting(false);
+        }
+        return;
+      }
+
       if (data.code === "ALREADY_ACCEPTED") {
         toast.error(data.message || "This call has already been accepted from another device.");
       } else {
         toast.error(data.message || "Failed to accept call");
       }
       
+      // Reset upgrade state if it was set
+      if (pendingUpgradeRef.current) {
+        pendingUpgradeRef.current = false;
+        isUpgradingRef.current = false;
+        setSharedAgoraState(prev => ({ ...prev, isUpgrading: false }));
+      }
+
       setIncomingCall(null);
       setIsAccepting(false);
     };
 
     const handleCallAcceptSuccess = (data) => {
       console.log("Call accepted successfully:", data);
+      pendingUpgradeRef.current = false;
       
       // Only set active call when server confirms success
       if (incomingCall) {
         setActiveCall({
           roomId: incomingCall.roomId,
-          agoraToken: incomingCall.agoraToken,
+          agoraToken: data.agoraToken || incomingCall.agoraToken,
           isUserSide: false,
-          callType: incomingCall.callType,
+          callType: data.type || incomingCall.callType,
           callerName: incomingCall.callerName,
           userId: incomingCall.userId,
           astrologerId: incomingCall.astrologerId,
@@ -52,7 +86,7 @@ const IncomingCallModal = () => {
       voiceSocket.off("error", handleCallAcceptError);
       voiceSocket.off("call:accepted", handleCallAcceptSuccess);
     };
-  }, [setIncomingCall, incomingCall, setActiveCall]);
+  }, [setIncomingCall, incomingCall, setActiveCall, activeCall]);
 
   if (!incomingCall) return null;
 
@@ -68,31 +102,30 @@ const IncomingCallModal = () => {
                           sharedAgoraState.client;
 
       if (isUpgrading) {
+        // 🔑 Set ref SYNCHRONOUSLY so VoiceCall cleanup can read it immediately
+        isUpgradingRef.current = true;
+        pendingUpgradeRef.current = true;
+        
         setSharedAgoraState(prev => ({ 
           ...prev, 
           isUpgrading: true 
         }));
         
-        // Log the state after setting
-        setTimeout(() => {
-          console.log("🔄 Shared state after setting isUpgrading:", {
-            isUpgrading: sharedAgoraState.isUpgrading,
-            hasClient: !!sharedAgoraState.client,
-            hasMicTrack: !!sharedAgoraState.micTrack
-          });
-        }, 100);
+        console.log("🔄 Upgrade initiated — isUpgradingRef:", isUpgradingRef.current);
       }
 
       voiceSocket.emit("call:accept", {
         roomId: incomingCall.roomId,
         token: incomingCall.agoraToken,
         channelName: incomingCall.roomId,
-        acceptedBy: "ASTROLOGER"
+        acceptedBy: "ASTROLOGER",
+        callType: incomingCall.callType // Tell backend this is a video upgrade
       });
 
     } catch (error) {
       console.error("Error accepting call:", error);
       toast.error(error?.message || "Failed to accept call");
+      pendingUpgradeRef.current = false;
       setIsAccepting(false);
     }
   };

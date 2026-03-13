@@ -196,17 +196,19 @@ const HomeLayout = () => {
       };
 
       const handleChatEnd = () => {
-        toast.warning("Chat has ended")
+        toast.warning("Chat has ended");
         setActiveChat(null);
       }
 
+      // Listen for chat end events
       voiceSocket.on("chat:accepted", handleChatUserAccepted);
-    voiceSocket.on("chat:ended", handleChatEnd);
+      voiceSocket.on("chat:ended", handleChatEnd);
+      voiceSocket.on("chat_ended", handleChatEnd); // Alternative event name
 
       return () => {
-
-    voiceSocket.off("chat:accepted", handleChatUserAccepted);
-    voiceSocket.off("chat:ended", handleChatEnd);
+        voiceSocket.off("chat:accepted", handleChatUserAccepted);
+        voiceSocket.off("chat:ended", handleChatEnd);
+        voiceSocket.off("chat_ended", handleChatEnd);
       }
   }, [])
 

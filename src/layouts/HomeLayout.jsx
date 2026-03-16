@@ -198,7 +198,8 @@ const HomeLayout = () => {
         userID: user?.user_ID,
         remainingTime: Number(data?.remainingTime),
       });
-      if (data?.remainingTime) setChatSeconds(Number(data?.remainingTime) * 60);
+      // Timer should start from 0 (counting up elapsed time), not from remainingTime
+      setChatSeconds(0);
 
       navigate(PATH.privateRoutes.CHAT_WINDOW.path.replace(":chatId", userId), {
         state: {

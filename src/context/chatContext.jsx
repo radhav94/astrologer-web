@@ -62,10 +62,16 @@ export const ChatProvider = ({ children }) => {
     }
   }, []);
 
-  const clearPersistedChatState = useCallback(() => {
+  const clearPersistedChatState = useCallback((roomId = null) => {
     localStorage.removeItem(CHAT_STORAGE_KEY);
     localStorage.removeItem(CHAT_TIMESTAMP_KEY);
     sessionStorage.removeItem("shubhtalk_chat_seconds");
+    localStorage.removeItem("shubhtalk_chat_start_time");
+    
+    // Clean up room-specific init flag if roomId provided
+    if (roomId) {
+      localStorage.removeItem(`shubhtalk_chat_init_${roomId}`);
+    }
   }, []);
 
   const restoreChatState = useCallback(() => {
@@ -75,7 +81,8 @@ export const ChatProvider = ({ children }) => {
       if (!saved || !timestamp) return null;
       const elapsed = Date.now() - Number(timestamp);
       if (elapsed > CHAT_EXPIRY_TIME) {
-        clearPersistedChatState();
+        const parsed = JSON.parse(saved);
+        clearPersistedChatState(parsed?.roomId);
         return null;
       }
       return JSON.parse(saved);
@@ -88,13 +95,16 @@ export const ChatProvider = ({ children }) => {
 
   /* ================= SET ACTIVE CHAT (wrapper with persistence) ================= */
   const setActiveChat = useCallback((chatData) => {
+    // Get current roomId before clearing (for cleanup)
+    const currentRoomId = activeChat?.roomId;
+    
     setActiveChatState(chatData);
     if (chatData) {
       persistChatState(chatData);
     } else {
-      clearPersistedChatState();
+      clearPersistedChatState(currentRoomId);
     }
-  }, [persistChatState, clearPersistedChatState]);
+  }, [persistChatState, clearPersistedChatState, activeChat?.roomId]);
 
   /* ================= RECONNECTION ================= */
   const reconnectToChat = useCallback(() => {
@@ -119,22 +129,26 @@ export const ChatProvider = ({ children }) => {
       voiceSocket.off("chat:reconnected", onReconnected);
 
       if (data && data.active) {
-        // Chat is still active — restore it
-        setActiveChatState({
+        // Chat is still active — restore it with backend's remaining time
+        const restoredChat = {
           ...savedChat,
           remainingTime: data.remainingTime || savedChat.remainingTime,
-        });
-        // Restore timer from remaining time
-        if (data.remainingTime) {
-          const savedSeconds = sessionStorage.getItem("shubhtalk_chat_seconds");
-          if (savedSeconds) {
-            setChatSeconds(Number(savedSeconds));
-          }
+        };
+        setActiveChatState(restoredChat);
+        persistChatState(restoredChat);
+
+        // Restore elapsed timer from sessionStorage (astrologer sees time counting up)
+        const savedSeconds = sessionStorage.getItem("shubhtalk_chat_seconds");
+        if (savedSeconds) {
+          setChatSeconds(Number(savedSeconds));
         }
+        // Start the timer
+        startTimer();
       } else {
         // Chat is no longer active
         console.log("[ChatContext] Chat no longer active:", data?.reason);
-        clearPersistedChatState();
+        clearPersistedChatState(savedChat.roomId);
+        resetTimer();
       }
     };
 
@@ -144,9 +158,9 @@ export const ChatProvider = ({ children }) => {
     setTimeout(() => {
       voiceSocket.off("chat:reconnected", onReconnected);
       setIsReconnecting(false);
-      clearPersistedChatState();
+      clearPersistedChatState(savedChat.roomId);
     }, 30000);
-  }, [restoreChatState, clearPersistedChatState, astroId]);
+  }, [restoreChatState, clearPersistedChatState, persistChatState, astroId]);
 
 
 useEffect(() => {

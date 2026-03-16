@@ -22,7 +22,10 @@ const VideoCalling = ({ callData }) => {
   const { activeCall, setActiveCall, setReviewData, setOpenReview, sharedAgoraState, setSharedAgoraState, isUpgradingRef, callStartTime, setCallStartTime, isCallMinimized, setIsCallMinimized } = useCall();
   const navigate = useNavigate();
 
-  if (!activeCall || activeCall.callType !== "video") return null;
+
+  if (!activeCall || activeCall.callType !== "video") {
+    return null;
+  }
 
   const { roomId, agoraToken, isUserSide, callerName } = callData;
 
@@ -40,6 +43,7 @@ const VideoCalling = ({ callData }) => {
   const cleanupRef = useRef(false);
   const endCallRef = useRef(false);
   const userLeftTimerRef = useRef(null);
+  const isDowngradingRef = useRef(false); // Track if downgrading to audio
 
   const [joined, setJoined] = useState(false);
   const [micOn, setMicOn] = useState(true);
@@ -407,9 +411,21 @@ const VideoCalling = ({ callData }) => {
     };
 
     start();
-    return () => cleanup();
+    return () => {
+      console.log("🎬 [VIDEO] Cleanup function called");
+      cleanup();
+    };
     // eslint-disable-next-line
   }, [roomId]);
+
+  /* ================= WATCH FOR DOWNGRADE ================= */
+  useEffect(() => {
+    isDowngradingRef.current = sharedAgoraState.isDowngrading;
+    // If downgrade was just triggered while we're mounted, set it on the ref immediately
+    if (sharedAgoraState.isDowngrading) {
+      console.log("📹 [VIDEO] isDowngradingRef set to true via effect");
+    }
+  }, [sharedAgoraState.isDowngrading]);
 
   /* ================= LOCAL VIDEO ================= */
  
@@ -506,15 +522,69 @@ const VideoCalling = ({ callData }) => {
 
   /* ================= CLEANUP ================= */
   const cleanup = async () => {
+    console.log("🧹 [VIDEO CLEANUP] Starting cleanup...");
+    
     if (cleanupRef.current) return;
     cleanupRef.current = true;
 
-    if (userLeftTimerRef.current) {
-      clearTimeout(userLeftTimerRef.current);
-      userLeftTimerRef.current = null;
+    console.log("🧹 [VIDEO CLEANUP] Proceeding with cleanup");
+
+    // Use the ref (synchronous, always up-to-date) as the primary check
+    const isDowngrading = isDowngradingRef.current;
+    
+    console.log("🧹 [VIDEO CLEANUP] isDowngrading:", isDowngrading);
+    
+    // If downgrading, keep mic track and client alive for VoiceCall to reuse
+    if (isDowngrading) {
+      console.log("🔽 Downgrading to audio - keeping mic and client, closing camera only");
+      
+      try {
+        // Unpublish camera from the Agora client FIRST so remote side stops receiving video
+        if (clientRef.current && camTrackRef.current) {
+          try {
+            await clientRef.current.unpublish([camTrackRef.current]);
+            console.log("✅ [VIDEO CLEANUP] Camera track unpublished from client");
+          } catch (e) {
+            console.warn("⚠️ [VIDEO CLEANUP] Failed to unpublish camera:", e);
+          }
+        }
+        
+        // Then stop and close camera track
+        try {
+          camTrackRef.current?.stop();
+          camTrackRef.current?.close();
+        } catch (e) {
+          console.warn("⚠️ [VIDEO CLEANUP] Failed to stop/close camera:", e);
+        }
+        camTrackRef.current = null;
+        
+        // Clear the camera from shared state (keep client and mic intact)
+        setSharedAgoraState(prev => ({
+          ...prev,
+          cameraTrack: null
+        }));
+        
+        if (timerRef.current) {
+          clearInterval(timerRef.current);
+          timerRef.current = null;
+        }
+        
+        setJoined(false);
+        setCallSeconds(0);
+        // Don't clear callStartTime, activeCall, or shared client/mic
+        // Don't clear clientRef.current or micTrackRef.current - VoiceCall needs them
+        
+        console.log("✅ [VIDEO CLEANUP] Downgrade cleanup complete - client and mic preserved");
+      } catch (e) {
+        console.warn("Error during downgrade cleanup:", e);
+      }
+      
+      return; // Exit early - don't run the normal cleanup below
     }
 
+    // Normal cleanup - close everything
     try {
+      console.log("🧹 [VIDEO CLEANUP] Normal cleanup - closing everything");
       micTrackRef.current?.stop();
       micTrackRef.current?.close();
       camTrackRef.current?.stop();
@@ -553,7 +623,8 @@ const VideoCalling = ({ callData }) => {
         client: null,
         micTrack: null,
         cameraTrack: null,
-        isUpgrading: false
+        isUpgrading: false,
+        isDowngrading: false
       });
       isUpgradingRef.current = false;
     }
@@ -561,6 +632,12 @@ const VideoCalling = ({ callData }) => {
 
   /* ================= SAFE END CALL (User initiated) ================= */
   const safeEndCall = async () => {
+    // Don't emit call:end if downgrading
+    if (isDowngradingRef.current) {
+      console.log("🔽 Skipping call:end emit - downgrading to audio");
+      return;
+    }
+
     console.log("📞 User initiated video call end - emitting call:end");
     if (endCallRef.current) return;
     endCallRef.current = true;
@@ -580,6 +657,12 @@ const VideoCalling = ({ callData }) => {
 
   /* ================= HANDLE REMOTE/SERVER CALL END ================= */
   const handleRemoteCallEnd = async () => {
+    // Don't end call if downgrading
+    if (isDowngradingRef.current) {
+      console.log("🔽 Ignoring remote call end - downgrading to audio");
+      return;
+    }
+
     console.log("📞 Remote/Server ended video call - cleaning up without emitting call:end");
     if (endCallRef.current) return;
     endCallRef.current = true;
@@ -606,6 +689,11 @@ const VideoCalling = ({ callData }) => {
   useEffect(() => {
     const onCallEnded = () => {
       console.log("📞 call:ended received in VideoCall");
+      // Don't end call if we're downgrading to audio
+      if (isDowngradingRef.current) {
+        console.log("🔽 Ignoring call:ended - downgrading to audio");
+        return;
+      }
       if (endCallRef.current || cleanupRef.current) return;
       endCallRef.current = true;
       setReviewData({
@@ -618,6 +706,11 @@ const VideoCalling = ({ callData }) => {
 
     const onForceCallEnd = () => {
       console.log("📞 force_call_end received in VideoCall");
+      // Don't end call if we're downgrading to audio
+      if (isDowngradingRef.current) {
+        console.log("🔽 Ignoring force_call_end - downgrading to audio");
+        return;
+      }
       if (endCallRef.current || cleanupRef.current) return;
       endCallRef.current = true;
       setReviewData({
@@ -630,6 +723,11 @@ const VideoCalling = ({ callData }) => {
 
     const onCallCanceled = () => {
       console.log("📞 call:canceled received in VideoCall");
+      // Don't end call if we're downgrading to audio
+      if (isDowngradingRef.current) {
+        console.log("🔽 Ignoring call:canceled - downgrading to audio");
+        return;
+      }
       if (endCallRef.current || cleanupRef.current) return;
       endCallRef.current = true;
       cleanup();

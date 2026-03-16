@@ -43,7 +43,8 @@ export const CallProvider = ({ children }) => {
     client: null,
     micTrack: null,
     cameraTrack: null,
-    isUpgrading: false
+    isUpgrading: false,
+    isDowngrading: false
   });
 
   /* 🔥 Shared timer that updates every second when call is active */

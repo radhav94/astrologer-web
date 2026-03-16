@@ -604,13 +604,16 @@ const ChatWindow = () => {
   }, [activeCall]);
 
   useEffect(() => {
-    // Call ended (activeCall is null) and we had a call before → navigate away immediately.
-    // StickyReviewFooter (in HomeLayout) handles the review modal on the destination page.
+    // Call ended (activeCall is null) and we had a call before
+    // Only navigate away if there's no active chat session to return to
     if (hadActiveCallRef.current && !activeCall) {
       hadActiveCallRef.current = false;
-      navigate("/chats");
+      // If chat is still active, stay on this page instead of navigating to chat list
+      if (!isChatActive) {
+        navigate("/chats");
+      }
     }
-  }, [activeCall, navigate]);
+  }, [activeCall, navigate, isChatActive]);
 
   /* --------- Timer Logic --------- */
   const formatTimer = (sec) =>

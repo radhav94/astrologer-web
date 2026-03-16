@@ -24,7 +24,9 @@ const AgoraVoiceCalling = ({ callData }) => {
   const { setActiveChat } = useChatContext();
   const navigate = useNavigate();
 
-  if (!activeCall || activeCall.callType !== "audio") return null;
+  if (!activeCall || activeCall.callType !== "audio") {
+    return null;
+  }
 
   const { roomId, agoraToken, callerName, isUserSide } = callData;
 
@@ -39,6 +41,7 @@ const AgoraVoiceCalling = ({ callData }) => {
   const isRefreshingRef = useRef(false);
   // Track if this mount is a refresh-resume (activeCall restored from sessionStorage)
   const isResumeFromRefresh = useRef(!!sessionStorage.getItem("shubhtalk_active_call"));
+  const isDowngradingRef = useRef(false); // Track if downgrading from video
 
   /* ================= STATE ================= */
   const [micOn, setMicOn] = useState(true);
@@ -73,87 +76,260 @@ const AgoraVoiceCalling = ({ callData }) => {
     cleanupRef.current = false;
 
     const startCall = async () => {
-      const client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
-      clientRef.current = client;
+      try {
+        // Check if we're downgrading from video call
+        // Primary check: isDowngrading flag (set by IncomingCallModal before callType changes)
+        // Fallback: check if we have an active client with mic (meaning we're reusing a connection)
+        const shouldDowngrade = sharedAgoraState.isDowngrading || 
+                                (sharedAgoraState.client && 
+                                 sharedAgoraState.micTrack && 
+                                 !sharedAgoraState.isUpgrading);
 
-      client.on("user-published", async (user, mediaType) => {
-        // Cancel any pending end-call grace timer — remote user is back
-        if (userLeftTimerRef.current) {
-          clearTimeout(userLeftTimerRef.current);
-          userLeftTimerRef.current = null;
-          console.log("[VoiceCall] ✅ user-published: cancelled pending endCall grace timer");
-        }
+        if (shouldDowngrade) {
+          console.log("🔽 Downgrading from video to audio - reusing connection");
+          
+          // Verify client is still available
+          if (!sharedAgoraState.client || !sharedAgoraState.micTrack) {
+            console.error("❌ [DOWNGRADE] Client or mic track is null! Cannot downgrade.");
+            console.error("❌ [DOWNGRADE] Client:", !!sharedAgoraState.client, "Mic:", !!sharedAgoraState.micTrack);
+            console.error("❌ [DOWNGRADE] Starting fresh call instead.");
+            // Fall through to fresh call setup
+          } else {
+            // Reuse existing client and mic track
+            clientRef.current = sharedAgoraState.client;
+            micTrackRef.current = sharedAgoraState.micTrack;
+            
+            console.log("✅ [DOWNGRADE] Client and mic track assigned");
+            console.log("📹 Unpublishing and closing camera track...");
+            
+            // Unpublish and close camera track (may already be done by VideoCall cleanup)
+            if (sharedAgoraState.cameraTrack) {
+              try {
+                await clientRef.current.unpublish([sharedAgoraState.cameraTrack]);
+                sharedAgoraState.cameraTrack.stop();
+                sharedAgoraState.cameraTrack.close();
+                console.log("✅ Camera track closed successfully");
+              } catch (err) {
+                console.warn("[DOWNGRADE] Camera track cleanup (may already be done by VideoCall):", err.message);
+              }
+            } else {
+              console.log("ℹ️ [DOWNGRADE] Camera track already cleaned up by VideoCall");
+            }
+            
+            // Remove old VideoCall event listeners and add new VoiceCall listeners
+            console.log("🔄 [DOWNGRADE] Removing old event listeners and adding new ones");
+            if (clientRef.current) {
+              clientRef.current.removeAllListeners();
+              
+              // Add VoiceCall event listeners
+              clientRef.current.on("user-published", async (user, mediaType) => {
+                // Cancel any pending end-call grace timer — remote user is back
+                if (userLeftTimerRef.current) {
+                  clearTimeout(userLeftTimerRef.current);
+                  userLeftTimerRef.current = null;
+                  console.log("[DOWNGRADE] ✅ user-published: cancelled pending endCall grace timer");
+                }
 
-        await client.subscribe(user, mediaType);
-        if (mediaType === "audio") {
-          user.audioTrack?.play();
-          // Set initial volume based on speaker state
-          if (user.audioTrack) {
-            user.audioTrack.setVolume(speakerOn ? 100 : 0);
+                console.log(`📹 [DOWNGRADE] User published ${mediaType}:`, user.uid);
+                await clientRef.current.subscribe(user, mediaType);
+                
+                if (mediaType === "audio") {
+                  user.audioTrack?.play();
+                  if (user.audioTrack) {
+                    user.audioTrack.setVolume(speakerOn ? 100 : 0);
+                  }
+                }
+
+                if (mediaType === "video") {
+                  setIsRemoteVideo(true);
+                  if (remoteVideoRef.current && user.videoTrack) {
+                    user.videoTrack.play(remoteVideoRef.current);
+                  }
+                }
+              });
+
+              clientRef.current.on("user-unpublished", async (user, mediaType) => {
+                console.log(`📹 [DOWNGRADE] User unpublished ${mediaType}:`, user.uid);
+                if (mediaType === "video") {
+                  setIsRemoteVideo(false);
+                }
+              });
+
+              // Grace period so a page refresh doesn't kill the call
+              clientRef.current.on("user-left", (user) => {
+                // If upgrading to video, ignore user-left
+                if (isUpgradingRef.current || upgradeRejectionRef.current) {
+                  console.log("⚠️ [DOWNGRADE] Ignoring user-left — upgrade in progress");
+                  return;
+                }
+                console.log("[DOWNGRADE] 👋 user-left — uid:", user.uid, "starting 60s grace timer");
+                if (userLeftTimerRef.current) clearTimeout(userLeftTimerRef.current);
+                userLeftTimerRef.current = setTimeout(() => {
+                  console.log("[DOWNGRADE] ⏰ user-left grace timer expired — ending call");
+                  handleRemoteUserLeft();
+                }, 60000); // 60s grace period — matches backend disconnect grace
+              });
+
+              clientRef.current.on("user-joined", (user) => {
+                console.log("[DOWNGRADE] 🤝 user-joined — uid:", user.uid);
+                // User reconnected — cancel the pending end-call
+                if (userLeftTimerRef.current) {
+                  clearTimeout(userLeftTimerRef.current);
+                  userLeftTimerRef.current = null;
+                  console.log("[DOWNGRADE] ✅ user-joined: cancelled pending endCall grace timer");
+                }
+              });
+            }
+            
+            // Update shared state (clear camera, keep client and mic)
+            setSharedAgoraState(prev => ({
+              ...prev,
+              cameraTrack: null,
+              // Keep isDowngrading flag for now - will clear it after remote user check
+            }));
+            
+            setJoined(true);
+            setCallState("connected");
+            
+            // 🔥 CRITICAL: Ensure remote audio is playing after downgrade
+            // Store client ref locally to avoid race condition
+            const currentClient = clientRef.current;
+            setTimeout(() => {
+              console.log("🔍 [DOWNGRADE] Checking for existing remote users...");
+              
+              if (!currentClient) {
+                console.warn("⚠️ [DOWNGRADE] currentClient is null, skipping remote user check");
+                // Still clear the flag even if client is null
+                setSharedAgoraState(prev => ({
+                  ...prev,
+                  isDowngrading: false
+                }));
+                return;
+              }
+              
+              try {
+                const remoteUsers = currentClient.remoteUsers;
+                console.log(`📊 [DOWNGRADE] Found ${remoteUsers.length} remote users`);
+                
+                for (const user of remoteUsers) {
+                  console.log(`👤 [DOWNGRADE] Remote user ${user.uid}:`, {
+                    hasVideo: user.hasVideo,
+                    hasAudio: user.hasAudio,
+                    videoTrack: !!user.videoTrack,
+                    audioTrack: !!user.audioTrack
+                  });
+
+                  // Ensure audio is playing
+                  if (user.audioTrack) {
+                    console.log(`🔊 [DOWNGRADE] Playing audio from user ${user.uid}`);
+                    user.audioTrack.play();
+                    user.audioTrack.setVolume(speakerOn ? 100 : 0);
+                  }
+                }
+              } catch (err) {
+                console.error("❌ [DOWNGRADE] Error checking remote users:", err);
+              }
+              
+              // Clear the downgrade flag after everything is set up
+              console.log("✅ [DOWNGRADE] Complete - clearing isDowngrading flag");
+              setSharedAgoraState(prev => ({
+                ...prev,
+                isDowngrading: false
+              }));
+            }, 500);
+            
+            return;
           }
         }
 
-        if (mediaType === "video") {
-          setIsRemoteVideo(true)
-          user.videoTrack?.play(remoteVideoRef.current);
+        // Fresh audio call - normal flow
+        const client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
+        clientRef.current = client;
+
+        client.on("user-published", async (user, mediaType) => {
+          // Cancel any pending end-call grace timer — remote user is back
+          if (userLeftTimerRef.current) {
+            clearTimeout(userLeftTimerRef.current);
+            userLeftTimerRef.current = null;
+            console.log("[VoiceCall] ✅ user-published: cancelled pending endCall grace timer");
+          }
+
+          await client.subscribe(user, mediaType);
+          if (mediaType === "audio") {
+            user.audioTrack?.play();
+            // Set initial volume based on speaker state
+            if (user.audioTrack) {
+              user.audioTrack.setVolume(speakerOn ? 100 : 0);
+            }
+          }
+
+          if (mediaType === "video") {
+            setIsRemoteVideo(true);
+            if (remoteVideoRef.current && user.videoTrack) {
+              user.videoTrack.play(remoteVideoRef.current);
+            }
+          }
+        });
+
+        client.on("user-unpublished", async (user, mediaType) => {
+          if (mediaType === "video") {
+            setIsRemoteVideo(false)
+          }
+        });
+
+        // Grace period so a page refresh doesn't kill the call
+        client.on("user-left", (user) => {
+          // If upgrading to video, ignore user-left
+          if (isUpgradingRef.current || upgradeRejectionRef.current) {
+            console.log("⚠️ Ignoring user-left — upgrade in progress");
+            return;
+          }
+          console.log("[VoiceCall] 👋 user-left — uid:", user.uid, "starting 60s grace timer");
+          if (userLeftTimerRef.current) clearTimeout(userLeftTimerRef.current);
+          userLeftTimerRef.current = setTimeout(() => {
+            console.log("[VoiceCall] ⏰ user-left grace timer expired — ending call");
+            handleRemoteUserLeft();
+          }, 60000); // 60s grace period — matches backend disconnect grace
+        });
+
+        client.on("user-joined", (user) => {
+          console.log("[VoiceCall] 🤝 user-joined — uid:", user.uid);
+          // User reconnected — cancel the pending end-call
+          if (userLeftTimerRef.current) {
+            clearTimeout(userLeftTimerRef.current);
+            userLeftTimerRef.current = null;
+            console.log("[VoiceCall] ✅ user-joined: cancelled pending endCall grace timer");
+          }
+        });
+
+        await client.join(APP_ID, roomId, agoraToken, "");
+
+        // Clear the resume flag now that we've successfully rejoined
+        if (isResumeFromRefresh.current) {
+          console.log("[VoiceCall] 🔄 Clearing isResumeFromRefresh flag (Agora joined successfully)");
+          setTimeout(() => {
+            isResumeFromRefresh.current = false;
+            console.log("[VoiceCall] ✅ isResumeFromRefresh cleared");
+          }, 5000);
         }
-      });
 
-      client.on("user-unpublished", async (user, mediaType) => {
-        if (mediaType === "video") {
-          setIsRemoteVideo(false)
-        }
-      });
+        micTrackRef.current = await AgoraRTC.createMicrophoneAudioTrack();
+        await client.publish([micTrackRef.current]);
 
-      // Grace period so a page refresh doesn't kill the call
-      client.on("user-left", (user) => {
-        // If upgrading to video, ignore user-left
-        if (isUpgradingRef.current || upgradeRejectionRef.current) {
-          console.log("⚠️ Ignoring user-left — upgrade in progress");
-          return;
-        }
-        console.log("[VoiceCall] 👋 user-left — uid:", user.uid, "starting 30s grace timer");
-        if (userLeftTimerRef.current) clearTimeout(userLeftTimerRef.current);
-        userLeftTimerRef.current = setTimeout(() => {
-          console.log("[VoiceCall] ⏰ user-left grace timer expired — ending call");
-          handleRemoteUserLeft();
-        }, 60000); // 60s grace period — matches backend disconnect grace
-      });
+        // Store in shared state for potential upgrade
+        setSharedAgoraState({
+          client: client,
+          micTrack: micTrackRef.current,
+          cameraTrack: null,
+          isUpgrading: false
+        });
 
-      client.on("user-joined", (user) => {
-        console.log("[VoiceCall] 🤝 user-joined — uid:", user.uid);
-        // User reconnected — cancel the pending end-call
-        if (userLeftTimerRef.current) {
-          clearTimeout(userLeftTimerRef.current);
-          userLeftTimerRef.current = null;
-          console.log("[VoiceCall] ✅ user-joined: cancelled pending endCall grace timer");
-        }
-      });
-
-      await client.join(APP_ID, roomId, agoraToken, "");
-
-      // Clear the resume flag now that we've successfully rejoined
-      if (isResumeFromRefresh.current) {
-        console.log("[VoiceCall] 🔄 Clearing isResumeFromRefresh flag (Agora joined successfully)");
-        setTimeout(() => {
-          isResumeFromRefresh.current = false;
-          console.log("[VoiceCall] ✅ isResumeFromRefresh cleared");
-        }, 5000);
+        setJoined(true);
+        setCallState("connected");
+      } catch (err) {
+        console.error("VOICE CALL START ERROR", err);
+        await cleanup();
       }
-
-      micTrackRef.current = await AgoraRTC.createMicrophoneAudioTrack();
-      await client.publish([micTrackRef.current]);
-
-      // Store in shared state for potential upgrade
-      setSharedAgoraState({
-        client: client,
-        micTrack: micTrackRef.current,
-        cameraTrack: null,
-        isUpgrading: false
-      });
-
-      setJoined(true);
-      setCallState("connected");
     };
 
     startCall();
@@ -188,6 +364,15 @@ const AgoraVoiceCalling = ({ callData }) => {
     // eslint-disable-next-line
   }, [roomId]);
 
+  /* ================= WATCH FOR UPGRADE ================= */
+  useEffect(() => {
+    isUpgradingRef.current = sharedAgoraState.isUpgrading;
+  }, [sharedAgoraState.isUpgrading]);
+
+  /* ================= WATCH FOR DOWNGRADE ================= */
+  useEffect(() => {
+    isDowngradingRef.current = sharedAgoraState.isDowngrading;
+  }, [sharedAgoraState.isDowngrading]);
   /* ================= MIC TOGGLE ================= */
   useEffect(() => {
     micTrackRef.current?.setEnabled(micOn);
@@ -241,9 +426,14 @@ const AgoraVoiceCalling = ({ callData }) => {
     }
 
     try {
-      // If upgrading, don't close anything - just hand over to video call
+      // If upgrading or downgrading, don't close anything - just hand over
       if (isUpgradingRef.current) {
         console.log("🔄 Cleanup skipped - preserving connection for upgrade");
+        return;
+      }
+
+      if (isDowngradingRef.current) {
+        console.log("🔽 Cleanup skipped - preserving connection for downgrade");
         return;
       }
 
@@ -261,14 +451,15 @@ const AgoraVoiceCalling = ({ callData }) => {
       sessionStorage.removeItem("shubhtalk_active_call");
       sessionStorage.removeItem("shubhtalk_call_start_time");
 
-      // Only clear active call and shared state if not upgrading
-      if (!isUpgradingRef.current) {
+      // Only clear active call and shared state if not upgrading or downgrading
+      if (!isUpgradingRef.current && !isDowngradingRef.current) {
         setActiveCall(null);
         setSharedAgoraState({
           client: null,
           micTrack: null,
           cameraTrack: null,
-          isUpgrading: false
+          isUpgrading: false,
+          isDowngrading: false
         });
       }
       setCallStartTime(null);
@@ -277,9 +468,14 @@ const AgoraVoiceCalling = ({ callData }) => {
 
   /* ================= END CALL (User initiated) ================= */
   const endCall = async () => {
-    // Don't emit call:end if upgrading
+    // Don't emit call:end if upgrading or downgrading
     if (isUpgradingRef.current || sharedAgoraState.isUpgrading) {
       console.log("🔄 Skipping call:end emit - upgrading to video");
+      return;
+    }
+
+    if (isDowngradingRef.current) {
+      console.log("🔽 Skipping call:end emit - downgrading from video");
       return;
     }
 
@@ -298,9 +494,9 @@ const AgoraVoiceCalling = ({ callData }) => {
 
   /* ================= HANDLE REMOTE USER LEFT (Remote initiated) ================= */
   const handleRemoteUserLeft = async () => {
-    // Check if we're upgrading - don't end call if upgrading
-    if (isUpgradingRef.current || upgradeRejectionRef.current || sharedAgoraState.isUpgrading) {
-      console.log("⚠️ Ignoring remote user left - upgrade in progress");
+    // Check if we're upgrading or downgrading - don't end call if switching
+    if (isUpgradingRef.current || isDowngradingRef.current || upgradeRejectionRef.current || sharedAgoraState.isUpgrading) {
+      console.log("⚠️ Ignoring remote user left - call type switch in progress");
       return;
     }
 
@@ -316,9 +512,9 @@ const AgoraVoiceCalling = ({ callData }) => {
 
   /* ================= HANDLE SERVER CALL END (Server/Remote initiated) ================= */
   const handleServerCallEnd = async () => {
-    // Check if we're upgrading - don't end call if upgrading
-    if (isUpgradingRef.current || upgradeRejectionRef.current || isUpgradeRejectionProtected || sharedAgoraState.isUpgrading) {
-      console.log("⚠️ Ignoring server call end - upgrade in progress");
+    // Check if we're upgrading or downgrading - don't end call if switching
+    if (isUpgradingRef.current || isDowngradingRef.current || upgradeRejectionRef.current || isUpgradeRejectionProtected || sharedAgoraState.isUpgrading) {
+      console.log("⚠️ Ignoring server call end - call type switch in progress");
       return;
     }
 

@@ -51,6 +51,12 @@ export default function useChat({
     stopTimer();
     setActiveChat(null);
     setMessages([]); // Clear local messages — they're now in history
+    
+    // Clean up reconnect flags
+    if (roomId) {
+      localStorage.removeItem(`shubhtalk_chat_init_${roomId}`);
+    }
+    localStorage.removeItem("shubhtalk_chat_start_time");
   };
 
   // Derive disabled state from activeChat / activeCall
@@ -66,12 +72,27 @@ export default function useChat({
   useEffect(() => {
     if(!roomId || !userId || !astrologerId) return;
 
+    // Check if this is a reconnected session (init flag already set)
+    const initFlagKey = `shubhtalk_chat_init_${roomId}`;
+    const isReconnectedSession = localStorage.getItem(initFlagKey) === "true";
+
     socketService.connect({
       onConnected: () => {
         console.log("[useChatWindow] Socket connected for room:", roomId);
         if(Object.keys(activeChat || {}).length > 0 || (activeCall && activeCall.userId === userId)) {
           startTimer();
           setIsMessageDisabled(false);
+          
+          // Set chat start time only if not already set (preserves original on reconnect)
+          const startTimeKey = "shubhtalk_chat_start_time";
+          if (!localStorage.getItem(startTimeKey)) {
+            localStorage.setItem(startTimeKey, Date.now().toString());
+          }
+          
+          // Mark this room as initialized (for reconnect detection)
+          if (!isReconnectedSession) {
+            localStorage.setItem(initFlagKey, "true");
+          }
         }
       },
       onDisconnected: (reason) => {

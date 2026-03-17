@@ -16,6 +16,7 @@ import { AppDefaultImg } from "../utils/appImages";
 import { setAstrologerDetails } from "../reducer/registerSlice";
 import { getDefaultImgBasedOnGender } from "../utils/utlis";
 import styles from "./HomeLayout.module.scss";
+import StickyChatFooter from "../components/StickyChatFooter";
 
 const HomeLayout = () => {
   const { kundliId } = useParams();
@@ -198,8 +199,7 @@ const HomeLayout = () => {
         userID: user?.user_ID,
         remainingTime: Number(data?.remainingTime),
       });
-      // Timer should start from 0 (counting up elapsed time), not from remainingTime
-      setChatSeconds(0);
+      // if (data?.remainingTime) setChatSeconds(Number(data?.remainingTime) * 60);
 
       navigate(PATH.privateRoutes.CHAT_WINDOW.path.replace(":chatId", userId), {
         state: {
@@ -356,6 +356,7 @@ const HomeLayout = () => {
         <AudioVideoContainer />
         <IncomingChatModal />
         <StickyReviewFooter />
+        <StickyChatFooter/>
       </main>
     </div>
   );

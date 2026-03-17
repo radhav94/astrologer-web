@@ -61,18 +61,45 @@ const IncomingCallModal = () => {
       
       // Only set active call when server confirms success
       if (incomingCall) {
-        setActiveCall({
-          roomId: incomingCall.roomId,
-          agoraToken: data.agoraToken || incomingCall.agoraToken,
-          isUserSide: false,
-          callType: data.type || incomingCall.callType,
-          callerName: incomingCall.callerName,
-          userId: incomingCall.userId,
-          astrologerId: incomingCall.astrologerId,
-          chatRoomId: incomingCall.chatRoomId,
-          kundliId: incomingCall.kundliId,
-          userID: incomingCall.userID
-        });
+        // Check if this is a switch/downgrade scenario
+        // Detect switch from our own state - don't rely solely on backend's isSwitch flag
+        const isSameRoom = activeCall && activeCall.roomId === incomingCall.roomId;
+        const isSwitch = data?.isSwitch || 
+                         (isSameRoom && activeCall.callType !== incomingCall.callType);
+        const isDowngrading = activeCall && 
+                              activeCall.callType === "video" && 
+                              incomingCall.callType === "audio" &&
+                              isSwitch;
+
+        const isUpgrading = activeCall && 
+                            activeCall.callType === "audio" && 
+                            incomingCall.callType === "video" &&
+                            isSwitch;
+
+        // If switching, update the existing activeCall to preserve all data
+        if (isSwitch && activeCall) {
+          console.log(`🔄 Switching call type from ${activeCall.callType} to ${incomingCall.callType}`);
+          
+          setActiveCall({
+            ...activeCall, // Preserve existing call data
+            callType: incomingCall.callType, // Update only the call type
+            agoraToken: data.agoraToken || incomingCall.agoraToken || activeCall.agoraToken // Update token if provided
+          });
+        } else {
+          // New call - set all data from incomingCall
+          setActiveCall({
+            roomId: incomingCall.roomId,
+            agoraToken: data.agoraToken || incomingCall.agoraToken,
+            isUserSide: false,
+            callType: data.type || incomingCall.callType,
+            callerName: incomingCall.callerName,
+            userId: incomingCall.userId,
+            astrologerId: incomingCall.astrologerId,
+            chatRoomId: incomingCall.chatRoomId,
+            kundliId: incomingCall.kundliId,
+            userID: incomingCall.userID
+          });
+        }
         
         setIncomingCall(null);
         setIsAccepting(false);
@@ -101,17 +128,33 @@ const IncomingCallModal = () => {
                           incomingCall.callType === "video" &&
                           sharedAgoraState.client;
 
+      // Check if downgrading from video to audio
+      const isDowngrading = activeCall && 
+                            activeCall.callType === "video" && 
+                            incomingCall.callType === "audio" &&
+                            sharedAgoraState.client;
+
       if (isUpgrading) {
         // 🔑 Set ref SYNCHRONOUSLY so VoiceCall cleanup can read it immediately
         isUpgradingRef.current = true;
         pendingUpgradeRef.current = true;
         
+        console.log("🔄 Setting isUpgrading flag");
         setSharedAgoraState(prev => ({ 
           ...prev, 
           isUpgrading: true 
         }));
         
         console.log("🔄 Upgrade initiated — isUpgradingRef:", isUpgradingRef.current);
+        console.log("🔄 Upgrading from audio to video");
+      } else if (isDowngrading) {
+        console.log("🔽 Setting isDowngrading flag");
+        setSharedAgoraState(prev => ({ 
+          ...prev, 
+          isDowngrading: true 
+        }));
+        
+        console.log("🔽 Downgrading from video to audio");
       }
 
       voiceSocket.emit("call:accept", {
@@ -137,16 +180,19 @@ const IncomingCallModal = () => {
                              incomingCall.callType === "video" &&
                              activeCall.roomId === incomingCall.roomId;
 
+    // Check if this is an audio downgrade request during an ongoing video call
+    const isDowngradeRequest = activeCall && 
+                               activeCall.callType === "video" && 
+                               incomingCall.callType === "audio" &&
+                               activeCall.roomId === incomingCall.roomId;
+
     if (isUpgradeRequest) {
       console.log("🚫 Rejecting video upgrade request - keeping audio call active");
       
       // Set BOTH ref and state for immediate + reactive protection
       upgradeRejectionRef.current = true;
       setIsUpgradeRejectionProtected(true);
-      console.log("🛡️ Upgrade rejection protection ENABLED (ref + state)", {
-        refValue: upgradeRejectionRef.current,
-        timestamp: new Date().toISOString()
-      });
+      console.log("🛡️ Upgrade rejection protection ENABLED (ref + state)");
       
       // Clear protection after 5 seconds
       setTimeout(() => {
@@ -155,15 +201,31 @@ const IncomingCallModal = () => {
         console.log("🛡️ Upgrade rejection protection DISABLED");
       }, 5000);
       
-      // Emit regular reject - server will respond with call:rejected
-      console.log("📤 Emitting call:reject for upgrade rejection");
+      voiceSocket.emit("call:reject", {
+        roomId: incomingCall.roomId,
+        rejectedBy: "ASTROLOGER"
+      });
+    } else if (isDowngradeRequest) {
+      console.log("🚫 Rejecting audio downgrade request - keeping video call active");
+      
+      // Set protection for downgrade rejection
+      upgradeRejectionRef.current = true;
+      setIsUpgradeRejectionProtected(true);
+      console.log("🛡️ Downgrade rejection protection ENABLED");
+      
+      // Clear protection after 5 seconds
+      setTimeout(() => {
+        upgradeRejectionRef.current = false;
+        setIsUpgradeRejectionProtected(false);
+        console.log("🛡️ Downgrade rejection protection DISABLED");
+      }, 5000);
+      
       voiceSocket.emit("call:reject", {
         roomId: incomingCall.roomId,
         rejectedBy: "ASTROLOGER"
       });
     } else {
       console.log("🚫 Rejecting new incoming call");
-      // Regular call rejection - no protection needed
       voiceSocket.emit("call:reject", {
         roomId: incomingCall.roomId,
         rejectedBy: "ASTROLOGER"
@@ -187,11 +249,15 @@ const IncomingCallModal = () => {
             <h3 className="text-lg font-semibold text-white">
               {activeCall && activeCall.callType === "audio" && incomingCall.callType === "video" 
                 ? "Switch to Video Call?" 
+                : activeCall && activeCall.callType === "video" && incomingCall.callType === "audio"
+                ? "Switch to Audio Call?"
                 : `Incoming ${incomingCall.callType === "video" ? "Video" : "Audio"} Call`}
             </h3>
             <p className="text-sm text-zinc-400">
               {activeCall && activeCall.callType === "audio" && incomingCall.callType === "video"
                 ? `${incomingCall.callerName || "Caller"} wants to switch to video`
+                : activeCall && activeCall.callType === "video" && incomingCall.callType === "audio"
+                ? `${incomingCall.callerName || "Caller"} wants to switch to audio only`
                 : `${incomingCall.callerName || "Someone"} is calling you…`}
             </p>
           </div>
@@ -204,7 +270,9 @@ const IncomingCallModal = () => {
             className="flex-1 rounded-xl bg-red-600 py-3 text-white font-semibold hover:bg-red-700 active:scale-95 transition"
           >
             {activeCall && activeCall.callType === "audio" && incomingCall.callType === "video" 
-              ? "Keep Audio Only" 
+              ? "Keep Audio Only"
+              : activeCall && activeCall.callType === "video" && incomingCall.callType === "audio"
+              ? "Keep Video"
               : "Reject"}
           </button>
 
@@ -217,7 +285,13 @@ const IncomingCallModal = () => {
                 : "bg-green-600 hover:bg-green-700 active:scale-95"
             }`}
           >
-            {isAccepting ? "Accepting..." : activeCall && activeCall.callType === "audio" && incomingCall.callType === "video" ? "Switch to Video" : "Accept"}
+            {isAccepting 
+              ? "Accepting..." 
+              : activeCall && activeCall.callType === "audio" && incomingCall.callType === "video" 
+              ? "Switch to Video"
+              : activeCall && activeCall.callType === "video" && incomingCall.callType === "audio"
+              ? "Switch to Audio"
+              : "Accept"}
           </button>
         </div>
       </div>

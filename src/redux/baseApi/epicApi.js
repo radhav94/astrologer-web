@@ -4,7 +4,7 @@ import { getToken } from "../../utils/utlis";
 export const epicApi = createApi({
   reducerPath: "epicApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: `https://devapi-shubhtalk.epicon.in/api/`,
+    baseUrl: `${import.meta.env.VITE_APP_API_BASE_URL}/api/`,
     prepareHeaders: (headers) => {
       headers.set("Authorization", `Bearer ${getToken()}`);
       headers.set("Content-Type", "application/json");

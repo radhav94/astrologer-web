@@ -121,7 +121,8 @@ export default function useChat({
           sender: isSenderAstrologer,
           time: formatTime(),
           dateTime: data?.dateTime,
-          type: data?.type
+          type: data?.type,
+          kundliName: data?.kundliName
         });
     }
 

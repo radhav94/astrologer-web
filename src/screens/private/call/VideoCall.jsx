@@ -715,6 +715,10 @@ const VideoCalling = ({ callData }) => {
     await cleanup();
   };
 
+  // Use ref to always have the latest handler available for socket listeners
+  const handleRemoteCallEndRef = useRef(handleRemoteCallEnd);
+  handleRemoteCallEndRef.current = handleRemoteCallEnd;
+
   /* ================= HANDLE CALL CANCELED ================= */
   const handleCallCanceled = async () => {
     console.log("📞 Call canceled");
@@ -735,14 +739,7 @@ const VideoCalling = ({ callData }) => {
         console.log("🔽 Ignoring call:ended - downgrading to audio");
         return;
       }
-      if (endCallRef.current || cleanupRef.current) return;
-      endCallRef.current = true;
-      setReviewData({
-        userID: activeCall?.userID,
-        fullName: activeCall?.callerName,
-      });
-      setOpenReview(true);
-      cleanup();
+      handleRemoteCallEndRef.current();
     };
 
     const onForceCallEnd = () => {
@@ -752,14 +749,7 @@ const VideoCalling = ({ callData }) => {
         console.log("🔽 Ignoring force_call_end - downgrading to audio");
         return;
       }
-      if (endCallRef.current || cleanupRef.current) return;
-      endCallRef.current = true;
-      setReviewData({
-        userID: activeCall?.userID,
-        fullName: activeCall?.callerName,
-      });
-      setOpenReview(true);
-      cleanup();
+      handleRemoteCallEndRef.current();
     };
 
     const onCallCanceled = () => {

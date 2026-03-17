@@ -568,23 +568,30 @@ const AgoraVoiceCalling = ({ callData }) => {
     await cleanup();
   };
 
+  // Use ref to always have the latest handler available for socket listeners
+  const handleServerCallEndRef = useRef(handleServerCallEnd);
+  handleServerCallEndRef.current = handleServerCallEnd;
+
   const handleCallCanceled = async () => {
     await cleanup();
   };
 
   /* ================= SOCKET ================= */
   useEffect(() => {
+    console.log("[VoiceCall] Setting up socket listeners for room:", roomId);
+    console.log("[VoiceCall] Socket connected:", voiceSocket.connected, "Socket ID:", voiceSocket.id);
+    
     const handleCallEnded = (data) => {
       console.log("📞 call:ended event received:", data);
       // Only handle if it's for our room
-      if (!data.roomId || data.roomId === roomId) {
-        handleServerCallEnd();
+      if (!data?.roomId || data.roomId === roomId) {
+        handleServerCallEndRef.current();
       }
     };
 
     const handleForceCallEnd = (data) => {
       console.log("📞 force_call_end event received:", data);
-      handleServerCallEnd();
+      handleServerCallEndRef.current();
     };
 
     // NOTE: We no longer listen to socket 'disconnect' here.
@@ -593,26 +600,28 @@ const AgoraVoiceCalling = ({ callData }) => {
 
     const handleCallRejected = (data) => {
       console.log("📞 call:rejected event received:", data);
-      if (data.roomId == activeCall?.roomId) {
-        handleServerCallEnd();
+      if (data.roomId == roomId) {
+        handleServerCallEndRef.current();
       }
     };
 
-    console.log("[VoiceCall] Setting up socket listeners for room:", roomId);
+    const handleCanceled = async () => {
+      await cleanup();
+    };
     
     voiceSocket.on("call:ended", handleCallEnded);
     voiceSocket.on("force_call_end", handleForceCallEnd);
     voiceSocket.on("call:rejected", handleCallRejected);
-    voiceSocket.on("call:canceled", handleCallCanceled);
+    voiceSocket.on("call:canceled", handleCanceled);
 
     return () => {
       console.log("[VoiceCall] Cleaning up socket listeners for room:", roomId);
       voiceSocket.off("call:ended", handleCallEnded);
       voiceSocket.off("force_call_end", handleForceCallEnd);
       voiceSocket.off("call:rejected", handleCallRejected);
-      voiceSocket.off("call:canceled", handleCallCanceled);
+      voiceSocket.off("call:canceled", handleCanceled);
     };
-  }, [roomId, isUpgradeRejectionProtected]); // Re-attach listeners when room changes
+  }, [roomId]); // Only depend on roomId
 
   /* ================= DRAG ================= */
   const dragOffset = useRef({ x: 0, y: 0 });

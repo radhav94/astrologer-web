@@ -276,6 +276,18 @@ export const CallProvider = ({ children }) => {
     return () => window.removeEventListener("storage", syncAstroId);
   }, []);
 
+  // Use refs for handlers to avoid useEffect re-running when handlers change
+  const handleSocketConnectRef = useRef(handleSocketConnect);
+  const handleSocketDisconnectRef = useRef(handleSocketDisconnect);
+  const handleCallReconnectedRef = useRef(handleCallReconnected);
+  
+  // Keep refs updated
+  useEffect(() => {
+    handleSocketConnectRef.current = handleSocketConnect;
+    handleSocketDisconnectRef.current = handleSocketDisconnect;
+    handleCallReconnectedRef.current = handleCallReconnected;
+  }, [handleSocketConnect, handleSocketDisconnect, handleCallReconnected]);
+
   useEffect(() => {
     if (!astroId) {
       if (voiceSocket.connected) voiceSocket.disconnect();
@@ -284,6 +296,13 @@ export const CallProvider = ({ children }) => {
 
     // Skip socket connection when running inside an iframe (e.g. Kundli view)
     if (window.self !== window.top) {
+      return;
+    }
+
+    // Only disconnect and reconnect if not already connected with same astroId
+    // This prevents unnecessary reconnections
+    if (voiceSocket.connected && voiceSocket.io.opts.query?.astrologerId === astroId) {
+      console.log("[CallContext] Socket already connected with same astroId, skipping reconnect");
       return;
     }
 
@@ -301,12 +320,12 @@ export const CallProvider = ({ children }) => {
 
     const onConnect = () => {
       console.log("🟢 SOCKET CONNECTED:", voiceSocket.id);
-      handleSocketConnect();
+      handleSocketConnectRef.current();
     };
 
     const onDisconnect = (r) => {
       console.log("SOCKET DISCONNECTED:", r);
-      handleSocketDisconnect(r);
+      handleSocketDisconnectRef.current(r);
     };
 
     const onConnectError = (e) =>
@@ -365,6 +384,10 @@ export const CallProvider = ({ children }) => {
       // They will show review modal and then clear activeCall
     };
 
+    const onCallReconnected = (data) => {
+      handleCallReconnectedRef.current(data);
+    };
+
     voiceSocket.on("connect", onConnect);
     voiceSocket.on("disconnect", onDisconnect);
     voiceSocket.on("connect_error", onConnectError);
@@ -373,7 +396,7 @@ export const CallProvider = ({ children }) => {
     voiceSocket.on("call_canceled", handleCallCanceled);
     voiceSocket.on("call:canceled", handleCallCanceled);
     voiceSocket.on("waiting_list", handleWaitingList);
-    voiceSocket.on("call:reconnected", handleCallReconnected);
+    voiceSocket.on("call:reconnected", onCallReconnected);
     voiceSocket.on("call:ended", handleCallEnded);
 
     return () => {
@@ -385,7 +408,7 @@ export const CallProvider = ({ children }) => {
       voiceSocket.off("waiting_list", handleWaitingList);
       voiceSocket.off("incoming_call", handleIncomingCall);
       voiceSocket.off("incoming", handleIncomingCallRequest);
-      voiceSocket.off("call:reconnected", handleCallReconnected);
+      voiceSocket.off("call:reconnected", onCallReconnected);
       voiceSocket.off("call:ended", handleCallEnded);
       
       // Clear any pending reconnect timeout
@@ -396,7 +419,7 @@ export const CallProvider = ({ children }) => {
       
       voiceSocket.disconnect();
     };
-  }, [astroId, handleSocketConnect, handleSocketDisconnect, handleCallReconnected]);
+  }, [astroId]); // Only depend on astroId - handlers use refs
 
   /* ================= ATTEMPT RECONNECTION ON MOUNT (handled by socket connect now) ================= */
   // Note: reconnectToCall is now triggered by handleSocketConnect when socket connects

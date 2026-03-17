@@ -351,6 +351,20 @@ export const CallProvider = ({ children }) => {
       setWaitingList(data?.list || []);
     };
 
+    // Handle call:ended from backend (when user or system ends the call)
+    const handleCallEnded = (data) => {
+      console.log("[CallContext] call:ended received:", data);
+      // Clear reconnection state
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
+      setIsReconnecting(false);
+      setNetworkDisconnected(false);
+      // Note: We don't clear activeCall here - let VoiceCall/VideoCall handle cleanup
+      // They will show review modal and then clear activeCall
+    };
+
     voiceSocket.on("connect", onConnect);
     voiceSocket.on("disconnect", onDisconnect);
     voiceSocket.on("connect_error", onConnectError);
@@ -360,6 +374,7 @@ export const CallProvider = ({ children }) => {
     voiceSocket.on("call:canceled", handleCallCanceled);
     voiceSocket.on("waiting_list", handleWaitingList);
     voiceSocket.on("call:reconnected", handleCallReconnected);
+    voiceSocket.on("call:ended", handleCallEnded);
 
     return () => {
       voiceSocket.off("connect", onConnect);
@@ -371,6 +386,7 @@ export const CallProvider = ({ children }) => {
       voiceSocket.off("incoming_call", handleIncomingCall);
       voiceSocket.off("incoming", handleIncomingCallRequest);
       voiceSocket.off("call:reconnected", handleCallReconnected);
+      voiceSocket.off("call:ended", handleCallEnded);
       
       // Clear any pending reconnect timeout
       if (reconnectTimeoutRef.current) {

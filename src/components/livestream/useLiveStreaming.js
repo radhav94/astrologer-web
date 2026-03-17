@@ -10,7 +10,7 @@ import {
 } from "agora-rtc-react";
 import { getAgoraToken } from "../../services/appServices/getLiveStreamService";
 
-const APP_ID = "c76e3d30a3b6483689dac88ca9f94381";
+const APP_ID = "cf5e31fa03584573aacaf42daebd493c";
 const SESSION_KEY = "shubhtalk_live_session";
 
 export const useLiveStreaming = (client, ROLE, previewSettings = {}) => {

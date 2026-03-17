@@ -17,7 +17,7 @@ import { PATH } from "../../../utils/routes/Paths";
 import CallIcon from "../../../assets/chat/Call.svg";
 import { ReconnectingOverlay } from "../../../components/UI";
 
-const APP_ID = "c76e3d30a3b6483689dac88ca9f94381";
+const APP_ID = "cf5e31fa03584573aacaf42daebd493c";
 
 const VideoCalling = ({ callData }) => {
   const { activeCall, setActiveCall, setReviewData, setOpenReview, sharedAgoraState, setSharedAgoraState, isUpgradingRef, callStartTime, setCallStartTime, isCallMinimized, setIsCallMinimized, isReconnecting, networkDisconnected } = useCall();
@@ -153,6 +153,13 @@ const VideoCalling = ({ callData }) => {
 
     const start = async () => {
       try {
+        // If we're reconnecting after network drop, don't try to rejoin Agora
+        // The existing Agora client will handle reconnection automatically
+        if (isReconnecting || networkDisconnected) {
+          console.log("[VideoCall] 🔄 Skipping Agora join - reconnection in progress");
+          return;
+        }
+
         // Check if we're upgrading from audio call
         // We check for existing client/micTrack even if isUpgrading flag isn't set yet
         // because state updates are asynchronous
@@ -407,6 +414,17 @@ const VideoCalling = ({ callData }) => {
         }, 1000);
       } catch (err) {
         console.error("CALL START ERROR", err);
+        
+        // Don't cleanup on network errors during reconnection - let the reconnection logic handle it
+        const isNetworkError = err?.code === "CAN_NOT_GET_GATEWAY_SERVER" || 
+                               err?.message?.includes("CAN_NOT_GET_GATEWAY_SERVER") ||
+                               err?.message?.includes("network");
+        
+        if (isNetworkError && (isReconnecting || networkDisconnected)) {
+          console.log("[VideoCall] 🔄 Network error during reconnection - waiting for network to stabilize");
+          return;
+        }
+        
         safeEndCall();
       }
     };
@@ -708,6 +726,8 @@ const VideoCalling = ({ callData }) => {
 
   /* ================= SOCKET ================= */
   useEffect(() => {
+    console.log("[VideoCall] Setting up socket listeners for room:", roomId);
+    
     const onCallEnded = () => {
       console.log("📞 call:ended received in VideoCall");
       // Don't end call if we're downgrading to audio
@@ -759,6 +779,7 @@ const VideoCalling = ({ callData }) => {
     voiceSocket.on("call:canceled", onCallCanceled);
 
     return () => {
+      console.log("[VideoCall] Cleaning up socket listeners for room:", roomId);
       voiceSocket.off("call:ended", onCallEnded);
       voiceSocket.off("force_call_end", onForceCallEnd);
       voiceSocket.off("call:canceled", onCallCanceled);

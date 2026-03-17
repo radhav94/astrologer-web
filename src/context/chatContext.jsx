@@ -215,10 +215,20 @@ export const ChatProvider = ({ children }) => {
     emitChatReconnect();
   }, [emitChatReconnect]);
 
+  // Use refs for handlers to avoid useEffect re-running when handlers change
+  const handleSocketConnectRef = useRef(handleSocketConnect);
+  const handleSocketDisconnectRef = useRef(handleSocketDisconnect);
+  const handleChatReconnectedRef = useRef(handleChatReconnected);
+  
+  // Keep refs updated
+  useEffect(() => {
+    handleSocketConnectRef.current = handleSocketConnect;
+    handleSocketDisconnectRef.current = handleSocketDisconnect;
+    handleChatReconnectedRef.current = handleChatReconnected;
+  }, [handleSocketConnect, handleSocketDisconnect, handleChatReconnected]);
 
 useEffect(() => {
   if (!astroId) {
-    if (voiceSocket.connected) voiceSocket.disconnect();
     return;
   }
 
@@ -227,51 +237,25 @@ useEffect(() => {
     return;
   }
 
-  if (voiceSocket.connected) {
-      voiceSocket.disconnect();
-    }
+  // NOTE: Socket connection is managed by CallContext
+  // ChatContext only listens to chat-specific events
 
-    voiceSocket.io.opts.query = {
-      astrologerId: astroId,
-      role: "ASTROLOGER",
-    };
-
-    console.log("🔄 Connecting socket with:", voiceSocket.io.opts.query);
-    voiceSocket.connect();
-
-  // 🔍 SOCKET DEBUG LISTENERS
+  // 🔍 SOCKET DEBUG LISTENERS for chat reconnection
   const onConnect = () => {
-    console.log("🟢 SOCKET CONNECTED");
-    console.log("Socket ID:", voiceSocket.id);
-    console.log("Connected:", voiceSocket.connected);
+    console.log("[ChatContext] 🟢 SOCKET CONNECTED - checking for chat reconnection");
     // Attempt chat reconnection once socket is connected
-    handleSocketConnect();
+    handleSocketConnectRef.current();
   };
 
   const onDisconnect = (reason) => {
-    console.log("🔴 SOCKET DISCONNECTED:", reason);
-    handleSocketDisconnect(reason);
-  };
-
-  const onConnectError = (err) => {
-    console.log("❌ SOCKET CONNECT ERROR:", err.message);
+    console.log("[ChatContext] 🔴 SOCKET DISCONNECTED:", reason);
+    handleSocketDisconnectRef.current(reason);
   };
 
   voiceSocket.on("connect", onConnect);
   voiceSocket.on("disconnect", onDisconnect);
-  voiceSocket.on("connect_error", onConnectError);
 
-  // 🔌 CONNECT SOCKET
-  if (!voiceSocket.connected) {
-    voiceSocket.io.opts.query = {
-      astrologerId: astroId,
-      role: "ASTROLOGER",
-    };
-    voiceSocket.connect();
-    console.log("🔄 socket.connect() called");
-  }
-
-  // 📞 EVENTS
+  // 📞 CHAT-SPECIFIC EVENTS
   const handleIncomingChat = (data) => {
     if(data.type != "chat") return;
     
@@ -292,7 +276,7 @@ useEffect(() => {
   };
 
   const handleChatCanceled = (data) => {
-    console.log("🚫 Call canceled", data);
+    console.log("🚫 Chat canceled", data);
     setIncomingChat(null);
     toast.warning(data?.message || "User has cancelled chat request!")
   };
@@ -302,39 +286,32 @@ useEffect(() => {
     setWaitingList(data?.list || []);
   };
 
-  // const handleActivity = (data) => {
-  //   if(data?.remainingTime){
-  //     resetTimer(); // Reset the timer
-  //     setChatSeconds(data?.remainingTime*60); // Use data.remainingTime if provided
-  //     startTimer(); // Start the timer again
-  //   }
-  // }
+  const onChatReconnected = (data) => {
+    handleChatReconnectedRef.current(data);
+  };
 
-  // voiceSocket.on("activity", handleActivity);
   voiceSocket.on("incoming", handleIncomingChat);
   voiceSocket.on("chat:canceled", handleChatCanceled);
   voiceSocket.on("waiting_list", handleWaitingList);
   voiceSocket.on("message:recieved", handleWaitingList);
-  voiceSocket.on("chat:reconnected", handleChatReconnected);
+  voiceSocket.on("chat:reconnected", onChatReconnected);
 
   return () => {
     voiceSocket.off("connect", onConnect);
     voiceSocket.off("disconnect", onDisconnect);
-    voiceSocket.off("connect_error", onConnectError);
-
-    // voiceSocket.off("activity", handleActivity);
     voiceSocket.off("incoming", handleIncomingChat);
     voiceSocket.off("chat:canceled", handleChatCanceled);
     voiceSocket.off("waiting_list", handleWaitingList);
-    voiceSocket.off("chat:reconnected", handleChatReconnected);
+    voiceSocket.off("chat:reconnected", onChatReconnected);
     
     // Clear any pending reconnect timeout
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current);
       reconnectTimeoutRef.current = null;
     }
+    // NOTE: Don't disconnect socket here - CallContext manages the connection
   };
-}, [astroId, handleSocketConnect, handleSocketDisconnect, handleChatReconnected]);
+}, [astroId]); // Only depend on astroId - handlers use refs
 
 
   /* ================= BEFOREUNLOAD — persist chat state ================= */

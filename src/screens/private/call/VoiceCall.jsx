@@ -18,7 +18,7 @@ import CallIcon from "../../../assets/chat/Call.svg";
 import VideoCallChat from "./VideoCallChat";
 import { ReconnectingOverlay } from "../../../components/UI";
 
-const APP_ID = "c76e3d30a3b6483689dac88ca9f94381";
+const APP_ID = "cf5e31fa03584573aacaf42daebd493c";
 
 const AgoraVoiceCalling = ({ callData }) => {
   const { activeCall, setActiveCall, sharedAgoraState, setSharedAgoraState, isUpgradeRejectionProtected, upgradeRejectionRef, isUpgradingRef, setReviewData, setOpenReview, callStartTime, setCallStartTime, isCallMinimized, setIsCallMinimized, isReconnecting, networkDisconnected } = useCall();
@@ -78,6 +78,13 @@ const AgoraVoiceCalling = ({ callData }) => {
 
     const startCall = async () => {
       try {
+        // If we're reconnecting after network drop, don't try to rejoin Agora
+        // The existing Agora client will handle reconnection automatically
+        if (isReconnecting || networkDisconnected) {
+          console.log("[VoiceCall] 🔄 Skipping Agora join - reconnection in progress");
+          return;
+        }
+
         // Check if we're downgrading from video call
         // Primary check: isDowngrading flag (set by IncomingCallModal before callType changes)
         // Fallback: check if we have an active client with mic (meaning we're reusing a connection)
@@ -329,6 +336,17 @@ const AgoraVoiceCalling = ({ callData }) => {
         setCallState("connected");
       } catch (err) {
         console.error("VOICE CALL START ERROR", err);
+        
+        // Don't cleanup on network errors during reconnection - let the reconnection logic handle it
+        const isNetworkError = err?.code === "CAN_NOT_GET_GATEWAY_SERVER" || 
+                               err?.message?.includes("CAN_NOT_GET_GATEWAY_SERVER") ||
+                               err?.message?.includes("network");
+        
+        if (isNetworkError && (isReconnecting || networkDisconnected)) {
+          console.log("[VoiceCall] 🔄 Network error during reconnection - waiting for network to stabilize");
+          return;
+        }
+        
         await cleanup();
       }
     };
@@ -550,20 +568,30 @@ const AgoraVoiceCalling = ({ callData }) => {
     await cleanup();
   };
 
+  // Use ref to always have the latest handler available for socket listeners
+  const handleServerCallEndRef = useRef(handleServerCallEnd);
+  handleServerCallEndRef.current = handleServerCallEnd;
+
   const handleCallCanceled = async () => {
     await cleanup();
   };
 
   /* ================= SOCKET ================= */
   useEffect(() => {
+    console.log("[VoiceCall] Setting up socket listeners for room:", roomId);
+    console.log("[VoiceCall] Socket connected:", voiceSocket.connected, "Socket ID:", voiceSocket.id);
+    
     const handleCallEnded = (data) => {
       console.log("📞 call:ended event received:", data);
-      handleServerCallEnd();
+      // Only handle if it's for our room
+      if (!data?.roomId || data.roomId === roomId) {
+        handleServerCallEndRef.current();
+      }
     };
 
     const handleForceCallEnd = (data) => {
       console.log("📞 force_call_end event received:", data);
-      handleServerCallEnd();
+      handleServerCallEndRef.current();
     };
 
     // NOTE: We no longer listen to socket 'disconnect' here.
@@ -572,23 +600,28 @@ const AgoraVoiceCalling = ({ callData }) => {
 
     const handleCallRejected = (data) => {
       console.log("📞 call:rejected event received:", data);
-      if (data.roomId == activeCall?.roomId) {
-        handleServerCallEnd();
+      if (data.roomId == roomId) {
+        handleServerCallEndRef.current();
       }
     };
 
+    const handleCanceled = async () => {
+      await cleanup();
+    };
+    
     voiceSocket.on("call:ended", handleCallEnded);
     voiceSocket.on("force_call_end", handleForceCallEnd);
     voiceSocket.on("call:rejected", handleCallRejected);
-    voiceSocket.on("call:canceled", handleCallCanceled);
+    voiceSocket.on("call:canceled", handleCanceled);
 
     return () => {
+      console.log("[VoiceCall] Cleaning up socket listeners for room:", roomId);
       voiceSocket.off("call:ended", handleCallEnded);
       voiceSocket.off("force_call_end", handleForceCallEnd);
       voiceSocket.off("call:rejected", handleCallRejected);
-      voiceSocket.off("call:canceled", handleCallCanceled);
+      voiceSocket.off("call:canceled", handleCanceled);
     };
-  }, [isUpgradeRejectionProtected]); // Keep state in dependency for reactivity
+  }, [roomId]); // Only depend on roomId
 
   /* ================= DRAG ================= */
   const dragOffset = useRef({ x: 0, y: 0 });

@@ -225,7 +225,7 @@ const Message = ({ text, isSender, time, type, giftData, kundliName }) => {
           }}
         >
           <GrReactjs />
-          {kundliName || "View Kundli"}
+          {kundliName ? `${kundliName}'s Kundli` : "View Kundli"}
         </div>
       );
     }

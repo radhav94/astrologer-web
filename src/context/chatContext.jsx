@@ -17,6 +17,9 @@ const CHAT_STORAGE_KEY = "shubhtalk_active_chat";
 const CHAT_TIMESTAMP_KEY = "shubhtalk_chat_timestamp";
 const CHAT_EXPIRY_TIME = 30 * 60 * 1000; // 30 minutes
 
+// Grace window timeout (backend uses 60s, we use slightly less to show UI feedback)
+const RECONNECT_GRACE_TIMEOUT = 55000;
+
 export const ChatProvider = ({ children }) => {
 
   const {astroId} = useCall();
@@ -30,6 +33,8 @@ export const ChatProvider = ({ children }) => {
   const [chatSeconds, setChatSeconds] = useState(0);
   const [chatStartTime, setChatStartTime] = useState(null);
   const [isReconnecting, setIsReconnecting] = useState(false);
+  const [networkDisconnected, setNetworkDisconnected] = useState(false);
+  const reconnectTimeoutRef = useRef(null);
   const timerRef = useRef(null);
 
   const startTimer = () => {
@@ -107,60 +112,108 @@ export const ChatProvider = ({ children }) => {
   }, [persistChatState, clearPersistedChatState, activeChat?.roomId]);
 
   /* ================= RECONNECTION ================= */
-  const reconnectToChat = useCallback(() => {
-    const savedChat = restoreChatState();
-    if (!savedChat || !savedChat.roomId) {
-      clearPersistedChatState();
+  
+  // Handle chat:reconnected response from backend
+  const handleChatReconnected = useCallback((data) => {
+    console.log("[ChatContext] chat:reconnected received:", data);
+    
+    // Clear any pending grace timeout
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+    
+    setIsReconnecting(false);
+    setNetworkDisconnected(false);
+
+    if (data && data.active) {
+      // Chat is still active — restore it with backend's remaining time
+      const restoredChat = {
+        ...activeChat,
+        remainingTime: data.remainingTime || activeChat?.remainingTime,
+      };
+      setActiveChatState(restoredChat);
+      persistChatState(restoredChat);
+
+      // Restore elapsed timer from sessionStorage
+      const savedSeconds = sessionStorage.getItem("shubhtalk_chat_seconds");
+      if (savedSeconds) {
+        setChatSeconds(Number(savedSeconds));
+      }
+      startTimer();
+    } else {
+      // Chat is no longer active — backend ended it
+      console.log("[ChatContext] Chat no longer active:", data?.reason);
+      setActiveChatState(null);
+      clearPersistedChatState(activeChat?.roomId);
+      resetTimer();
+    }
+  }, [activeChat, persistChatState, clearPersistedChatState]);
+
+  // Emit chat:reconnect immediately when socket reconnects
+  const emitChatReconnect = useCallback(() => {
+    // Use current activeChat state or restore from localStorage
+    const currentChat = activeChat || restoreChatState();
+    if (!currentChat || !currentChat.roomId) {
+      setNetworkDisconnected(false);
       return;
     }
 
-    console.log("[ChatContext] Attempting chat reconnection for room:", savedChat.roomId);
+    console.log("[ChatContext] Emitting chat:reconnect for room:", currentChat.roomId);
     setIsReconnecting(true);
 
     voiceSocket.emit("chat:reconnect", {
-      roomId: savedChat.roomId,
-      userId: savedChat.userId || savedChat.chaterId,
-      astrologerId: savedChat.astrologerId || astroId,
+      roomId: currentChat.roomId,
+      userId: currentChat.userId || currentChat.chaterId,
+      astrologerId: currentChat.astrologerId || astroId,
     });
+  }, [activeChat, restoreChatState, astroId]);
 
-    const onReconnected = (data) => {
-      console.log("[ChatContext] chat:reconnected received:", data);
+  // Handle socket disconnect — start grace window countdown
+  const handleSocketDisconnect = useCallback((reason) => {
+    if (!activeChat) return;
+    
+    console.log("[ChatContext] Socket disconnected during active chat:", reason);
+    setNetworkDisconnected(true);
+    
+    // Start grace window timeout — if we don't reconnect in time, chat will end
+    reconnectTimeoutRef.current = setTimeout(() => {
+      console.log("[ChatContext] Grace window expired — chat likely ended by backend");
+      setNetworkDisconnected(false);
       setIsReconnecting(false);
-      voiceSocket.off("chat:reconnected", onReconnected);
+      setActiveChatState(null);
+      clearPersistedChatState(activeChat?.roomId);
+      resetTimer();
+    }, RECONNECT_GRACE_TIMEOUT);
+  }, [activeChat, clearPersistedChatState]);
 
-      if (data && data.active) {
-        // Chat is still active — restore it with backend's remaining time
-        const restoredChat = {
-          ...savedChat,
-          remainingTime: data.remainingTime || savedChat.remainingTime,
-        };
-        setActiveChatState(restoredChat);
-        persistChatState(restoredChat);
-
-        // Restore elapsed timer from sessionStorage (astrologer sees time counting up)
-        const savedSeconds = sessionStorage.getItem("shubhtalk_chat_seconds");
-        if (savedSeconds) {
-          setChatSeconds(Number(savedSeconds));
+  // Handle socket connect — emit reconnect if we were disconnected during a chat
+  const handleSocketConnect = useCallback(() => {
+    // Only emit reconnect if we were actually disconnected during an active chat
+    // Don't emit for fresh chats that are just starting
+    if (networkDisconnected) {
+      emitChatReconnect();
+    } else {
+      // On initial mount (page refresh), try to restore from localStorage
+      // But only if there's no current activeChat (to avoid interfering with fresh chats)
+      if (!activeChat) {
+        const savedChat = restoreChatState();
+        if (savedChat && savedChat.roomId) {
+          console.log("[ChatContext] Restoring chat from localStorage on connect");
+          setActiveChatState(savedChat);
+          // Small delay to let state settle before emitting reconnect
+          setTimeout(() => {
+            emitChatReconnect();
+          }, 100);
         }
-        // Start the timer
-        startTimer();
-      } else {
-        // Chat is no longer active
-        console.log("[ChatContext] Chat no longer active:", data?.reason);
-        clearPersistedChatState(savedChat.roomId);
-        resetTimer();
       }
-    };
+    }
+  }, [networkDisconnected, activeChat, emitChatReconnect, restoreChatState]);
 
-    voiceSocket.on("chat:reconnected", onReconnected);
-
-    // Timeout — if backend doesn't respond in 30s, give up
-    setTimeout(() => {
-      voiceSocket.off("chat:reconnected", onReconnected);
-      setIsReconnecting(false);
-      clearPersistedChatState(savedChat.roomId);
-    }, 30000);
-  }, [restoreChatState, clearPersistedChatState, persistChatState, astroId]);
+  // Legacy function for manual reconnection (kept for backward compatibility)
+  const reconnectToChat = useCallback(() => {
+    emitChatReconnect();
+  }, [emitChatReconnect]);
 
 
 useEffect(() => {
@@ -192,11 +245,12 @@ useEffect(() => {
     console.log("Socket ID:", voiceSocket.id);
     console.log("Connected:", voiceSocket.connected);
     // Attempt chat reconnection once socket is connected
-    reconnectToChat();
+    handleSocketConnect();
   };
 
   const onDisconnect = (reason) => {
     console.log("🔴 SOCKET DISCONNECTED:", reason);
+    handleSocketDisconnect(reason);
   };
 
   const onConnectError = (err) => {
@@ -261,6 +315,7 @@ useEffect(() => {
   voiceSocket.on("chat:canceled", handleChatCanceled);
   voiceSocket.on("waiting_list", handleWaitingList);
   voiceSocket.on("message:recieved", handleWaitingList);
+  voiceSocket.on("chat:reconnected", handleChatReconnected);
 
   return () => {
     voiceSocket.off("connect", onConnect);
@@ -271,8 +326,15 @@ useEffect(() => {
     voiceSocket.off("incoming", handleIncomingChat);
     voiceSocket.off("chat:canceled", handleChatCanceled);
     voiceSocket.off("waiting_list", handleWaitingList);
+    voiceSocket.off("chat:reconnected", handleChatReconnected);
+    
+    // Clear any pending reconnect timeout
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
   };
-}, [astroId]);
+}, [astroId, handleSocketConnect, handleSocketDisconnect, handleChatReconnected]);
 
 
   /* ================= BEFOREUNLOAD — persist chat state ================= */
@@ -313,7 +375,8 @@ useEffect(() => {
         chatSeconds,
         setChatSeconds,
         chatStartTime,
-        isReconnecting
+        isReconnecting,
+        networkDisconnected
       }}
     >
       {children}

@@ -15,11 +15,12 @@ import { useCall } from "../../../context/CallContext";
 import VideoCallChat from "./VideoCallChat";
 import { PATH } from "../../../utils/routes/Paths";
 import CallIcon from "../../../assets/chat/Call.svg";
+import { ReconnectingOverlay } from "../../../components/UI";
 
 const APP_ID = "c76e3d30a3b6483689dac88ca9f94381";
 
 const VideoCalling = ({ callData }) => {
-  const { activeCall, setActiveCall, setReviewData, setOpenReview, sharedAgoraState, setSharedAgoraState, isUpgradingRef, callStartTime, setCallStartTime, isCallMinimized, setIsCallMinimized } = useCall();
+  const { activeCall, setActiveCall, setReviewData, setOpenReview, sharedAgoraState, setSharedAgoraState, isUpgradingRef, callStartTime, setCallStartTime, isCallMinimized, setIsCallMinimized, isReconnecting, networkDisconnected } = useCall();
   const navigate = useNavigate();
 
   if (!activeCall || activeCall.callType !== "video") return null;
@@ -515,14 +516,34 @@ const VideoCalling = ({ callData }) => {
     }
 
     try {
-      micTrackRef.current?.stop();
-      micTrackRef.current?.close();
-      camTrackRef.current?.stop();
-      camTrackRef.current?.close();
+      // Use try-catch for each operation to prevent one failure from blocking others
+      try {
+        micTrackRef.current?.stop();
+        micTrackRef.current?.close();
+      } catch (e) {
+        console.warn("[VideoCall] Mic track cleanup error:", e.message);
+      }
+      
+      try {
+        camTrackRef.current?.stop();
+        camTrackRef.current?.close();
+      } catch (e) {
+        console.warn("[VideoCall] Camera track cleanup error:", e.message);
+      }
 
+      // Only attempt to leave if client exists and is connected
       if (clientRef.current) {
-        await clientRef.current.leave();
-        clientRef.current.removeAllListeners();
+        try {
+          // Check connection state before leaving to avoid WS_ABORT
+          const connectionState = clientRef.current.connectionState;
+          if (connectionState === "CONNECTED" || connectionState === "CONNECTING") {
+            await clientRef.current.leave();
+          }
+          clientRef.current.removeAllListeners();
+        } catch (e) {
+          // Ignore WS_ABORT and other leave errors - channel may already be closed
+          console.warn("[VideoCall] Client leave error (safe to ignore):", e.message);
+        }
       }
     } catch (e) {
       console.warn(e);
@@ -712,6 +733,12 @@ const VideoCalling = ({ callData }) => {
   }), [activeCall.userId, activeCall.astrologerId, activeCall.chatRoomId, activeCall.kundliId, activeCall.isUserSide]);
   return (
     <>
+      {/* RECONNECTING OVERLAY */}
+      <ReconnectingOverlay 
+        isVisible={networkDisconnected || isReconnecting} 
+        message={isReconnecting ? "Reconnecting..." : "Connection lost..."} 
+      />
+      
       {/* MINI VIEW */}
       <div
         style={{

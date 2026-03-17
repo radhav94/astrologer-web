@@ -22,6 +22,7 @@ import CallIcon from "../../../../src/assets/chat/Call.svg"
 import VideocamIcon from "../../../../src/assets/chat/Videocam.svg";
 import { useChat as useChatContext } from "../../../context/chatContext";
 import { useCall } from "../../../context/CallContext";
+import { ReconnectingOverlay } from "../../../components/UI";
 /* -------------------- Helpers -------------------- */
 
 const formatDate = (date) => dayjs(date).format("DD MMMM YYYY");
@@ -356,7 +357,7 @@ const ChatWindow = () => {
     userID: stateUserID
   } = state || {};
 
-  const { activeChat } = useChatContext();
+  const { activeChat, isReconnecting, networkDisconnected } = useChatContext();
   const { activeCall, setActiveCall } = useCall();
   const isChatActive = activeChat && activeChat?.roomId;
   
@@ -669,6 +670,12 @@ const ChatWindow = () => {
 
   return (
     <div className="-m-4 max-w-none flex flex-col h-screen bg-gray-50">
+      {/* RECONNECTING OVERLAY */}
+      <ReconnectingOverlay 
+        isVisible={networkDisconnected || isReconnecting} 
+        message={isReconnecting ? "Reconnecting..." : "Connection lost..."} 
+      />
+      
       {/* ---------- Header ---------- */}
       <div className="sticky top-20 z-20 bg-white">
         <div className="flex items-center justify-between px-4 md:px-6 py-3 border-b border-gray-200">

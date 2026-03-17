@@ -11,6 +11,9 @@ const CALL_EXPIRY_TIME = 30 * 60 * 1000; // 30 minutes
 // ⚙️ Feature flag - Backend now implements call:reconnect & call:reconnected
 const RECONNECTION_ENABLED = true;
 
+// Grace window timeout (backend uses 60s, we use slightly less to show UI feedback)
+const RECONNECT_GRACE_TIMEOUT = 55000;
+
 export const CallProvider = ({ children }) => {
   const [astroId, setAstroId] = useState(
     () => localStorage.getItem("shubhtalk_astro_id")
@@ -24,6 +27,8 @@ export const CallProvider = ({ children }) => {
   const [openReview, setOpenReview] = useState(null);
   const [reviewData, setReviewData] = useState(null);
   const [isReconnecting, setIsReconnecting] = useState(false);
+  const [networkDisconnected, setNetworkDisconnected] = useState(false);
+  const reconnectTimeoutRef = useRef(null);
   const [callSeconds, setCallSeconds] = useState(0);
   const [isUpgradeRejectionProtected, setIsUpgradeRejectionProtected] = useState(false);
   const [isCallMinimized, setIsCallMinimized] = useState(false);
@@ -150,65 +155,115 @@ export const CallProvider = ({ children }) => {
   }, []);
 
   /* ================= RECONNECTION (gated by RECONNECTION_ENABLED) ================= */
-  const reconnectToCall = useCallback(() => {
-    if (!RECONNECTION_ENABLED) return;
-    const savedCall = restoreCallState();
-    if (!savedCall || !savedCall.roomId) {
+  
+  // Handle call:reconnected response from backend
+  const handleCallReconnected = useCallback((data) => {
+    console.log("[CallContext] call:reconnected received:", data);
+    
+    // Clear any pending grace timeout
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+    
+    setIsReconnecting(false);
+    setNetworkDisconnected(false);
+
+    if (data && data.active) {
+      // 🔑 Use backend's type as source of truth — it may have changed
+      const backendCallType = data.type || data.callType || activeCall?.callType;
+      console.log("[CallContext] Reconnected as callType:", backendCallType);
+
+      const restoredCall = {
+        ...activeCall,
+        callType: backendCallType,
+        agoraToken: data.agoraToken || activeCall?.agoraToken,
+        remainingTime: data.remainingTime || activeCall?.remainingTime,
+      };
+
+      setActiveCallState(restoredCall);
+      persistCallState(restoredCall);
+
+      if (data.remainingTime) {
+        setCallSeconds(Number(data.remainingTime) * 60);
+      }
+    } else {
+      // Call is no longer active — backend ended it
+      console.log("[CallContext] Call no longer active:", data?.reason);
+      setActiveCallState(null);
       clearPersistedCallState();
+    }
+  }, [activeCall, persistCallState, clearPersistedCallState]);
+
+  // Emit call:reconnect immediately when socket reconnects
+  const emitCallReconnect = useCallback(() => {
+    if (!RECONNECTION_ENABLED) return;
+    
+    // Use current activeCall state or restore from localStorage
+    const currentCall = activeCall || restoreCallState();
+    if (!currentCall || !currentCall.roomId) {
+      setNetworkDisconnected(false);
       return;
     }
 
-    console.log("[CallContext] Attempting reconnection for room:", savedCall.roomId);
+    console.log("[CallContext] Emitting call:reconnect for room:", currentCall.roomId);
     setIsReconnecting(true);
 
-    // Emit reconnect request to backend
     voiceSocket.emit("call:reconnect", {
-      roomId: savedCall.roomId,
-      userId: savedCall.userId,
-      astrologerId: savedCall.astrologerId,
-      callType: savedCall.callType,
+      roomId: currentCall.roomId,
+      userId: currentCall.userId,
+      astrologerId: currentCall.astrologerId,
+      callType: currentCall.callType,
     });
+  }, [activeCall, restoreCallState]);
 
-    // Listen for backend response
-    const onReconnected = (data) => {
-      console.log("[CallContext] call:reconnected received:", data);
+  // Handle socket disconnect — start grace window countdown
+  const handleSocketDisconnect = useCallback((reason) => {
+    if (!RECONNECTION_ENABLED || !activeCall) return;
+    
+    console.log("[CallContext] Socket disconnected during active call:", reason);
+    setNetworkDisconnected(true);
+    
+    // Start grace window timeout — if we don't reconnect in time, call will end
+    reconnectTimeoutRef.current = setTimeout(() => {
+      console.log("[CallContext] Grace window expired — call likely ended by backend");
+      setNetworkDisconnected(false);
       setIsReconnecting(false);
-      voiceSocket.off("call:reconnected", onReconnected);
-
-      if (data && data.active) {
-        // 🔑 Use backend's type as source of truth — it may have changed
-        // (e.g. audio→video upgrade happened before refresh)
-        const backendCallType = data.type || data.callType || savedCall.callType;
-        console.log("[CallContext] Reconnecting as callType:", backendCallType, "(saved was:", savedCall.callType, ")");
-
-        const restoredCall = {
-          ...savedCall,
-          callType: backendCallType,
-          agoraToken: data.agoraToken || savedCall.agoraToken,
-          remainingTime: data.remainingTime || savedCall.remainingTime,
-        };
-
-        setActiveCallState(restoredCall);
-        persistCallState(restoredCall); // Update localStorage with correct callType
-
-        if (data.remainingTime) {
-          setCallSeconds(Number(data.remainingTime) * 60);
-        }
-      } else {
-        // Call is no longer active
-        clearPersistedCallState();
-      }
-    };
-
-    voiceSocket.on("call:reconnected", onReconnected);
-
-    // Timeout — if backend doesn't respond in 30s, give up
-    setTimeout(() => {
-      voiceSocket.off("call:reconnected", onReconnected);
-      setIsReconnecting(false);
+      setActiveCallState(null);
       clearPersistedCallState();
-    }, 30000);
-  }, [restoreCallState, clearPersistedCallState, persistCallState]);
+    }, RECONNECT_GRACE_TIMEOUT);
+  }, [activeCall, clearPersistedCallState]);
+
+  // Handle socket connect — emit reconnect if we were disconnected during a call
+  const handleSocketConnect = useCallback(() => {
+    if (!RECONNECTION_ENABLED) return;
+    
+    // Only emit reconnect if we were actually disconnected during an active call
+    // Don't emit for fresh calls that are just starting
+    if (networkDisconnected) {
+      emitCallReconnect();
+    } else {
+      // On initial mount (page refresh), try to restore from localStorage
+      // But only if there's no current activeCall (to avoid interfering with fresh calls)
+      if (!activeCall) {
+        const savedCall = restoreCallState();
+        if (savedCall && savedCall.roomId) {
+          console.log("[CallContext] Restoring call from localStorage on connect");
+          setActiveCallState(savedCall);
+          // Small delay to let state settle before emitting reconnect
+          setTimeout(() => {
+            emitCallReconnect();
+          }, 100);
+        }
+      }
+    }
+  }, [networkDisconnected, activeCall, emitCallReconnect, restoreCallState]);
+
+  // Legacy function for manual reconnection (kept for backward compatibility)
+  const reconnectToCall = useCallback(() => {
+    if (!RECONNECTION_ENABLED) return;
+    emitCallReconnect();
+  }, [emitCallReconnect]);
 
   /* 🔥 Listen to login/logout changes */
   useEffect(() => {
@@ -243,11 +298,15 @@ export const CallProvider = ({ children }) => {
     console.log("🔄 Connecting socket with:", voiceSocket.io.opts.query);
     voiceSocket.connect();
 
-    const onConnect = () =>
+    const onConnect = () => {
       console.log("🟢 SOCKET CONNECTED:", voiceSocket.id);
+      handleSocketConnect();
+    };
 
-    const onDisconnect = (r) =>
+    const onDisconnect = (r) => {
       console.log("SOCKET DISCONNECTED:", r);
+      handleSocketDisconnect(r);
+    };
 
     const onConnectError = (e) =>
       console.log("CONNECT ERROR:", e.message);
@@ -299,6 +358,7 @@ export const CallProvider = ({ children }) => {
     voiceSocket.on("call_canceled", handleCallCanceled);
     voiceSocket.on("call:canceled", handleCallCanceled);
     voiceSocket.on("waiting_list", handleWaitingList);
+    voiceSocket.on("call:reconnected", handleCallReconnected);
 
     return () => {
       voiceSocket.off("connect", onConnect);
@@ -309,17 +369,20 @@ export const CallProvider = ({ children }) => {
       voiceSocket.off("waiting_list", handleWaitingList);
       voiceSocket.off("incoming_call", handleIncomingCall);
       voiceSocket.off("incoming", handleIncomingCallRequest);
+      voiceSocket.off("call:reconnected", handleCallReconnected);
+      
+      // Clear any pending reconnect timeout
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
+      
       voiceSocket.disconnect();
     };
-  }, [astroId]);
+  }, [astroId, handleSocketConnect, handleSocketDisconnect, handleCallReconnected]);
 
-  /* ================= ATTEMPT RECONNECTION ON MOUNT ================= */
-  useEffect(() => {
-    if (RECONNECTION_ENABLED) {
-      reconnectToCall();
-    }
-    // eslint-disable-next-line
-  }, []);
+  /* ================= ATTEMPT RECONNECTION ON MOUNT (handled by socket connect now) ================= */
+  // Note: reconnectToCall is now triggered by handleSocketConnect when socket connects
 
   /* ================= BEFOREUNLOAD (gated by RECONNECTION_ENABLED) ================= */
   useEffect(() => {
@@ -364,6 +427,7 @@ export const CallProvider = ({ children }) => {
         reviewData,
         setReviewData,
         isReconnecting,
+        networkDisconnected,
         callSeconds,
         setCallSeconds,
         startTimer,

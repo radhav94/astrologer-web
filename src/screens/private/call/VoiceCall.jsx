@@ -16,11 +16,12 @@ import { PATH } from "../../../utils/routes/Paths";
 import { useChat as useChatContext } from "../../../context/chatContext";
 import CallIcon from "../../../assets/chat/Call.svg";
 import VideoCallChat from "./VideoCallChat";
+import { ReconnectingOverlay } from "../../../components/UI";
 
 const APP_ID = "c76e3d30a3b6483689dac88ca9f94381";
 
 const AgoraVoiceCalling = ({ callData }) => {
-  const { activeCall, setActiveCall, sharedAgoraState, setSharedAgoraState, isUpgradeRejectionProtected, upgradeRejectionRef, isUpgradingRef, setReviewData, setOpenReview, callStartTime, setCallStartTime, isCallMinimized, setIsCallMinimized } = useCall();
+  const { activeCall, setActiveCall, sharedAgoraState, setSharedAgoraState, isUpgradeRejectionProtected, upgradeRejectionRef, isUpgradingRef, setReviewData, setOpenReview, callStartTime, setCallStartTime, isCallMinimized, setIsCallMinimized, isReconnecting, networkDisconnected } = useCall();
   const { setActiveChat } = useChatContext();
   const navigate = useNavigate();
 
@@ -438,11 +439,32 @@ const AgoraVoiceCalling = ({ callData }) => {
       }
 
       // Normal cleanup - close everything
-      await micTrackRef.current?.stop();
-      await micTrackRef.current?.close();
-      await videoTrackRef.current?.stop();
-      await videoTrackRef.current?.close();
-      await clientRef.current?.leave();
+      // Use try-catch for each operation to prevent one failure from blocking others
+      try {
+        micTrackRef.current?.stop();
+        micTrackRef.current?.close();
+      } catch (e) {
+        console.warn("[VoiceCall] Mic track cleanup error:", e.message);
+      }
+      
+      try {
+        videoTrackRef.current?.stop();
+        videoTrackRef.current?.close();
+      } catch (e) {
+        console.warn("[VoiceCall] Video track cleanup error:", e.message);
+      }
+      
+      // Only attempt to leave if client exists
+      // Use .catch() to completely suppress WS_ABORT errors during network drops
+      if (clientRef.current) {
+        const connectionState = clientRef.current.connectionState;
+        if (connectionState === "CONNECTED" || connectionState === "CONNECTING") {
+          clientRef.current.leave().catch((e) => {
+            // Silently ignore - WS_ABORT is expected during network drops
+            console.warn("[VoiceCall] Client leave error (safe to ignore):", e.message);
+          });
+        }
+      }
     } catch (e) {
       console.warn("Voice cleanup error:", e);
     } finally {
@@ -544,15 +566,9 @@ const AgoraVoiceCalling = ({ callData }) => {
       handleServerCallEnd();
     };
 
-    const handleDisconnect = (reason) => {
-      // Don't end call on socket disconnect if we're refreshing or resuming
-      if (isRefreshingRef.current || isResumeFromRefresh.current) {
-        console.log("[VoiceCall] 🔄 Ignoring socket disconnect during refresh/resume");
-        return;
-      }
-      console.log("📞 disconnect event received:", reason);
-      handleServerCallEnd();
-    };
+    // NOTE: We no longer listen to socket 'disconnect' here.
+    // The CallContext handles reconnection logic on socket disconnect.
+    // The call will only end when backend explicitly sends 'call:ended'.
 
     const handleCallRejected = (data) => {
       console.log("📞 call:rejected event received:", data);
@@ -563,14 +579,12 @@ const AgoraVoiceCalling = ({ callData }) => {
 
     voiceSocket.on("call:ended", handleCallEnded);
     voiceSocket.on("force_call_end", handleForceCallEnd);
-    voiceSocket.on("disconnect", handleDisconnect);
     voiceSocket.on("call:rejected", handleCallRejected);
     voiceSocket.on("call:canceled", handleCallCanceled);
 
     return () => {
       voiceSocket.off("call:ended", handleCallEnded);
       voiceSocket.off("force_call_end", handleForceCallEnd);
-      voiceSocket.off("disconnect", handleDisconnect);
       voiceSocket.off("call:rejected", handleCallRejected);
       voiceSocket.off("call:canceled", handleCallCanceled);
     };
@@ -680,6 +694,12 @@ const AgoraVoiceCalling = ({ callData }) => {
   /* ================= UI ================= */
   return (
     <>
+      {/* RECONNECTING OVERLAY */}
+      <ReconnectingOverlay 
+        isVisible={networkDisconnected || isReconnecting} 
+        message={isReconnecting ? "Reconnecting..." : "Connection lost..."} 
+      />
+      
       {/* MINI VIEW */}
       {isCallMinimized && (
         <div

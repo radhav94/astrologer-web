@@ -15,11 +15,12 @@ import { useCall } from "../../../context/CallContext";
 import VideoCallChat from "./VideoCallChat";
 import { PATH } from "../../../utils/routes/Paths";
 import CallIcon from "../../../assets/chat/Call.svg";
+import { ReconnectingOverlay } from "../../../components/UI";
 
 const APP_ID = "c76e3d30a3b6483689dac88ca9f94381";
 
 const VideoCalling = ({ callData }) => {
-  const { activeCall, setActiveCall, setReviewData, setOpenReview, sharedAgoraState, setSharedAgoraState, isUpgradingRef, callStartTime, setCallStartTime, isCallMinimized, setIsCallMinimized } = useCall();
+  const { activeCall, setActiveCall, setReviewData, setOpenReview, sharedAgoraState, setSharedAgoraState, isUpgradingRef, callStartTime, setCallStartTime, isCallMinimized, setIsCallMinimized, isReconnecting, networkDisconnected } = useCall();
   const navigate = useNavigate();
 
 
@@ -135,14 +136,14 @@ const VideoCalling = ({ callData }) => {
   };
 
   const resumeRemoteAudio = () => {
-  if (!clientRef.current) return;
+    if (!clientRef.current) return;
 
-  clientRef.current.remoteUsers.forEach((user) => {
-    if (user.audioTrack) {
-      user.audioTrack.play();
-    }
-  });
-};
+    clientRef.current.remoteUsers.forEach((user) => {
+      if (user.audioTrack) {
+        user.audioTrack.play();
+      }
+    });
+  };
 
 
   /* ================= START CALL ================= */
@@ -155,33 +156,33 @@ const VideoCalling = ({ callData }) => {
         // Check if we're upgrading from audio call
         // We check for existing client/micTrack even if isUpgrading flag isn't set yet
         // because state updates are asynchronous
-        const shouldUpgrade = (sharedAgoraState.isUpgrading || 
-                               (sharedAgoraState.client && sharedAgoraState.micTrack)) &&
-                              sharedAgoraState.client && 
-                              sharedAgoraState.micTrack;
+        const shouldUpgrade = (sharedAgoraState.isUpgrading ||
+          (sharedAgoraState.client && sharedAgoraState.micTrack)) &&
+          sharedAgoraState.client &&
+          sharedAgoraState.micTrack;
 
         console.log("🔍 Should upgrade?", shouldUpgrade);
 
         if (shouldUpgrade) {
           console.log("🔄 Upgrading from audio to video - reusing connection");
-          
+
           // Reuse existing client and mic track
           clientRef.current = sharedAgoraState.client;
           micTrackRef.current = sharedAgoraState.micTrack;
-          
+
           console.log("📹 Creating camera track...");
           // Only create and publish camera track
           camTrackRef.current = await AgoraRTC.createCameraVideoTrack();
-          
+
           console.log("📤 Publishing camera track...");
           await clientRef.current.publish([camTrackRef.current]);
-          
+
           console.log("✅ Camera track published successfully");
-          
+
           // Add event listeners for video (the audio call client doesn't have these)
           clientRef.current.on("user-published", async (user, mediaType) => {
             console.log(`📹 [UPGRADE] User published ${mediaType}:`, user.uid);
-            
+
             if (mediaType === "video") {
               try {
                 await clientRef.current.subscribe(user, mediaType);
@@ -205,7 +206,7 @@ const VideoCalling = ({ callData }) => {
               }
             }
           });
-          
+
           // Update shared state
           setSharedAgoraState(prev => ({
             ...prev,
@@ -213,19 +214,19 @@ const VideoCalling = ({ callData }) => {
             isUpgrading: false
           }));
           isUpgradingRef.current = false; // Reset synchronous ref
-          
+
           setJoined(true);
-          
+
           timerRef.current = setInterval(() => {
             setCallSeconds((p) => p + 1);
           }, 1000);
-          
+
           // 🔥 CRITICAL: Check for existing remote users after upgrade
           setTimeout(async () => {
             console.log("🔍 [UPGRADE] Checking for existing remote users...");
             const remoteUsers = clientRef.current.remoteUsers;
             console.log(`📊 [UPGRADE] Found ${remoteUsers.length} remote users`);
-            
+
             for (const user of remoteUsers) {
               console.log(`👤 [UPGRADE] Remote user ${user.uid}:`, {
                 hasVideo: user.hasVideo,
@@ -261,7 +262,7 @@ const VideoCalling = ({ callData }) => {
               }
             }
           }, 1000);
-          
+
           return;
         }
 
@@ -277,14 +278,14 @@ const VideoCalling = ({ callData }) => {
 
         client.on("user-published", async (user, mediaType) => {
           console.log(`📹 User published ${mediaType}:`, user.uid);
-          
+
           // Cancel any pending end-call grace timer — remote user is back
           if (userLeftTimerRef.current) {
             clearTimeout(userLeftTimerRef.current);
             userLeftTimerRef.current = null;
             console.log("[VideoCall] ✅ user-published: cancelled pending endCall grace timer");
           }
-          
+
           await client.subscribe(user, mediaType);
 
           if (mediaType === "video" && user.videoTrack) {
@@ -335,7 +336,7 @@ const VideoCalling = ({ callData }) => {
         camTrackRef.current = await AgoraRTC.createCameraVideoTrack();
 
         await client.publish([micTrackRef.current, camTrackRef.current]);
-        
+
         // Store in shared state
         setSharedAgoraState({
           client: client,
@@ -354,7 +355,7 @@ const VideoCalling = ({ callData }) => {
           console.log("🔍 Checking for existing remote users...");
           const remoteUsers = client.remoteUsers;
           console.log(`📊 Found ${remoteUsers.length} remote users`);
-          
+
           for (const user of remoteUsers) {
             console.log(`👤 Remote user ${user.uid}:`, {
               hasVideo: user.hasVideo,
@@ -428,7 +429,7 @@ const VideoCalling = ({ callData }) => {
   }, [sharedAgoraState.isDowngrading]);
 
   /* ================= LOCAL VIDEO ================= */
- 
+
 
   useEffect(() => {
     if (!joined) return;
@@ -438,14 +439,14 @@ const VideoCalling = ({ callData }) => {
       if (clientRef.current && remoteVideoMiniRef.current) {
         clientRef.current.remoteUsers.forEach((user) => {
           if (user.videoTrack) {
-            try { user.videoTrack.stop(); } catch (e) {}
+            try { user.videoTrack.stop(); } catch (e) { }
             remoteVideoMiniRef.current.innerHTML = "";
             const div = document.createElement("div");
             div.style.width = "100%";
             div.style.height = "100%";
             remoteVideoMiniRef.current.appendChild(div);
             setTimeout(() => {
-              try { user.videoTrack.play(div); } catch (e) {}
+              try { user.videoTrack.play(div); } catch (e) { }
             }, 100);
           }
         });
@@ -488,7 +489,7 @@ const VideoCalling = ({ callData }) => {
 
   useEffect(() => {
     camTrackRef.current?.setEnabled(cameraOn);
-    
+
     // Replay local video when camera is turned back on
     if (cameraOn && camTrackRef.current && localVideoFullRef.current) {
       setTimeout(() => {
@@ -500,7 +501,7 @@ const VideoCalling = ({ callData }) => {
   /* ================= SPEAKER TOGGLE ================= */
   useEffect(() => {
     if (!clientRef.current) return;
-    
+
     // Control volume of all remote audio tracks
     clientRef.current.remoteUsers.forEach((user) => {
       if (user.audioTrack) {
@@ -523,7 +524,7 @@ const VideoCalling = ({ callData }) => {
   /* ================= CLEANUP ================= */
   const cleanup = async () => {
     console.log("🧹 [VIDEO CLEANUP] Starting cleanup...");
-    
+
     if (cleanupRef.current) return;
     cleanupRef.current = true;
 
@@ -531,13 +532,13 @@ const VideoCalling = ({ callData }) => {
 
     // Use the ref (synchronous, always up-to-date) as the primary check
     const isDowngrading = isDowngradingRef.current;
-    
+
     console.log("🧹 [VIDEO CLEANUP] isDowngrading:", isDowngrading);
-    
+
     // If downgrading, keep mic track and client alive for VoiceCall to reuse
     if (isDowngrading) {
       console.log("🔽 Downgrading to audio - keeping mic and client, closing camera only");
-      
+
       try {
         // Unpublish camera from the Agora client FIRST so remote side stops receiving video
         if (clientRef.current && camTrackRef.current) {
@@ -548,7 +549,7 @@ const VideoCalling = ({ callData }) => {
             console.warn("⚠️ [VIDEO CLEANUP] Failed to unpublish camera:", e);
           }
         }
-        
+
         // Then stop and close camera track
         try {
           camTrackRef.current?.stop();
@@ -557,42 +558,62 @@ const VideoCalling = ({ callData }) => {
           console.warn("⚠️ [VIDEO CLEANUP] Failed to stop/close camera:", e);
         }
         camTrackRef.current = null;
-        
+
         // Clear the camera from shared state (keep client and mic intact)
         setSharedAgoraState(prev => ({
           ...prev,
           cameraTrack: null
         }));
-        
+
         if (timerRef.current) {
           clearInterval(timerRef.current);
           timerRef.current = null;
         }
-        
+
         setJoined(false);
         setCallSeconds(0);
         // Don't clear callStartTime, activeCall, or shared client/mic
         // Don't clear clientRef.current or micTrackRef.current - VoiceCall needs them
-        
+
         console.log("✅ [VIDEO CLEANUP] Downgrade cleanup complete - client and mic preserved");
       } catch (e) {
         console.warn("Error during downgrade cleanup:", e);
       }
-      
+
       return; // Exit early - don't run the normal cleanup below
     }
 
     // Normal cleanup - close everything
+    console.log("🧹 [VIDEO CLEANUP] Normal cleanup - closing everything");
     try {
-      console.log("🧹 [VIDEO CLEANUP] Normal cleanup - closing everything");
-      micTrackRef.current?.stop();
-      micTrackRef.current?.close();
-      camTrackRef.current?.stop();
-      camTrackRef.current?.close();
+      // Use try-catch for each operation to prevent one failure from blocking others
+      try {
+        micTrackRef.current?.stop();
+        micTrackRef.current?.close();
+      } catch (e) {
+        console.warn("[VideoCall] Mic track cleanup error:", e.message);
+      }
 
+      try {
+        camTrackRef.current?.stop();
+        camTrackRef.current?.close();
+      } catch (e) {
+        console.warn("[VideoCall] Camera track cleanup error:", e.message);
+      }
+
+      // Only attempt to leave if client exists and is connected
       if (clientRef.current) {
-        await clientRef.current.leave();
-        clientRef.current.removeAllListeners();
+        try {
+          // Check connection state before leaving to avoid WS_ABORT
+          const connectionState = clientRef.current.connectionState;
+          if (connectionState === "CONNECTED" || connectionState === "CONNECTING") {
+            await clientRef.current.leave();
+          }
+          clientRef.current.removeAllListeners();
+        } catch (e) {
+          // Ignore WS_ABORT and other leave errors - channel may already be closed
+          console.warn("[VideoCall] Client leave error (safe to ignore):", e.message);
+        }
       }
     } catch (e) {
       console.warn(e);
@@ -617,7 +638,7 @@ const VideoCalling = ({ callData }) => {
       setCallSeconds(0);
       setCallStartTime(null);
       setActiveCall(null);
-      
+
       // Clear shared state
       setSharedAgoraState({
         client: null,
@@ -810,6 +831,12 @@ const VideoCalling = ({ callData }) => {
   }), [activeCall.userId, activeCall.astrologerId, activeCall.chatRoomId, activeCall.kundliId, activeCall.isUserSide]);
   return (
     <>
+      {/* RECONNECTING OVERLAY */}
+      <ReconnectingOverlay
+        isVisible={networkDisconnected || isReconnecting}
+        message={isReconnecting ? "Reconnecting..." : "Connection lost..."}
+      />
+
       {/* MINI VIEW */}
       <div
         style={{
@@ -861,13 +888,13 @@ const VideoCalling = ({ callData }) => {
       {/* FULL VIEW */}
       <div
         className="fixed inset-0 z-[99999] flex flex-col"
-        style={{ 
+        style={{
           visibility: isCallMinimized ? "hidden" : "visible",
           backgroundColor: hasRemoteVideo ? 'transparent' : 'white'
         }}
       >
         {/* HEADER */}
-        <div 
+        <div
           className="flex items-center justify-between px-4 md:px-6 py-3 border-b z-50 transition-all duration-300"
           style={{
             position: hasRemoteVideo ? 'absolute' : 'relative',
@@ -896,7 +923,7 @@ const VideoCalling = ({ callData }) => {
 
             {/* User Info */}
             <div className="flex flex-col">
-              <h2 
+              <h2
                 className="text-sm font-semibold transition-colors duration-300 capitalize truncate max-w-[150px]"
                 style={{ color: hasRemoteVideo ? 'white' : '#111827' }}
               >
@@ -907,19 +934,19 @@ const VideoCalling = ({ callData }) => {
 
           {/* Desktop View - Chat icon, Audio/Video toggle, Timer, View Profile button */}
           <div className="hidden md:flex items-center gap-3">
-            <button 
+            <button
               onClick={openChatWithMinimize}
               className="w-10 h-10 rounded-lg border flex items-center justify-center hover:opacity-90 transition-opacity"
-              style={{ 
+              style={{
                 borderColor: '#f75801'
               }}
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 17 17" fill="none">
-                <path d="M15 0H1.66667C0.75 0 0.00833333 0.75 0.00833333 1.66667L0 16.6667L3.33333 13.3333H15C15.9167 13.3333 16.6667 12.5833 16.6667 11.6667V1.66667C16.6667 0.75 15.9167 0 15 0ZM4.16667 5.83333H12.5C12.9583 5.83333 13.3333 6.20833 13.3333 6.66667C13.3333 7.125 12.9583 7.5 12.5 7.5H4.16667C3.70833 7.5 3.33333 7.125 3.33333 6.66667C3.33333 6.20833 3.70833 5.83333 4.16667 5.83333ZM9.16667 10H4.16667C3.70833 10 3.33333 9.625 3.33333 9.16667C3.33333 8.70833 3.70833 8.33333 4.16667 8.33333H9.16667C9.625 8.33333 10 8.70833 10 9.16667C10 9.625 9.625 10 9.16667 10ZM12.5 5H4.16667C3.70833 5 3.33333 4.625 3.33333 4.16667C3.33333 3.70833 3.70833 3.33333 4.16667 3.33333H12.5C12.9583 3.33333 13.3333 3.70833 13.3333 4.16667C13.3333 4.625 12.9583 5 12.5 5Z" fill="url(#paint0_linear_desktop_chat_video)"/>
+                <path d="M15 0H1.66667C0.75 0 0.00833333 0.75 0.00833333 1.66667L0 16.6667L3.33333 13.3333H15C15.9167 13.3333 16.6667 12.5833 16.6667 11.6667V1.66667C16.6667 0.75 15.9167 0 15 0ZM4.16667 5.83333H12.5C12.9583 5.83333 13.3333 6.20833 13.3333 6.66667C13.3333 7.125 12.9583 7.5 12.5 7.5H4.16667C3.70833 7.5 3.33333 7.125 3.33333 6.66667C3.33333 6.20833 3.70833 5.83333 4.16667 5.83333ZM9.16667 10H4.16667C3.70833 10 3.33333 9.625 3.33333 9.16667C3.33333 8.70833 3.70833 8.33333 4.16667 8.33333H9.16667C9.625 8.33333 10 8.70833 10 9.16667C10 9.625 9.625 10 9.16667 10ZM12.5 5H4.16667C3.70833 5 3.33333 4.625 3.33333 4.16667C3.33333 3.70833 3.70833 3.33333 4.16667 3.33333H12.5C12.9583 3.33333 13.3333 3.70833 13.3333 4.16667C13.3333 4.625 12.9583 5 12.5 5Z" fill="url(#paint0_linear_desktop_chat_video)" />
                 <defs>
                   <linearGradient id="paint0_linear_desktop_chat_video" x1="0" y1="8.33333" x2="16.6667" y2="8.33333" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#F75801"/>
-                    <stop offset="1" stopColor="#D43400"/>
+                    <stop stopColor="#F75801" />
+                    <stop offset="1" stopColor="#D43400" />
                   </linearGradient>
                 </defs>
               </svg>
@@ -927,10 +954,10 @@ const VideoCalling = ({ callData }) => {
 
             <div className="w-px h-6 bg-gray-300"></div>
 
-            <button 
+            <button
               onClick={() => setCameraOn((p) => !p)}
               className="w-10 h-10 rounded-lg border flex items-center justify-center hover:opacity-90 transition-opacity"
-              style={{ 
+              style={{
                 borderColor: '#f75801'
               }}
             >
@@ -938,18 +965,18 @@ const VideoCalling = ({ callData }) => {
                 <img src={CallIcon} alt="Audio" width="20" height="20" style={{ filter: 'invert(45%) sepia(94%) saturate(2477%) hue-rotate(356deg) brightness(101%) contrast(98%)' }} />
               ) : (
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="13" viewBox="0 0 17 11" fill="none">
-                  <path d="M12.8333 4.125V0.916667C12.8333 0.4125 12.4208 0 11.9167 0H0.916667C0.4125 0 0 0.4125 0 0.916667V10.0833C0 10.5875 0.4125 11 0.916667 11H11.9167C12.4208 11 12.8333 10.5875 12.8333 10.0833V6.875L14.9325 8.97417C15.51 9.55167 16.5 9.13917 16.5 8.32333V2.6675C16.5 1.85167 15.51 1.43917 14.9325 2.01667L12.8333 4.125Z" fill="url(#paint0_linear_desktop)"/>
+                  <path d="M12.8333 4.125V0.916667C12.8333 0.4125 12.4208 0 11.9167 0H0.916667C0.4125 0 0 0.4125 0 0.916667V10.0833C0 10.5875 0.4125 11 0.916667 11H11.9167C12.4208 11 12.8333 10.5875 12.8333 10.0833V6.875L14.9325 8.97417C15.51 9.55167 16.5 9.13917 16.5 8.32333V2.6675C16.5 1.85167 15.51 1.43917 14.9325 2.01667L12.8333 4.125Z" fill="url(#paint0_linear_desktop)" />
                   <defs>
                     <linearGradient id="paint0_linear_desktop" x1="0" y1="5.5" x2="16.5" y2="5.5" gradientUnits="userSpaceOnUse">
-                      <stop stopColor="#F75801"/>
-                      <stop offset="1" stopColor="#D43400"/>
+                      <stop stopColor="#F75801" />
+                      <stop offset="1" stopColor="#D43400" />
                     </linearGradient>
                   </defs>
                 </svg>
               )}
             </button>
 
-            <span 
+            <span
               className="text-sm font-medium ml-2 transition-colors duration-300"
               style={{ color: hasRemoteVideo ? 'white' : '#374151' }}
             >
@@ -968,7 +995,7 @@ const VideoCalling = ({ callData }) => {
           {/* Mobile View - Timer and View Profile button */}
           <div className="md:hidden flex items-center gap-3">
             <span className="text-sm font-semibold text-red-500">{formatTime(callSeconds)}</span>
-            
+
             <button
               onClick={toggleChat}
               className="px-4 py-2 text-white rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity"
@@ -980,7 +1007,7 @@ const VideoCalling = ({ callData }) => {
         </div>
 
         {/* Mobile Chat Button - Part of sticky header */}
-        <div 
+        <div
           className="md:hidden flex gap-3 px-4 py-3 border-b z-50 transition-all duration-300"
           style={{
             position: hasRemoteVideo ? 'absolute' : 'relative',
@@ -992,31 +1019,31 @@ const VideoCalling = ({ callData }) => {
             borderColor: hasRemoteVideo ? 'rgba(255, 255, 255, 0.2)' : '#e5e7eb'
           }}
         >
-          <button 
+          <button
             onClick={openChatWithMinimize}
             className="flex-1 flex items-center justify-center gap-2 py-3 rounded-full border-2 hover:opacity-90 transition-all duration-300"
-            style={{ 
+            style={{
               borderColor: '#f75801',
               backgroundColor: hasRemoteVideo ? 'rgba(255, 255, 255, 0.1)' : 'white',
               backdropFilter: hasRemoteVideo ? 'blur(10px)' : 'none'
             }}
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 17 17" fill="none">
-              <path d="M15 0H1.66667C0.75 0 0.00833333 0.75 0.00833333 1.66667L0 16.6667L3.33333 13.3333H15C15.9167 13.3333 16.6667 12.5833 16.6667 11.6667V1.66667C16.6667 0.75 15.9167 0 15 0ZM4.16667 5.83333H12.5C12.9583 5.83333 13.3333 6.20833 13.3333 6.66667C13.3333 7.125 12.9583 7.5 12.5 7.5H4.16667C3.70833 7.5 3.33333 7.125 3.33333 6.66667C3.33333 6.20833 3.70833 5.83333 4.16667 5.83333ZM9.16667 10H4.16667C3.70833 10 3.33333 9.625 3.33333 9.16667C3.33333 8.70833 3.70833 8.33333 4.16667 8.33333H9.16667C9.625 8.33333 10 8.70833 10 9.16667C10 9.625 9.625 10 9.16667 10ZM12.5 5H4.16667C3.70833 5 3.33333 4.625 3.33333 4.16667C3.33333 3.70833 3.70833 3.33333 4.16667 3.33333H12.5C12.9583 3.33333 13.3333 3.70833 13.3333 4.16667C13.3333 4.625 12.9583 5 12.5 5Z" fill="url(#paint0_linear_mobile_chat_video)"/>
+              <path d="M15 0H1.66667C0.75 0 0.00833333 0.75 0.00833333 1.66667L0 16.6667L3.33333 13.3333H15C15.9167 13.3333 16.6667 12.5833 16.6667 11.6667V1.66667C16.6667 0.75 15.9167 0 15 0ZM4.16667 5.83333H12.5C12.9583 5.83333 13.3333 6.20833 13.3333 6.66667C13.3333 7.125 12.9583 7.5 12.5 7.5H4.16667C3.70833 7.5 3.33333 7.125 3.33333 6.66667C3.33333 6.20833 3.70833 5.83333 4.16667 5.83333ZM9.16667 10H4.16667C3.70833 10 3.33333 9.625 3.33333 9.16667C3.33333 8.70833 3.70833 8.33333 4.16667 8.33333H9.16667C9.625 8.33333 10 8.70833 10 9.16667C10 9.625 9.625 10 9.16667 10ZM12.5 5H4.16667C3.70833 5 3.33333 4.625 3.33333 4.16667C3.33333 3.70833 3.70833 3.33333 4.16667 3.33333H12.5C12.9583 3.33333 13.3333 3.70833 13.3333 4.16667C13.3333 4.625 12.9583 5 12.5 5Z" fill="url(#paint0_linear_mobile_chat_video)" />
               <defs>
                 <linearGradient id="paint0_linear_mobile_chat_video" x1="0" y1="8.33333" x2="16.6667" y2="8.33333" gradientUnits="userSpaceOnUse">
-                  <stop stopColor="#F75801"/>
-                  <stop offset="1" stopColor="#D43400"/>
+                  <stop stopColor="#F75801" />
+                  <stop offset="1" stopColor="#D43400" />
                 </linearGradient>
               </defs>
             </svg>
             <span className="text-base font-medium" style={{ color: '#f75801' }}>Chat</span>
           </button>
 
-          <button 
+          <button
             onClick={() => setCameraOn((p) => !p)}
             className="flex-1 flex items-center justify-center gap-2 py-3 rounded-full border-2 hover:opacity-90 transition-all duration-300"
-            style={{ 
+            style={{
               borderColor: '#f75801',
               backgroundColor: hasRemoteVideo ? 'rgba(255, 255, 255, 0.1)' : 'white',
               backdropFilter: hasRemoteVideo ? 'blur(10px)' : 'none'
@@ -1026,11 +1053,11 @@ const VideoCalling = ({ callData }) => {
               <img src={CallIcon} alt="Audio" width="22" height="22" style={{ filter: 'invert(45%) sepia(94%) saturate(2477%) hue-rotate(356deg) brightness(101%) contrast(98%)' }} />
             ) : (
               <svg xmlns="http://www.w3.org/2000/svg" width="22" height="15" viewBox="0 0 17 11" fill="none">
-                <path d="M12.8333 4.125V0.916667C12.8333 0.4125 12.4208 0 11.9167 0H0.916667C0.4125 0 0 0.4125 0 0.916667V10.0833C0 10.5875 0.4125 11 0.916667 11H11.9167C12.4208 11 12.8333 10.5875 12.8333 10.0833V6.875L14.9325 8.97417C15.51 9.55167 16.5 9.13917 16.5 8.32333V2.6675C16.5 1.85167 15.51 1.43917 14.9325 2.01667L12.8333 4.125Z" fill="url(#paint0_linear_mobile)"/>
+                <path d="M12.8333 4.125V0.916667C12.8333 0.4125 12.4208 0 11.9167 0H0.916667C0.4125 0 0 0.4125 0 0.916667V10.0833C0 10.5875 0.4125 11 0.916667 11H11.9167C12.4208 11 12.8333 10.5875 12.8333 10.0833V6.875L14.9325 8.97417C15.51 9.55167 16.5 9.13917 16.5 8.32333V2.6675C16.5 1.85167 15.51 1.43917 14.9325 2.01667L12.8333 4.125Z" fill="url(#paint0_linear_mobile)" />
                 <defs>
                   <linearGradient id="paint0_linear_mobile" x1="0" y1="5.5" x2="16.5" y2="5.5" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#F75801"/>
-                    <stop offset="1" stopColor="#D43400"/>
+                    <stop stopColor="#F75801" />
+                    <stop offset="1" stopColor="#D43400" />
                   </linearGradient>
                 </defs>
               </svg>
@@ -1044,7 +1071,7 @@ const VideoCalling = ({ callData }) => {
             <div className="text-white text-xl">Connecting…</div>
           </div>
         ) : (
-          <div 
+          <div
             className="relative"
             style={{
               flex: 1,
@@ -1065,7 +1092,7 @@ const VideoCalling = ({ callData }) => {
                     <div className={styles.rippleRing}></div>
                     <div className={styles.rippleRing}></div>
                     <div className={styles.rippleRing}></div>
-                    
+
                     {/* Avatar with green border */}
                     <div className="relative w-40 h-40 md:w-64 md:h-64 rounded-full overflow-hidden shadow-2xl bg-white z-10" style={{ border: '8px solid #b7d9a5' }}>
                       <img
@@ -1110,7 +1137,7 @@ const VideoCalling = ({ callData }) => {
             )}
 
             {/* BOTTOM CONTROLS SECTION */}
-            <div 
+            <div
               className="absolute bottom-0 left-0 right-0 z-20"
               style={{
                 display: 'flex',
@@ -1118,7 +1145,7 @@ const VideoCalling = ({ callData }) => {
               }}
             >
               {/* SUGGEST REMEDY BUTTON - Blurred Background */}
-              <div 
+              <div
                 style={{
                   backdropFilter: hasRemoteVideo ? 'blur(20px)' : 'none',
                   background: hasRemoteVideo ? 'rgba(100, 100, 100, 0.4)' : 'transparent',
@@ -1128,21 +1155,21 @@ const VideoCalling = ({ callData }) => {
                   transition: 'all 0.3s'
                 }}
               >
-                <button 
-                  className="px-8 py-3 text-white rounded-full text-base font-semibold hover:opacity-90 transition-opacity shadow-lg flex items-center gap-2" 
-                  style={{ 
+                <button
+                  className="px-8 py-3 text-white rounded-full text-base font-semibold hover:opacity-90 transition-opacity shadow-lg flex items-center gap-2"
+                  style={{
                     background: 'linear-gradient(135deg, #f75801, #d43400)'
                   }}
                 >
                   Suggest Remedy
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
                   </svg>
                 </button>
               </div>
 
               {/* CONTROL BUTTONS - Solid Black Background */}
-              <div 
+              <div
                 style={{
                   background: hasRemoteVideo ? 'rgba(0, 0, 0, 0.6)' : 'transparent',
                   padding: '24px 20px 32px 20px',
@@ -1150,66 +1177,66 @@ const VideoCalling = ({ callData }) => {
                 }}
               >
                 <div className="flex items-center justify-center gap-8 md:gap-6">
-                
-                {/* MUTE BUTTON */}
-                <div className="flex flex-col items-center gap-2">
-                  <button
-                    onClick={() => setMicOn((p) => !p)}
-                    className="w-16 h-16 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center shadow-lg hover:bg-gray-50 transition-colors"
-                  >
-                    {micOn ? (
-                      <IoMic size={28} style={{ color: '#f75801' }} />
-                    ) : (
-                      <IoMicOff size={28} style={{ color: '#f75801' }} />
-                    )}
-                  </button>
-                  <span className="text-sm font-medium text-white">
-                    {micOn ? "Mute" : "Unmute"}
-                  </span>
-                </div>
 
-                {/* REPORT CALLER BUTTON */}
-                <div className="flex flex-col items-center gap-2">
-                  <button 
-                    onClick={safeEndCall}
-                    className="w-16 h-16 rounded-full bg-red-500 flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors"
-                  >
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-                      <path d="M12 2L2 20h20L12 2z" fill="white"/>
-                      <rect x="11" y="8" width="2" height="6" fill="#ef4444" rx="1"/>
-                      <circle cx="12" cy="17" r="1" fill="#ef4444"/>
-                    </svg>
-                  </button>
-                  <span className="text-sm font-medium text-white">Report Caller</span>
-                </div>
+                  {/* MUTE BUTTON */}
+                  <div className="flex flex-col items-center gap-2">
+                    <button
+                      onClick={() => setMicOn((p) => !p)}
+                      className="w-16 h-16 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center shadow-lg hover:bg-gray-50 transition-colors"
+                    >
+                      {micOn ? (
+                        <IoMic size={28} style={{ color: '#f75801' }} />
+                      ) : (
+                        <IoMicOff size={28} style={{ color: '#f75801' }} />
+                      )}
+                    </button>
+                    <span className="text-sm font-medium text-white">
+                      {micOn ? "Mute" : "Unmute"}
+                    </span>
+                  </div>
 
-                {/* SPEAKER BUTTON */}
-                <div className="flex flex-col items-center gap-2">
-                  <button
-                    onClick={() => setSpeakerOn((p) => !p)}
-                    className="w-16 h-16 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center shadow-lg hover:bg-gray-50 transition-colors"
-                  >
-                    {speakerOn ? (
-                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#f75801" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-                        <path d="M15.54 8.46a5 5 0 010 7.07"/>
-                        <path d="M19.07 4.93a10 10 0 010 14.14"/>
+                  {/* REPORT CALLER BUTTON */}
+                  <div className="flex flex-col items-center gap-2">
+                    <button
+                      onClick={safeEndCall}
+                      className="w-16 h-16 rounded-full bg-red-500 flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors"
+                    >
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                        <path d="M12 2L2 20h20L12 2z" fill="white" />
+                        <rect x="11" y="8" width="2" height="6" fill="#ef4444" rx="1" />
+                        <circle cx="12" cy="17" r="1" fill="#ef4444" />
                       </svg>
-                    ) : (
-                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#f75801" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-                        <line x1="2" y1="2" x2="22" y2="22"/>
-                      </svg>
-                    )}
-                  </button>
-                  <span className="text-sm font-medium text-white">
-                    Speaker {speakerOn ? "On" : "Off"}
-                  </span>
-                </div>
+                    </button>
+                    <span className="text-sm font-medium text-white">Report Caller</span>
+                  </div>
 
+                  {/* SPEAKER BUTTON */}
+                  <div className="flex flex-col items-center gap-2">
+                    <button
+                      onClick={() => setSpeakerOn((p) => !p)}
+                      className="w-16 h-16 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center shadow-lg hover:bg-gray-50 transition-colors"
+                    >
+                      {speakerOn ? (
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#f75801" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                          <path d="M15.54 8.46a5 5 0 010 7.07" />
+                          <path d="M19.07 4.93a10 10 0 010 14.14" />
+                        </svg>
+                      ) : (
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#f75801" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                          <line x1="2" y1="2" x2="22" y2="22" />
+                        </svg>
+                      )}
+                    </button>
+                    <span className="text-sm font-medium text-white">
+                      Speaker {speakerOn ? "On" : "Off"}
+                    </span>
+                  </div>
+
+                </div>
               </div>
             </div>
-          </div>
           </div>
         )}
         {/* Chat Panel */}

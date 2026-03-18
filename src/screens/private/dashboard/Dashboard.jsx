@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 import { useGetAstrologerByIdQuery, useGetMonthlyOverviewQuery } from "../../../redux/astrologer/astrologerApi";
 import * as AuthServices from "../../../services/appServices/authservice";
 import { useCall } from "../../../context/CallContext";
@@ -18,6 +19,7 @@ import {
   AvailabilityScheduleSection,
   MonthlyOverviewSection,
   MilestonesSection,
+  PendingVerificationSection,
 } from "../../../components/Dashboard/sections";
 
 /**
@@ -26,6 +28,17 @@ import {
  */
 const Dashboard = () => {
   const navigate = useNavigate();
+
+  // Check verification status from Redux state
+  const astrologerDetails = useSelector((state) => state.register?.astrologerDetails);
+  const isRegister = astrologerDetails?.isRegister ?? false;
+  const isVerified = astrologerDetails?.isVerified ?? false;
+
+  // Only check manualVerification if both isRegister and isVerified are true
+  const isManualVerification = (isRegister && isVerified)
+    ? (astrologerDetails?.manualVerification ?? false)
+    : false;
+
   const userData = JSON.parse(
     localStorage.getItem("shubhtalk_astrologer_details")
   );
@@ -283,6 +296,11 @@ const Dashboard = () => {
       </div>
     );
   }, [sectionRegistry]);
+
+  // If user is not fully verified, show pending message card
+  if (!isManualVerification) {
+    return <PendingVerificationSection />;
+  }
 
   return (
     <div className="space-y-6 bg-[#F5F5F5] lg:bg-transparent -m-4 p-4 lg:m-0 lg:p-0">

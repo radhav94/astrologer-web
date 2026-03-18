@@ -21,24 +21,37 @@ import StickyChatFooter from "../components/StickyChatFooter";
 const HomeLayout = () => {
   const { kundliId } = useParams();
   const dispatch = useDispatch();
-  
+
   // Get astrologer details from Redux state
-  const astrologerDetails = useSelector((state) => state.register.astrologerDetails);
-  const astrologerIdFromRedux = useSelector((state) => state.register.astrologerId);
-  
+  const astrologerDetails = useSelector(
+    (state) => state.register.astrologerDetails,
+  );
+  const astrologerIdFromRedux = useSelector(
+    (state) => state.register.astrologerId,
+  );
+
   // Fallback to localStorage if Redux doesn't have the data
   // const userData = JSON.parse(
   //   localStorage.getItem("shubhtalk_astrologer_details"),
   // );
   // const astrologerId = userData?._id || userData?.id;
-  
+
   // Use Redux state as primary source
-  const userData = astrologerDetails || JSON.parse(
-    localStorage.getItem("shubhtalk_astrologer_details") || "{}"
-  );
+  const userData =
+    astrologerDetails ||
+    JSON.parse(localStorage.getItem("shubhtalk_astrologer_details") || "{}");
   const astrologerId = astrologerIdFromRedux || userData?._id || userData?.id;
-  
+
   const { data: astrologerResponse } = useGetAstrologerByIdQuery(astrologerId);
+
+  const isRegister = astrologerDetails?.isRegister ?? false;
+  const isVerified = astrologerDetails?.isVerified ?? false;
+
+  // Only check manualVerification if both isRegister and isVerified are true
+  const isManualVerification =
+    isRegister && isVerified
+      ? (astrologerDetails?.manualVerification ?? false)
+      : false;
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [statusState, setStatusState] = useState({
@@ -50,7 +63,8 @@ const HomeLayout = () => {
   const lastName = userData?.lastName?.trim();
   const userName =
     firstName && lastName ? `${firstName} ${lastName}` : "Unknown";
-  const avatar = userData?.profileImgUrl || getDefaultImgBasedOnGender(userData?.gender);
+  const avatar =
+    userData?.profileImgUrl || getDefaultImgBasedOnGender(userData?.gender);
 
   //Chat
   const { setActiveChat, setChatSeconds } = useChatContext();
@@ -235,9 +249,7 @@ const HomeLayout = () => {
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
       <main className={styles.main}>
-        <header
-          className={`${styles.header} ${kundliId ? styles.hidden : ""}`}
-        >
+        <header className={`${styles.header} ${kundliId ? styles.hidden : ""}`}>
           <div className={styles.headerContent}>
             {/* LEFT: Profile + Info */}
             <div className={styles.leftSection}>
@@ -273,9 +285,7 @@ const HomeLayout = () => {
               {/* Name + Date */}
               <div className={styles.userInfo}>
                 <p className={styles.greeting}>Namaste</p>
-                <p className={styles.userName}>
-                  {userName}
-                </p>
+                <p className={styles.userName}>{userName}</p>
                 <p className={styles.date}>
                   {new Date().toLocaleDateString("en-GB")}
                 </p>
@@ -283,65 +293,73 @@ const HomeLayout = () => {
             </div>
 
             {/* RIGHT: Followers + Status */}
-            <div className={styles.rightSection}>
-              <p className={styles.followers}>1.15k followers</p>
+            {isManualVerification && (
+              <div className={styles.rightSection}>
+                <p className={styles.followers}>1.15k followers</p>
 
-              <div className={styles.statusButtons}>
-                {/* Call Button */}
-                <button
-                  disabled={statusState.call.loading}
-                  onClick={() => handleStatusToggle("call")}
-                  className={`${styles.statusButton} ${
-                    statusState.call.isOnline ? styles.active : styles.inactive
-                  } ${statusState.call.loading ? styles.loading : ""}`}
-                >
-                  <span
-                    className={`${styles.statusLabel} ${
-                      statusState.call.isOnline ? styles.active : styles.inactive
-                    }`}
+                <div className={styles.statusButtons}>
+                  {/* Call Button */}
+                  <button
+                    disabled={statusState.call.loading}
+                    onClick={() => handleStatusToggle("call")}
+                    className={`${styles.statusButton} ${
+                      statusState.call.isOnline
+                        ? styles.active
+                        : styles.inactive
+                    } ${statusState.call.loading ? styles.loading : ""}`}
                   >
-                    Call
-                  </span>
-                  <div
-                    className={`${styles.statusIcon} ${
-                      statusState.call.isOnline ? styles.active : styles.inactive
-                    }`}
-                  >
-                    <Icons.Phone
-                      size={18}
-                      strokeWidth={2.5}
-                    />
-                  </div>
-                </button>
+                    <span
+                      className={`${styles.statusLabel} ${
+                        statusState.call.isOnline
+                          ? styles.active
+                          : styles.inactive
+                      }`}
+                    >
+                      Call
+                    </span>
+                    <div
+                      className={`${styles.statusIcon} ${
+                        statusState.call.isOnline
+                          ? styles.active
+                          : styles.inactive
+                      }`}
+                    >
+                      <Icons.Phone size={18} strokeWidth={2.5} />
+                    </div>
+                  </button>
 
-                {/* Chat Button */}
-                <button
-                  disabled={statusState.chat.loading}
-                  onClick={() => handleStatusToggle("chat")}
-                  className={`${styles.statusButton} ${
-                    statusState.chat.isOnline ? styles.active : styles.inactive
-                  } ${statusState.chat.loading ? styles.loading : ""}`}
-                >
-                  <span
-                    className={`${styles.statusLabel} ${
-                      statusState.chat.isOnline ? styles.active : styles.inactive
-                    }`}
+                  {/* Chat Button */}
+                  <button
+                    disabled={statusState.chat.loading}
+                    onClick={() => handleStatusToggle("chat")}
+                    className={`${styles.statusButton} ${
+                      statusState.chat.isOnline
+                        ? styles.active
+                        : styles.inactive
+                    } ${statusState.chat.loading ? styles.loading : ""}`}
                   >
-                    Chat
-                  </span>
-                  <div
-                    className={`${styles.statusIcon} ${
-                      statusState.chat.isOnline ? styles.active : styles.inactive
-                    }`}
-                  >
-                    <Icons.MessageSquare
-                      size={18}
-                      strokeWidth={2.5}
-                    />
-                  </div>
-                </button>
+                    <span
+                      className={`${styles.statusLabel} ${
+                        statusState.chat.isOnline
+                          ? styles.active
+                          : styles.inactive
+                      }`}
+                    >
+                      Chat
+                    </span>
+                    <div
+                      className={`${styles.statusIcon} ${
+                        statusState.chat.isOnline
+                          ? styles.active
+                          : styles.inactive
+                      }`}
+                    >
+                      <Icons.MessageSquare size={18} strokeWidth={2.5} />
+                    </div>
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </header>
 

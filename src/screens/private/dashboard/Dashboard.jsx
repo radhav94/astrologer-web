@@ -231,6 +231,10 @@ const Dashboard = () => {
         categoryPercentages,
         monthlyOverview,
         heatmapData,
+        selectedMonth,
+        selectedYear,
+        setSelectedMonth,
+        setSelectedYear,
       },
     },
     [SECTION_TYPES.MILESTONES]: {
@@ -259,6 +263,10 @@ const Dashboard = () => {
     categoryPercentages,
     monthlyOverview,
     heatmapData,
+    selectedMonth,
+    selectedYear,
+    setSelectedMonth,
+    setSelectedYear,
     tipsContent,
   ]);
 

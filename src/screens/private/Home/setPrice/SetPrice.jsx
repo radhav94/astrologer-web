@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Icons } from "../../../../components/Icons";
 import { useState } from "react";
 import { useSetAstrologerPriceMutation } from "../../../../redux/astrologer/astrologerApi";
@@ -6,14 +6,15 @@ import { Toast } from "../../../../components";
 import { ChevronRight } from "lucide-react";
 
 const SetPrice = () => {
+  const navigate = useNavigate();
   const userData = JSON.parse(
     localStorage.getItem("shubhtalk_astrologer_details")
   );
   
   // Get current prices with fallbacks
-  const currentAudioRate = userData?.price?.audioRate?.amount || userData?.price?.callRate?.amount || 15;
-  const currentChatRate = userData?.price?.chatRate?.amount || 15;
-  const currentVideoRate = userData?.price?.videoCallRate?.amount || 15;
+  const currentAudioRate = userData?.price?.audioRate?.amount || userData?.price?.callRate?.amount || 0;
+  const currentChatRate = userData?.price?.chatRate?.amount || 0;
+  const currentVideoRate = userData?.price?.videoCallRate?.amount || 0;
   
   const [price, setPrice] = useState({
     audioRate: {
@@ -181,6 +182,7 @@ const SetPrice = () => {
       localStorage.setItem("shubhtalk_astrologer_details", JSON.stringify(updatedUserData));
       
       Toast.success("Prices updated successfully");
+      navigate("/dashboard");
     } catch (error) {
       console.error("Price update error:", error);
       Toast.error(error?.data?.message || "Failed to update prices. Please try again.");

@@ -22,7 +22,7 @@ const APP_ID = "cf5e31fa03584573aacaf42daebd493c";
 
 const AgoraVoiceCalling = ({ callData }) => {
   const { activeCall, setActiveCall, sharedAgoraState, setSharedAgoraState, isUpgradeRejectionProtected, upgradeRejectionRef, isUpgradingRef, setReviewData, setOpenReview, callStartTime, setCallStartTime, isCallMinimized, setIsCallMinimized, isReconnecting, networkDisconnected } = useCall();
-  const { setActiveChat } = useChatContext();
+  const { activeChat, setActiveChat } = useChatContext();
   const navigate = useNavigate();
 
   if (!activeCall || activeCall.callType !== "audio") {
@@ -528,7 +528,10 @@ const AgoraVoiceCalling = ({ callData }) => {
       userID: activeCall?.userID,
       fullName: activeCall?.callerName,
     });
-    setOpenReview(true);
+    // Don't show review popup if chat is still active
+    if (!activeChat) {
+      setOpenReview(true);
+    }
     await cleanup();
   };
 
@@ -546,7 +549,10 @@ const AgoraVoiceCalling = ({ callData }) => {
       userID: activeCall?.userID,
       fullName: activeCall?.callerName,
     });
-    setOpenReview(true);
+    // Don't show review popup if chat is still active
+    if (!activeChat) {
+      setOpenReview(true);
+    }
     await cleanup();
   };
 
@@ -564,7 +570,10 @@ const AgoraVoiceCalling = ({ callData }) => {
       userID: activeCall?.userID,
       fullName: activeCall?.callerName,
     });
-    setOpenReview(true);
+    // Don't show review popup if chat is still active
+    if (!activeChat) {
+      setOpenReview(true);
+    }
     await cleanup();
   };
 

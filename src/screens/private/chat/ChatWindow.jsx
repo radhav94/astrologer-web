@@ -31,7 +31,7 @@ const MIN_CHAT_SECONDS = 60;
 
 /* -------------------- Message Bubble -------------------- */
 
-const Message = ({ text, isSender, time, type, giftData }) => {
+const Message = ({ text, isSender, time, type, giftData, kundliName }) => {
   const [iframeSrc, setIframeSrc] = useState(null);
   const [loading, setLoading] = useState(false);
   
@@ -225,7 +225,7 @@ const Message = ({ text, isSender, time, type, giftData }) => {
           }}
         >
           <GrReactjs />
-          View Kundli
+          {kundliName ? `${kundliName}'s Kundli` : "View Kundli"}
         </div>
       );
     }
@@ -412,7 +412,8 @@ const ChatWindow = () => {
       time: formatTime(item.createdAt),
       date: formatDate(item.createdAt),
       dateTime: item.createdAt,
-      type: item?.type
+      type: item?.type,
+      kundliName: item?.kundliName
     }));
 
     const socket = socketMessages.map((msg, idx) => ({
@@ -422,7 +423,8 @@ const ChatWindow = () => {
       time: msg.time,
       date: msg.date || formatDate(new Date()),
       dateTime: msg.dateTime || new Date().toISOString(),
-      type: msg?.type
+      type: msg?.type,
+      kundliName: msg?.kundliName
     }));
 
     return [...history, ...socket].sort(
@@ -788,7 +790,7 @@ const ChatWindow = () => {
               {msg.date}
             </div>
           ) : (
-            <Message key={msg.id} text={msg.text} isSender={msg.isSender} time={msg.time} type={msg.type} />
+            <Message key={msg.id} text={msg.text} isSender={msg.isSender} time={msg.time} type={msg.type} kundliName={msg?.kundliName} />
           )
         )}
 

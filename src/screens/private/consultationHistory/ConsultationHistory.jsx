@@ -1,12 +1,16 @@
 import { useEffect, useState } from "react";
 import { Icons } from "../../../components/Icons";
 import { Link } from "react-router";
+import { useNavigate } from "react-router-dom";
 import { useGetOrderHistoryQuery } from "../../../redux/oderHistory/orderHistory";
 // Import default profile image
 import { AppDefaultImg, AppIcons } from "../../../utils/appImages";
 import SectionHeader from "../../../components/UI/SectionHeader";
 import styles from "./ConsultationHistory.module.scss";
 import dayjs from "dayjs";
+// import { PATH } from "../../../utils/routes/Paths";
+// import useChat from "../../../hooks/useChatWindow";
+// const { activeChat } = useChat();
 
 const formatDate = (iso) => {
   const date = new Date(iso);
@@ -56,8 +60,9 @@ const ConsultationHistory = () => {
   const [openMenuId, setOpenMenuId] = useState(null);
   const [refundItem, setRefundItem] = useState(null);
   const [refundAmount, setRefundAmount] = useState("");
-  const [sortOrder, setSortOrder] = useState("asc");
+  const [sortOrder, setSortOrder] = useState("desc");
   const [filterBy, setFilterBy] = useState("call");
+  const navigate = useNavigate();
 
   const { data, isLoading, isFetching, isError } = useGetOrderHistoryQuery({
     page,
@@ -219,18 +224,24 @@ const ConsultationHistory = () => {
           {/* Orders Count and Actions */}
           <div className={styles.ordersHeader}>
             <h2 className={styles.ordersCount}>
-              {data?.data?.pagination?.totalItems || 0} Orders
+              Total Orders: {data?.data?.pagination?.totalItems || 0}
             </h2>
             <div className={styles.actionButtons}>
-              <button
-                className={styles.actionButton}
-                onClick={() =>
-                  setFilterBy((prev) => (prev === "call" ? "chat" : "call"))
-                }
-              >
+              {/* Filter dropdown: shows icon + label, select changes filterBy */}
+              <div className={styles.actionButton}>
                 <Icons.Filter size={14} />
-                <span>Filter</span>
-              </button>
+                <select
+                  value={filterBy}
+                  onChange={(e) => {
+                    setFilterBy(e.target.value);
+                    setPage(1);
+                  }}
+                  className={styles.filterSelect}
+                >
+                  <option value="call">Call</option>
+                  <option value="chat">Chat</option>
+                </select>
+              </div>
               <button
                 className={styles.actionButton}
                 onClick={() =>
@@ -252,146 +263,190 @@ const ConsultationHistory = () => {
 
                 {/* Items for this date */}
                 <div className={styles.itemsList}>
-                  {items.map((item, index) => (
-                    <div key={item._id} className={styles.orderCard}>
-                      {/* Order ID and Menu */}
-                      <div className={styles.orderHeader}>
-                        <span className={styles.orderNumber}>
-                          #{index + 1 + (page - 1) * 10}
-                        </span>
-                        <div
-                          className={styles.menuContainer}
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <button
-                            onClick={() =>
-                              setOpenMenuId(
-                                openMenuId === item._id ? null : item._id,
-                              )
-                            }
-                            className={styles.menuButton}
+                  {items.map((item, index) => {
+                    // console.log(
+                    //   "first",
+                    //   PATH.privateRoutes.CHAT_WINDOW.path.replace(
+                    //     ":chatId",
+                    //     item?.id,
+                    //   ),
+                    //   {
+                    //     state: {
+                    //       userId: item?.userId,
+                    //       astrologerId: item?.astrologerId,
+                    //       fullName: item?.displayProfile?.name,
+                    //       roomId:
+                    //         activeChat?.chaterId === item.userId
+                    //           ? activeChat?.roomId
+                    //           : null,
+                    //       isUserSide: false,
+                    //       kundliId: null,
+                    //       userID: item?.userId,
+                    //     },
+                    //   },
+                    // );
+                    return (
+                      <div key={item._id} className={styles.orderCard}>
+                        {/* Order ID and Menu */}
+                        <div className={styles.orderHeader}>
+                          <span className={styles.orderNumber}>
+                            #{index + 1 + (page - 1) * 10}
+                          </span>
+                          <div
+                            className={styles.menuContainer}
+                            onClick={(e) => e.stopPropagation()}
                           >
-                            <Icons.MoreVertical size={18} />
-                          </button>
-
-                          {openMenuId === item._id && (
-                            <div className={styles.menuDropdown}>
-                              <button
-                                onClick={() => {
-                                  setRefundItem(item);
-                                  setRefundAmount("");
-                                  setOpenMenuId(null);
-                                }}
-                                className={styles.menuItem}
-                              >
-                                Refund
-                              </button>
-                              <button
-                                onClick={() => {
-                                  // console.log("Total Refund", item._id);
-                                  setOpenMenuId(null);
-                                }}
-                                className={styles.menuItemDanger}
-                              >
-                                Total Refund
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Main Content */}
-                      <div className={styles.orderContent}>
-                        {/* Profile Image - Vertically Centered */}
-                        <div className={styles.profileImageContainer}>
-                          <div className={styles.profileImage}>
-                            <img
-                              src={
-                                item.displayProfile?.profileImage ||
-                                AppDefaultImg.DefaultMaleAstrologer
+                            <button
+                              onClick={() =>
+                                setOpenMenuId(
+                                  openMenuId === item._id ? null : item._id,
+                                )
                               }
-                              alt={item.displayProfile?.name || "User"}
-                              onError={(e) => {
-                                e.target.src = defaultProfileImage;
-                              }}
-                            />
-                          </div>
-                        </div>
+                              className={styles.menuButton}
+                            >
+                              <Icons.MoreVertical size={18} />
+                            </button>
 
-                        {/* Details - Full Width Container */}
-                        <div className={styles.detailsContainer}>
-                          <svg width="0" height="0">
-                            <defs>
-                              <linearGradient
-                                id="starGradient"
-                                x1="0%"
-                                y1="0%"
-                                x2="100%"
-                                y2="0%"
-                              >
-                                <stop
-                                  offset="0%"
-                                  stopColor="var(--main-primary-start)"
-                                />
-                                <stop
-                                  offset="100%"
-                                  stopColor="var(--main-primary-end)"
-                                />
-                              </linearGradient>
-                            </defs>
-                          </svg>
-                          {/* Stars and Call Button Row */}
-                          <div className={styles.starsAndCallRow}>
-                            <div className={styles.starsContainer}>
-                              {[1, 2, 3, 4, 5].map((star) => {
-                                const isFilled = star <= (item?.rating || 0);
-
-                                return (
-                                  <Icons.Star
-                                    key={star}
-                                    size={20}
-                                    strokeWidth={2}
-                                    className={`${styles.star} ${
-                                      isFilled
-                                        ? styles.starFilled
-                                        : styles.starEmpty
-                                    }`}
-                                  />
-                                );
-                              })}
-                            </div>
-                            {item.type === "call" ? (
-                              <button className={styles.callButton}>
-                                <img src={AppIcons.Call1} alt="call" />
-                              </button>
-                            ) : (
-                              <button className={styles.callButton}>
-                                <img src={AppIcons.Chat1} alt="chat" />
-                              </button>
+                            {openMenuId === item._id && (
+                              <div className={styles.menuDropdown}>
+                                <button
+                                  onClick={() => {
+                                    setRefundItem(item);
+                                    setRefundAmount("");
+                                    setOpenMenuId(null);
+                                  }}
+                                  className={styles.menuItem}
+                                >
+                                  Refund
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    // console.log("Total Refund", item._id);
+                                    setOpenMenuId(null);
+                                  }}
+                                  className={styles.menuItemDanger}
+                                >
+                                  Total Refund
+                                </button>
+                              </div>
                             )}
                           </div>
+                        </div>
 
-                          {/* Name - Left Aligned */}
-                          <h4 className={styles.userName}>
-                            {item.displayProfile?.name || "Unknown User"}
-                          </h4>
-
-                          {/* Date and Time Row - Left Aligned */}
-                          <div className={styles.dateTimeRow}>
-                            <div className={styles.dateTimeItem}>
-                              <Icons.Calendar size={16} strokeWidth={2} />
-                              <span>{formatDate(item.createdAt)}</span>
-                            </div>
-                            <div className={styles.dateTimeItem}>
-                              <Icons.Clock size={16} strokeWidth={2} />
-                              <span>{formatTime(item.createdAt)}</span>
+                        {/* Main Content */}
+                        <div
+                          className={styles.orderContent}
+                          // onClick={() =>
+                          //   navigate(
+                          //     PATH.privateRoutes.CHAT_WINDOW.path.replace(
+                          //       ":chatId",
+                          //       item?.id,
+                          //     ),
+                          //     {
+                          //       state: {
+                          //         userId: item?.userId,
+                          //         astrologerId: astrologerId,
+                          //         fullName: item?.displayProfile?.name,
+                          //         roomId:
+                          //           activeChat?.chaterId === item.userId
+                          //             ? activeChat?.roomId
+                          //             : null,
+                          //         isUserSide: false,
+                          //         kundliId: null,
+                          //         userID: item?.userId,
+                          //       },
+                          //     },
+                          //   )
+                          // }
+                        >
+                          {/* Profile Image - Vertically Centered */}
+                          <div className={styles.profileImageContainer}>
+                            <div className={styles.profileImage}>
+                              <img
+                                src={
+                                  item.displayProfile?.profileImage ||
+                                  AppDefaultImg.DefaultMaleAstrologer
+                                }
+                                alt={item.displayProfile?.name || "User"}
+                                onError={(e) => {
+                                  e.target.src = defaultProfileImage;
+                                }}
+                              />
                             </div>
                           </div>
 
-                          {/* Duration - Only show if exists */}
-                          {item.sessionDetails?.durationSeconds !== null &&
-                            item.sessionDetails?.durationSeconds !==
-                              undefined && (
+                          {/* Details - Full Width Container */}
+                          <div className={styles.detailsContainer}>
+                            <svg width="0" height="0">
+                              <defs>
+                                <linearGradient
+                                  id="starGradient"
+                                  x1="0%"
+                                  y1="0%"
+                                  x2="100%"
+                                  y2="0%"
+                                >
+                                  <stop
+                                    offset="0%"
+                                    stopColor="var(--main-primary-start)"
+                                  />
+                                  <stop
+                                    offset="100%"
+                                    stopColor="var(--main-primary-end)"
+                                  />
+                                </linearGradient>
+                              </defs>
+                            </svg>
+                            {/* Stars and Call Button Row */}
+                            <div className={styles.starsAndCallRow}>
+                              <div className={styles.starsContainer}>
+                                {[1, 2, 3, 4, 5].map((star) => {
+                                  const isFilled = star <= (item?.rating || 0);
+
+                                  return (
+                                    <Icons.Star
+                                      key={star}
+                                      size={20}
+                                      strokeWidth={2}
+                                      className={`${styles.star} ${
+                                        isFilled
+                                          ? styles.starFilled
+                                          : styles.starEmpty
+                                      }`}
+                                    />
+                                  );
+                                })}
+                              </div>
+                              {item.type === "call" ? (
+                                <button className={styles.callButton}>
+                                  <img src={AppIcons.Call1} alt="call" />
+                                </button>
+                              ) : (
+                                <button className={styles.callButton}>
+                                  <img src={AppIcons.Chat1} alt="chat" />
+                                </button>
+                              )}
+                            </div>
+
+                            {/* Name - Left Aligned */}
+                            <h4 className={styles.userName}>
+                              {item.displayProfile?.name || "Unknown User"}
+                            </h4>
+
+                            {/* Date and Time Row - Left Aligned */}
+                            <div className={styles.dateTimeRow}>
+                              <div className={styles.dateTimeItem}>
+                                <Icons.Calendar size={16} strokeWidth={2} />
+                                <span>{formatDate(item.createdAt)}</span>
+                              </div>
+                              <div className={styles.dateTimeItem}>
+                                <Icons.Clock size={16} strokeWidth={2} />
+                                <span>{formatTime(item.createdAt)}</span>
+                              </div>
+                            </div>
+
+                            {/* Duration - Only show if exists */}
+                            {item.sessionDetails?.durationSeconds && (
                               <p className={styles.duration}>
                                 Duration :{" "}
                                 {formatDuration(
@@ -400,17 +455,18 @@ const ConsultationHistory = () => {
                               </p>
                             )}
 
-                          {/* Amount - Left Aligned */}
-                          <p className={styles.amount}>
-                            ₹
-                            {item.billing?.astrologer?.creditAmount ||
-                              item.sessionDetails?.amount ||
-                              0}
-                          </p>
+                            {/* Amount - Left Aligned */}
+                            <p className={styles.amount}>
+                              ₹
+                              {item.billing?.astrologer?.creditAmount ||
+                                item.sessionDetails?.amount ||
+                                0}
+                            </p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             ))}

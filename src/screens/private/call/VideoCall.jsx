@@ -21,7 +21,7 @@ import { ReconnectingOverlay } from "../../../components/UI";
 const APP_ID = "cf5e31fa03584573aacaf42daebd493c";
 
 const VideoCalling = ({ callData }) => {
-  const { activeCall, setActiveCall, setReviewData, setOpenReview, sharedAgoraState, setSharedAgoraState, isUpgradingRef, callStartTime, setCallStartTime, isCallMinimized, setIsCallMinimized, isReconnecting, networkDisconnected } = useCall();
+  const { activeCall, setActiveCall, setReviewData, setOpenReview, sharedAgoraState, setSharedAgoraState, isUpgradingRef, callStartTime, setCallStartTime, isCallMinimized, setIsCallMinimized, isReconnecting, networkDisconnected, recoverCallAfterSystemDisconnect } = useCall();
   const { activeChat } = useChatContext();
   const navigate = useNavigate();
 
@@ -762,13 +762,21 @@ const VideoCalling = ({ callData }) => {
   useEffect(() => {
     console.log("[VideoCall] Setting up socket listeners for room:", roomId);
     
-    const onCallEnded = () => {
-      console.log("📞 call:ended received in VideoCall");
+    const onCallEnded = (data) => {
+      console.log("📞 call:ended received in VideoCall", data);
+      if (data?.roomId && data.roomId !== roomId) {
+        return;
+      }
       // Don't end call if we're downgrading to audio
       if (isDowngradingRef.current) {
         console.log("🔽 Ignoring call:ended - downgrading to audio");
         return;
       }
+
+      if (recoverCallAfterSystemDisconnect(data)) {
+        return;
+      }
+
       handleRemoteCallEndRef.current();
     };
 

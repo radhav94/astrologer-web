@@ -18,7 +18,7 @@ export default function useChat({
   const [error, setError] = useState(null);
   const [isTyping, setIsTyping] = useState(false);
   const [isMessageDisabled, setIsMessageDisabled] = useState(false);
-  const {setActiveChat, activeChat, startTimer, stopTimer, chatSeconds} = useChatContext();
+  const {setActiveChat, activeChat, startTimer, stopTimer, chatSeconds, recoverChatAfterSystemDisconnect} = useChatContext();
   const { activeCall } = useCall();
   const navigate = useNavigate();
 
@@ -45,7 +45,11 @@ export default function useChat({
     }
   }, [activeChat, activeCall]);
 
-  const handleChatEndedFromServer = () => {
+  const handleChatEndedFromServer = (data) => {
+    console.log("[ChatWindow] chat:ended", JSON.stringify(data, null, 2));
+    if (recoverChatAfterSystemDisconnect(data)) {
+      return;
+    }
     setIsMessageDisabled(true);
     setOpenReview(true);
     stopTimer();

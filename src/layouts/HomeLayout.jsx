@@ -53,7 +53,7 @@ const HomeLayout = () => {
   const avatar = userData?.profileImgUrl || getDefaultImgBasedOnGender(userData?.gender);
 
   //Chat
-  const { setActiveChat, setChatSeconds } = useChatContext();
+  const { setActiveChat, setChatSeconds, recoverChatAfterSystemDisconnect } = useChatContext();
   const navigate = useNavigate();
 
   const handleStatusToggle = async (type) => {
@@ -213,7 +213,11 @@ const HomeLayout = () => {
       });
     };
 
-    const handleChatEnd = () => {
+    const handleChatEnd = (data) => {
+      console.log("[HomeLayout] chat:ended", JSON.stringify(data, null, 2));
+      if (recoverChatAfterSystemDisconnect(data)) {
+        return;
+      }
       toast.warning("Chat has ended");
       setActiveChat(null);
     };

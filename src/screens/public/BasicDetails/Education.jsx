@@ -106,8 +106,9 @@ const Education = () => {
   };
 
   return (
-    <div className={styles.container}>
-      <div className={styles.containerCard}>
+    <div className={styles.formLayoutWrapper}>
+      <div className={styles.formLayoutContainer}>
+        <div className={styles.formLayoutContent}>
 
         {/* Progress + Skip */}
         <div className={styles.progressWithSkip}>
@@ -200,20 +201,23 @@ const Education = () => {
             onChange={(value) => formik.setFieldValue("educationShowOnProfile", value)}
           />
         </div>
+        </div>
 
         {/* Next Button */}
-        <Button
-          type="submit"
-          onClick={formik.handleSubmit}
-          disabled={!isFormValid || formik.isSubmitting}
-          className={`${styles.formButton} ${
-            !isFormValid || formik.isSubmitting
-              ? styles.formButtonDisabled
-              : ""
-          }`}
-        >
-          Next
-        </Button>
+        <div className={styles.formLayoutFooter}>
+          <Button
+            type="submit"
+            onClick={formik.handleSubmit}
+            disabled={!isFormValid || formik.isSubmitting}
+            className={`${styles.formButton} ${
+              !isFormValid || formik.isSubmitting
+                ? styles.formButtonDisabled
+                : ""
+            }`}
+          >
+            Next
+          </Button>
+        </div>
       </div>
     </div>
   );

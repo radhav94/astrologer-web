@@ -1,6 +1,6 @@
 import { ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import styles from "./Login.module.scss";
 import * as AuthServices from "../../../services/appServices/authservice";
 import { AppImages } from "../../../utils/appImages";
@@ -14,7 +14,7 @@ const Login = () => {
   const [mobile, setMobile] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [isInputFocused, setIsInputFocused] = useState(false);
+  const navigatedRef = useRef(false);
 
   // ✅ Allow numbers only & max 10 digits
   const handleMobileChange = (e) => {
@@ -30,7 +30,7 @@ const Login = () => {
 
   // ✅ Get OTP API Call
   const handleGetOtp = async () => {
-    if (!isValidMobile) return;
+    if (!isValidMobile || loading || navigatedRef.current) return;
 
     try {
       setLoading(true);
@@ -48,17 +48,24 @@ const Login = () => {
         throw new Error(response?.data?.message || "Failed to send OTP");
       }
 
-      // ✅ Navigate to OTP verify page
+      // ✅ Set session flag before navigating
       sessionStorage.setItem("otpSession", "true");
+
+      // ✅ Mark as navigated to prevent state updates after navigation
+      navigatedRef.current = true;
+
+      // ✅ Navigate to OTP verify page (replace to prevent back-button loop)
       navigate("/verify-otp", {
+        replace: true,
         state: {
           mobile: `+91${mobile}`,
           phoneNumber: `91${mobile}`,
         },
       });
+      return; // exit early, skip finally state updates
     } catch (err) {
-      setError(err.message || "Something went wrong");
-    } finally {
+      const apiMessage = err?.response?.data?.message || err.message || "Something went wrong";
+      setError(apiMessage);
       setLoading(false);
     }
   };
@@ -70,9 +77,7 @@ const Login = () => {
   };
 
   return (
-    <div
-      className={`${styles.loginContainer} ${isInputFocused ? styles.keyboardOpen : ""}`}
-    >
+    <div className={styles.loginContainer}>
       <img
         src={AppImages.CosmicCircle}
         alt="Onboarding"
@@ -86,8 +91,7 @@ const Login = () => {
         modalOpen={isOpen}
         setModalOpen={setIsOpen}
         doNotClose={true}
-        showBackButton={isInputFocused}
-        className={`${styles.onboardingModal} ${isInputFocused ? styles.expanded : ""}`}
+        className={styles.onboardingModal}
       >
         <div className={styles.modalContent}>
           <h1 className={styles.heading}>Start your journey</h1>
@@ -127,8 +131,6 @@ const Login = () => {
                 onChange={handleMobileChange}
                 placeholder="Enter your Number"
                 onKeyDown={handleKeyDown}
-                onFocus={() => setIsInputFocused(true)}
-                onBlur={() => setIsInputFocused(false)}
                 className={styles.phoneInput}
               />
               <span className={styles.countryCode}>+91</span>

@@ -35,6 +35,9 @@
     flex-direction: column;
     padding: 24px;
     overflow-y: auto;
+    scrollbar-width: none; // Firefox
+    -ms-overflow-style: none; // IE/Edge
+    &::-webkit-scrollbar { display: none; } // Chrome/Safari
     
     @media (min-width: 1024px) {
         max-width: 32rem;
@@ -45,6 +48,9 @@
     flex: 1;
     overflow-y: auto;
     padding-bottom: 1rem;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    &::-webkit-scrollbar { display: none; }
 }
 
 .formLayoutFooter {
@@ -562,73 +568,56 @@
 .expertiseGridFigma {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
+    gap: 0.75rem;
     margin-bottom: 0.5rem;
-
-    @media (max-width: 768px) {
-        grid-template-columns: 1fr;
-    }
 }
 
 .expertiseCardFigma {
-    min-height: 140px;
-    border-radius: 1.5rem;
-    padding: 1.2rem;
-    border: none;
+    aspect-ratio: 1;
+    border-radius: 1.25rem;
+    padding: 1rem;
+    border: 2px solid transparent;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
     position: relative;
     overflow: hidden;
-
-    &:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    }
-
-    &:active {
-        transform: translateY(0);
-    }
 }
 
 .expertiseCardFigmaActive {
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-    transform: scale(1.02);
-
-    &:hover {
-        transform: scale(1.02) translateY(-2px);
-    }
+    border-color: #F75801;
+    box-shadow: 0 2px 8px rgba(247, 88, 1, 0.2);
 }
 
 .expertiseCardContent {
     display: flex;
+    flex-direction: column;
     justify-content: space-between;
-    align-items: flex-start;
     height: 100%;
 }
 
 .expertiseCardTitle {
-    font-size: 1rem;
-    font-weight: 600;
+    font-size: 0.95rem;
+    font-weight: 700;
     color: #1f2937;
     text-align: left;
-    line-height: 1.4;
+    line-height: 1.35;
     margin: 0;
-    max-width: 60%;
 }
 
 .expertiseIconCircle {
-    width: 3.5rem;
-    height: 3.5rem;
+    width: 2.75rem;
+    height: 2.75rem;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    align-self: flex-end;
 }
 
 .expertiseIcon {
-    width: 2rem;
-    height: 2rem;
+    width: 1.4rem;
+    height: 1.4rem;
     object-fit: contain;
     filter: brightness(0) invert(1);
 }

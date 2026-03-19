@@ -87,7 +87,7 @@
 
 .input {
   width: 100%;
-  padding: 16px;
+  padding: 12px;
   border-radius: 12px;
   border: 1px solid #E5E5E5;
   background-color: var(--white-color);
@@ -244,7 +244,7 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  margin-top: 32px;
+  margin-top: 24px;
   transition: all 0.2s ease;
 
   &:disabled{

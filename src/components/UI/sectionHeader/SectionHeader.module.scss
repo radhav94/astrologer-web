@@ -2,11 +2,11 @@
   display: flex;
   align-items: center;
   gap: 1rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
 }
 
 .backButton {
-  padding: 1rem;
+  // padding: 1rem;
   background-color: var(--white-color);
   border-radius: 50px;
   border: 1px solid var(--main-primary-start);
@@ -22,7 +22,7 @@
 }
 
 .title {
-  font-size: 1.5rem;
+  font-size: 1.3rem;
   font-weight: 700;
   color: var(--title);
 }

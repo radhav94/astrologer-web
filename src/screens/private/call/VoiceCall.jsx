@@ -30,6 +30,7 @@ const AgoraVoiceCalling = ({ callData }) => {
   }
 
   const { roomId, agoraToken, callerName, isUserSide } = callData;
+  const shouldSkipReview = Boolean(activeChat?.roomId || activeCall?.resumeToChat);
 
   /* ================= REFS ================= */
   const clientRef = useRef(null);
@@ -529,7 +530,7 @@ const AgoraVoiceCalling = ({ callData }) => {
       fullName: activeCall?.callerName,
     });
     // Don't show review popup if chat is still active
-    if (!activeChat) {
+    if (!shouldSkipReview) {
       setOpenReview(true);
     }
     await cleanup();
@@ -550,7 +551,7 @@ const AgoraVoiceCalling = ({ callData }) => {
       fullName: activeCall?.callerName,
     });
     // Don't show review popup if chat is still active
-    if (!activeChat) {
+    if (!shouldSkipReview) {
       setOpenReview(true);
     }
     await cleanup();
@@ -571,7 +572,7 @@ const AgoraVoiceCalling = ({ callData }) => {
       fullName: activeCall?.callerName,
     });
     // Don't show review popup if chat is still active
-    if (!activeChat) {
+    if (!shouldSkipReview) {
       setOpenReview(true);
     }
     await cleanup();

@@ -655,6 +655,7 @@ const ChatWindow = () => {
         chatRoomId: roomId,
         kundliId,
         userID,
+        resumeToChat: true,
       });
       voiceSocket.off("call:initiated", handleCallInitiated);
       voiceSocket.off("call:initiate:error", handleCallError);

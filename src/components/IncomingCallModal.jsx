@@ -1,10 +1,12 @@
 import { useCall } from "../context/CallContext";
+import { useChat as useChatContext } from "../context/chatContext";
 import { voiceSocket } from "../services/appServices/voiceSocketServices";
 import toast from "./toast";
 import { useEffect, useState, useRef } from "react";
 
 const IncomingCallModal = () => {
   const { incomingCall, setIncomingCall, setActiveCall, activeCall, sharedAgoraState, setSharedAgoraState, setIsUpgradeRejectionProtected, upgradeRejectionRef, isUpgradingRef } = useCall();
+  const { activeChat } = useChatContext();
   const [isAccepting, setIsAccepting] = useState(false);
   const pendingUpgradeRef = useRef(false); // Track if we're waiting for an upgrade accept
 
@@ -61,6 +63,12 @@ const IncomingCallModal = () => {
       
       // Only set active call when server confirms success
       if (incomingCall) {
+        const shouldResumeChat = Boolean(activeChat?.roomId) && (
+          activeChat.roomId === incomingCall.roomId ||
+          activeChat.roomId === incomingCall.chatRoomId ||
+          incomingCall.isSwitch
+        );
+
         // Check if this is a switch/downgrade scenario
         // Detect switch from our own state - don't rely solely on backend's isSwitch flag
         const isSameRoom = activeCall && activeCall.roomId === incomingCall.roomId;
@@ -83,7 +91,8 @@ const IncomingCallModal = () => {
           setActiveCall({
             ...activeCall, // Preserve existing call data
             callType: incomingCall.callType, // Update only the call type
-            agoraToken: data.agoraToken || incomingCall.agoraToken || activeCall.agoraToken // Update token if provided
+            agoraToken: data.agoraToken || incomingCall.agoraToken || activeCall.agoraToken, // Update token if provided
+            resumeToChat: activeCall.resumeToChat || shouldResumeChat,
           });
         } else {
           // New call - set all data from incomingCall
@@ -97,7 +106,8 @@ const IncomingCallModal = () => {
             astrologerId: incomingCall.astrologerId,
             chatRoomId: incomingCall.chatRoomId,
             kundliId: incomingCall.kundliId,
-            userID: incomingCall.userID
+            userID: incomingCall.userID,
+            resumeToChat: shouldResumeChat,
           });
         }
         
@@ -113,7 +123,7 @@ const IncomingCallModal = () => {
       voiceSocket.off("error", handleCallAcceptError);
       voiceSocket.off("call:accepted", handleCallAcceptSuccess);
     };
-  }, [setIncomingCall, incomingCall, setActiveCall, activeCall]);
+  }, [setIncomingCall, incomingCall, setActiveCall, activeCall, activeChat]);
 
   if (!incomingCall) return null;
 

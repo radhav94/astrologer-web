@@ -31,6 +31,7 @@ const VideoCalling = ({ callData }) => {
   }
 
   const { roomId, agoraToken, isUserSide, callerName } = callData;
+  const shouldSkipReview = Boolean(activeChat?.roomId || activeCall?.resumeToChat);
 
   const clientRef = useRef(null);
   const micTrackRef = useRef(null);
@@ -714,7 +715,7 @@ const VideoCalling = ({ callData }) => {
     });
 
     // Don't show review popup if chat is still active
-    if (!activeChat) {
+    if (!shouldSkipReview) {
       setOpenReview(true);
     }
     await cleanup();
@@ -738,7 +739,7 @@ const VideoCalling = ({ callData }) => {
 
     // Don't emit call:end - already ended by remote/server
     // Don't show review popup if chat is still active
-    if (!activeChat) {
+    if (!shouldSkipReview) {
       setOpenReview(true);
     }
     await cleanup();

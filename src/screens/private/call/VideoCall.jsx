@@ -12,6 +12,7 @@ import { useNavigate } from "react-router-dom";
 import styles from "./VideoCalling.module.scss";
 import { voiceSocket } from "../../../services/appServices/voiceSocketServices";
 import { useCall } from "../../../context/CallContext";
+import { useChat as useChatContext } from "../../../context/chatContext";
 import VideoCallChat from "./VideoCallChat";
 import { PATH } from "../../../utils/routes/Paths";
 import CallIcon from "../../../assets/chat/Call.svg";
@@ -21,6 +22,7 @@ const APP_ID = "cf5e31fa03584573aacaf42daebd493c";
 
 const VideoCalling = ({ callData }) => {
   const { activeCall, setActiveCall, setReviewData, setOpenReview, sharedAgoraState, setSharedAgoraState, isUpgradingRef, callStartTime, setCallStartTime, isCallMinimized, setIsCallMinimized, isReconnecting, networkDisconnected } = useCall();
+  const { activeChat } = useChatContext();
   const navigate = useNavigate();
 
 
@@ -29,6 +31,7 @@ const VideoCalling = ({ callData }) => {
   }
 
   const { roomId, agoraToken, isUserSide, callerName } = callData;
+  const shouldSkipReview = Boolean(activeChat?.roomId || activeCall?.resumeToChat);
 
   const clientRef = useRef(null);
   const micTrackRef = useRef(null);
@@ -150,6 +153,7 @@ const VideoCalling = ({ callData }) => {
   useEffect(() => {
     cleanupRef.current = false;
     endCallRef.current = false;
+    let didCancelStart = false;
 
     const start = async () => {
       try {
@@ -337,10 +341,26 @@ const VideoCalling = ({ callData }) => {
           }
         });
 
+        // On mobile Safari, requesting mic and camera separately can leave the call
+        // joined-but-unpublished long enough for the backend to resume chat.
+        const [micTrack, camTrack] = await AgoraRTC.createMicrophoneAndCameraTracks();
+        if (didCancelStart || cleanupRef.current || endCallRef.current) {
+          micTrack.stop();
+          micTrack.close();
+          camTrack.stop();
+          camTrack.close();
+          return;
+        }
+
+        micTrackRef.current = micTrack;
+        camTrackRef.current = camTrack;
+
         await client.join(APP_ID, roomId, agoraToken, null);
 
-        micTrackRef.current = await AgoraRTC.createMicrophoneAudioTrack();
-        camTrackRef.current = await AgoraRTC.createCameraVideoTrack();
+        if (didCancelStart || cleanupRef.current || endCallRef.current) {
+          await client.leave();
+          return;
+        }
 
         await client.publish([micTrackRef.current, camTrackRef.current]);
 
@@ -413,6 +433,9 @@ const VideoCalling = ({ callData }) => {
           }
         }, 1000);
       } catch (err) {
+        if (didCancelStart || cleanupRef.current || endCallRef.current) {
+          return;
+        }
         console.error("CALL START ERROR", err);
         
         // Don't cleanup on network errors during reconnection - let the reconnection logic handle it
@@ -432,6 +455,7 @@ const VideoCalling = ({ callData }) => {
     start();
     return () => {
       console.log("🎬 [VIDEO] Cleanup function called");
+      didCancelStart = true;
       cleanup();
     };
     // eslint-disable-next-line
@@ -690,7 +714,10 @@ const VideoCalling = ({ callData }) => {
       endedBy: isUserSide ? "CUSTOMER" : "ASTROLOGER",
     });
 
-    setOpenReview(true);
+    // Don't show review popup if chat is still active
+    if (!shouldSkipReview) {
+      setOpenReview(true);
+    }
     await cleanup();
   };
 
@@ -711,7 +738,10 @@ const VideoCalling = ({ callData }) => {
     });
 
     // Don't emit call:end - already ended by remote/server
-    setOpenReview(true);
+    // Don't show review popup if chat is still active
+    if (!shouldSkipReview) {
+      setOpenReview(true);
+    }
     await cleanup();
   };
 

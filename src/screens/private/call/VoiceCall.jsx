@@ -21,7 +21,7 @@ import { ReconnectingOverlay } from "../../../components/UI";
 const APP_ID = "cf5e31fa03584573aacaf42daebd493c";
 
 const AgoraVoiceCalling = ({ callData }) => {
-  const { activeCall, setActiveCall, sharedAgoraState, setSharedAgoraState, isUpgradeRejectionProtected, upgradeRejectionRef, isUpgradingRef, setReviewData, setOpenReview, callStartTime, setCallStartTime, isCallMinimized, setIsCallMinimized, isReconnecting, networkDisconnected } = useCall();
+  const { activeCall, setActiveCall, sharedAgoraState, setSharedAgoraState, isUpgradeRejectionProtected, upgradeRejectionRef, isUpgradingRef, setReviewData, setOpenReview, callStartTime, setCallStartTime, isCallMinimized, setIsCallMinimized, isReconnecting, networkDisconnected, recoverCallAfterSystemDisconnect } = useCall();
   const { activeChat, setActiveChat } = useChatContext();
   const navigate = useNavigate();
 
@@ -593,10 +593,15 @@ const AgoraVoiceCalling = ({ callData }) => {
     
     const handleCallEnded = (data) => {
       console.log("📞 call:ended event received:", data);
-      // Only handle if it's for our room
-      if (!data?.roomId || data.roomId === roomId) {
-        handleServerCallEndRef.current();
+      if (data?.roomId && data.roomId !== roomId) {
+        return;
       }
+
+      if (recoverCallAfterSystemDisconnect(data)) {
+        return;
+      }
+
+      handleServerCallEndRef.current();
     };
 
     const handleForceCallEnd = (data) => {

@@ -763,7 +763,7 @@ const ChatWindow = () => {
         </div>
 
         {/* Mobile Call Buttons - Part of sticky header */}
-        <div className="md:hidden flex gap-3 px-4 py-3 bg-[#FFF8F0] border-b border-gray-200">
+        {/* <div className="md:hidden flex gap-3 px-4 py-3 bg-[#FFF8F0] border-b border-gray-200">
           <button onClick={() => handleInitiateCall("audio")} className="flex-1 flex items-center justify-center gap-2 py-3 rounded-full border-2 bg-white hover:opacity-90 transition-opacity"
             style={{ borderColor: '#f75801' }}
           >
@@ -777,11 +777,11 @@ const ChatWindow = () => {
             <img src={VideocamIcon} alt="Video Call" width="20" height="20" />
             <span className="text-base font-medium" style={{ color: '#f75801' }}>Video Call</span>
           </button>
-        </div>
+        </div> */}
       </div>
 
       {/* ---------- Messages ---------- */}
-      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 md:p-6 pb-8 custom-scrollbar">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 md:p-6 pb-24 md:pb-8 custom-scrollbar">
         {messagesWithDate.map((msg) =>
           msg.isDate ? (
             <div
@@ -806,9 +806,9 @@ const ChatWindow = () => {
 
       {/* ---------- Input ---------- */}
       {!isMessageDisabled && (
-        <div className="sticky bottom-0 z-20 px-4 py-4 bg-white border-t border-gray-200">
-          <div className="flex items-center gap-3">
-            <div className="flex-1 flex items-center bg-white border border-gray-300 rounded-lg px-5 py-3.5 shadow-sm">
+        <div className="fixed bottom-0 left-0 right-0 z-20 px-4 py-3 bg-white border-t border-gray-200 md:sticky md:bottom-0">
+          <div className="flex items-center gap-2">
+            <div className="flex-1 flex items-center bg-white border border-gray-300 rounded-lg px-3 md:px-5 py-3 shadow-sm min-w-0">
               <input
                 type="text"
                 value={message}
@@ -824,10 +824,10 @@ const ChatWindow = () => {
                   }
                 }}
                 disabled={isMessageDisabled}
-                className="flex-1 bg-transparent border-none outline-none text-sm text-gray-700 placeholder-gray-400"
+                className="flex-1 min-w-0 bg-transparent border-none outline-none text-sm text-gray-700 placeholder-gray-400"
               />
 
-              <div className="flex items-center gap-3 ml-3 border-l border-gray-300 pl-3">
+              <div className="flex items-center gap-2 md:gap-3 ml-2 md:ml-3 border-l border-gray-300 pl-2 md:pl-3 flex-shrink-0">
                 <button
                   onClick={handleAttachment}
                   disabled={attachmentSelecting}
@@ -835,15 +835,16 @@ const ChatWindow = () => {
                   style={{ color: '#f75801' }}
                   aria-label="Attach file"
                 >
-                  <Paperclip size={24} />
+                  <Paperclip size={22} />
                 </button>
 
                 <button
                   onClick={handleMicClick}
                   className="hover:opacity-80 transition-opacity"
                   style={{ color: '#f75801' }}
+                  aria-label="Voice message"
                 >
-                  <Mic size={24} />
+                  <Mic size={22} />
                 </button>
 
                 <button
@@ -851,8 +852,9 @@ const ChatWindow = () => {
                   disabled={!message.trim() || isMessageDisabled}
                   className="hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{ color: '#f75801' }}
+                  aria-label="Send message"
                 >
-                  <Send size={24} />
+                  <Send size={22} />
                 </button>
               </div>
             </div>

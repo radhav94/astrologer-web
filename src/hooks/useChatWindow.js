@@ -5,6 +5,7 @@ import toast from "../components/toast";
 import {useChat as useChatContext} from "../context/chatContext"
 import { useCall } from "../context/CallContext";
 import { useNavigate } from "react-router-dom";
+import { showErrorWithHighlight } from "../utils/showErrorWithHighlight";
 
 export default function useChat({
   userId,
@@ -99,7 +100,8 @@ export default function useChat({
         console.log("[useChatWindow] Socket disconnected:", reason);
       },
       onError: (errMsg) => {
-        toast.error(errMsg ||"Something went wrong");
+        showErrorWithHighlight(errMsg);
+        // toast.error(errMsg ||"Something went wrong");
         setError(errMsg)
         if(errMsg === 'Chat no longer available' || errMsg === 'Chat has already ended' || errMsg === 'Session not found'){
           setIsMessageDisabled(true);

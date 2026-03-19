@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useState, useCallback } from "react";
 import { ChevronDown } from "lucide-react";
+import useClickOutside from "../../../hooks/useClickOutside";
 
 const ChartSelect = ({
   options = ["Birth Chart"],
@@ -7,21 +8,8 @@ const ChartSelect = ({
   onChange,
 }) => {
   const [open, setOpen] = useState(false);
-  const wrapperRef = useRef(null);
-
-  // 🔹 Close dropdown on outside click
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
-        setOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
+  const closeDropdown = useCallback(() => setOpen(false), []);
+  const wrapperRef = useClickOutside(closeDropdown, open);
 
   return (
     <div ref={wrapperRef} className="relative w-full">

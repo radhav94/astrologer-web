@@ -1,6 +1,17 @@
+import { useState, useCallback } from "react";
 import { Icons } from "../../Icons";
 import { DonutChart, Heatmap } from "../../Charts";
 import SectionHeader from "../../UI/SectionHeader";
+import useClickOutside from "../../../hooks/useClickOutside";
+
+const MONTHS = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
+];
+
+const NOW = new Date();
+const CURRENT_MONTH = NOW.getMonth() + 1;
+const CURRENT_YEAR = NOW.getFullYear();
 
 /**
  * Monthly Overview Section Component
@@ -13,15 +24,94 @@ const MonthlyOverviewSection = ({
   metricsData,
   categoryPercentages,
   monthlyOverview,
-  heatmapData
+  heatmapData,
+  selectedMonth,
+  selectedYear,
+  setSelectedMonth,
+  setSelectedYear,
 }) => {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const closeDropdown = useCallback(() => setIsDropdownOpen(false), []);
+  const dropdownRef = useClickOutside(closeDropdown, isDropdownOpen);
+
+  const handleMonthSelect = (monthIndex) => {
+    setSelectedMonth(monthIndex + 1);
+    setIsDropdownOpen(false);
+  };
+
+  const handleYearChange = (direction) => {
+    const newYear = selectedYear + direction;
+    if (newYear > CURRENT_YEAR) return;
+    setSelectedYear(newYear);
+    if (newYear === CURRENT_YEAR && selectedMonth > CURRENT_MONTH) {
+      setSelectedMonth(CURRENT_MONTH);
+    }
+  };
+
   return (
     <div className="space-y-4 lg:space-y-6">
       <div className="space-y-4 lg:space-y-6">
         <div className="flex items-center justify-between">
           <SectionHeader title="MONTHLY OVERVIEW" />
-          <div className="bg-white border border-[#D1D5DB] px-4 py-2 rounded-full text-sm font-normal text-[#FF6B35] flex items-center gap-2 ml-4">
-            {isMonthlyLoading ? "Loading..." : monthName} <Icons.ChevronDown size={16} className="text-[#FF6B35]" />
+          <div className="relative" ref={dropdownRef}>
+            <button
+              onClick={() => setIsDropdownOpen((prev) => !prev)}
+              className="bg-white border border-[#D1D5DB] px-4 py-2 rounded-full text-sm font-normal text-[#FF6B35] flex items-center gap-2 ml-4 cursor-pointer hover:bg-[#FFF8F0] transition-colors"
+            >
+              {isMonthlyLoading ? "Loading..." : monthName}
+              <Icons.ChevronDown
+                size={16}
+                className={`text-[#FF6B35] transition-transform ${isDropdownOpen ? "rotate-180" : ""}`}
+              />
+            </button>
+
+            {isDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-lg border border-gray-200 z-30 overflow-hidden">
+                {/* Year selector */}
+                <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-100 bg-[#FFF8F0]">
+                  <button
+                    onClick={() => handleYearChange(-1)}
+                    className="p-1 hover:bg-white rounded-full transition-colors"
+                  >
+                    <Icons.ChevronLeft size={16} className="text-[#FF6B35]" />
+                  </button>
+                  <span className="text-sm font-semibold text-gray-800">{selectedYear}</span>
+                  <button
+                    onClick={() => handleYearChange(1)}
+                    disabled={selectedYear >= CURRENT_YEAR}
+                    className="p-1 hover:bg-white rounded-full transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    <Icons.ChevronRight size={16} className="text-[#FF6B35]" />
+                  </button>
+                </div>
+
+                {/* Month grid */}
+                <div className="grid grid-cols-3 gap-1 p-2">
+                  {MONTHS.map((m, idx) => {
+                    const monthNum = idx + 1;
+                    const isSelected = monthNum === selectedMonth;
+                    const isFuture = selectedYear === CURRENT_YEAR && monthNum > CURRENT_MONTH;
+
+                    return (
+                      <button
+                        key={m}
+                        onClick={() => !isFuture && handleMonthSelect(idx)}
+                        disabled={isFuture}
+                        className={`py-2 px-1 rounded-lg text-xs font-medium transition-colors
+                          ${isSelected
+                            ? "bg-[#FF6B35] text-white"
+                            : isFuture
+                              ? "text-gray-300 cursor-not-allowed"
+                              : "text-gray-700 hover:bg-[#FFF0E6]"
+                          }`}
+                      >
+                        {m.slice(0, 3)}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

@@ -1,6 +1,23 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 
 export const DonutChart = ({ data }) => {
+  const total = data.reduce((sum, entry) => sum + entry.value, 0);
+
+  const CustomTooltip = ({ active, payload }) => {
+    if (!active || !payload?.length) return null;
+    const { name, value, fill } = payload[0].payload;
+    const pct = total > 0 ? ((value / total) * 100).toFixed(0) : 0;
+    return (
+      <div className="bg-white rounded-lg shadow-md border border-gray-100 px-3 py-2 text-xs">
+        <div className="flex items-center gap-1.5">
+          <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: fill }} />
+          <span className="text-gray-700 font-medium">{name}</span>
+        </div>
+        <p className="text-gray-900 font-semibold mt-0.5">₹{value.toLocaleString("en-IN")} ({pct}%)</p>
+      </div>
+    );
+  };
+
   return (
     <div className="h-24 w-24 sm:h-32 sm:w-32 relative">
       <ResponsiveContainer minWidth="100%" minHeight="100%">
@@ -35,17 +52,9 @@ export const DonutChart = ({ data }) => {
               <Cell key={`cell-${index}`} fill={entry.fill} />
             ))}
           </Pie>
-          <Tooltip
-            contentStyle={{
-              borderRadius: "8px",
-              border: "none",
-              boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
-            }}
-            itemStyle={{ fontSize: "12px" }}
-          />
+          <Tooltip content={<CustomTooltip />} />
         </PieChart>
       </ResponsiveContainer>
-      {/* Center Label (Simulated) */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
         <div className="text-center"></div>
       </div>

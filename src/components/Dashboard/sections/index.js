@@ -8,3 +8,4 @@ export { default as UpcomingSessionsSection } from './UpcomingSessionsSection';
 export { default as AvailabilityScheduleSection } from './AvailabilityScheduleSection';
 export { default as MonthlyOverviewSection } from './MonthlyOverviewSection';
 export { default as MilestonesSection } from './MilestonesSection';
+export { default as PendingVerificationSection } from './PendingVerificationSection';

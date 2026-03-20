@@ -37,9 +37,9 @@ const Languages = () => {
   
   // Static language cards for UI design purposes only
   const [myLanguages] = useState([
-    { id: "1", name: "Hindi", level: "Beginner", symbol: AppImages.Letter1 },
-    { id: "2", name: "English", level: "Beginner", symbol: AppImages.Letter1 },
-    { id: "3", name: "Tamil", level: "Beginner", symbol: AppImages.Letter1 },
+    { id: "1", name: "Hindi", level: "Basic", symbol: AppImages.Letter1 },
+    { id: "2", name: "English", level: "Basic", symbol: AppImages.Letter1 },
+    { id: "3", name: "Tamil", level: "Basic", symbol: AppImages.Letter1 },
   ]);
 
   const suggestedLanguages = [
@@ -50,7 +50,7 @@ const Languages = () => {
     "Telugu",
     "Kannada",
   ];
-  const proficiencies = ["Fluent", "Intermediate", "Beginner"];
+  const proficiencies = ["Fluent", "Basic", "Conversational", "Native"];
 
   // Validation schema using reusable utilities from utils.js
   const validationSchema = Yup.object().shape({

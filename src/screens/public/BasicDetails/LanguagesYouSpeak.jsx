@@ -19,7 +19,7 @@ const LANGUAGES = [
   "Kannada",
 ];
 
-const LEVELS = ["Fluent", "Intermediate", "Beginner"];
+const LEVELS = ["Fluent", "Basic", "Conversational", "Native"];
 
 const LanguagesYouSpeak = () => {
   const navigate = useNavigate();

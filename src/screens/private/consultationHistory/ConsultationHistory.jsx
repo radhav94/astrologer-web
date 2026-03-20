@@ -63,6 +63,7 @@ const ConsultationHistory = () => {
   const [refundAmount, setRefundAmount] = useState("");
   const [sortOrder, setSortOrder] = useState("desc");
   const [filterBy, setFilterBy] = useState("call");
+  const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
 
   const { data, isLoading, isFetching, isError } = useGetOrderHistoryQuery({
@@ -238,6 +239,9 @@ const ConsultationHistory = () => {
     <>
       <div className={styles.headerWrapper}>
         <SectionHeader title={"Order History"} />
+        <h2 className={styles.ordersCount}>
+          Total Orders: {data?.data?.pagination?.totalItems || 0}
+        </h2>
       </div>
 
       <div className={styles.mainContainer}>
@@ -245,10 +249,29 @@ const ConsultationHistory = () => {
         <main className={styles.mainContent}>
           {/* Orders Count and Actions */}
           <div className={styles.ordersHeader}>
-            <h2 className={styles.ordersCount}>
+            {/* <h2 className={styles.ordersCount}>
               Total Orders: {data?.data?.pagination?.totalItems || 0}
-            </h2>
+            </h2> */}
             <div className={styles.actionButtons}>
+              {/* Search Bar */}
+              <div className={styles.searchBar}>
+                <Icons.Search size={18} className={styles.searchIcon} />
+                <input
+                  type="text"
+                  placeholder="Search name"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className={styles.searchInput}
+                />
+                {searchQuery && (
+                  <button
+                    className={styles.searchClear}
+                    onClick={() => setSearchQuery("")}
+                  >
+                    <Icons.X size={16} />
+                  </button>
+                )}
+              </div>
               {/* Filter dropdown: shows icon + label, select changes filterBy */}
               <div className={styles.actionButton}>
                 <Icons.Filter size={14} />
@@ -338,7 +361,10 @@ const ConsultationHistory = () => {
                         <div
                           className={styles.orderContent}
                           onClick={() => handleNavigation(item?.type, item)}
-                          style={{cursor:item?.type=="chat"?"pointer":"none"}}
+                          style={{
+                            cursor:
+                              item?.type == "chat" ? "pointer" : "default",
+                          }}
                         >
                           {/* Profile Image - Vertically Centered */}
                           <div className={styles.profileImageContainer}>
@@ -433,14 +459,14 @@ const ConsultationHistory = () => {
                             </div>
 
                             {/* Duration - Only show if exists */}
-                            {item.sessionDetails?.durationSeconds && (
+                            {/* {item.sessionDetails?.durationSeconds && ( */}
                               <p className={styles.duration}>
                                 Duration :{" "}
                                 {formatDuration(
                                   item.sessionDetails?.durationSeconds,
                                 )}
                               </p>
-                            )}
+                            {/* )} */}
 
                             {/* Amount - Left Aligned */}
                             <p className={styles.amount}>

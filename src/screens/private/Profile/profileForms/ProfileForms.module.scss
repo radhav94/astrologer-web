@@ -6,6 +6,7 @@
   height: 100%;
   text-align: left;
   padding: 20px;
+  overflow-y: auto;
 }
 
 .header {
@@ -41,21 +42,7 @@
 
 .formContent {
   flex: 1;
-  overflow-y: auto;
   padding-right: 8px;
-  
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-  
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  
-  &::-webkit-scrollbar-thumb {
-    background: #D1D1D1;
-    border-radius: 3px;
-  }
 }
 
 .achievementFileUpload{
@@ -562,6 +549,7 @@
 @media (max-width: 768px) {
   .basicContainer {
     padding: 16px;
+    padding-bottom: 32px;
   }
   
   .genderButton {

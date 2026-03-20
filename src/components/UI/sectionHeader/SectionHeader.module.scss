@@ -6,14 +6,26 @@
 }
 
 .backButton {
-  // padding: 1rem;
+  width: 48px;
+  height: 48px;
   background-color: var(--white-color);
-  border-radius: 50px;
+  border-radius: 50%;
   border: 1px solid var(--main-primary-start);
-  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+
   &:hover {
-    background-color: var(--white-color);
+    background-color: var(--card-2);
+    border-color: var(--primary-300);
+  }
+
+  @media (max-width: 768px) {
+    width: 30px;
+    height: 30px;
   }
 }
 

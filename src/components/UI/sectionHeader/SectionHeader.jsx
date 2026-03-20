@@ -10,7 +10,7 @@ const SectionHeader = ({ title }) => {
       onClick={() => navigate(-1)}
       className={styles.backButton}
     >
-      <Icons.ChevronLeft size={20} width={30} height={30} className={styles.icon} />
+      <Icons.ChevronLeft size={20} className={styles.icon} />
     </button>
 
     <h1 className={styles.title}>{title}</h1>

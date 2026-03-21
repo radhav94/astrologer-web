@@ -145,6 +145,7 @@ import VideoIcon from "../assets/svg/vector.svg";
 import LeftLine from "../assets/svg/Left Line.svg";
 import RightLine from "../assets/svg/Right Line.svg";
 import Moon from "../assets/svg/Moon.svg";
+import OfflineCloud from "../assets/svg/offline.svg";
 
 export const appSvgs = {
   Aries,
@@ -176,4 +177,5 @@ export const appSvgs = {
   LeftLine,
   RightLine,
   Moon,
+  OfflineCloud,
 };

@@ -8,8 +8,9 @@ import { AppDefaultImg, AppIcons } from "../../../utils/appImages";
 import SectionHeader from "../../../components/UI/SectionHeader";
 import styles from "./ConsultationHistory.module.scss";
 import dayjs from "dayjs";
-// import { PATH } from "../../../utils/routes/Paths";
-// import useChat from "../../../hooks/useChatWindow";
+import { PATH } from "../../../utils/routes/Paths";
+import useChat from "../../../hooks/useChatWindow";
+import { useSelector } from "react-redux";
 // const { activeChat } = useChat();
 
 const formatDate = (iso) => {
@@ -71,6 +72,10 @@ const ConsultationHistory = () => {
     filterBy,
   });
 
+  const astrologerDetails = useSelector(
+    (state) => state.register?.astrologerDetails,
+  );
+
   const pagination = data?.data?.pagination;
   const transactions = data?.data?.transactions || [];
 
@@ -100,6 +105,23 @@ const ConsultationHistory = () => {
 
   const handlePageClick = (pageNum) => {
     setPage(pageNum);
+  };
+
+  const handleNavigation = (type, item) => {
+    if (type !== "chat") {
+      return;
+    }
+    navigate(PATH.privateRoutes.CHAT_WINDOW.path.replace(":chatId", item?.id), {
+      state: {
+        userId: item?.userId,
+        astrologerId: item?.astrologerId,
+        fullName: item?.displayProfile?.name,
+        roomId: null,
+        isUserSide: false,
+        kundliId: null,
+        userID: item?.userId,
+      },
+    });
   };
 
   // Generate page numbers to display
@@ -264,27 +286,6 @@ const ConsultationHistory = () => {
                 {/* Items for this date */}
                 <div className={styles.itemsList}>
                   {items.map((item, index) => {
-                    // console.log(
-                    //   "first",
-                    //   PATH.privateRoutes.CHAT_WINDOW.path.replace(
-                    //     ":chatId",
-                    //     item?.id,
-                    //   ),
-                    //   {
-                    //     state: {
-                    //       userId: item?.userId,
-                    //       astrologerId: item?.astrologerId,
-                    //       fullName: item?.displayProfile?.name,
-                    //       roomId:
-                    //         activeChat?.chaterId === item.userId
-                    //           ? activeChat?.roomId
-                    //           : null,
-                    //       isUserSide: false,
-                    //       kundliId: null,
-                    //       userID: item?.userId,
-                    //     },
-                    //   },
-                    // );
                     return (
                       <div key={item._id} className={styles.orderCard}>
                         {/* Order ID and Menu */}
@@ -336,28 +337,8 @@ const ConsultationHistory = () => {
                         {/* Main Content */}
                         <div
                           className={styles.orderContent}
-                          // onClick={() =>
-                          //   navigate(
-                          //     PATH.privateRoutes.CHAT_WINDOW.path.replace(
-                          //       ":chatId",
-                          //       item?.id,
-                          //     ),
-                          //     {
-                          //       state: {
-                          //         userId: item?.userId,
-                          //         astrologerId: astrologerId,
-                          //         fullName: item?.displayProfile?.name,
-                          //         roomId:
-                          //           activeChat?.chaterId === item.userId
-                          //             ? activeChat?.roomId
-                          //             : null,
-                          //         isUserSide: false,
-                          //         kundliId: null,
-                          //         userID: item?.userId,
-                          //       },
-                          //     },
-                          //   )
-                          // }
+                          onClick={() => handleNavigation(item?.type, item)}
+                          style={{cursor:item?.type=="chat"?"pointer":"none"}}
                         >
                           {/* Profile Image - Vertically Centered */}
                           <div className={styles.profileImageContainer}>
@@ -417,13 +398,19 @@ const ConsultationHistory = () => {
                                   );
                                 })}
                               </div>
-                              {item.type === "call" ? (
+                              {item.type === "call" && (
                                 <button className={styles.callButton}>
                                   <img src={AppIcons.Call1} alt="call" />
                                 </button>
-                              ) : (
+                              )}
+                              {item.type === "chat" && (
                                 <button className={styles.callButton}>
                                   <img src={AppIcons.Chat1} alt="chat" />
+                                </button>
+                              )}
+                              {item.type === "video" && (
+                                <button className={styles.callButton}>
+                                  <img src={AppIcons.Video1Icon} alt="video" />
                                 </button>
                               )}
                             </div>

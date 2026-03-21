@@ -20,8 +20,11 @@ const mapRecentActivity = (apiData = []) => {
       let messagePreview = latestMessage?.message || "";
       if (latestMessage?.type === "gift") {
         try {
-          const parsed = typeof messagePreview === "string" ? JSON.parse(messagePreview) : messagePreview;
-            messagePreview = "🎁 Sent a gift";
+          const parsed =
+            typeof messagePreview === "string"
+              ? JSON.parse(messagePreview)
+              : messagePreview;
+          messagePreview = "🎁 Sent a gift";
         } catch (e) {
           messagePreview = "🎁 Sent a gift";
         }
@@ -52,44 +55,44 @@ const mapRecentActivity = (apiData = []) => {
 
         lastMessageTime: latestMessage?.updatedAt || null,
 
-        userID: user?.user_ID
+        userID: user?.user_ID,
       };
     })
     .sort(
       (a, b) =>
-        dayjs(b.lastMessageTime).valueOf() -
-        dayjs(a.lastMessageTime).valueOf()
+        dayjs(b.lastMessageTime).valueOf() - dayjs(a.lastMessageTime).valueOf(),
     );
 };
 
-
 const ChatPage = ({ onBack }) => {
   const astroIdLocal = localStorage.getItem("shubhtalk_astro_id");
-  
-  const { data, isLoading, isError, refetch } = useGetChatMessagesQuery({
-    astrologerId: astroIdLocal,
-  }, {refetchOnMountOrArgChange : true});
+
+  const { data, isLoading, isError, refetch } = useGetChatMessagesQuery(
+    {
+      astrologerId: astroIdLocal,
+    },
+    { refetchOnMountOrArgChange: true },
+  );
   const navigate = useNavigate();
   const { activeChat } = useChat();
   const activityList = mapRecentActivity(data?.data);
 
-  {isLoading && (
-    <div className="text-center text-gray-400 py-4">
-        Loading messages...
-    </div>
-    )}
+  {
+    isLoading && (
+      <div className="text-center text-gray-400 py-4">Loading messages...</div>
+    );
+  }
 
-    {isError && (   
-    <div className="text-center text-red-500 py-4">
+  {
+    isError && (
+      <div className="text-center text-red-500 py-4">
         Failed to load messages.
-        <button
-        onClick={refetch}
-        className="ml-2 underline text-sm"
-        >
-        Retry
+        <button onClick={refetch} className="ml-2 underline text-sm">
+          Retry
         </button>
-    </div>
-    )}
+      </div>
+    );
+  }
 
   return (
     <div className="h-full flex flex-col text-start ">
@@ -111,62 +114,64 @@ const ChatPage = ({ onBack }) => {
             20/11/2025
           </h3> */}
           <div className="space-y-3">
-            {activityList.map((item) => (
-              <div
-                key={item.id}
-                onClick={() =>
-                navigate(
-                  PATH.privateRoutes.CHAT_WINDOW.path.replace(
-                    ":chatId",
-                    item?.id
-                  ),
-                  {
-                    state: {
-                      userId: item?.userId,
-                      astrologerId: astroIdLocal,
-                      fullName: item?.title,
-                      roomId: activeChat?.chaterId === item.userId ? activeChat?.roomId : null,
-                      isUserSide: false,
-                      kundliId:null,
-                      userID: item?.userID
-                    },
+            {activityList.map((item) => {
+              return (
+                <div
+                  key={item.id}
+                  onClick={() =>
+                    navigate(
+                      PATH.privateRoutes.CHAT_WINDOW.path.replace(
+                        ":chatId",
+                        item?.id,
+                      ),
+                      {
+                        state: {
+                          userId: item?.userId,
+                          astrologerId: astroIdLocal,
+                          fullName: item?.title,
+                          roomId:
+                            activeChat?.chaterId === item.userId
+                              ? activeChat?.roomId
+                              : null,
+                          isUserSide: false,
+                          kundliId: null,
+                          userID: item?.userID,
+                        },
+                      },
+                    )
                   }
-                )
-              }
-                className={`rounded-xl p-4 flex items-center justify-between cursor-pointer transition-all
+                  className={`rounded-xl p-4 flex items-center justify-between cursor-pointer transition-all
                             ${
                               activeChat?.chaterId === item.userId
                                 ? "bg-blue-100 ring-2 ring-blue-400"
                                 : "bg-[#EAEAEA] hover:bg-gray-200"
                             }`}
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 flex-shrink-0">
-                    <img
-                      className="rounded-full"
-                      src={`https://picsum.photos/seed/${item.avatarSeed}/200`}
-                      alt={item.title}
-                    />
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 flex-shrink-0">
+                      <img
+                        className="rounded-full"
+                        src={`https://picsum.photos/seed/${item.avatarSeed}/200`}
+                        alt={item.title}
+                      />
+                    </div>
+
+                    <div>
+                      <p className="text-sm text-gray-900 font-medium">
+                        {item.title}
+                      </p>
+                      <p className="text-gray-600 text-xs line-clamp-1">
+                        {item.messagePreview}
+                      </p>
+                    </div>
                   </div>
 
-                  <div>
-                    <p className="text-sm text-gray-900 font-medium">
-                      {item.title}
-                    </p>
-                    <p className="text-gray-600 text-xs line-clamp-1">
-                      {item.messagePreview}
-                    </p>
+                  <div className="text-right">
+                    <p className="text-xs text-gray-400">{item.timeAgo}</p>
                   </div>
                 </div>
-
-                <div className="text-right">
-                  <p className="text-xs text-gray-400">
-                    {item.timeAgo}
-                  </p>
-                </div>
-              </div>
-            ))}
-
+              );
+            })}
           </div>
         </div>
       </div>

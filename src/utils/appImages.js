@@ -21,7 +21,8 @@ import Coin from "../assets/icons/coin.png";
 import TwinkleStar from "../assets/icons/twinkle star.png"
 import Call1 from "../assets/icons/call-1.png";
 import Chat1 from "../assets/icons/chat-1.png";
-import EditIcon from "../assets/icons/Edit Icon.png"
+import EditIcon from "../assets/icons/Edit Icon.png";
+import Video1Icon from "../assets/icons/video-1.png";
 
 export const AppIcons = {
   Logo,
@@ -47,7 +48,8 @@ export const AppIcons = {
   TwinkleStar,
   Call1,
   Chat1,
-  EditIcon
+  EditIcon,
+  Video1Icon
 };
 
 //appImages

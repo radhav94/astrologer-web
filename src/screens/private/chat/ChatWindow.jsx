@@ -31,7 +31,7 @@ const MIN_CHAT_SECONDS = 60;
 
 /* -------------------- Message Bubble -------------------- */
 
-const Message = ({ text, isSender, time, type, giftData, kundliName }) => {
+const Message = ({ text, isSender, time, type, giftData, kundliName, onImageClick }) => {
   const [iframeSrc, setIframeSrc] = useState(null);
   const [loading, setLoading] = useState(false);
   
@@ -179,7 +179,8 @@ const Message = ({ text, isSender, time, type, giftData, kundliName }) => {
         <img
           src={text}
           alt="Shared image"
-          className="max-w-[200px] max-h-[200px] object-cover rounded-lg"
+          className="max-w-[200px] max-h-[200px] object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+          onClick={() => onImageClick?.(text)}
         />
       );
     }
@@ -371,6 +372,7 @@ const ChatWindow = () => {
   const userID = stateUserID || activeChat?.userID || null;
 
   const [message, setMessage] = useState("");
+  const [imagePreview, setImagePreview] = useState(null);
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
 
@@ -791,7 +793,7 @@ const ChatWindow = () => {
               {msg.date}
             </div>
           ) : (
-            <Message key={msg.id} text={msg.text} isSender={msg.isSender} time={msg.time} type={msg.type} kundliName={msg?.kundliName} />
+            <Message key={msg.id} text={msg.text} isSender={msg.isSender} time={msg.time} type={msg.type} kundliName={msg?.kundliName} onImageClick={setImagePreview} />
           )
         )}
 
@@ -888,6 +890,21 @@ const ChatWindow = () => {
         src={kundliIframeSrc}
         onClose={() => setKundliIframeSrc(null)}
       />
+
+      {/* Image Preview Modal */}
+      {imagePreview && (
+        <div
+          className="fixed inset-0 z-[10000] bg-black/90 flex items-center justify-center p-5 cursor-pointer"
+          onClick={() => setImagePreview(null)}
+        >
+          <img
+            src={imagePreview}
+            alt="Preview"
+            className="max-w-full max-h-[90vh] object-contain rounded-lg"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   );
 };

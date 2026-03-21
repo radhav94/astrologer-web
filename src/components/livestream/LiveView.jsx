@@ -60,6 +60,7 @@ const isMountedRef = useRef(false);
     participantCount,
     endRoom,
     clearLiveSession,
+    isMicMutedByCall,
   } = props;
 
 
@@ -161,8 +162,8 @@ const endLiveSafely = useCallback(async () => {
       {/* HOST CONTROLS */}
       {isHost && isConnected && (
         <div className="control-panel">
-          <button onClick={() => setMic((v) => !v)}>
-            {micOn ? "🎙️ Mute" : "🎤 Unmute"}
+          <button onClick={() => setMic((v) => !v)} disabled={isMicMutedByCall}>
+            {isMicMutedByCall ? "🔇 On Call" : micOn ? "🎙️ Mute" : "🎤 Unmute"}
           </button>
           <button onClick={() => setCamera((v) => !v)}>
             {cameraOn ? "📷 Hide" : "📸 Show"}

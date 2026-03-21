@@ -10,9 +10,14 @@ import Rudraksha from "./remedies/rudraksha/Rudraksha";
 import GemStones from "./remedies/gemstones/GemStones";
 import { PrimaryText } from "../../../../../../components";
 import { appColors } from "../../../../../../utils/theme";
+import EmptyState from "../../../../../../components/UI/EmptyState";
 
 const Report = (props) => {
   const {userDetail,birthDetail } = props || {};
+
+  // Show empty state when required data is not available
+  if (!userDetail) return <EmptyState message="No report data available." />;
+
   // const userDetails = useSelector((state) => state?.form?.userDetails);
   // const birthDetails = useSelector((state) => state?.form?.kundliPayload);
   const userDetails =userDetail;

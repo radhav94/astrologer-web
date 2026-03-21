@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Icons } from "../../../components/Icons";
 import { Link } from "react-router";
 import { useNavigate } from "react-router-dom";
-import { useGetOrderHistoryQuery } from "../../../redux/oderHistory/orderHistory";
+import { useGetOrderHistoryQuery, useRefundInitiateByAstrologerMutation } from "../../../redux/oderHistory/orderHistory";
 // Import default profile image
 import { AppDefaultImg, AppIcons } from "../../../utils/appImages";
 import SectionHeader from "../../../components/UI/SectionHeader";
@@ -11,6 +11,7 @@ import dayjs from "dayjs";
 import { PATH } from "../../../utils/routes/Paths";
 import useChat from "../../../hooks/useChatWindow";
 import { useSelector } from "react-redux";
+import { Toast } from "../../../components";
 // const { activeChat } = useChat();
 
 const formatDate = (iso) => {
@@ -60,7 +61,12 @@ const ConsultationHistory = () => {
   const [page, setPage] = useState(1);
   const [openMenuId, setOpenMenuId] = useState(null);
   const [refundItem, setRefundItem] = useState(null);
-  const [refundAmount, setRefundAmount] = useState("");
+  // Old: amount-based refund input
+  // const [refundAmount, setRefundAmount] = useState("");
+  // New: minutes-based refund input (system calculates amount internally)
+  const [refundMinutes, setRefundMinutes] = useState("");
+  // Track refund type: "partial" for Refund, "total" for Total Refund
+  const [refundType, setRefundType] = useState("partial");
   const [sortOrder, setSortOrder] = useState("desc");
   const [filterBy, setFilterBy] = useState("call");
   const [searchQuery, setSearchQuery] = useState("");
@@ -76,6 +82,41 @@ const ConsultationHistory = () => {
   const astrologerDetails = useSelector(
     (state) => state.register?.astrologerDetails,
   );
+
+  // Refund mutation hook
+  const [refundInitiate, { isLoading: isRefunding }] = useRefundInitiateByAstrologerMutation();
+
+  // Handle refund API call with proper success/error toast messages
+  const handleRefund = async () => {
+    if (!refundItem || !refundMinutes) return;
+    try {
+      const res = await refundInitiate({
+        astrologerId: refundItem?.astrologerId,
+        minutes: Number(refundMinutes),
+        roomId: refundItem?.roomId,
+        userId: refundItem?.userId,
+      }).unwrap();
+
+      // API may return 200 OK but with error statusCode in body (e.g. statusCode: 500)
+      if (res?.statusCode && res.statusCode >= 400) {
+        Toast.error(res?.message || "Refund failed. Please try again.");
+      } else {
+        Toast.success(res?.message || "Refund initiated successfully.");
+      }
+    } catch (err) {
+      const errorMsg =
+        err?.data?.message ||
+        err?.error?.data?.message ||
+        err?.message ||
+        "Refund failed. Please try again.";
+      Toast.error(errorMsg);
+    } finally {
+      // Always close modal regardless of success or error
+      setRefundItem(null);
+      setRefundMinutes("");
+      setRefundType("partial");
+    }
+  };
 
   const pagination = data?.data?.pagination;
   const transactions = data?.data?.transactions || [];
@@ -314,7 +355,7 @@ const ConsultationHistory = () => {
                         {/* Order ID and Menu */}
                         <div className={styles.orderHeader}>
                           <span className={styles.orderNumber}>
-                            #{index + 1 + (page - 1) * 10}
+                           #{item?._id?.slice(-4)}
                           </span>
                           <div
                             className={styles.menuContainer}
@@ -333,25 +374,44 @@ const ConsultationHistory = () => {
 
                             {openMenuId === item._id && (
                               <div className={styles.menuDropdown}>
-                                <button
-                                  onClick={() => {
-                                    setRefundItem(item);
-                                    setRefundAmount("");
-                                    setOpenMenuId(null);
-                                  }}
-                                  className={styles.menuItem}
-                                >
-                                  Refund
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    // console.log("Total Refund", item._id);
-                                    setOpenMenuId(null);
-                                  }}
-                                  className={styles.menuItemDanger}
-                                >
-                                  Total Refund
-                                </button>
+                                {/* Refund actions: disabled when durationSeconds is null or 0 */}
+                                {(() => {
+                                  const isRefundEnabled = item?.sessionDetails?.durationSeconds > 0;
+                                  return (
+                                    <>
+                                      <button
+                                        onClick={() => {
+                                          if (!isRefundEnabled) return;
+                                          setRefundItem(item);
+                                          setRefundMinutes("");
+                                          setRefundType("partial");
+                                          setOpenMenuId(null);
+                                        }}
+                                        className={styles.menuItem}
+                                        style={!isRefundEnabled ? { opacity: 0.4, pointerEvents: "none" } : {}}
+                                        disabled={!isRefundEnabled}
+                                      >
+                                        Refund
+                                      </button>
+                                      <button
+                                        onClick={() => {
+                                          if (!isRefundEnabled) return;
+                                          // Total Refund: pre-fill with full session duration in minutes
+                                          const totalMins = Math.floor((item?.sessionDetails?.durationSeconds || 0) / 60);
+                                          setRefundItem(item);
+                                          setRefundMinutes(String(totalMins));
+                                          setRefundType("total");
+                                          setOpenMenuId(null);
+                                        }}
+                                        className={styles.menuItemDanger}
+                                        style={!isRefundEnabled ? { opacity: 0.4, pointerEvents: "none" } : {}}
+                                        disabled={!isRefundEnabled}
+                                      >
+                                        Total Refund
+                                      </button>
+                                    </>
+                                  );
+                                })()}
                               </div>
                             )}
                           </div>
@@ -560,37 +620,72 @@ const ConsultationHistory = () => {
             )}
           </div>
 
-          {/* Refund Modal */}
+          {/* Refund Modal - Shared for both Refund (partial) and Total Refund */}
           {refundItem && (
             <div className={styles.modalOverlay}>
               <div className={styles.modalContent}>
-                <h3 className={styles.modalTitle}>Refund Amount</h3>
+                <h3 className={styles.modalTitle}>
+                  {refundType === "total" ? "Total Refund" : "Refund"}
+                </h3>
 
-                <input
+                {/* Session duration info - shown only for partial refund */}
+                {refundType === "partial" && (
+                  <p className={styles.modalSubtext}>
+                    Session Duration: {formatDuration(refundItem?.sessionDetails?.durationSeconds || 0)}
+                  </p>
+                )}
+
+                {/* Old: amount input */}
+                {/* <input
                   type="number"
                   placeholder="Enter refund amount"
                   value={refundAmount}
                   onChange={(e) => setRefundAmount(e.target.value)}
                   className={styles.modalInput}
+                /> */}
+
+                {/* Minutes input: editable for partial, disabled & pre-filled for total */}
+                <input
+                  type="number"
+                  placeholder="Enter refund minutes"
+                  value={refundMinutes}
+                  onChange={(e) => {
+                    // Total refund: input is locked, skip onChange
+                    if (refundType === "total") return;
+                    const val = e.target.value;
+                    // Accept only numeric values
+                    if (val === "" || /^\d+$/.test(val)) {
+                      const maxMinutes = Math.floor((refundItem?.sessionDetails?.durationSeconds || 0) / 60);
+                      // Do not allow minutes greater than session duration
+                      if (val === "" || Number(val) <= maxMinutes) {
+                        setRefundMinutes(val);
+                      }
+                    }
+                  }}
+                  disabled={refundType === "total"}
+                  min="0"
+                  max={Math.floor((refundItem?.sessionDetails?.durationSeconds || 0) / 60)}
+                  className={styles.modalInput}
+                  style={refundType === "total" ? { backgroundColor: "#f3f4f6", cursor: "not-allowed" } : {}}
                 />
 
                 <div className={styles.modalButtons}>
                   <button
-                    onClick={() => setRefundItem(null)}
+                    onClick={() => {
+                      setRefundItem(null);
+                      setRefundType("partial");
+                    }}
                     className={styles.modalCancelButton}
                   >
                     Cancel
                   </button>
 
                   <button
-                    disabled={!refundAmount}
-                    onClick={() => {
-                      console.log("Refund:", refundAmount, refundItem._id);
-                      setRefundItem(null);
-                    }}
+                    disabled={!refundMinutes || isRefunding}
+                    onClick={handleRefund}
                     className={styles.modalConfirmButton}
                   >
-                    Confirm Refund
+                    {isRefunding ? "Processing..." : "Confirm Refund"}
                   </button>
                 </div>
               </div>

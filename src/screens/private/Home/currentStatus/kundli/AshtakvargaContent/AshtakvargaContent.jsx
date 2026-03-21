@@ -7,6 +7,7 @@ import { useSelector } from "react-redux";
 import { useGetAshtakvargaChartQuery } from "../../../../../../redux/kundli/KundliDetailApi"
 import { buildVedicParam } from "../../../../../../utils/VedicParams.js/vedicParams";
 import { sanitizeSvg } from "../../../../../../utils/helper/sanitizeSvg";
+import EmptyState from "../../../../../../components/UI/EmptyState";
 
 const sectionVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -21,7 +22,8 @@ const AshtakvargaContent = (props) => {
   // const { Jupiter, Mars, Mercury, Moon, Sarva, Saturn, Sun, Venus } = data?.data
   const {userDetails } = props || {};
 
-  if (!userDetails) return null;
+  // Show empty state when required data is not available
+  if (!userDetails) return <EmptyState message="No Ashtakvarga data available." />;
   // const payload = useSelector((state) => state?.form?.kundliPayload);
   const payload = userDetails;
   const params = payload ? buildVedicParam(payload) : null;

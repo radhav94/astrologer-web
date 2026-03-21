@@ -12,6 +12,7 @@ import { skipToken } from "@reduxjs/toolkit/query";
 import PrimaryLoader from "../../../../../../components/UI/PrimaryLoader";
 import { buildVedicParam } from "../../../../../../utils/VedicParams.js/vedicParams";
 import { sanitizeSvg } from "../../../../../../utils/helper/sanitizeSvg";
+import EmptyState from "../../../../../../components/UI/EmptyState";
 
 const sectionVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -116,7 +117,8 @@ const cuspHeaders = [
 const KpContent = (props) => {
   const {userDetails } = props || {};
 
-  if (!userDetails) return null;
+  // Show empty state when required data is not available
+  if (!userDetails) return <EmptyState message="No KP data available." />;
   // const payload = useSelector((state) => state?.form?.kundliPayload);
   const payload = userDetails;
 

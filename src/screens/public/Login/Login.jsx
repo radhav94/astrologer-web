@@ -107,7 +107,7 @@ const Login = () => {
                 alt="India"
                 className={styles.flagImage}
               />
-              <svg
+              {/* <svg
                 width="12"
                 height="8"
                 viewBox="0 0 12 8"
@@ -121,7 +121,7 @@ const Login = () => {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
-              </svg>
+              </svg> */}
             </button>
 
             <div className={styles.inputWrapper}>
@@ -158,17 +158,17 @@ const Login = () => {
           </Button>
 
           {/* OR Divider */}
-          <div className={styles.divider}>
+          {/* <div className={styles.divider}>
             <div className={styles.dividerLine} />
             <span className={styles.dividerText}>OR</span>
             <div className={styles.dividerLine} />
-          </div>
+          </div> */}
 
           {/* Social Login */}
-          <div className={styles.socialButtonsWrapper}>
+          {/* <div className={styles.socialButtonsWrapper}>
             <Button className={styles.socialButton}>Sign in with Google</Button>
             <Button className={styles.socialButton}>Sign in with Apple</Button>
-          </div>
+          </div> */}
 
           <p className={styles.footerText}>
             Your number will be used for secure login and communication only.

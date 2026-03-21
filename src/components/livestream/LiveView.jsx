@@ -1,5 +1,6 @@
-import React, { useEffect, useCallback, useState,useRef } from "react";
+import { useEffect, useCallback, useState, useRef } from "react";
 import { LocalUser, RemoteUser } from "agora-rtc-react";
+import { MicOff, Mic, VideoOff, Video, Send, Timer, Gift, Share2 } from "lucide-react";
 import "./styles/videoBox.scss";
 import { useLiveViewLogic } from "./useLiveViewLogic";
 import GiftPopup from "./GiftPopup";
@@ -7,7 +8,10 @@ import CallRequestPopup from "./CallRequestPopup";
 import SharePopup from "./SharePopup";
 import { Toast } from "../../components";
 import { stopLiveStream } from "../../services/appServices/authservice";
+import { getUserFromStorage } from "../../utils/authStorage";
 import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { getDefaultImgBasedOnGender } from "../../utils/utlis";
 
 
 const LiveView = (props) => {
@@ -18,10 +22,15 @@ const LiveView = (props) => {
 
   const navigate = useNavigate();
 
+  const user = getUserFromStorage();
+  const astrologerDetails = useSelector((state) => state.register.astrologerDetails);
+  const astrologerName = user?.firstName
+    ? `${user.firstName} ${user.lastName || ""}`.trim()
+    : "Astrologer Live";
+  const profileImage = astrologerDetails?.profileImgUrl || getDefaultImgBasedOnGender(astrologerDetails?.gender);
 
   const hasEndedRef = useRef(false);
-const isMountedRef = useRef(false);
-
+  const isMountedRef = useRef(false);
 
   const hostData = {
     name: "Anaisha",
@@ -62,46 +71,39 @@ const isMountedRef = useRef(false);
     clearLiveSession,
   } = props;
 
-
   const handleEndLive = useCallback(async () => {
-  if (ROLE !== "host") return;
+    if (ROLE !== "host") return;
 
-  try {
-    endRoom?.();
-    await stopLiveStream(channelName);
-    clearLiveSession?.();
-    Toast.success("Live ended successfully");
+    try {
+      endRoom?.();
+      await stopLiveStream(channelName);
+      clearLiveSession?.();
+      Toast.success("Live ended successfully");
+      navigate("/astrologer-dashboard", { replace: true });
+    } catch (e) {
+      Toast.error("Unable to end live");
+    } finally {
+      setCalling(false);
+    }
+  }, [ROLE, channelName, setCalling, navigate, endRoom, clearLiveSession]);
 
-    navigate("/astrologer-dashboard", { replace: true });
+  const endLiveSafely = useCallback(async () => {
+    if (ROLE !== "host") return;
+    if (hasEndedRef.current) return;
 
-  } catch (e) {
-    Toast.error("Unable to end live");
-  } finally {
-    setCalling(false);
-  }
-}, [ROLE, channelName, setCalling, navigate, endRoom, clearLiveSession]);
+    hasEndedRef.current = true;
 
-const endLiveSafely = useCallback(async () => {
-  if (ROLE !== "host") return;
-  if (hasEndedRef.current) return;
-
-  hasEndedRef.current = true;
-
-  try {
-    endRoom?.();
-    await stopLiveStream(channelName);
-    clearLiveSession?.();
-    Toast.success("Live ended");
-  } catch (e) {
-    console.error("Failed to end live", e);
-  } finally {
-    setCalling(false);
-  }
-}, [ROLE, channelName, setCalling, endRoom, clearLiveSession]);
-
-
-
-
+    try {
+      endRoom?.();
+      await stopLiveStream(channelName);
+      clearLiveSession?.();
+      Toast.success("Live ended");
+    } catch (e) {
+      console.error("Failed to end live", e);
+    } finally {
+      setCalling(false);
+    }
+  }, [ROLE, channelName, setCalling, endRoom, clearLiveSession]);
 
   const isHost = ROLE === "host";
   const viewerCount = participantCount || (remoteUsers?.length || 0) + 1;
@@ -118,24 +120,45 @@ const endLiveSafely = useCallback(async () => {
     shareToPinterest,
   } = useLiveViewLogic(props);
 
+  const getInitials = (name) => {
+    if (!name) return "?";
+    return name.charAt(0).toUpperCase();
+  };
+
   return (
     <div className="video-box">
       {/* TOP BAR */}
       <div className="top-bar">
         <div className="host-info">
-          <div className="host-avatar">🕉️</div>
+          <div className="host-avatar">
+            <img
+              src={profileImage}
+              alt={astrologerName}
+              style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }}
+              onError={(e) => { e.target.style.display = "none"; e.target.parentNode.textContent = "🕉️"; }}
+            />
+          </div>
           <div>
-            <div className="host-name">Astrologer Live</div>
-            <div className="host-subtitle">Shubhtalk • Verified</div>
+            <div className="host-name">{astrologerName}</div>
           </div>
         </div>
 
-        <div className="live-status">
-          <div className="live-badge">LIVE</div>
-          <div className="viewer-pill">
-            <span className="viewer-dot" />
-            <span className="viewer-count">{viewerCount} watching</span>
+        <div className="top-bar-right">
+          <div className="live-badge">
+            <span className="live-badge-dot" />
+            LIVE
           </div>
+          <div className="viewer-pill">
+            <span className="viewer-icon">👁</span>
+            <span className="viewer-count">{viewerCount >= 1000 ? `${(viewerCount / 1000).toFixed(1)}k` : viewerCount}</span>
+          </div>
+          <button
+            className="close-live-btn"
+            onClick={isHost ? handleEndLive : () => navigate(-1)}
+            aria-label="Close live"
+          >
+            ✕
+          </button>
         </div>
       </div>
 
@@ -158,42 +181,97 @@ const endLiveSafely = useCallback(async () => {
         )}
       </div>
 
-      {/* HOST CONTROLS */}
-      {isHost && isConnected && (
-        <div className="control-panel">
-          <button onClick={() => setMic((v) => !v)}>
-            {micOn ? "🎙️ Mute" : "🎤 Unmute"}
+      {/* RIGHT FLOATING ACTION BUTTONS */}
+      <div className="right-action-bar">
+        <div className="action-item">
+          <button
+            className="action-btn"
+            onClick={() => setShowCallPopup(true)}
+            aria-label="Request call"
+          >
+            <Timer size={24} strokeWidth={1.5} />
           </button>
-          <button onClick={() => setCamera((v) => !v)}>
-            {cameraOn ? "📷 Hide" : "📸 Show"}
-          </button>
+          <span className="action-label">20 m</span>
         </div>
-      )}
 
-      {/* CHAT */}
+        <div className="action-item">
+          <button
+            className="action-btn"
+            onClick={() => setShowSharePopup(true)}
+            aria-label="Share live"
+          >
+             <Gift size={24} strokeWidth={1.5} />
+          </button>
+          <span className="action-label">Share</span>
+          <span className="action-label">13</span>
+        </div>
+      </div>
+
+      {/* CHAT OVERLAY */}
       <div className="chat-panel">
         <div className="chat-messages">
           {messages.map((m) => (
             <div
               key={m.id}
-              className={`chat-message ${m.isSelf ? "self" : ""}`}
+              className={`chat-message ${m.isSelf ? "self" : ""} ${m.text?.toLowerCase().includes("joined") ? "joined-msg" : ""}`}
             >
-              <b>{m.role === "host" ? "You" : m.senderName}:</b> {m.text}
+              <div className="chat-avatar">
+                {getInitials(m.senderName)}
+              </div>
+              <div className="chat-bubble">
+                <span className="chat-sender">
+                  {m.role === "host" ? "You" : m.senderName}
+                </span>
+                <span className="chat-text">{m.text}</span>
+              </div>
             </div>
           ))}
           <div ref={messagesEndRef} />
         </div>
+      </div>
 
-        <form className="chat-input-row" onSubmit={handleSend}>
+      {/* BOTTOM COMPOSER */}
+      <form className="chat-composer" onSubmit={handleSend}>
+        <div className="composer-pill">
           <input
             type="text"
-            placeholder="Say something..."
+            placeholder="Starts typing..."
             value={chatInput}
             onChange={(e) => setChatInput(e.target.value)}
           />
-          <button type="submit">Send</button>
-        </form>
-      </div>
+
+          {isHost && (
+            <>
+              <button
+                type="button"
+                className={`composer-icon-btn mic-btn ${!micOn ? "active" : ""}`}
+                onClick={() => setMic((v) => !v)}
+                aria-label={micOn ? "Mute microphone" : "Unmute microphone"}
+              >
+                {micOn ? <Mic size={18} /> : <MicOff size={18} />}
+              </button>
+              <button
+                type="button"
+                className={`composer-icon-btn video-btn ${!cameraOn ? "active" : ""}`}
+                onClick={() => setCamera((v) => !v)}
+                aria-label={cameraOn ? "Hide camera" : "Show camera"}
+              >
+                {cameraOn ? <Video size={18} /> : <VideoOff size={18} />}
+              </button>
+            </>
+          )}
+
+          <button
+            type="submit"
+            className="composer-icon-btn send-btn"
+            aria-label="Send message"
+          >
+            <Send size={18} />
+          </button>
+        </div>
+      </form>
+
+      {/* POPUPS */}
       <GiftPopup
         show={showGifts}
         onClose={() => setShowGifts(false)}
@@ -214,7 +292,6 @@ const endLiveSafely = useCallback(async () => {
         shareToGmail={shareToGmail}
         handleCopyLink={handleCopyLink}
       />
-
       <CallRequestPopup
         show={showCallPopup}
         onClose={() => setShowCallPopup(false)}
@@ -224,27 +301,6 @@ const endLiveSafely = useCallback(async () => {
         }}
         host={hostData}
       />
-
-      {/* NEW BOTTOM ACTION BAR */}
-      <div className="right-action-bar">
-        <button className="icon-btn" onClick={() => setShowSharePopup(true)}>
-          📤
-        </button>
-
-        <button className="icon-btn" onClick={() => setShowCallPopup(true)}>
-          📞
-        </button>
-
-        {/* <button className="icon-btn" onClick={() => setShowGifts(true)}>
-          🎁
-        </button> */}
-
-        {isHost && (
-          <button className="icon-btn end-live" onClick={handleEndLive}>
-            ✖
-          </button>
-        )}
-      </div>
     </div>
   );
 };

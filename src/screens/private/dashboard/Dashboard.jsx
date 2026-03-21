@@ -52,7 +52,7 @@ const Dashboard = () => {
   const { orderedSections, tipsContent, isLoading: isSectionsLoading } = useHomepageSections();
 
   // Get waiting list, active call, and call timer from CallContext
-  const { waitingList, activeCall, callTimer } = useCall();
+  const { waitingList, activeCall, callTimer, setIsCallMinimized } = useCall();
   
   // Get active chat and chat timer from ChatContext
   const { activeChat, chatSeconds } = useChat();
@@ -137,10 +137,11 @@ const Dashboard = () => {
       } else {
         console.log("❌ No chatId found in activeChat");
       }
-    } else {
-      console.log("ℹ️ Active call detected, not navigating (call UI already visible)");
+    } else if (activeCall) {
+      // Un-minimize the call overlay so the call screen becomes visible
+      setIsCallMinimized(false);
     }
-  }, [isActiveSession, activeChat, navigate, astrologerId]);
+  }, [isActiveSession, activeChat, activeCall, navigate, astrologerId, setIsCallMinimized]);
 
   // Monthly overview state
   const currentDate = new Date();

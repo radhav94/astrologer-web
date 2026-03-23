@@ -104,7 +104,7 @@ const SchedulePage = () => {
             <Link 
               to="/profile"
               state={{ data: "availability" }}
-              className="p-2 bg-[#FFF5EC] border border-[#FFE8C5] rounded-xl hover:bg-[#FFEDD5] transition-colors flex-shrink-0"
+              className="p-2 bg-[#FFF5EC] border border-[#FFE8C5] rounded-xl hover:bg-[#FFEDD5] transition-colors"
             >
               <Icons.ChevronLeft size={20} className="text-[#F75801]" />
             </Link>

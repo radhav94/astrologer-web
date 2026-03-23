@@ -198,7 +198,7 @@ const SetPrice = () => {
           <div className="flex items-center gap-4 mb-6">
             <Link 
               to="/dashboard"
-              className="p-2 bg-[#FFF5EC] border border-[#FFE8C5] rounded-xl hover:bg-[#FFEDD5] transition-colors flex-shrink-0"
+              className="p-2 bg-[#FFF5EC] border border-[#FFE8C5] rounded-xl hover:bg-[#FFEDD5] transition-colors"
             >
               <Icons.ChevronLeft size={20} className="text-[#F75801]" />
             </Link>

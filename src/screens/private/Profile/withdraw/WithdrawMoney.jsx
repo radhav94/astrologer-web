@@ -16,9 +16,9 @@ const WithdrawMoney = () => {
     <div className="h-full flex flex-col max-w-lg mx-auto">
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
-        <button className="p-2 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors">
+        <button className="p-2 bg-[#FFF5EC] border border-[#FFE8C5] rounded-xl hover:bg-[#FFEDD5] transition-colors">
           <Link to="/profile">
-            <Icons.ChevronLeft size={20} className="text-gray-700" />
+            <Icons.ChevronLeft size={20} className="text-[#F75801]" />
           </Link>
         </button>
         <h1 className="text-xl font-bold text-gray-900">Withdraw Money</h1>

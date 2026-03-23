@@ -269,7 +269,7 @@ const SetAvailability = () => {
                         style={{
                           width: 20,
                           height: 20,
-                          transform: s.enabled ? "translateX(22px)" : "translateX(2px)",
+                          transform: s.enabled ? "translateX(0px)" : "translateX(-20px)",
                         }}
                       />
                     </button>

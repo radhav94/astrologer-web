@@ -39,9 +39,9 @@ const RecentTickets = () => {
   return (
     <div className="h-full flex flex-col max-w-4xl mx-auto">
       <div className="flex items-center gap-4 mb-8">
-        <button className="p-2 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors">
+        <button className="p-2 bg-[#FFF5EC] border border-[#FFE8C5] rounded-xl hover:bg-[#FFEDD5] transition-colors">
           <Link to="/profile" state={{ data: "support" }}>
-            <Icons.ChevronLeft size={20} className="text-gray-700" />
+            <Icons.ChevronLeft size={20} className="text-[#F75801]" />
           </Link>
         </button>
         <h1 className="text-2xl font-bold text-gray-900">Recent Tickets</h1>

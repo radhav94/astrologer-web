@@ -99,10 +99,10 @@ const ChatPage = ({ onBack }) => {
       <div className="flex items-center gap-4 mb-6">
         <button
           onClick={onBack}
-          className="p-2 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
+          className="p-2 bg-[#FFF5EC] border border-[#FFE8C5] rounded-xl hover:bg-[#FFEDD5] transition-colors"
         >
           <Link to="/dashboard">
-            <Icons.ChevronLeft size={20} className="text-gray-700" />
+            <Icons.ChevronLeft size={20} className="text-[#F75801]" />
           </Link>
         </button>
         <h1 className="text-xl font-bold text-gray-900">Client Chats</h1>

@@ -72,9 +72,9 @@ const CustomerSupport = () => {
     <div className="h-full flex flex-col max-w-4xl mx-auto bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
       {/* Chat Header */}
       <div className="flex items-center gap-4 p-4 border-b border-gray-100">
-        <button className="p-2 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors">
+        <button className="p-2 bg-[#FFF5EC] border border-[#FFE8C5] rounded-xl hover:bg-[#FFEDD5] transition-colors">
           <Link to="/profile" state={{ data: "support" }}>
-            <Icons.ChevronLeft size={20} className="text-gray-700" />
+            <Icons.ChevronLeft size={20} className="text-[#F75801]" />
           </Link>
         </button>
         <div>

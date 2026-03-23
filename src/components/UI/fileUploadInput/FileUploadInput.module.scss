@@ -20,7 +20,7 @@
 // File Upload Box
 .fileUploadBox {
     width: 100%;
-    min-height: 200px;
+    min-height: 180px;
     border: 2px solid #e5e7eb;
     border-radius: 1rem;
     background-color: #FFFFFF;
@@ -29,7 +29,7 @@
     justify-content: center;
     cursor: pointer;
     transition: all 0.2s;
-    padding: 2rem;
+    padding: 1rem;
 
     &:hover {
         border-color: #d1d5db;

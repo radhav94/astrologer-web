@@ -6,10 +6,10 @@
 }
 
 .backButton {
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   background-color: var(--white-color);
-  border-radius: 50%;
+  border-radius: 8px;
   border: 1px solid var(--main-primary-start);
   display: flex;
   align-items: center;
@@ -24,8 +24,8 @@
   }
 
   @media (max-width: 768px) {
-    width: 30px;
-    height: 30px;
+    width: 36px;
+    height: 36px;
   }
 }
 

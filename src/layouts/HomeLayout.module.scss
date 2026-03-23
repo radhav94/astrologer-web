@@ -44,11 +44,14 @@ $mobile-screen-width: 500px;
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  @media (width <= 767px) {
+    gap: 0.2rem;
+  }
 }
 
 .menuButton {
   padding: 0.5rem;
-  margin-left: -0.5rem;
+  margin-left: -1rem;
   color: #4b5563;
   background: none;
   border: none;
@@ -129,6 +132,10 @@ $mobile-screen-width: 500px;
   font-size: 0.875rem;
   font-weight: 600;
   color: #111827;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;  
+  overflow: hidden;
 }
 
 .date {
@@ -162,12 +169,17 @@ $mobile-screen-width: 500px;
   gap: 0.5rem;
   height: 2.5rem;
   padding-left: 1rem;
-  padding-right: 0.5rem;
+  padding-right: 2px;
   border-radius: 9999px;
   transition: all 0.3s ease;
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   border: none;
   cursor: pointer;
+  @media (width <= 767px) {
+    gap: 0.2rem;
+    padding-left: 0.5rem;
+    height: 2rem;
+  }
 
   &.active {
     background-color: var(--card-2);
@@ -209,14 +221,22 @@ $mobile-screen-width: 500px;
 }
 
 .statusIcon {
-  width: 2.25rem;
-  height: 2.25rem;
+  width: 2rem;
+  height: 2rem;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: background-color 0.3s ease;
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  @media (width <= 767px) {
+    width: 1.5rem;
+    height: 1.5rem;
+    svg{
+      width: 10px;
+      height: 10px;
+    }
+  }
 
   &.active {
     background:linear-gradient(90deg, var(--main-primary-start) 0%, var(--main-primary-end) 100%);
@@ -233,7 +253,7 @@ $mobile-screen-width: 500px;
 
 // Content area
 .content {
-  padding: 0 1rem;
+  padding: 1rem;
   max-width: 80rem;
   margin-left: auto;
   margin-right: auto;

@@ -15,11 +15,11 @@
 }
 
 .backButton {
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   background-color: var(--white-color);
   border: 1px solid var(--main-primary-start);
-  border-radius: 50%;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -84,7 +84,7 @@
   );
   border-radius: 24px;
   padding: 32px;
-  margin-bottom: 32px;
+  margin-bottom: 6px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -186,6 +186,9 @@
   border: none;
   border-top: 1px solid #E5E5E5;
   margin: 24px 0;
+  @media (width <= 767px) {
+    margin: 16px 0;
+  }
 }
 
 // Responsive Design
@@ -196,8 +199,8 @@
   }
   
   .backButton {
-    width: 35px;
-    height: 35px;
+    width: 36px;
+    height: 36px;
   }
   
   .userName {
@@ -216,7 +219,7 @@
   
   .balanceCard {
     padding: 24px;
-    margin-bottom: 24px;
+    // margin-bottom: 24px;
     min-height: 140px;
   }
   
@@ -234,7 +237,7 @@
   .balanceCard {
     flex-direction: column;
     align-items: flex-start;
-    gap: 20px;
+    gap: 10px;
     padding: 20px;
   }
   

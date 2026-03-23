@@ -99,7 +99,7 @@ const Achievements = () => {
         <div className={styles.formLayoutContent}>
           {/* Progress + Skip */}
           <div className={styles.progressWithSkip}>
-            <FormStep totalSteps={6} currentStep={5} />
+            <FormStep totalSteps={7} currentStep={5} />
 
             <button 
               type="button"

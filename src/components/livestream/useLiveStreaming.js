@@ -1,5 +1,5 @@
 // src/components/LiveStreaming/useLiveStreaming.js
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   useJoin,
   usePublish,
@@ -9,6 +9,7 @@ import {
   useRemoteUsers,
 } from "agora-rtc-react";
 import { getAgoraToken } from "../../services/appServices/getLiveStreamService";
+import { useCall } from "../../context/CallContext";
 
 const APP_ID = "cf5e31fa03584573aacaf42daebd493c";
 const SESSION_KEY = "shubhtalk_live_session";
@@ -24,6 +25,12 @@ export const useLiveStreaming = (client, ROLE, previewSettings = {}) => {
   const isConnected = useIsConnected();
   const [micOn, setMic] = useState(previewSettings.micOn ?? true);
   const [cameraOn, setCamera] = useState(previewSettings.cameraOn ?? true);
+
+  // Track whether mic was muted by an active call (not by the host manually)
+  const micMutedByCallRef = useRef(false);
+  const [isMicMutedByCall, setIsMicMutedByCall] = useState(false);
+
+  const { activeCall } = useCall();
 
   useEffect(() => {
     if (client) {
@@ -110,6 +117,45 @@ export const useLiveStreaming = (client, ROLE, previewSettings = {}) => {
     shouldPublish ? [localMicrophoneTrack, localCameraTrack] : []
   );
 
+  /* ================= MUTE LIVE MIC DURING ACTIVE CALL ================= */
+  // When astrologer accepts a call while live, mute the live stream mic
+  // so audience can still see video but can't hear the private conversation.
+  // We use track.setEnabled(false) instead of setMic(false) to keep the track
+  // alive and published — only the audio is silenced. This avoids affecting
+  // the camera track or the usePublish hook.
+  useEffect(() => {
+    if (ROLE !== "host") return;
+    if (!localMicrophoneTrack) return;
+
+    if (activeCall) {
+      if (!micMutedByCallRef.current) {
+        micMutedByCallRef.current = true;
+        setIsMicMutedByCall(true);
+        localMicrophoneTrack.setEnabled(false);
+        console.log("[LiveStream] 🔇 Muting live mic track — private call active");
+      }
+    } else {
+      if (micMutedByCallRef.current) {
+        micMutedByCallRef.current = false;
+        setIsMicMutedByCall(false);
+        // Only re-enable if the host had mic on before the call
+        if (micOn) {
+          localMicrophoneTrack.setEnabled(true);
+        }
+        console.log("[LiveStream] 🔊 Restoring live mic track — call ended");
+      }
+    }
+  }, [activeCall, ROLE, localMicrophoneTrack, micOn]);
+
+  // Wrap setMic so host can't manually unmute live stream during an active call
+  const safeMicToggle = (value) => {
+    if (micMutedByCallRef.current) {
+      console.log("[LiveStream] ⚠️ Cannot unmute live mic — private call in progress");
+      return;
+    }
+    setMic(value);
+  };
+
   const clearLiveSession = () => {
     sessionStorage.removeItem(SESSION_KEY);
   };
@@ -119,7 +165,7 @@ export const useLiveStreaming = (client, ROLE, previewSettings = {}) => {
     setCalling,
     isConnected,
     micOn,
-    setMic,
+    setMic: safeMicToggle,
     cameraOn,
     setCamera,
     localMicrophoneTrack,
@@ -129,5 +175,6 @@ export const useLiveStreaming = (client, ROLE, previewSettings = {}) => {
     chatRoomId,
     isReconnect,
     clearLiveSession,
+    isMicMutedByCall,
   };
 };

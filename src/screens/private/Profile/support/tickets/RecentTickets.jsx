@@ -51,7 +51,7 @@ const RecentTickets = () => {
         {TICKETS.map((ticket, idx) => (
           <div
             key={idx}
-            className="bg-gray-50 rounded-2xl p-6 border border-gray-100 hover:shadow-sm transition-all flex flex-col md:flex-row md:items-center justify-between gap-4"
+            className="bg-gray-50 bg-white rounded-2xl p-6 border border-gray-100 hover:shadow-sm transition-all flex flex-col md:flex-row md:items-center justify-between gap-4"
           >
             <div>
               <div className="flex items-center gap-3 mb-1">

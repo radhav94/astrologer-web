@@ -65,7 +65,7 @@ const HomeLayout = () => {
     userData?.profileImgUrl || getDefaultImgBasedOnGender(userData?.gender);
 
   //Chat
-  const { setActiveChat, setChatSeconds, recoverChatAfterSystemDisconnect } =
+  const { setActiveChat, setChatSeconds, resetTimer, recoverChatAfterSystemDisconnect } =
     useChatContext();
   const navigate = useNavigate();
 
@@ -256,6 +256,7 @@ const HomeLayout = () => {
         formattedFirstName && formattedLastName
           ? `${formattedFirstName} ${formattedLastName}`
           : formattedFirstName || "Customer";
+          resetTimer();
       setActiveChat({
         roomId: roomId,
         isUserSide: false,

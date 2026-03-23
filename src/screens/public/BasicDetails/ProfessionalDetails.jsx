@@ -9,7 +9,13 @@ import styles from "./BasicForms.module.scss";
 import FormStep from "./FormStep";
 import { appSvgs } from "../../../utils/appImages";
 
-const EXPERTISE_LIST = ['Tarot', 'Face Reading', 'Vedic', 'Numerology', 'Palmistry'];
+const EXPERTISE_LIST = [
+    { title: "Tarot", slug: "tarot" },
+    { title: "Face Reading", slug: "face-reading" },
+    { title: "Vedic", slug: "vedic" },
+    { title: "Numerology", slug: "numerology" },
+    { title: "Palmistry", slug: "palmistry" },
+  ];
 
 const EXPERIENCE_LIST = Array.from({ length: 51 }, (_, i) => i); // 0 to 50
 
@@ -17,6 +23,13 @@ const ProfessionalDetails = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const registerData = useSelector((state) => state.register.registerData);
+
+  // Normalize existing expertise from Redux: handle both old format (strings) and new format (objects)
+  const normalizedExistingExpertise = (registerData?.expertise || []).map((item) =>
+    typeof item === "string"
+      ? { title: item, slug: item.toLowerCase().replace(/\s+&\s+/g, "-").replace(/\s+/g, "-") }
+      : item
+  );
 
   // Validation schema using reusable utilities from utils.js
   const validationSchema = Yup.object().shape({
@@ -26,18 +39,24 @@ const ProfessionalDetails = () => {
       required: true,
       emptyValue: "",
     }),
-    expertise: createMultiSelectValidation({
-      fieldName: "Areas of expertise",
-      minSelections: 1,
-      required: true,
-    }),
+    // Old: string-based validation
+    // expertise: createMultiSelectValidation({
+    //   fieldName: "Areas of expertise",
+    //   minSelections: 1,
+    //   required: true,
+    // }),
+    // New: object-based validation { title, slug }
+    expertise: Yup.array()
+      .of(Yup.object().shape({ title: Yup.string(), slug: Yup.string() }))
+      .min(1, "Please select at least one area of expertise")
+      .required("Area of expertise is required"),
   });
 
   // Formik setup with Redux state hydration
   const formik = useFormik({
     initialValues: {
       experience: registerData?.experience || "",
-      expertise: registerData?.expertise || [],
+      expertise: normalizedExistingExpertise,
     },
     validationSchema,
     validateOnChange: true,
@@ -58,13 +77,30 @@ const ProfessionalDetails = () => {
     },
   });
 
-  const toggleExpertise = (item) => {
+  // Check if an expertise option is currently selected (compare by slug)
+  const isExpertiseSelected = (slug) =>
+    formik.values.expertise.some((item) => item?.slug === slug);
+
+  // Old: string-based toggle
+  // const toggleExpertise = (item) => {
+  //   const currentExpertise = formik.values.expertise;
+  //   const newExpertise = currentExpertise.includes(item)
+  //     ? currentExpertise.filter((e) => e !== item)
+  //     : [...currentExpertise, item];
+  //   formik.setFieldValue("expertise", newExpertise);
+  // };
+
+  // New: object-based toggle by slug
+  const toggleExpertise = (option) => {
     const currentExpertise = formik.values.expertise;
-    const newExpertise = currentExpertise.includes(item)
-      ? currentExpertise.filter((e) => e !== item)
-      : [...currentExpertise, item];
-    
-    formik.setFieldValue("expertise", newExpertise);
+    if (isExpertiseSelected(option?.slug)) {
+      formik.setFieldValue(
+        "expertise",
+        currentExpertise.filter((item) => item?.slug !== option?.slug),
+      );
+    } else {
+      formik.setFieldValue("expertise", [...currentExpertise, { title: option?.title, slug: option?.slug }]);
+    }
   };
 
   // Check if all required fields are filled and valid
@@ -135,16 +171,16 @@ const ProfessionalDetails = () => {
             <div className={styles.chipContainer}>
               {EXPERTISE_LIST.map((item) => (
                 <button
-                  key={item}
+                  key={item.slug}
                   type="button"
                   onClick={() => toggleExpertise(item)}
                   className={`${styles.chip} ${
-                    formik.values.expertise.includes(item)
+                    isExpertiseSelected(item.slug)
                       ? styles.chipActive
                       : ""
                   }`}
                 >
-                  {item}
+                  {item?.title}
                 </button>
               ))}
             </div>

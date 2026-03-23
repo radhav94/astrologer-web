@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, X } from "lucide-react";
+import CountdownTimer from "./CountdownTimer";
 import "./styles/livePreview.scss";
 
 const LivePreview = () => {
@@ -9,6 +10,7 @@ const LivePreview = () => {
   const streamRef = useRef(null);
 
   const [hasPermission, setHasPermission] = useState(null);
+  const [showCountdown, setShowCountdown] = useState(false);
 
   const stopAllTracks = useCallback(() => {
     streamRef.current?.getTracks().forEach((t) => t.stop());
@@ -58,10 +60,18 @@ const LivePreview = () => {
   }, [stopAllTracks, attachStream]);
 
   const handleGoLive = () => {
+    setShowCountdown(true);
+  };
+
+  const handleCountdownComplete = () => {
     stopAllTracks();
     navigate("/astrologer-dashboard/live-streaming", {
       state: { micOn: true, cameraOn: true },
     });
+  };
+
+  const handleCountdownCancel = () => {
+    setShowCountdown(false);
   };
 
   const handleClose = () => {
@@ -117,11 +127,18 @@ const LivePreview = () => {
         <button
           className="go-live-btn"
           onClick={handleGoLive}
-          disabled={hasPermission === false}
+          disabled={hasPermission === false || showCountdown}
         >
           Go Live
         </button>
       </div>
+
+      {showCountdown && (
+        <CountdownTimer
+          onComplete={handleCountdownComplete}
+          onCancel={handleCountdownCancel}
+        />
+      )}
     </div>
   );
 };

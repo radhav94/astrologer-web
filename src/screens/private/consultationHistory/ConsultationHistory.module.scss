@@ -943,10 +943,20 @@
 .modalTitle {
     font-size: 1.125rem;
     font-weight: 700;
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
 
     @media (min-width: 640px) {
         font-size: 1.25rem;
+    }
+}
+
+.modalSubtext {
+    font-size: 0.8125rem;
+    color: #6b7280;
+    margin-bottom: 1rem;
+
+    @media (min-width: 640px) {
+        font-size: 0.875rem;
     }
 }
 
@@ -1005,7 +1015,7 @@
     padding: 0.625rem 1rem;
     font-size: 0.875rem;
     font-weight: 500;
-    background-color: #f97316;
+    background: linear-gradient(90deg, var(--main-primary-start) 0%, var(--main-primary-end) 100%);
     color: #fff;
     border-radius: 0.5rem;
     transition: background-color 0.15s;

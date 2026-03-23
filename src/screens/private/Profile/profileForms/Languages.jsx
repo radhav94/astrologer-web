@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { EllipsisVertical } from "lucide-react";
+import { EllipsisVertical, Pencil, Trash2 } from "lucide-react";
 import { Icons } from "../../../../components/Icons";
 import styles from "./ProfileForms.module.scss";
 import { AppImages } from "../../../../utils/appImages";
@@ -36,12 +36,6 @@ const Languages = () => {
   const existingLanguages = existingData?.languagePreferences || [];
   
   // Static language cards for UI design purposes only
-  const [myLanguages] = useState([
-    { id: "1", name: "Hindi", level: "Basic", symbol: AppImages.Letter1 },
-    { id: "2", name: "English", level: "Basic", symbol: AppImages.Letter1 },
-    { id: "3", name: "Tamil", level: "Basic", symbol: AppImages.Letter1 },
-  ]);
-
   const suggestedLanguages = [
     "English",
     "Hindi",
@@ -51,6 +45,22 @@ const Languages = () => {
     "Kannada",
   ];
   const proficiencies = ["Fluent", "Basic", "Conversational", "Native"];
+
+  const [menuOpen, setMenuOpen] = useState(null);
+  const [editingLang, setEditingLang] = useState(null);
+  const [newlyAdded, setNewlyAdded] = useState([]);
+  const menuRef = useRef(null);
+
+  // Close menu on outside click
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpen(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Validation schema using reusable utilities from utils.js
   const validationSchema = Yup.object().shape({
@@ -97,15 +107,16 @@ const Languages = () => {
     );
 
     if (existingIndex !== -1) {
-      // Remove language
-      const newPreferences = currentPreferences.filter((_, idx) => idx !== existingIndex);
-      formik.setFieldValue("languagePreferences", newPreferences);
+      // Already exists — just open proficiency editor, don't remove
+      setEditingLang(lang);
     } else {
       // Add language with default proficiency
       formik.setFieldValue("languagePreferences", [
         ...currentPreferences,
         { languageName: lang, proficiencyLevel: "Beginner" },
       ]);
+      setNewlyAdded((prev) => [...prev, lang]);
+      setEditingLang(lang);
     }
   };
 
@@ -137,8 +148,29 @@ const Languages = () => {
         ...currentPreferences,
         { languageName: lang, proficiencyLevel: "Beginner" },
       ]);
-      formik.setFieldValue("customLanguage", "");
+      setNewlyAdded((prev) => [...prev, lang]);
+      // Show proficiency editor for the newly added language
+      setEditingLang(lang);
     }
+
+    formik.setFieldValue("customLanguage", "");
+  };
+
+  /* Delete a language from the list */
+  const deleteLanguage = (langName) => {
+    const updated = formik.values.languagePreferences.filter(
+      (item) => item.languageName !== langName
+    );
+    formik.setFieldValue("languagePreferences", updated);
+    setNewlyAdded((prev) => prev.filter((l) => l !== langName));
+    if (editingLang === langName) setEditingLang(null);
+    setMenuOpen(null);
+  };
+
+  /* Start editing — scroll to the proficiency section for that language */
+  const handleEdit = (langName) => {
+    setEditingLang(langName);
+    setMenuOpen(null);
   };
 
   const selectedLanguages = formik.values.languagePreferences.map(
@@ -160,29 +192,67 @@ const Languages = () => {
       {/* Form Content */}
       <div className={styles.formContent}>
         {/* Current Languages Cards */}
-        <div className={styles.languageCards}>
-          {myLanguages.map((lang) => (
-            <div key={lang.id} className={styles.languageCard}>
-              <EllipsisVertical size={35} className={styles.languageCardMenu} />
-              <div className={styles.languageSymbol}>
-                <span className={styles.leftLetter}>{lang.name[0]}</span>
-                <span className={styles.rightLetter}>{lang.name[0]}</span>
+        {formik.values.languagePreferences.length > 0 && (
+          <div className={styles.languageCards}>
+            {formik.values.languagePreferences.map((lang) => (
+              <div key={lang.languageName} className={styles.languageCard}>
+                <div
+                  className={styles.languageCardMenu}
+                  onClick={() => setMenuOpen(menuOpen === lang.languageName ? null : lang.languageName)}
+                  ref={menuOpen === lang.languageName ? menuRef : null}
+                >
+                  <EllipsisVertical size={20} />
+                  {menuOpen === lang.languageName && (
+                    <div className={styles.cardDropdown}>
+                      <button
+                        className={styles.cardDropdownItem}
+                        onClick={(e) => { e.stopPropagation(); handleEdit(lang.languageName); }}
+                      >
+                        <Pencil size={16} color="#F75801" />
+                        Edit
+                      </button>
+                      <div className={styles.cardDropdownDivider} />
+                      <button
+                        className={styles.cardDropdownItem}
+                        onClick={(e) => { e.stopPropagation(); deleteLanguage(lang.languageName); }}
+                      >
+                        <Trash2 size={16} color="#ef4444" />
+                        Delete
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <div className={styles.languageSymbol}>
+                  <span className={styles.leftLetter}>{lang.languageName[0]}</span>
+                  <span className={styles.rightLetter}>{lang.languageName[0]}</span>
+                </div>
+                <h3 className={styles.languageName}>{lang.languageName}</h3>
+                <p className={styles.languageLevel}>{lang.proficiencyLevel || "—"}</p>
               </div>
-              <h3 className={styles.languageName}>{lang.name}</h3>
-              <p className={styles.languageLevel}>{lang.level}</p>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
         {/* Select Language */}
         <div className={styles.formGroup}>
           <label className={styles.label}>Select Language</label>
           <div className={styles.expertiseOptions}>
+            {/* Custom languages (not in preset list) shown first */}
+            {formik.values.languagePreferences
+              .filter((item) => !suggestedLanguages.includes(item.languageName))
+              .map((item) => (
+                <Chip
+                  key={item.languageName}
+                  label={item.languageName}
+                  selected={newlyAdded.includes(item.languageName)}
+                  onClick={() => toggleLanguage(item.languageName)}
+                />
+              ))}
             {suggestedLanguages.map((lang) => (
               <Chip
                 key={lang}
                 label={lang}
-                selected={selectedLanguages.includes(lang)}
+                selected={newlyAdded.includes(lang)}
                 onClick={() => toggleLanguage(lang)}
               />
             ))}
@@ -221,12 +291,18 @@ const Languages = () => {
           />
         </div>
 
-        {/* Add Proficiency Level */}
-        {selectedLanguages.length > 0 && (
+        {/* Add Proficiency Level - only shows for the card being edited */}
+        {editingLang && (
           <div className={styles.formGroup}>
-            <label className={styles.label}>Add Proficiency Level</label>
-            {formik.values.languagePreferences.map((langPref) => (
-              <div key={langPref.languageName} className={styles.proficiencySection}>
+            <label className={styles.label}>Edit Proficiency Level</label>
+            {formik.values.languagePreferences
+              .filter((langPref) => langPref.languageName === editingLang)
+              .map((langPref) => (
+              <div
+                key={langPref.languageName}
+                className={styles.proficiencySection}
+                style={{ border: "1.5px solid #F75801", borderRadius: 12, padding: 12 }}
+              >
                 <h4 className={styles.label}>{langPref.languageName}</h4>
                 <div className={styles.expertiseOptions}>
                   {proficiencies.map((level) => (
@@ -234,7 +310,9 @@ const Languages = () => {
                       key={level}
                       label={level}
                       selected={langPref.proficiencyLevel === level}
-                      onClick={() => setProficiency(langPref.languageName, level)}
+                      onClick={() => {
+                        setProficiency(langPref.languageName, level);
+                      }}
                     />
                   ))}
                 </div>

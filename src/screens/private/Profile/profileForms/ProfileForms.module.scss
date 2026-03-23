@@ -298,10 +298,14 @@
 
 // Languages Specific Styles
 .languageCards {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  display: flex;
   gap: 16px;
   margin-bottom: 32px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar { display: none; }
+  padding-bottom: 4px;
 }
 
 .languageCard {
@@ -311,6 +315,8 @@
   position: relative;
   text-align: left;
   overflow: hidden;
+  min-width: 140px;
+  flex-shrink: 0;
 }
 
 .languageCardMenu {
@@ -319,15 +325,52 @@
   right: 12px;
   background: none;
   border: none;
-  font-size: 30px;
   color: #6B6B6B;
   cursor: pointer;
   padding: 4px;
   line-height: 1;
+  z-index: 2;
   
   &:hover {
     color: var(--title);
   }
+}
+
+.cardDropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  min-width: 130px;
+  z-index: 10;
+  overflow: hidden;
+}
+
+.cardDropdownItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 14px 16px;
+  border: none;
+  background: none;
+  font-size: 15px;
+  font-weight: 500;
+  color: #1f2937;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover {
+    background: #f9fafb;
+  }
+}
+
+.cardDropdownDivider {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 0 12px;
 }
 
 .languageSymbol {

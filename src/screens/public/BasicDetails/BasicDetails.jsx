@@ -87,7 +87,7 @@ const BasicDetails = () => {
       <div className={styles.formLayoutContainer}>
         <div className={styles.formLayoutContent}>
           {/* Progress Dots */}
-          <FormStep totalSteps={6} currentStep={1} />
+          <FormStep totalSteps={7} currentStep={1} />
 
           {/* Heading */}
           <h1 className={styles.heading}>Let's Begin</h1>

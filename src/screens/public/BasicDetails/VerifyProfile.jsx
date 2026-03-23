@@ -144,7 +144,7 @@ const VerifyProfile = () => {
         <div className={styles.formLayoutContent}>
           {/* Progress + Skip */}
           <div className={styles.progressWithSkip}>
-            <FormStep totalSteps={6} currentStep={6} />
+            <FormStep totalSteps={7} currentStep={7} />
 
             <button 
               type="button"

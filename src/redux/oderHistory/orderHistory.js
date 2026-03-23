@@ -13,9 +13,21 @@ export const orderHistory = epicApi.injectEndpoints({
           ...(filterBy && { filterBy }),
         },
       }),
+      providesTags: ["Transactions"],
+    }),
+
+    // Refund initiation API - POST /api/transactions/refundIniitalByAstrologer
+    refundInitiateByAstrologer: builder.mutation({
+      query: ({ astrologerId, minutes, roomId, userId }) => ({
+        url: "transactions/refundIniitalByAstrologer",
+        method: "POST",
+        body: { astrologerId, minutes, roomId, userId },
+      }),
+      // Invalidate Transactions tag to refresh order history after refund
+      invalidatesTags: ["Transactions"],
     }),
   }),
   overrideExisting: false,
 });
 
-export const { useGetOrderHistoryQuery } = orderHistory;
+export const { useGetOrderHistoryQuery, useRefundInitiateByAstrologerMutation } = orderHistory;

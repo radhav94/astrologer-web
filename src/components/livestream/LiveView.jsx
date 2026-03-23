@@ -69,6 +69,7 @@ const LiveView = (props) => {
     participantCount,
     endRoom,
     clearLiveSession,
+    isMicMutedByCall,
   } = props;
 
   const handleEndLive = useCallback(async () => {

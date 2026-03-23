@@ -47,8 +47,9 @@ const Languages = () => {
   const proficiencies = ["Fluent", "Basic", "Conversational", "Native"];
 
   const [menuOpen, setMenuOpen] = useState(null);
-  const [editingLang, setEditingLang] = useState(null);
+  const [editingLang, setEditingLang] = useState([]);
   const [newlyAdded, setNewlyAdded] = useState([]);
+  const [showCustomInput, setShowCustomInput] = useState(false);
   const menuRef = useRef(null);
 
   // Close menu on outside click
@@ -108,7 +109,7 @@ const Languages = () => {
 
     if (existingIndex !== -1) {
       // Already exists — just open proficiency editor, don't remove
-      setEditingLang(lang);
+      setEditingLang((prev) => prev.includes(lang) ? prev : [...prev, lang]);
     } else {
       // Add language with default proficiency
       formik.setFieldValue("languagePreferences", [
@@ -116,7 +117,7 @@ const Languages = () => {
         { languageName: lang, proficiencyLevel: "Beginner" },
       ]);
       setNewlyAdded((prev) => [...prev, lang]);
-      setEditingLang(lang);
+      setEditingLang((prev) => [...prev, lang]);
     }
   };
 
@@ -143,17 +144,29 @@ const Languages = () => {
       (item) => item.languageName === lang
     );
 
-    if (!alreadyExists) {
-      formik.setFieldValue("languagePreferences", [
-        ...currentPreferences,
-        { languageName: lang, proficiencyLevel: "Beginner" },
-      ]);
-      setNewlyAdded((prev) => [...prev, lang]);
-      // Show proficiency editor for the newly added language
-      setEditingLang(lang);
+    if (alreadyExists) return; // Already exists, do nothing
+
+    // If we're editing a previously added custom lang, rename it
+    if (editingLang.length > 0 && newlyAdded.includes(editingLang[editingLang.length - 1]) && editingLang[editingLang.length - 1] !== lang) {
+      const lastEditing = editingLang[editingLang.length - 1];
+      const updated = currentPreferences.map((item) =>
+        item.languageName === lastEditing
+          ? { ...item, languageName: lang }
+          : item
+      );
+      formik.setFieldValue("languagePreferences", updated);
+      setNewlyAdded((prev) => prev.map((l) => (l === lastEditing ? lang : l)));
+      setEditingLang((prev) => prev.map((l) => (l === lastEditing ? lang : l)));
+      return;
     }
 
-    formik.setFieldValue("customLanguage", "");
+    // Add new language
+    formik.setFieldValue("languagePreferences", [
+      ...currentPreferences,
+      { languageName: lang, proficiencyLevel: "Beginner" },
+    ]);
+    setNewlyAdded((prev) => [...prev, lang]);
+    setEditingLang((prev) => [...prev, lang]);
   };
 
   /* Delete a language from the list */
@@ -163,13 +176,13 @@ const Languages = () => {
     );
     formik.setFieldValue("languagePreferences", updated);
     setNewlyAdded((prev) => prev.filter((l) => l !== langName));
-    if (editingLang === langName) setEditingLang(null);
+    setEditingLang((prev) => prev.filter((l) => l !== langName));
     setMenuOpen(null);
   };
 
-  /* Start editing — scroll to the proficiency section for that language */
+  /* Start editing — show proficiency section for that language */
   const handleEdit = (langName) => {
-    setEditingLang(langName);
+    setEditingLang((prev) => prev.includes(langName) ? prev : [...prev, langName]);
     setMenuOpen(null);
   };
 
@@ -257,9 +270,9 @@ const Languages = () => {
               />
             ))}
             <Chip
-              label="Add Language +"
+              label={showCustomInput ? "− Close" : "Add Language +"}
               selected={false}
-              onClick={addCustomLanguage}
+              onClick={() => setShowCustomInput(!showCustomInput)}
             />
           </div>
           <p className={styles.helperText}>*You can select more than 1.</p>
@@ -272,36 +285,39 @@ const Languages = () => {
           )}
         </div>
 
-        {/* Enter Language Input */}
-        <div className={styles.formGroup}>
-          <input
-            type="text"
-            name="customLanguage"
-            value={formik.values.customLanguage}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                addCustomLanguage();
-              }
-            }}
-            className={styles.input}
-            placeholder="Enter Language"
-          />
-        </div>
+        {/* Enter Language Input - only visible when Add Language is clicked */}
+        {showCustomInput && (
+          <div className={styles.formGroup}>
+            <input
+              type="text"
+              name="customLanguage"
+              value={formik.values.customLanguage}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  addCustomLanguage();
+                }
+              }}
+              autoFocus
+              className={styles.input}
+              placeholder="Enter Language"
+            />
+          </div>
+        )}
 
-        {/* Add Proficiency Level - only shows for the card being edited */}
-        {editingLang && (
+        {/* Add Proficiency Level - shows for all languages being edited */}
+        {editingLang.length > 0 && (
           <div className={styles.formGroup}>
             <label className={styles.label}>Edit Proficiency Level</label>
             {formik.values.languagePreferences
-              .filter((langPref) => langPref.languageName === editingLang)
+              .filter((langPref) => editingLang.includes(langPref.languageName))
               .map((langPref) => (
               <div
                 key={langPref.languageName}
                 className={styles.proficiencySection}
-                style={{ border: "1.5px solid #F75801", borderRadius: 12, padding: 12 }}
+                style={{ border: "1.5px solid #F75801", borderRadius: 12, padding: 12, marginBottom: 12 }}
               >
                 <h4 className={styles.label}>{langPref.languageName}</h4>
                 <div className={styles.expertiseOptions}>

@@ -44,14 +44,11 @@ const HomeLayout = () => {
 
   const { data: astrologerResponse } = useGetAstrologerByIdQuery(astrologerId);
 
-  const isRegister = astrologerDetails?.isRegister ?? false;
-  const isVerified = astrologerDetails?.isVerified ?? false;
+  const isRegister = astrologerDetails?.isRegister;
+  const isVerified = astrologerDetails?.isVerified;
 
   // Only check manualVerification if both isRegister and isVerified are true
-  const isManualVerification =
-    isRegister && isVerified
-      ? (astrologerDetails?.manualVerification ?? false)
-      : false;
+  const isManualVerification = astrologerDetails?.manualVerification;
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [statusState, setStatusState] = useState({
@@ -67,7 +64,8 @@ const HomeLayout = () => {
     userData?.profileImgUrl || getDefaultImgBasedOnGender(userData?.gender);
 
   //Chat
-  const { setActiveChat, setChatSeconds, recoverChatAfterSystemDisconnect } = useChatContext();
+  const { setActiveChat, setChatSeconds, recoverChatAfterSystemDisconnect } =
+    useChatContext();
   const navigate = useNavigate();
 
   const handleStatusToggle = async (type) => {
@@ -183,6 +181,59 @@ const HomeLayout = () => {
 
     syncAstrologerStatus();
   }, [astrologerId, astrologerResponse]);
+
+  // Old: async useEffect (not supported by React)
+  // useEffect(async () => {
+  //   if (isManualVerification === false) {
+  //     await handleStatusToggle("call")
+  //     await handleStatusToggle("chat")
+  //   }
+  // }, [isRegister, isVerified, isManualVerification]);
+
+  // Auto-set user offline if manualVerification is false (from API response)
+  // Runs once when astrologerResponse data is available
+  useEffect(() => {
+    if (!astrologerResponse?.success) return;
+
+    const apiUser = astrologerResponse.data;
+    const manualVerification = apiUser?.manualVerification;
+
+    if (manualVerification === false && apiUser?.isActiveType.length > 0) {
+      const forceOffline = async () => {
+        try {
+          // Send status: true with activeType to deactivate audio, video, chat
+          // updateAstrologerStatus("offline", []) sends { status: false, activeType: [] }
+          const response = await updateAstrologerStatus("offline", []);
+
+          if (response?.data?.success) {
+            // Update local state to reflect offline
+            setStatusState({
+              call: { isOnline: false, loading: false },
+              chat: { isOnline: false, loading: false },
+            });
+
+            const updatedUser = {
+              ...userData,
+              isActive: "offline",
+              activeType: [],
+            };
+
+            localStorage.setItem(
+              "shubhtalk_astrologer_details",
+              JSON.stringify(updatedUser),
+            );
+
+            // Keep Redux in sync
+            dispatch(setAstrologerDetails(updatedUser));
+          }
+        } catch (error) {
+          console.error("Auto-offline for unverified user failed:", error);
+        }
+      };
+
+      forceOffline();
+    }
+  }, [astrologerResponse]);
 
   //Handle if chat accepted by user
   useEffect(() => {
@@ -378,7 +429,7 @@ const HomeLayout = () => {
         <AudioVideoContainer />
         <IncomingChatModal />
         <StickyReviewFooter />
-        <StickyChatFooter/>
+        <StickyChatFooter />
       </main>
     </div>
   );

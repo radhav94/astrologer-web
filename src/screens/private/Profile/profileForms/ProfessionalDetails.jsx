@@ -7,13 +7,14 @@ import styles from "./ProfileForms.module.scss";
 import Button from "../../../../components/UI/button/Button";
 import SectionHeader from "../../../../components/UI/sectionHeader/SectionHeader";
 import Chip from "../../../../components/UI/chip/Chip";
-import { useSetAstroEditProfileMutation } from "../../../../redux/profileApi/profileApi";
+import { useGetExpertiseListQuery, useSetAstroEditProfileMutation } from "../../../../redux/profileApi/profileApi";
 import toast from "../../../../components/toast";
 
 const ProfessionalProfileDtls = () => {
   const navigate = useNavigate();
   const [setAstroEditProfile, { isLoading: isUpdating }] =
     useSetAstroEditProfileMutation();
+  // const [baseExpertiseOptions,{ isLoading: isLoadingExpertise }] = useGetExpertiseListQuery();
 
   // Get astrologer details from Redux state
   const astrologerDetails = useSelector(
@@ -44,10 +45,16 @@ const ProfessionalProfileDtls = () => {
   const existingExpertise =
     existingData?.expertise || existingData?.specializations || [];
 
+  // Normalize existing expertise: handle both old format (strings) and new format (objects)
+  const normalizedExistingExpertise = existingExpertise.map((item) =>
+    typeof item === "string" ? { title: item, slug: item.toLowerCase().replace(/\s+&\s+/g, "-").replace(/\s+/g, "-") } : item
+  );
+
   // Dynamically add any missing expertise values from Redux to the options list
+  const existingSlugs = new Set(baseExpertiseOptions.map((opt) => opt.slug));
   const expertiseOptions = [
     ...baseExpertiseOptions,
-    ...existingExpertise.filter((spec) => !baseExpertiseOptions.includes(spec.title)),
+    ...normalizedExistingExpertise.filter((spec) => !existingSlugs.has(spec.slug)),
   ];
 
   const experienceYears = Array.from({ length: 51 }, (_, i) => i); // 0 to 50
@@ -57,8 +64,14 @@ const ProfessionalProfileDtls = () => {
     experience: Yup.number()
       .min(0, "Experience must be at least 0 years")
       .required("Experience is required"),
+    // Old: expertise was array of strings
+    // expertise: Yup.array()
+    //   .of(Yup.string())
+    //   .min(1, "Please select at least one area of expertise")
+    //   .required("Area of expertise is required"),
+    // New: expertise is array of objects { title, slug }
     expertise: Yup.array()
-      .of(Yup.string())
+      .of(Yup.object().shape({ title: Yup.string(), slug: Yup.string() }))
       .min(1, "Please select at least one area of expertise")
       .required("Area of expertise is required"),
   });
@@ -67,7 +80,7 @@ const ProfessionalProfileDtls = () => {
   const formik = useFormik({
     initialValues: {
       experience: existingData?.experience || 0,
-      expertise: existingExpertise,
+      expertise: normalizedExistingExpertise,
     },
     validationSchema,
     validateOnChange: true,
@@ -75,6 +88,7 @@ const ProfessionalProfileDtls = () => {
     validateOnMount: true,
     onSubmit: async (values) => {
       try {
+        // Send expertise as array of objects { title, slug } to API
         await setAstroEditProfile({
           id: astrologerId,
           experience: values.experience,
@@ -93,15 +107,21 @@ const ProfessionalProfileDtls = () => {
     },
   });
 
+  // Check if an expertise option is currently selected (compare by slug)
+  const isExpertiseSelected = (slug) =>
+    formik.values.expertise.some((item) => item?.slug === slug);
+
   const toggleExpertise = (option) => {
     const currentExpertise = formik.values.expertise;
-    if (currentExpertise.includes(option)) {
+    if (isExpertiseSelected(option?.slug)) {
+      // Remove: filter out by slug
       formik.setFieldValue(
         "expertise",
         currentExpertise.filter((item) => item?.slug !== option?.slug),
       );
     } else {
-      formik.setFieldValue("expertise", [...currentExpertise, {title:option?.title,slug:option?.slug}]);
+      // Add: push object with title and slug
+      formik.setFieldValue("expertise", [...currentExpertise, { title: option?.title, slug: option?.slug }]);
     }
   };
 
@@ -148,7 +168,7 @@ const ProfessionalProfileDtls = () => {
               <Chip
                 key={option?.slug}
                 label={option?.title}
-                selected={formik.values.expertise.includes(option?.slug)}
+                selected={isExpertiseSelected(option?.slug)}
                 onClick={() => toggleExpertise(option)}
               />
             ))}

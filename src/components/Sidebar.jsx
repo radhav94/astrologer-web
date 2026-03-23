@@ -1,15 +1,17 @@
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { Icons } from "./Icons";
 import { useCall } from "../context/CallContext";
 import { Toast } from "../components";
 import styles from "./Sidebar.module.scss";
+import { setLogout } from "../reducer/registerSlice";
 
 const Sidebar = ({ isOpen, onClose }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { kundliId } = useParams();
   const { setAstroId } = useCall(); // 🔥 VERY IMPORTANT
+  const dispatch = useDispatch();
 
   // Check verification status from Redux state
   const astrologerDetails = useSelector((state) => state.register?.astrologerDetails);
@@ -32,8 +34,10 @@ const Sidebar = ({ isOpen, onClose }) => {
     // localStorage.removeItem("accessToken");
     localStorage.clear();
     sessionStorage.removeItem("otpSession");
+    dispatch(setLogout())
     // navigate("/");
     Toast.success("You have been logged out successfully.");
+    
 
     setAstroId(null);
 

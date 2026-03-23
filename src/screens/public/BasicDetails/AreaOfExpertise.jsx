@@ -3,7 +3,8 @@ import { useFormik } from "formik";
 import { useDispatch, useSelector } from "react-redux";
 import * as Yup from "yup";
 import { updateRegisterData, setCurrentStep } from "../../../reducer/registerSlice";
-import { createMultiSelectValidation } from "../../../utils/utlis";
+// Old: string-based validation import
+// import { createMultiSelectValidation } from "../../../utils/utlis";
 import { EXPERTISE_AREAS } from "../../../utils/config";
 import Button from "../../../components/UI/button/Button";
 import FormStep from "./FormStep";
@@ -14,29 +15,50 @@ const AreaOfExpertise = () => {
   const dispatch = useDispatch();
   const registerData = useSelector((state) => state.register.registerData);
 
-  // Validation schema using reusable utilities from utils.js
+  // Normalize existing specialties from Redux: handle both old format (strings) and new format (objects)
+  const normalizedExistingSpecialties = (registerData?.specialties || []).map((item) =>
+    typeof item === "string"
+      ? { title: item, slug: item.toLowerCase().replace(/\s+&\s+/g, "-").replace(/\s+/g, "-") }
+      : item
+  );
+
+  // Old: string-based validation
+  // const validationSchema = Yup.object().shape({
+  //   specialties: createMultiSelectValidation({
+  //     fieldName: "Specialties",
+  //     minSelections: 1,
+  //     maxSelections: 6,
+  //     required: true,
+  //   }),
+  // });
+
+  // New: object-based validation { title, slug }
   const validationSchema = Yup.object().shape({
-    specialties: createMultiSelectValidation({
-      fieldName: "Specialties",
-      minSelections: 1,
-      maxSelections: 6,
-      required: true,
-    }),
+    specialties: Yup.array()
+      .of(Yup.object().shape({ title: Yup.string(), slug: Yup.string() }))
+      .min(1, "Please select at least one specialty")
+      .max(6, "You can select up to 6 specialties only")
+      .required("Specialties is required"),
   });
 
   // Formik setup with Redux state hydration
   const formik = useFormik({
     initialValues: {
-      specialties: registerData?.specialties || [],
+      specialties: normalizedExistingSpecialties,
     },
     validationSchema,
     validateOnChange: true,
     validateOnBlur: true,
     enableReinitialize: true, // Allow form to reinitialize when Redux state changes
     onSubmit: (values) => {
-      // Dispatch to Redux store
+      // Old: send only slugs for API payload
+      // dispatch(updateRegisterData({
+      //   specialties: values.specialties.map((item) => item.slug),
+      // }));
+
+      // New: send as array of objects { title, slug }
       dispatch(updateRegisterData({
-        specialties: values.specialties,
+        specialties: values.specialties.map((item) => ({ title: item.title, slug: item.slug })),
       }));
       
       // Update current step
@@ -47,13 +69,30 @@ const AreaOfExpertise = () => {
     },
   });
 
+  // Check if a specialty is currently selected (compare by slug)
+  const isSpecialtySelected = (slug) =>
+    formik.values.specialties.some((item) => item?.slug === slug);
+
+  // Old: string-based toggle
+  // const toggleSelect = (item) => {
+  //   const currentSpecialties = formik.values.specialties;
+  //   const newSpecialties = currentSpecialties.includes(item.title)
+  //     ? currentSpecialties.filter((i) => i !== item.title)
+  //     : [...currentSpecialties, item.title];
+  //   formik.setFieldValue("specialties", newSpecialties);
+  // };
+
+  // New: object-based toggle by slug
   const toggleSelect = (item) => {
     const currentSpecialties = formik.values.specialties;
-    const newSpecialties = currentSpecialties.includes(item.title)
-      ? currentSpecialties.filter((i) => i !== item.title)
-      : [...currentSpecialties, item.title];
-    
-    formik.setFieldValue("specialties", newSpecialties);
+    if (isSpecialtySelected(item?.slug)) {
+      formik.setFieldValue(
+        "specialties",
+        currentSpecialties.filter((s) => s?.slug !== item?.slug),
+      );
+    } else {
+      formik.setFieldValue("specialties", [...currentSpecialties, { title: item?.title, slug: item?.slug }]);
+    }
   };
 
   // Check if all required fields are filled and valid
@@ -98,7 +137,10 @@ const AreaOfExpertise = () => {
           <div className={styles.formGroup}>
             <div className={styles.expertiseGridFigma}>
               {EXPERTISE_AREAS.map((item) => {
-                const active = formik.values.specialties.includes(item.title);
+                // Old: string-based check
+                // const active = formik.values.specialties.includes(item.title);
+                // New: object-based check by slug
+                const active = isSpecialtySelected(item.slug);
 
                 return (
                   <button

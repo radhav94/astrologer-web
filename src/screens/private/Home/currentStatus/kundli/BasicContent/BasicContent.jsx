@@ -7,6 +7,7 @@ import { useSelector } from "react-redux";
 // import { useFetchBirthDetailsQuery } from "../../../../../../../redux/api/kundli/kundliApi";
 import { capitalizeWords } from "../../../../../../utils/capitalize";
 import { format12HourTime } from "../../../../../../utils/dateFormat/dateTime";
+import EmptyState from "../../../../../../components/UI/EmptyState";
 
 const DetailCard = ({ title, data = {} }) => {
   // format labels nicely (camelCase or snake_case → readable text)
@@ -50,7 +51,10 @@ const BasicContent = (props) => {
 
   const { birthDetails, birthPanchang, astroDetails,userDetails } = props || {};
 
-  if (!birthDetails || !birthPanchang || !astroDetails || !userDetails) return null;
+  if (!birthDetails || !birthPanchang || !astroDetails || !userDetails) {
+    // Show empty state when required data is not available
+    return <EmptyState message="No basic details available." />;
+  }
 
   // Helper to format date
   const formatDate = (d, m, y) =>

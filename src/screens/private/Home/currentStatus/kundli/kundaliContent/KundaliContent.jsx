@@ -5,6 +5,7 @@ import { PrimaryText } from "../../../../../../components";
 import { appColors } from "../../../../../../utils/theme";
 import NorthIndian from "./NorthIndian";
 import SouthIndian from "./SouthIndian";
+import EmptyState from "../../../../../../components/UI/EmptyState";
 // import SwitchTabs from "../../../../components/UI/tabs/switchtabs/SwitchTabs";
 import { useSelector } from "react-redux";
 // import { useGetPlanetsQuery } from "../../../../redux/api/kundli/kundliApi";
@@ -13,7 +14,8 @@ import { useSelector } from "react-redux";
 const KundaliContent = (props) => {
   // const userDetails = useSelector((state) => state?.form?.userDetails);
   const {userDetails } = props || {};
-  if (!userDetails) return null;
+  // Show empty state when required data is not available
+  if (!userDetails) return <EmptyState message="No kundali data available." />;
   // const tabs = [
   //   { label: "North Indian", value: "north", component: () => <NorthIndian data={data} /> },
   //   { label: "South Indian", value: "south", component: () => <SouthIndian data={data} /> },

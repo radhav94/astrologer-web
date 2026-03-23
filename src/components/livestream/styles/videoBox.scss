@@ -273,12 +273,14 @@
   position: absolute;
   left: 0;
   right: 80px;
-  bottom: 70px;
+  bottom: 60px;
   display: flex;
   flex-direction: column;
   gap: 6px;
   z-index: 8;
   padding: 0 14px;
+  max-height: 250px;
+  overflow: auto;
 }
 
 .chat-messages {
@@ -452,9 +454,9 @@
     bottom: 180px;
   }
 
-  .chat-panel {
-    right: 70px;
-  }
+  // .chat-panel {
+  //   right: 70px;
+  // }
 }
 
 /* ===============================
@@ -481,11 +483,11 @@
     width: 44px;
     height: 44px;
   }
-  .chat-panel {
-    right: 70px;
-    bottom: 68px;
-    padding: 0 10px;
-  }
+  // .chat-panel {
+  //   right: 70px;
+  //   bottom: 68px;
+  //   padding: 0 10px;
+  // }
 
   .chat-messages {
     max-height: 160px;

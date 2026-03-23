@@ -32,7 +32,13 @@ const ProfessionalProfileDtls = () => {
   // Use Redux state as primary source for prefilling form
   const existingData = astrologerDetails || userData;
 
-  const baseExpertiseOptions = ['Tarot', 'Face Reading', 'Vedic', 'Numerology', 'Palmistry'];
+  const baseExpertiseOptions = [
+    { title: "Tarot", slug: "tarot" },
+    { title: "Face Reading", slug: "face-reading" },
+    { title: "Vedic", slug: "vedic" },
+    { title: "Numerology", slug: "numerology" },
+    { title: "Palmistry", slug: "palmistry" },
+  ];
 
   // Get existing expertise from Redux
   const existingExpertise =
@@ -41,7 +47,7 @@ const ProfessionalProfileDtls = () => {
   // Dynamically add any missing expertise values from Redux to the options list
   const expertiseOptions = [
     ...baseExpertiseOptions,
-    ...existingExpertise.filter((spec) => !baseExpertiseOptions.includes(spec)),
+    ...existingExpertise.filter((spec) => !baseExpertiseOptions.includes(spec.title)),
   ];
 
   const experienceYears = Array.from({ length: 51 }, (_, i) => i); // 0 to 50
@@ -92,10 +98,10 @@ const ProfessionalProfileDtls = () => {
     if (currentExpertise.includes(option)) {
       formik.setFieldValue(
         "expertise",
-        currentExpertise.filter((item) => item !== option),
+        currentExpertise.filter((item) => item?.slug !== option?.slug),
       );
     } else {
-      formik.setFieldValue("expertise", [...currentExpertise, option]);
+      formik.setFieldValue("expertise", [...currentExpertise, {title:option?.title,slug:option?.slug}]);
     }
   };
 
@@ -140,9 +146,9 @@ const ProfessionalProfileDtls = () => {
           <div className={styles.expertiseOptions}>
             {expertiseOptions.map((option) => (
               <Chip
-                key={option}
-                label={option}
-                selected={formik.values.expertise.includes(option)}
+                key={option?.slug}
+                label={option?.title}
+                selected={formik.values.expertise.includes(option?.slug)}
                 onClick={() => toggleExpertise(option)}
               />
             ))}

@@ -91,7 +91,7 @@ const ProfileTab = ({ profileData }) => {
           {expertise.length > 0 ? (
             expertise.map((expert, index) => (
               <span key={index} className={styles.tag}>
-                {expert}
+                {expert?.title}
               </span>
             ))
           ) : (

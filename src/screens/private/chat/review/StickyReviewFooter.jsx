@@ -3,6 +3,7 @@ import { useCall } from "../../../../context/CallContext";
 import { useAddUserReviewMutation } from "../../../../redux/review/reviewApi";
 import { Toast } from "../../../../components";
 import ReviewModal from "./ReviewModal";
+import { PATH } from "../../../../utils/routes/Paths";
 
 const StickyReviewFooter = () => {
   const {
@@ -27,7 +28,7 @@ const StickyReviewFooter = () => {
 
       if (res.success) {
         Toast.success(res.message);
-        navigate(-1); // or home
+        navigate(PATH.privateRoutes.DASHBOARD.path); // or home
       } else {
         Toast.error(res.message);
       }

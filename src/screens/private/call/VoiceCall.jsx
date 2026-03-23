@@ -17,6 +17,7 @@ import { useChat as useChatContext } from "../../../context/chatContext";
 import CallIcon from "../../../assets/chat/Call.svg";
 import VideoCallChat from "./VideoCallChat";
 import { ReconnectingOverlay } from "../../../components/UI";
+import SuggestRemedyPanel from "./SuggestRemedyPanel";
 
 const APP_ID = "cf5e31fa03584573aacaf42daebd493c";
 
@@ -55,6 +56,7 @@ const AgoraVoiceCalling = ({ callData }) => {
   const [isVideoMode, setIsVideoMode] = useState(false);
   const [speakerOn, setSpeakerOn] = useState(true);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isRemedyOpen, setIsRemedyOpen] = useState(false);
 
   /* ================= PREVENT ACCIDENTAL REFRESH & DETECT REFRESH ================= */
   useEffect(() => {
@@ -1047,7 +1049,7 @@ const AgoraVoiceCalling = ({ callData }) => {
                   transition: 'all 0.3s'
                 }}
               >
-                <button className="px-8 py-3 text-white rounded-full text-base font-semibold hover:opacity-90 transition-opacity shadow-lg flex items-center gap-2" style={{ background: 'linear-gradient(135deg, #f75801, #d43400)' }}>
+                <button onClick={() => setIsRemedyOpen(true)} className="px-8 py-3 text-white rounded-full text-base font-semibold hover:opacity-90 transition-opacity shadow-lg flex items-center gap-2" style={{ background: 'linear-gradient(135deg, #f75801, #d43400)' }}>
                   Suggest Remedy
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
@@ -1134,6 +1136,12 @@ const AgoraVoiceCalling = ({ callData }) => {
               videoCallData={chatData}
             />
           )}
+          {/* Suggest Remedy Panel */}
+          <SuggestRemedyPanel
+            isOpen={isRemedyOpen}
+            onClose={() => setIsRemedyOpen(false)}
+            roomId={activeCall?.chatRoomId || roomId}
+          />
         </div>
       )}
     </>

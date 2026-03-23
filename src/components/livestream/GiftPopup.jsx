@@ -29,7 +29,7 @@ const GiftPopup = ({
               className={`gift-item ${selectedGift?.id === gift.id ? "active" : ""}`}
               onClick={() => setSelectedGift(gift)}
             >
-              <img src={gift.icon} alt="" />
+              <span className="gift-icon" role="img" aria-label={gift.name}>{gift.icon}</span>
               <div className="gift-name">{gift.name}</div>
               <div className="gift-price">₹ {gift.price}</div>
             </div>

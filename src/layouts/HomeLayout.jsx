@@ -17,6 +17,7 @@ import { setAstrologerDetails } from "../reducer/registerSlice";
 import { getDefaultImgBasedOnGender } from "../utils/utlis";
 import styles from "./HomeLayout.module.scss";
 import StickyChatFooter from "../components/StickyChatFooter";
+import MiniLiveBar from "../components/livestream/MiniLiveBar";
 
 const HomeLayout = () => {
   const { kundliId } = useParams();
@@ -253,6 +254,7 @@ const HomeLayout = () => {
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
       <main className={styles.main}>
+        <MiniLiveBar />
         <header className={`${styles.header} ${kundliId ? styles.hidden : ""}`}>
           <div className={styles.headerContent}>
             {/* LEFT: Profile + Info */}

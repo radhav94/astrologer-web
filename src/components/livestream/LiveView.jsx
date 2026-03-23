@@ -1,6 +1,6 @@
 import { useEffect, useCallback, useState, useRef } from "react";
 import { LocalUser, RemoteUser } from "agora-rtc-react";
-import { MicOff, Mic, VideoOff, Video, Send, Timer, Gift, Share2 } from "lucide-react";
+import { MicOff, Mic, VideoOff, Video, Send, Timer, Gift, Share2, ChevronLeft } from "lucide-react";
 import "./styles/videoBox.scss";
 import { useLiveViewLogic } from "./useLiveViewLogic";
 import GiftPopup from "./GiftPopup";
@@ -12,6 +12,7 @@ import { getUserFromStorage } from "../../utils/authStorage";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { getDefaultImgBasedOnGender } from "../../utils/utlis";
+import { useLiveStream } from "../../context/LiveStreamContext";
 
 
 const LiveView = (props) => {
@@ -21,6 +22,7 @@ const LiveView = (props) => {
   const [showCallPopup, setShowCallPopup] = useState(false);
 
   const navigate = useNavigate();
+  const { minimizeLive, maximizeLive, isLiveMinimized } = useLiveStream();
 
   const user = getUserFromStorage();
   const astrologerDetails = useSelector((state) => state.register.astrologerDetails);
@@ -39,16 +41,16 @@ const LiveView = (props) => {
   };
 
   const giftList = [
-    { id: 1, name: "Flowers", price: 15, icon: "/gifts/flowers.png" },
-    { id: 2, name: "Pooja Thali", price: 21, icon: "/gifts/pooja.png" },
-    { id: 3, name: "Heart", price: 21, icon: "/gifts/heart.png" },
-    { id: 4, name: "Chocolates", price: 51, icon: "/gifts/choco.png" },
-    { id: 5, name: "Sweets", price: 101, icon: "/gifts/sweets.png" },
-    { id: 6, name: "Magician", price: 101, icon: "/gifts/magic.png" },
-    { id: 7, name: "Shivling", price: 251, icon: "/gifts/shiv.png" },
-    { id: 8, name: "Crown", price: 501, icon: "/gifts/crown.png" },
-    { id: 9, name: "Dakshina", price: 2100, icon: "/gifts/dakshina.png" },
-    { id: 10, name: "Ganesha", price: 5100, icon: "/gifts/ganesha.png" },
+    { id: 1, name: "Flowers", price: 15, icon: "💐" },
+    { id: 2, name: "Pooja Thali", price: 21, icon: "🪔" },
+    { id: 3, name: "Heart", price: 21, icon: "❤️" },
+    { id: 4, name: "Chocolates", price: 51, icon: "🍫" },
+    { id: 5, name: "Sweets", price: 101, icon: "🍬" },
+    { id: 6, name: "Magician", price: 101, icon: "🪄" },
+    { id: 7, name: "Shivling", price: 251, icon: "🕉️" },
+    { id: 8, name: "Crown", price: 501, icon: "👑" },
+    { id: 9, name: "Dakshina", price: 2100, icon: "🙏" },
+    { id: 10, name: "Ganesha", price: 5100, icon: "🐘" },
   ];
 
   const {
@@ -109,6 +111,18 @@ const LiveView = (props) => {
   const isHost = ROLE === "host";
   const viewerCount = participantCount || (remoteUsers?.length || 0) + 1;
 
+  const handleMinimize = useCallback(() => {
+    minimizeLive({
+      astrologerName,
+      profileImage,
+      viewerCount,
+      channelName,
+      endRoom,
+      clearLiveSession,
+    });
+    navigate("/dashboard", { replace: true });
+  }, [minimizeLive, astrologerName, profileImage, viewerCount, channelName, endRoom, clearLiveSession, navigate]);
+
   const {
     messagesEndRef,
     showSharePopup,
@@ -130,6 +144,13 @@ const LiveView = (props) => {
     <div className="video-box">
       {/* TOP BAR */}
       <div className="top-bar">
+        <button
+          className="back-btn"
+          onClick={handleMinimize}
+          aria-label="Minimize live"
+        >
+          <ChevronLeft size={22} strokeWidth={2} />
+        </button>
         <div className="host-info">
           <div className="host-avatar">
             <img
@@ -198,12 +219,12 @@ const LiveView = (props) => {
         <div className="action-item">
           <button
             className="action-btn"
-            onClick={() => setShowSharePopup(true)}
-            aria-label="Share live"
+            onClick={() => setShowGifts(true)}
+            aria-label="Send gift"
           >
              <Gift size={24} strokeWidth={1.5} />
           </button>
-          <span className="action-label">Share</span>
+          <span className="action-label">Gift</span>
           <span className="action-label">13</span>
         </div>
       </div>

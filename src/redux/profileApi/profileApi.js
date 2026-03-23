@@ -38,15 +38,9 @@ export const profileApi = epicApi.injectEndpoints({
       invalidatesTags: (result, error, { id }) => 
         id ? [{ type: "Astrologer", id }] : ["Astrologer"],
     }),
-    // GET /api/filters/get-filters/skills - Fetch available skills/expertise options
-    getExpertiseList: builder.query({
-      query: () => ({
-        url: "filters/get-filters/expertise",
-        method: "GET",
-      }),
-    }),
+    
     
   }),
 });
 
-export const { useGetAstrologerByIdQuery, useGetTransactionListQuery, useSetAstroEditProfileMutation, useGetExpertiseListQuery } = profileApi;
+export const { useGetAstrologerByIdQuery, useGetTransactionListQuery, useSetAstroEditProfileMutation } = profileApi;

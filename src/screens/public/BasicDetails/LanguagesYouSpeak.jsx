@@ -7,7 +7,7 @@ import { createLanguagePreferencesValidation } from "../../../utils/utlis";
 import Button from "../../../components/UI/button/Button";
 import FormStep from "./FormStep";
 import styles from "./BasicForms.module.scss";
-import { X, Pencil } from "lucide-react";
+import { X } from "lucide-react";
 import { useState } from "react";
 
 const LANGUAGES = [
@@ -25,8 +25,6 @@ const LanguagesYouSpeak = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const registerData = useSelector((state) => state.register.registerData);
-  const [editingLang, setEditingLang] = useState(null);
-  const [editValue, setEditValue] = useState("");
   const [showCustomInput, setShowCustomInput] = useState(false);
 
   // Validation schema using reusable utilities from utils.js
@@ -120,42 +118,12 @@ const LanguagesYouSpeak = () => {
   /* Check if a language is custom (not in preset list) */
   const isCustomLanguage = (langName) => !LANGUAGES.includes(langName);
 
-  /* Remove a custom language */
+  /* Remove a language */
   const removeLanguage = (langName) => {
     const updated = formik.values.languagePreferences.filter(
       (item) => item.languageName !== langName
     );
     formik.setFieldValue("languagePreferences", updated);
-  };
-
-  /* Start editing a custom language name */
-  const startEditing = (langName) => {
-    setEditingLang(langName);
-    setEditValue(langName);
-  };
-
-  /* Save edited language name */
-  const saveEdit = () => {
-    const trimmed = editValue.trim();
-    if (!trimmed || trimmed === editingLang) {
-      setEditingLang(null);
-      return;
-    }
-    const formatted = trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
-    const alreadyExists = formik.values.languagePreferences.some(
-      (item) => item.languageName === formatted
-    );
-    if (alreadyExists) {
-      setEditingLang(null);
-      return;
-    }
-    const updated = formik.values.languagePreferences.map((item) =>
-      item.languageName === editingLang
-        ? { ...item, languageName: formatted }
-        : item
-    );
-    formik.setFieldValue("languagePreferences", updated);
-    setEditingLang(null);
   };
 
   const selectedLanguages = formik.values.languagePreferences.map(
@@ -173,7 +141,7 @@ const LanguagesYouSpeak = () => {
       <div className={styles.formLayoutContainer}>
         <div className={styles.formLayoutContent}>
           {/* Progress Dots */}
-          <FormStep totalSteps={6} currentStep={3} />
+          <FormStep totalSteps={7} currentStep={3} />
 
           {/* Heading */}
           <h1 className={styles.heading}>
@@ -190,6 +158,23 @@ const LanguagesYouSpeak = () => {
             </label>
 
             <div className={styles.chipContainer}>
+              {/* Custom languages as chips with remove button */}
+              {formik.values.languagePreferences
+                .filter((item) => isCustomLanguage(item.languageName))
+                .map((item) => (
+                  <button
+                    key={item.languageName}
+                    type="button"
+                    className={`${styles.chip} ${styles.chipActive}`}
+                    onClick={() => removeLanguage(item.languageName)}
+                    style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+                  >
+                    {item.languageName}
+                    <X size={14} />
+                  </button>
+                ))}
+
+              {/* Preset language chips */}
               {LANGUAGES.map((lang) => (
                 <button
                   key={lang}
@@ -209,8 +194,9 @@ const LanguagesYouSpeak = () => {
                 type="button"
                 onClick={() => setShowCustomInput(!showCustomInput)}
                 className={styles.chipAdd}
+                style={{ background: showCustomInput ? "none" : undefined, border: showCustomInput ? "1.5px solid #F75801" : undefined, color: showCustomInput ? "#F75801" : undefined }}
               >
-                {showCustomInput ? "− Close language" : "+ Add language"}
+                {showCustomInput ? "− Close language" : "Add Language  +"}
               </button>
             </div>
 
@@ -244,41 +230,9 @@ const LanguagesYouSpeak = () => {
             {formik.values.languagePreferences.map((langItem) => (
               <div key={langItem.languageName} className={styles.languageItem}>
                 <div className={styles.languageBadgeWrapper}>
-                  {editingLang === langItem.languageName ? (
-                    <input
-                      type="text"
-                      value={editValue}
-                      onChange={(e) => setEditValue(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") { e.preventDefault(); saveEdit(); }
-                        if (e.key === "Escape") setEditingLang(null);
-                      }}
-                      onBlur={saveEdit}
-                      autoFocus
-                      className={styles.input}
-                      style={{ width: "auto", display: "inline-block", padding: "0.25rem 0.75rem", fontSize: "0.85rem" }}
-                    />
-                  ) : (
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                      <span className={styles.languageBadge}>
-                        {langItem.languageName}
-                      </span>
-                      {isCustomLanguage(langItem.languageName) && (
-                        <>
-                          <Pencil
-                            size={14}
-                            style={{ cursor: "pointer", color: "#F75801", flexShrink: 0 }}
-                            onClick={() => startEditing(langItem.languageName)}
-                          />
-                          <X
-                            size={16}
-                            style={{ cursor: "pointer", color: "#ef4444", flexShrink: 0 }}
-                            onClick={() => removeLanguage(langItem.languageName)}
-                          />
-                        </>
-                      )}
-                    </span>
-                  )}
+                  <span className={styles.languageBadge}>
+                    {langItem.languageName}
+                  </span>
                 </div>
 
                 <div className={styles.chipContainer}>

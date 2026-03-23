@@ -112,7 +112,7 @@ const Education = () => {
 
         {/* Progress + Skip */}
         <div className={styles.progressWithSkip}>
-          <FormStep totalSteps={6} currentStep={4} />
+          <FormStep totalSteps={7} currentStep={4} />
 
           <button 
             type="button"

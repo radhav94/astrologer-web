@@ -196,7 +196,6 @@
     max-width: 420px;
     left: 50%;
     transform: translateX(-50%);
-    border-radius: 24px;
   }
 
   .preview-bg-video {
@@ -206,6 +205,14 @@
   .preview-center,
   .preview-bottom {
     max-width: 420px;
+  }
+
+  .preview-badge {
+    right: calc(50% - 200px);
+  }
+
+  .preview-close-btn {
+    left: calc(50% - 200px);
   }
 }
 

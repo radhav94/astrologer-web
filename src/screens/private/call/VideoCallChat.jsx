@@ -72,7 +72,8 @@ const VideoCallChat = ({
         minute: "2-digit",
       }),
       dateTime: item.createdAt,
-      type: item?.type
+      type: item?.type,
+      kundliId: item?.kundliId
     }));
 
     const socketMsgs = messages.map((msg, idx) => ({
@@ -82,7 +83,8 @@ const VideoCallChat = ({
       time: msg.time,
       date: msg.date || formatDate(new Date()),
       dateTime: msg.dateTime || new Date().toISOString(),
-      type: msg?.type
+      type: msg?.type,
+      kundliId: msg?.kundliId
     }));
 
     return [...historyMsgs, ...socketMsgs].sort(
@@ -219,7 +221,7 @@ const VideoCallChat = ({
           <div className={styles.KundliMessage}>
             <span
               onClick={() => {
-                if (msg.text) setIframeSrc(msg.text);
+                if (msg.kundliId) setIframeSrc(`${window.location.origin}/kundli/${msg.kundliId}`);
               }}
             >
               <GrReactjs/> View Kundli

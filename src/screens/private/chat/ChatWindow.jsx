@@ -31,7 +31,7 @@ const MIN_CHAT_SECONDS = 60;
 
 /* -------------------- Message Bubble -------------------- */
 
-const Message = ({ text, isSender, time, type, giftData, kundliName, onImageClick, suggestedProducts }) => {
+const Message = ({ text, isSender, time, type, giftData, kundliName,kundliId,onImageClick, suggestedProducts }) => {
   const [iframeSrc, setIframeSrc] = useState(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -270,8 +270,10 @@ const Message = ({ text, isSender, time, type, giftData, kundliName, onImageClic
       return (
         <div
           onClick={() => {
-            const path = extractKundliPath(text);
-            if (path) setIframeSrc(path);
+            if (kundliId) {
+              setIframeSrc(`${window.location.origin}/kundli/${kundliId}`);
+              console.log(`${window.location.origin}/kundli/${kundliId}`,"56789765")
+            }
           }}
           style={{
             textDecoration: "underline",
@@ -473,7 +475,8 @@ const ChatWindow = () => {
       dateTime: item.createdAt,
       type: item?.type,
       kundliName: item?.kundliName,
-      suggestedProducts: item?.suggestedProducts
+      suggestedProducts: item?.suggestedProducts,
+      kundliId: item?.kundliId
     }));
 
     const socket = socketMessages.map((msg, idx) => ({
@@ -485,7 +488,8 @@ const ChatWindow = () => {
       dateTime: msg.dateTime || new Date().toISOString(),
       type: msg?.type,
       kundliName: msg?.kundliName,
-      suggestedProducts: msg?.suggestedProducts
+      suggestedProducts: msg?.suggestedProducts,
+      kundliId: msg?.kundliId
     }));
 
     return [...history, ...socket].sort(
@@ -852,7 +856,7 @@ const ChatWindow = () => {
               {msg.date}
             </div>
           ) : (
-            <Message key={msg.id} text={msg.text} isSender={msg.isSender} time={msg.time} type={msg.type} kundliName={msg?.kundliName} onImageClick={setImagePreview} suggestedProducts={msg?.suggestedProducts} />
+            <Message key={msg.id} text={msg.text} isSender={msg.isSender} time={msg.time} type={msg.type} kundliName={msg?.kundliName} kundliId={msg?.kundliId} onImageClick={setImagePreview} suggestedProducts={msg?.suggestedProducts} />
           )
         )}
 

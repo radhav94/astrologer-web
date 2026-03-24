@@ -72,11 +72,22 @@ const ConsultationHistory = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
 
+  // Old: no refetch on remount — stale cached data shown after session ends
+  // const { data, isLoading, isFetching, isError } = useGetOrderHistoryQuery({
+  //   page,
+  //   limit: 10,
+  //   sortOrder,
+  //   filterBy,
+  // });
+
+  // New: refetchOnMountOrArgChange ensures fresh data when navigating back
   const { data, isLoading, isFetching, isError } = useGetOrderHistoryQuery({
     page,
     limit: 10,
     sortOrder,
     filterBy,
+  }, {
+    refetchOnMountOrArgChange: true,
   });
 
   const astrologerDetails = useSelector(
@@ -216,17 +227,20 @@ const ConsultationHistory = () => {
     return pages;
   };
 
-  // Loading state
-  if (isLoading && page === 1) {
-    return (
-      <div className={styles.loadingContainer}>
-        <div className={styles.loadingContent}>
-          <div className={styles.spinner}></div>
-          <p className={styles.loadingText}>Loading consultation history...</p>
-        </div>
-      </div>
-    );
-  }
+  // Old: Loading state — early return replaced entire page, condition too strict
+  // if (isLoading && isFetching ) {
+  //   return (
+  //     <div className={styles.loadingContainer}>
+  //       <div className={styles.loadingContent}>
+  //         <div className={styles.spinner}></div>
+  //         <p className={styles.loadingText}>Loading consultation history...</p>
+  //       </div>
+  //     </div>
+  //   );
+  // }
+
+  // New: isLoadingOrFetching flag — used for overlay rendering below
+  const isLoadingOrFetching = isLoading || isFetching;
 
   // Error state
   if (isError) {
@@ -544,6 +558,8 @@ const ConsultationHistory = () => {
               </div>
             ))}
 
+           
+
             {/* Pagination Controls */}
             {pagination && pagination.totalPages > 1 && (
               <div className={styles.paginationContainer}>
@@ -612,12 +628,7 @@ const ConsultationHistory = () => {
               </div>
             )}
 
-            {/* Loading Indicator */}
-            {isFetching && (
-              <div className={styles.loadingIndicator}>
-                <div className={styles.loadingSpinner}></div>
-              </div>
-            )}
+            
           </div>
 
           {/* Refund Modal - Shared for both Refund (partial) and Total Refund */}
@@ -693,6 +704,16 @@ const ConsultationHistory = () => {
           )}
         </main>
       </div>
+
+      {/* Loading Overlay — shown during isLoading or isFetching */}
+      {isLoadingOrFetching && (
+        <div className={styles.loadingOverlay}>
+          <div className={styles.loadingContent}>
+            <div className={styles.spinner}></div>
+            <p className={styles.loadingText}>Loading consultation history...</p>
+          </div>
+        </div>
+      )}
     </>
   );
 };

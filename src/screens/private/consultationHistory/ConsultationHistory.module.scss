@@ -1,29 +1,68 @@
 // Loading State
-.loadingContainer {
-    height: 100vh;
+
+// Old: loadingContainer was a full-page replacement
+// .loadingContainer {
+//     height: 100vh;
+//     display: flex;
+//     align-items: center;
+//     justify-content: center;
+//     padding: 0 1rem;
+// }
+
+// New: semi-transparent overlay that covers the screen
+.loadingOverlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(255, 255, 255, 0.7);
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0 1rem;
+    z-index: 100;
+    pointer-events: all; // blocks interaction while loading
 }
 
 .loadingContent {
     text-align: center;
 }
 
+// Old: broken gradient border — border-color doesn't accept linear-gradient
+// .spinner {
+//     animation: spin 1s linear infinite;
+//     border-radius: 9999px;
+//     height: 2.5rem;
+//     width: 2.5rem;
+//     border-bottom-width: 2px;
+//     border-color: linear-gradient(90deg, var(--main-primary-start) 0%, var(--main-primary-end) 100%);
+//     margin: 0 auto 0.75rem;
+// }
+
+// New: gradient border spinner using conic-gradient + mask trick
 .spinner {
-    animation: spin 1s linear infinite;
-    border-radius: 9999px;
-    height: 2.5rem;
     width: 2.5rem;
-    border-bottom-width: 2px;
-    border-color: #111827;
+    height: 2.5rem;
+    border-radius: 9999px;
     margin: 0 auto 0.75rem;
+    position: relative;
+    background: conic-gradient(
+        from 0deg,
+        transparent 30%,
+        var(--main-primary-start) 70%,
+        var(--main-primary-end) 100%
+    );
+    animation: spin 0.8s linear infinite;
 
     @media (min-width: 640px) {
-        height: 3rem;
         width: 3rem;
+        height: 3rem;
         margin-bottom: 1rem;
+    }
+
+    &::after {
+        content: "";
+        position: absolute;
+        inset: 3px;
+        border-radius: 9999px;
+        background-color: rgba(255, 255, 255, 0.95);
     }
 }
 
@@ -905,14 +944,39 @@
     padding: 1rem 0;
 }
 
+// Old: broken inline loading spinner
+// .loadingSpinner {
+//     animation: spin 1s linear infinite;
+//     border-radius: 9999px;
+//     height: 2rem;
+//     width: 2rem;
+//     border-bottom-width: 2px;
+//     border-color: #f97316;
+//     margin: 0 auto;
+// }
+
+// New: uses same conic-gradient approach
 .loadingSpinner {
-    animation: spin 1s linear infinite;
-    border-radius: 9999px;
-    height: 2rem;
     width: 2rem;
-    border-bottom-width: 2px;
-    border-color: #f97316;
+    height: 2rem;
+    border-radius: 9999px;
     margin: 0 auto;
+    position: relative;
+    background: conic-gradient(
+        from 0deg,
+        transparent 30%,
+        var(--main-primary-start) 70%,
+        var(--main-primary-end) 100%
+    );
+    animation: spin 0.8s linear infinite;
+
+    &::after {
+        content: "";
+        position: absolute;
+        inset: 3px;
+        border-radius: 9999px;
+        background-color: #f9fafb;
+    }
 }
 
 // Refund Modal

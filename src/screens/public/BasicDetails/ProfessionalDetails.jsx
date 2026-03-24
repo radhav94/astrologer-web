@@ -4,18 +4,13 @@ import { useDispatch, useSelector } from "react-redux";
 import * as Yup from "yup";
 import { updateRegisterData, setCurrentStep } from "../../../reducer/registerSlice";
 import { createDropdownValidation, createMultiSelectValidation } from "../../../utils/utlis";
+import { useGetExpertiseListQuery } from "../../../redux/register/registerAstroApi";
 import Button from "../../../components/UI/button/Button";
 import styles from "./BasicForms.module.scss";
 import FormStep from "./FormStep";
 import { appSvgs } from "../../../utils/appImages";
 
-const EXPERTISE_LIST = [
-    { title: "Tarot", slug: "tarot" },
-    { title: "Face Reading", slug: "face-reading" },
-    { title: "Vedic", slug: "vedic" },
-    { title: "Numerology", slug: "numerology" },
-    { title: "Palmistry", slug: "palmistry" },
-  ];
+
 
 const EXPERIENCE_LIST = Array.from({ length: 51 }, (_, i) => i); // 0 to 50
 
@@ -23,6 +18,20 @@ const ProfessionalDetails = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const registerData = useSelector((state) => state.register.registerData);
+
+  // Fetch expertise dynamically from API
+  const { data: expertiseApiResponse } = useGetExpertiseListQuery();
+
+  // Extract expertise list where title === "Skill" (no static fallback)
+  const skillCategory = expertiseApiResponse?.data?.find(
+    (item) => item?.title === "Skill"
+  );
+  const EXPERTISE_LIST = (skillCategory?.list || []).map((item) => ({
+    title: item.title,
+    slug: item.slug,
+    ID: item.ID || item._id,
+    type: item.type,
+  }));
 
   // Normalize existing expertise from Redux: handle both old format (strings) and new format (objects)
   const normalizedExistingExpertise = (registerData?.expertise || []).map((item) =>

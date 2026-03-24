@@ -27,11 +27,6 @@ const Sidebar = ({ isOpen, onClose }) => {
   const restrictedItemIds = ["history", "chats", "live"];
 
   const handleLogout = () => {
-    // localStorage.removeItem("shubhtalk_role");
-    // localStorage.removeItem("shubhtalk_astro_id");
-    // localStorage.removeItem("shubhtalk_astro_token");
-    // localStorage.removeItem("shubhtalk_astrologer_details");
-    // localStorage.removeItem("accessToken");
     localStorage.clear();
     sessionStorage.removeItem("otpSession");
     dispatch(setLogout())

@@ -29,7 +29,6 @@ const ProfileTab = ({ profileData }) => {
 
   const formattedPhone = formatIndianPhone(phone);
 
-  console.log("profileDataTab::", achievements);
 
   return (
     <div className={styles.profileTabContainer}>
@@ -133,7 +132,7 @@ const ProfileTab = ({ profileData }) => {
         <span className={styles.sectionTitle}>Achievements</span>
 
         <p className={styles.achievementsText}>
-          {achievements[0]?.achievementName ? (
+          {achievements[0]?.achievementName && (
             <>
               {isAchievementExpanded
                 ? achievements[0].achievementName
@@ -154,9 +153,7 @@ const ProfileTab = ({ profileData }) => {
                   </>
                 )}
             </>
-          ) : (
-            "No achievements added yet."
-          )}
+          ) }
         </p>
         <div className={styles.imagesGrid}>
         {achievements.length > 0 ? (

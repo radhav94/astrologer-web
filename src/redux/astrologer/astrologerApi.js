@@ -30,6 +30,16 @@ export const astrologerApi = epicApi.injectEndpoints({
         "Availability",
         "Price",
       ],
+      // Invalidate Wallets tag so wallet data refetches when astrologer data is fetched
+      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          // After astrologer data is fetched, invalidate Wallets to trigger refetch
+          dispatch(epicApi.util.invalidateTags(["Wallets"]));
+        } catch {
+          // Silently ignore — wallet invalidation is non-critical
+        }
+      },
     }),
 
     getMonthlyOverview: builder.query({
@@ -46,6 +56,15 @@ export const astrologerApi = epicApi.injectEndpoints({
       },
       providesTags: ["MonthlyOverview"],
     }),
+
+    // Wallet endpoint — moved from redux/wallet/walletApi.js
+    getAllWallets: builder.query({
+      query: () => ({
+        url: "wallets/all",
+        method: "GET",
+      }),
+      providesTags: ["Wallets"],
+    }),
   }),
 });
 
@@ -53,5 +72,6 @@ export const {
   useUpdateAvailabilityMutation, 
   useSetAstrologerPriceMutation, 
   useGetAstrologerByIdQuery,
-  useGetMonthlyOverviewQuery 
+  useGetMonthlyOverviewQuery,
+  useGetAllWalletsQuery,
 } = astrologerApi;

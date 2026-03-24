@@ -43,7 +43,9 @@ const Dashboard = () => {
     localStorage.getItem("shubhtalk_astrologer_details")
   );
   const astrologerId = userData?._id || userData?.id;
-  const { data } = useGetAstrologerByIdQuery(astrologerId);
+  const { data } = useGetAstrologerByIdQuery(astrologerId, {
+  refetchOnMountOrArgChange: true,
+});
   const astrologerData = data?.data || {};
 
   

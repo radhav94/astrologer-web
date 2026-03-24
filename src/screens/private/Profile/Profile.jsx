@@ -9,6 +9,10 @@ import Support from "./support/Support.jsx";
 import { AppIcons, AppImages } from "../../../utils/appImages.js";
 import styles from "./Profile.module.scss";
 import { selectBasicInfo, selectProfileTabData } from "../../../utils/astrologerSelectors.js";
+// Old: import from standalone wallet API
+// import { useGetAllWalletsQuery } from "../../../redux/wallet/walletApi.js";
+// New: import from centralized astrologerApi
+import { useGetAllWalletsQuery } from "../../../redux/astrologer/astrologerApi.js";
 
 const Profile = ({ onBack }) => {
   const location = useLocation();
@@ -35,11 +39,14 @@ const Profile = ({ onBack }) => {
 
   const userName = basicInfo?.name || "Unknown";
   const experience = basicInfo?.experience || 0;
-  const wallet = basicInfo?.wallet || 0;
 
-  //  alert("Profile")
+  // Old: wallet from astrologer details
+  // const wallet = basicInfo?.wallet || 0;
 
-  // console.log("first",profileTabData)
+  // New: wallet from dedicated wallet API
+  const { data: walletResponse } = useGetAllWalletsQuery({ refetchOnMountOrArgChange: true});
+  const wallet = walletResponse?.data || 0;
+
 
   const tabs = [
     {
@@ -73,9 +80,15 @@ const Profile = ({ onBack }) => {
         <div className={styles.userInfo}>
           <div className={styles.nameRow}>
             <h1 className={styles.userName}>{userName}</h1>
-            <img src={AppIcons.Verified} alt="verified" className={styles.verifiedBadge} />
+            <img
+              src={AppIcons.Verified}
+              alt="verified"
+              className={styles.verifiedBadge}
+            />
           </div>
-          {experience && <p className={styles.userExperience}>Exp. {experience} Years</p>}
+          {experience && (
+            <p className={styles.userExperience}>Exp. {experience} Years</p>
+          )}
         </div>
       </div>
 
@@ -90,20 +103,28 @@ const Profile = ({ onBack }) => {
           <div className={styles.balanceLabel}>
             <div className={styles.coinIcon}>
               <img src={AppIcons.Coin} alt="coin" />
-              <img 
-                src={AppIcons.TwinkleStar} 
-                alt="TwinkleStar" 
+              <img
+                src={AppIcons.TwinkleStar}
+                alt="TwinkleStar"
                 className={styles.twinkleIcon}
               />
             </div>
             <span>Balance</span>
           </div>
-          <h2 className={styles.balanceAmount}>₹{wallet}</h2>
+          <h2 className={styles.balanceAmount}>
+            ₹{wallet?.toLocaleString("en-IN")}
+          </h2>
         </div>
 
-        <Link to="/withdraw-money" className={styles.withdrawButton}>
-          Withdraw Money <Icons.ArrowRight size={16} />
-        </Link>
+        
+          <Link
+            to="/withdraw-money"
+            className={styles.withdrawButton}
+            style={{ cursor: wallet !== 0 ? "pointer" : "not-allowed" }}
+          >
+            Withdraw Money <Icons.ArrowRight size={16} />
+          </Link>
+        
       </div>
 
       <hr className={styles.divider} />

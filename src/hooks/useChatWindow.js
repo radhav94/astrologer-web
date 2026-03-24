@@ -129,6 +129,7 @@ export default function useChat({
           dateTime: data?.dateTime,
           type: data?.type,
           kundliName: data?.kundliName,
+           kundliId: data?.kundliId,
           suggestedProducts: data?.suggestedProducts
         });
     }

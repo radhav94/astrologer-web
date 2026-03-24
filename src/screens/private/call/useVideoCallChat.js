@@ -38,7 +38,8 @@ export const useVideoCallChat = ({ userId, astrologerId, roomId, kundliId, isAct
         sender: isSenderAstrologer,
         time: formatTime(),
         dateTime: data?.dateTime,
-        type: data?.type
+        type: data?.type,
+        kundliId: data?.kundliId
       });
     };
 

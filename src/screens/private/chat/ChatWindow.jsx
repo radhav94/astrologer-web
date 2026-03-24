@@ -31,9 +31,10 @@ const MIN_CHAT_SECONDS = 60;
 
 /* -------------------- Message Bubble -------------------- */
 
-const Message = ({ text, isSender, time, type, giftData, kundliName, onImageClick }) => {
+const Message = ({ text, isSender, time, type, giftData, kundliName, onImageClick, suggestedProducts }) => {
   const [iframeSrc, setIframeSrc] = useState(null);
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
   
   const userData = JSON.parse(localStorage.getItem("shubhtalk_astrologer_details"));
   const firstName = userData?.firstName?.trim();
@@ -100,6 +101,62 @@ const Message = ({ text, isSender, time, type, giftData, kundliName, onImageClic
 
   // Handle different message types
   const renderMessageContent = () => {
+    // Handle products/remedy suggestion type
+    if (type === "products") {
+      const products = suggestedProducts || [];
+      return (
+        <div className="flex flex-col gap-2" style={{ maxWidth: 280 }}>
+          {text && (
+            <p className="m-0 text-[13px] font-medium italic text-gray-700">{text}</p>
+          )}
+          {products.map((p) => (
+            <div
+              key={p.productId || p._id || p.ID}
+              className="flex gap-2.5 p-2 rounded-lg cursor-pointer active:opacity-80 transition-opacity"
+              style={{ background: "rgba(0,0,0,0.04)" }}
+              onClick={() => p.slug && navigate(`/product-details/${p.slug}`)}
+            >
+              {(p.image || p.images?.[0]) && (
+                <img
+                  src={p.image || p.images?.[0]}
+                  alt={p.title}
+                  className="w-14 h-14 rounded-md object-cover flex-shrink-0"
+                  onError={(e) => { e.target.style.display = "none"; }}
+                />
+              )}
+              <div className="flex flex-col gap-0.5 min-w-0">
+                <span
+                  className="text-[13px] font-semibold leading-tight text-gray-900"
+                  style={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}
+                >
+                  {p.title}
+                </span>
+                {p.short_description && (
+                  <span
+                    className="text-[11px] leading-tight text-gray-500"
+                    style={{ display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical", overflow: "hidden" }}
+                  >
+                    {p.short_description}
+                  </span>
+                )}
+                <span className="text-[13px] font-bold flex items-center gap-1.5" style={{ color: "#f75801" }}>
+                  ₹{p.price}
+                  {p.mrp && p.mrp > p.price && (
+                    <s className="text-[11px] text-gray-400 font-normal">₹{p.mrp}</s>
+                  )}
+                  {p.mrp && p.mrp > p.price && (
+                    <span className="text-[10px] font-semibold" style={{ color: "#0a8f08" }}>
+                      {Math.round(((p.mrp - p.price) / p.mrp) * 100)}% off
+                    </span>
+                  )}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
     // Handle gift type
     if (type === "gift") {
       let parsedGiftData = giftData;
@@ -295,7 +352,7 @@ const Message = ({ text, isSender, time, type, giftData, kundliName, onImageClic
           </div>
         )}
 
-        <div className={`flex flex-col max-w-[70%] ${isSender ? "items-end" : "items-start"}`}>
+        <div className={`flex flex-col ${type === "products" ? "max-w-[85%] sm:max-w-[75%]" : "max-w-[70%]"} ${isSender ? "items-end" : "items-start"}`}>
           <div
             className={`px-4 py-3 rounded-2xl text-[15px] leading-relaxed shadow-sm ${
               isSender
@@ -415,7 +472,8 @@ const ChatWindow = () => {
       date: formatDate(item.createdAt),
       dateTime: item.createdAt,
       type: item?.type,
-      kundliName: item?.kundliName
+      kundliName: item?.kundliName,
+      suggestedProducts: item?.suggestedProducts
     }));
 
     const socket = socketMessages.map((msg, idx) => ({
@@ -426,7 +484,8 @@ const ChatWindow = () => {
       date: msg.date || formatDate(new Date()),
       dateTime: msg.dateTime || new Date().toISOString(),
       type: msg?.type,
-      kundliName: msg?.kundliName
+      kundliName: msg?.kundliName,
+      suggestedProducts: msg?.suggestedProducts
     }));
 
     return [...history, ...socket].sort(
@@ -793,7 +852,7 @@ const ChatWindow = () => {
               {msg.date}
             </div>
           ) : (
-            <Message key={msg.id} text={msg.text} isSender={msg.isSender} time={msg.time} type={msg.type} kundliName={msg?.kundliName} onImageClick={setImagePreview} />
+            <Message key={msg.id} text={msg.text} isSender={msg.isSender} time={msg.time} type={msg.type} kundliName={msg?.kundliName} onImageClick={setImagePreview} suggestedProducts={msg?.suggestedProducts} />
           )
         )}
 

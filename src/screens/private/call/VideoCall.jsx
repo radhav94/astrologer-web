@@ -17,6 +17,7 @@ import VideoCallChat from "./VideoCallChat";
 import { PATH } from "../../../utils/routes/Paths";
 import CallIcon from "../../../assets/chat/Call.svg";
 import { ReconnectingOverlay } from "../../../components/UI";
+import SuggestRemedyPanel from "./SuggestRemedyPanel";
 
 const APP_ID = "cf5e31fa03584573aacaf42daebd493c";
 
@@ -59,6 +60,7 @@ const VideoCalling = ({ callData }) => {
   const timerRef = useRef(null);
   const [isChatOpen, setIsChatOpen] = useState(false); // Chat panel state
   const [hasRemoteVideo, setHasRemoteVideo] = useState(false); // Track if remote user has video on
+  const [isRemedyOpen, setIsRemedyOpen] = useState(false);
 
   /* ================= LOCAL VIDEO ================= */
   const playLocalVideo = (container) => {
@@ -1205,6 +1207,7 @@ const VideoCalling = ({ callData }) => {
                 }}
               >
                 <button
+                  onClick={() => setIsRemedyOpen(true)}
                   className="px-8 py-3 text-white rounded-full text-base font-semibold hover:opacity-90 transition-opacity shadow-lg flex items-center gap-2"
                   style={{
                     background: 'linear-gradient(135deg, #f75801, #d43400)'
@@ -1296,6 +1299,12 @@ const VideoCalling = ({ callData }) => {
             videoCallData={chatData}
           />
         )}
+        {/* Suggest Remedy Panel */}
+        <SuggestRemedyPanel
+          isOpen={isRemedyOpen}
+          onClose={() => setIsRemedyOpen(false)}
+          roomId={activeCall?.chatRoomId || roomId}
+        />
       </div>
     </>
   );

@@ -19,7 +19,7 @@ export default function useChat({
   const [error, setError] = useState(null);
   const [isTyping, setIsTyping] = useState(false);
   const [isMessageDisabled, setIsMessageDisabled] = useState(false);
-  const {setActiveChat, activeChat, startTimer, stopTimer, chatSeconds, recoverChatAfterSystemDisconnect} = useChatContext();
+  const {setActiveChat, activeChat, startTimer, stopTimer, resetTimer, chatSeconds, recoverChatAfterSystemDisconnect} = useChatContext();
   const { activeCall } = useCall();
   const navigate = useNavigate();
 
@@ -53,7 +53,7 @@ export default function useChat({
     }
     setIsMessageDisabled(true);
     setOpenReview(true);
-    stopTimer();
+    resetTimer();
     setActiveChat(null);
     setMessages([]); // Clear local messages — they're now in history
     
@@ -109,7 +109,7 @@ export default function useChat({
         setError(errMsg)
         if(errMsg === 'Chat no longer available' || errMsg === 'Chat has already ended' || errMsg === 'Session not found'){
           setIsMessageDisabled(true);
-          stopTimer();
+          resetTimer();
           setActiveChat(null);
           navigate("/chats");
         }

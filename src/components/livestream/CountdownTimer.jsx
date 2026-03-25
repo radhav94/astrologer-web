@@ -7,25 +7,48 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
 const CountdownTimer = ({ onComplete, onCancel }) => {
   const [seconds, setSeconds] = useState(TOTAL);
+  const [progress, setProgress] = useState(0);
   const intervalRef = useRef(null);
+  const rafRef = useRef(null);
+  const startTimeRef = useRef(null);
 
   const clear = useCallback(() => {
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
   }, []);
 
   useEffect(() => {
+    startTimeRef.current = Date.now();
+
+    // Discrete seconds countdown for the number display
     intervalRef.current = setInterval(() => {
       setSeconds((prev) => {
         if (prev <= 1) {
-          clear();
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
+
+    // Smooth continuous progress via requestAnimationFrame
+    const animate = () => {
+      const elapsed = (Date.now() - startTimeRef.current) / 1000;
+      const fraction = Math.min(elapsed / TOTAL, 1);
+      setProgress(fraction * CIRCUMFERENCE);
+
+      if (fraction < 1) {
+        rafRef.current = requestAnimationFrame(animate);
+      }
+    };
+    rafRef.current = requestAnimationFrame(animate);
 
     return clear;
   }, [clear]);
@@ -38,8 +61,6 @@ const CountdownTimer = ({ onComplete, onCancel }) => {
     clear();
     onCancel();
   };
-
-  const progress = ((TOTAL - seconds) / TOTAL) * CIRCUMFERENCE;
 
   return (
     <div className="countdown-overlay">

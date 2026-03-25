@@ -37,7 +37,8 @@ import {
   ArrowUpDown,
   RefreshCw,
   BookOpen,
-  Search
+  Search,
+  Paperclip
 } from "lucide-react";
 
 export const Icons = {
@@ -79,5 +80,6 @@ export const Icons = {
   Chats: MessageSquare,
   ArrowUpDown,
   BookOpen,
-  Search
+  Search,
+  Paperclip
 };

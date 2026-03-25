@@ -27,7 +27,6 @@ import { ReconnectingOverlay } from "../../../components/UI";
 
 const formatDate = (date) => dayjs(date).format("DD MMMM YYYY");
 const formatTime = (date) => dayjs(date).format("hh:mm A");
-const MIN_CHAT_SECONDS = 60;
 
 /* -------------------- Message Bubble -------------------- */
 
@@ -613,10 +612,6 @@ const ChatWindow = () => {
   };
 
   const handleChatEnd = () => {
-    if (chatSeconds < MIN_CHAT_SECONDS) {
-      Toast.error("Chat cannot be ended before 1 minute");
-      return false;
-    }
     handleDisconnect();
     return true;
   };
@@ -804,6 +799,16 @@ const ChatWindow = () => {
                     View Kundli
                   </button>
                 )}
+
+                {isChatActive && !activeCall && (
+                  <button
+                    onClick={handleChatEnd}
+                    className="px-5 py-2 rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity text-white"
+                    style={{ backgroundColor: '#dc2626' }}
+                  >
+                    End Chat
+                  </button>
+                )}
               </>
             )}
           </div>
@@ -821,6 +826,16 @@ const ChatWindow = () => {
                 >
                   <GrReactjs size={16} />
                   View Kundli
+                </button>
+              )}
+
+              {isChatActive && !activeCall && (
+                <button
+                  onClick={handleChatEnd}
+                  className="px-4 py-2 rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity text-white"
+                  style={{ backgroundColor: '#dc2626' }}
+                >
+                  End
                 </button>
               )}
             </div>

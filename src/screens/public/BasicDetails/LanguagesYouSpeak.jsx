@@ -194,9 +194,8 @@ const LanguagesYouSpeak = () => {
                 type="button"
                 onClick={() => setShowCustomInput(!showCustomInput)}
                 className={styles.chipAdd}
-                style={{ background: showCustomInput ? "none" : undefined, border: showCustomInput ? "1.5px solid #F75801" : undefined, color: showCustomInput ? "#F75801" : undefined }}
               >
-                {showCustomInput ? "− Close language" : "Add Language  +"}
+                Add Language  +
               </button>
             </div>
 

@@ -5,6 +5,7 @@ const BASE_URL = import.meta.env.VITE_APP_API_BASE_URL;
 
 class SocketService {
   socket = null;
+  _hasShownConnectError = false;
 
   connect({ onConnected, onDisconnected, onError, onWarn }) {
     // Never create a socket connection inside an iframe (e.g. Kundli view)
@@ -37,8 +38,9 @@ class SocketService {
       autoConnect: true,
       reconnection: true,
       reconnectionAttempts: 10,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
+      reconnectionDelay: 2000,
+      reconnectionDelayMax: 10000,
+      randomizationFactor: 0.5,
       query: {
         astrologerId,
         role,
@@ -47,17 +49,22 @@ class SocketService {
 
     this.socket.on("connect", () => {
       console.log("[SocketService] Connected, id:", this.socket.id);
+      this._hasShownConnectError = false; // Reset so next disconnect can show error again
       onConnected?.();
     });
 
     this.socket.on("disconnect", (reason) => {
       console.log("[SocketService] Disconnected:", reason);
+      this._hasShownConnectError = false; // Allow one error toast on next failure
       onDisconnected?.(reason);
     });
 
     this.socket.on("connect_error", (err) => {
       console.error("[SocketService] Connect error:", err.message);
-      onError?.("Unable to connect to server");
+      if (!this._hasShownConnectError) {
+        this._hasShownConnectError = true;
+        onError?.("Unable to connect to server");
+      }
     });
 
     this.socket.on("error", (err) => {
@@ -70,6 +77,7 @@ class SocketService {
       this.socket.disconnect();
       this.socket = null;
     }
+    this._hasShownConnectError = false;
   }
 
   isConnected() {

@@ -792,27 +792,27 @@ const VideoCalling = ({ callData }) => {
       handleRemoteCallEndRef.current();
     };
 
-    const onCallCanceled = () => {
-      console.log("📞 call:canceled received in VideoCall");
-      // Don't end call if we're downgrading to audio
-      if (isDowngradingRef.current) {
-        console.log("🔽 Ignoring call:canceled - downgrading to audio");
-        return;
-      }
-      if (endCallRef.current || cleanupRef.current) return;
-      endCallRef.current = true;
-      cleanup();
-    };
+    // const onCallCanceled = () => {
+    //   console.log("📞 call:canceled received in VideoCall");
+    //   // Don't end call if we're downgrading to audio
+    //   if (isDowngradingRef.current) {
+    //     console.log("🔽 Ignoring call:canceled - downgrading to audio");
+    //     return;
+    //   }
+    //   if (endCallRef.current || cleanupRef.current) return;
+    //   endCallRef.current = true;
+    //   cleanup();
+    // };
 
     voiceSocket.on("call:ended", onCallEnded);
     voiceSocket.on("force_call_end", onForceCallEnd);
-    voiceSocket.on("call:canceled", onCallCanceled);
+    // voiceSocket.on("call:canceled", onCallCanceled);
 
     return () => {
       console.log("[VideoCall] Cleaning up socket listeners for room:", roomId);
       voiceSocket.off("call:ended", onCallEnded);
       voiceSocket.off("force_call_end", onForceCallEnd);
-      voiceSocket.off("call:canceled", onCallCanceled);
+      // voiceSocket.off("call:canceled", onCallCanceled);
     };
   }, [roomId]);
 

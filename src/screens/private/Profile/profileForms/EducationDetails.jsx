@@ -14,6 +14,7 @@ import { useFileUpload } from "../../../../hooks/useFileUpload";
 import { useSetAstroEditProfileMutation } from "../../../../redux/profileApi/profileApi";
 import toast from "../../../../components/toast";
 import { AppIcons } from "../../../../utils/appImages";
+import Toggle from "../../../../components/UI/toggle/Toggle";
 
 const EDUCATION_LEVELS = [
   "High School",
@@ -55,6 +56,11 @@ const EducationDetails = () => {
   const [deletingIndex, setDeletingIndex] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
+  // Get display status from existing education entries
+  const displayStatus = existingEducation.length > 0 
+    ? existingEducation[0].display 
+    : false;
+
   // 🔥 FORCE SCROLL TO TOP
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -83,6 +89,7 @@ const EducationDetails = () => {
       qualification: "",
       universityName: "",
       certificateImgUrl: "",
+      display:displayStatus,
     },
     validationSchema: Yup.object().shape({
       qualification: Yup.string().required("Qualification is required"),
@@ -102,6 +109,7 @@ const EducationDetails = () => {
             qualification: values.qualification,
             universityName: values.universityName,
             certificateImgUrl: values.certificateImgUrl,
+            display: values.display,
           };
         } else {
           // Add new education entry
@@ -111,6 +119,7 @@ const EducationDetails = () => {
               qualification: values.qualification,
               universityName: values.universityName,
               certificateImgUrl: values.certificateImgUrl,
+              display: values.display,
             },
           ];
         }
@@ -152,6 +161,7 @@ const EducationDetails = () => {
       qualification: edu.qualification || "",
       universityName: edu.universityName || "",
       certificateImgUrl: edu.certificateImgUrl || "",
+      display: edu.display ?? false,
     });
   };
 
@@ -218,10 +228,18 @@ const EducationDetails = () => {
     setDeletingIndex(null);
   };
 
+  // Old: same disabled logic for both add and edit
+  // const isFormValid =
+  //   formik.values.qualification.trim() !== "" && formik.isValid;
+  // const isButtonDisabled = !isFormValid || formik.isSubmitting || isUpdating;
+
+  // New: edit mode — always enabled (unless submitting); add mode — require valid form
   const isFormValid =
     formik.values.qualification.trim() !== "" && formik.isValid;
 
-  const isButtonDisabled = !isFormValid || formik.isSubmitting || isUpdating;
+  const isButtonDisabled = editingIndex !== null
+    ? formik.isSubmitting || isUpdating
+    : !isFormValid || formik.isSubmitting || isUpdating;
 
   return (
     <div className={styles.basicContainer}>
@@ -233,12 +251,12 @@ const EducationDetails = () => {
           <>
             <div className={styles.educationList}>
               {/* Existing Education Cards */}
-              {existingEducation.length > 0 &&
+              {existingEducation.length > 0 ? (
                 existingEducation.map((edu, index) => (
                   <div key={index} className={styles.educationCard}>
                     <div className={styles.educationCardHeader}>
                       <span className={styles.educationLevel}>
-                        {edu.qualification}
+                        {edu?.qualification || edu?.levelOfEducation}
                       </span>
                       <div className={styles.cardActions}>
                         <button
@@ -254,7 +272,7 @@ const EducationDetails = () => {
                           className={styles.deleteIconButton}
                           aria-label="Delete education"
                         >
-                         <Icons.X size={20} />
+                          <Icons.X size={20} />
                         </button>
                       </div>
                     </div>
@@ -273,7 +291,24 @@ const EducationDetails = () => {
                       </button>
                     )}
                   </div>
-                ))}
+                ))
+              ) : (
+                <div className={styles.educationEmptyState}>
+                  <div className={styles.educationEmptyContent}>
+                    <img
+                      src={AppIcons.Education1}
+                      alt="Education"
+                      className={styles.educationEmptyIcon}
+                    />
+                    <h2 className={styles.educationEmptyTitle}>
+                      No education added yet
+                    </h2>
+                    <p className={styles.educationEmptySubtitle}>
+                      Add your education details below
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
             {/* Add New Button */}
             <button
@@ -298,7 +333,12 @@ const EducationDetails = () => {
                   <button
                     key={level}
                     type="button"
-                    onClick={() => formik.setFieldValue("qualification", level)}
+                    onClick={() =>
+                      formik.setFieldValue(
+                        "qualification",
+                        formik.values.qualification === level ? "" : level,
+                      )
+                    }
                     className={`${styles.chip} ${
                       formik.values.qualification === level
                         ? styles.chipActive
@@ -346,7 +386,7 @@ const EducationDetails = () => {
                       className={styles.removeAttachmentButton}
                       aria-label="Remove certificate"
                     >
-                    <Icons.X size={24} />
+                      <Icons.X size={24} />
                     </button>
                     <img
                       src={formik.values.certificateImgUrl}
@@ -365,6 +405,16 @@ const EducationDetails = () => {
                   uploadSubtext="(.jpg, .png, .pdf)"
                 />
               </div>
+            </div>
+
+            {/* Display on Profile Toggle */}
+            <div className="mb-6 flex">
+              <Toggle
+                label="Display on Profile"
+                className="inline-flex"
+                checked={formik.values.display}
+                onChange={(value) => formik.setFieldValue("display", value)}
+              />
             </div>
 
             {/* Form Actions */}
@@ -420,17 +470,15 @@ const EducationDetails = () => {
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
-        <div
-          className={styles.attachmentModal}
-          onClick={handleDeleteCancel}
-        >
+        <div className={styles.attachmentModal} onClick={handleDeleteCancel}>
           <div
             className={styles.deleteModalContent}
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className={styles.deleteModalTitle}>Remove Education Record</h3>
             <p className={styles.deleteModalText}>
-              Are you sure you want to remove this education record? This action cannot be undone.
+              Are you sure you want to remove this education record? This action
+              cannot be undone.
             </p>
             <div className={styles.deleteModalActions}>
               <button

@@ -114,7 +114,7 @@ const ProfileTab = ({ profileData }) => {
               .filter((edu) => edu?.qualification)
               .map((edu, index) => (
                 <span key={index} className={styles.tag}>
-                  {edu.qualification}
+                  {edu?.qualification || edu?.levelOfEducation}
                 </span>
               ))
           ) : (

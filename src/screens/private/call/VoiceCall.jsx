@@ -622,21 +622,21 @@ const AgoraVoiceCalling = ({ callData }) => {
       }
     };
 
-    const handleCanceled = async () => {
-      await cleanup();
-    };
+    // const handleCanceled = async () => {
+    //   await cleanup();
+    // };
     
     voiceSocket.on("call:ended", handleCallEnded);
     voiceSocket.on("force_call_end", handleForceCallEnd);
     voiceSocket.on("call:rejected", handleCallRejected);
-    voiceSocket.on("call:canceled", handleCanceled);
+    // voiceSocket.on("call:canceled", handleCanceled);
 
     return () => {
       console.log("[VoiceCall] Cleaning up socket listeners for room:", roomId);
       voiceSocket.off("call:ended", handleCallEnded);
       voiceSocket.off("force_call_end", handleForceCallEnd);
       voiceSocket.off("call:rejected", handleCallRejected);
-      voiceSocket.off("call:canceled", handleCanceled);
+      // voiceSocket.off("call:canceled", handleCanceled);
     };
   }, [roomId]); // Only depend on roomId
 

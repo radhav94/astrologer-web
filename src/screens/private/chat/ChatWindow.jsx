@@ -542,10 +542,7 @@ const ChatWindow = () => {
     isUserSide,
     kundliId,
     setOpenReview,
-<<<<<<< Updated upstream
-    redirectOnEnded: true
-=======
->>>>>>> Stashed changes
+    redirectOnEnded: false
   });
 
   /* --------- Normalize & Merge Messages --------- */
@@ -699,6 +696,7 @@ const ChatWindow = () => {
 
   const handleChatEnd = () => {
     handleDisconnect();
+    setOpenReview(true);
     return true;
   };
 

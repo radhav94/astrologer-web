@@ -552,7 +552,7 @@ const AgoraVoiceCalling = ({ callData }) => {
       const res = await submitReport({
         reasonId: values.reasonId,
         userId: activeCall?.userId,
-        astrologerId: activeCall?.astrologerId,
+        // astrologerId: activeCall?.astrologerId,
         description: values.description,
       }).unwrap();
 

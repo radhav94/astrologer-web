@@ -29,11 +29,14 @@ export const reviewApi = privateApi.injectEndpoints({
       query: ({ reasonId, userId, astrologerId, description }) => ({
         url: "report/submit",
         method: "POST",
-        body: { reasonId, userId, astrologerId, description },
+        body: { reasonId, userId, description },
       }),
     }),
-    
   }),
 });
 
-export const { useAddUserReviewMutation, useGetReportReasonsQuery, useSubmitReportMutation } = reviewApi;
+export const {
+  useAddUserReviewMutation,
+  useGetReportReasonsQuery,
+  useSubmitReportMutation,
+} = reviewApi;

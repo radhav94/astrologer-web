@@ -738,8 +738,8 @@ const ChatWindow = () => {
     try {
       const res = await submitReport({
         reasonId: values.reasonId,
-        userId:userID,
-        astrologerId,
+        userId:userId,
+        // astrologerId,
         description: values.description,
       }).unwrap();
 

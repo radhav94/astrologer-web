@@ -636,6 +636,47 @@
   margin-bottom: 12px;
 }
 
+// Education Empty State — matches Figma design
+.educationEmptyState {
+  grid-column: 1 / -1;
+  background-color: var(--white-color);
+  border: 1px solid #E5E5E5;
+  border-radius: 16px;
+  padding: 40px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.educationEmptyContent {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+.educationEmptyIcon {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.educationEmptyTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--title);
+  margin: 0 0 6px 0;
+}
+
+.educationEmptySubtitle {
+  font-size: 14px;
+  color: #9E9E9E;
+  margin: 0;
+  font-weight: 400;
+}
+
 .cardActions {
   display: flex;
   gap: 8px;
@@ -768,7 +809,7 @@
   border-radius: 50px;
   border: 1.5px solid #E5E5E5;
   background-color: var(--white-color);
-  color: #6B6B6B;
+  color: var(--main-primary-start);
   font-size: 15px;
   font-weight: 400;
   cursor: pointer;
@@ -776,8 +817,8 @@
   white-space: nowrap;
   
   &:hover {
-    border-color: var(--title);
-    background-color: #F5F5F5;
+    border-color: var(--main-primary-start);
+    background-color:var(--white-color);
   }
   
   &.chipActive {

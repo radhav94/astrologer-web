@@ -5,7 +5,7 @@ export const profileApi = epicApi.injectEndpoints({
   endpoints: (builder) => ({
     getAstrologerById: builder.query({
       query: ({ id }) => ({
-        url: `astrologers/astrologer?astrologerId=${id}`,
+        url: `astrologers/astrologer?astrologerId=${id}&change=false`,
         method: "GET",
       }),
       providesTags: (result, error, { id }) => [

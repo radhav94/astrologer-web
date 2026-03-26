@@ -6,7 +6,8 @@ export const voiceSocket = io(BASE_URL, {
   autoConnect: false,
   reconnection: true,
   reconnectionAttempts: Infinity,
-  reconnectionDelay: 1000,
-  reconnectionDelayMax: 5000,
+  reconnectionDelay: 2000,
+  reconnectionDelayMax: 10000,
+  randomizationFactor: 0.5,
 });
 

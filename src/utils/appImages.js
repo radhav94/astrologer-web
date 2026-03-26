@@ -23,6 +23,8 @@ import Call1 from "../assets/icons/call-1.png";
 import Chat1 from "../assets/icons/chat-1.png";
 import EditIcon from "../assets/icons/Edit Icon.png";
 import Video1Icon from "../assets/icons/video-1.png";
+import Education1 from "../assets/icons/education.png"
+import FileIcon from "../assets/icons/File Icon.png"
 
 export const AppIcons = {
   Logo,
@@ -49,7 +51,9 @@ export const AppIcons = {
   Call1,
   Chat1,
   EditIcon,
-  Video1Icon
+  Video1Icon,
+  Education1,
+  FileIcon
 };
 
 //appImages
@@ -78,6 +82,7 @@ import AchivmentImg from "../assets/images/achivments.png"
 import CosmicCircle from "../assets/images/cosmic-circle.png";
 import MobileViewAccount from "../assets/images/mobile-view-account.png"
 
+
 export const AppImages = {
   Hero,
   Astro1,
@@ -102,7 +107,8 @@ export const AppImages = {
   Letter1,
   AchivmentImg,
   CosmicCircle,
-  MobileViewAccount
+  MobileViewAccount,
+  
 };
 
 

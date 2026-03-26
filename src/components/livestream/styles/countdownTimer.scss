@@ -57,7 +57,7 @@
   stroke: rgba(255, 255, 255, 0.8);
   stroke-width: 5;
   stroke-linecap: round;
-  transition: stroke-dashoffset 0.35s ease;
+  /* No CSS transition — progress is driven smoothly by requestAnimationFrame */
 }
 
 .countdown-number {

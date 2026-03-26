@@ -42,6 +42,7 @@ const AgoraVoiceCalling = ({ callData }) => {
   const localVideoRef = useRef(null);
   const userLeftTimerRef = useRef(null);
   const isRefreshingRef = useRef(false);
+  const unmountedRef = useRef(false); // Prevents stale Agora callbacks after unmount
   // Track if this mount is a refresh-resume (activeCall restored from sessionStorage)
   const isResumeFromRefresh = useRef(!!sessionStorage.getItem("shubhtalk_active_call"));
   const isDowngradingRef = useRef(false); // Track if downgrading from video
@@ -78,6 +79,7 @@ const AgoraVoiceCalling = ({ callData }) => {
   /* ================= START CALL ================= */
   useEffect(() => {
     cleanupRef.current = false;
+    unmountedRef.current = false;
 
     const startCall = async () => {
       try {
@@ -173,12 +175,24 @@ const AgoraVoiceCalling = ({ callData }) => {
                   console.log("⚠️ [DOWNGRADE] Ignoring user-left — upgrade in progress");
                   return;
                 }
-                console.log("[DOWNGRADE] 👋 user-left — uid:", user.uid, "starting 60s grace timer");
+                // Ignore if VoiceCall already unmounted (stale Agora callback)
+                if (unmountedRef.current) {
+                  console.log("⚠️ [DOWNGRADE] Ignoring user-left — component already unmounted");
+                  return;
+                }
+                // Use shorter grace period when call was initiated from chat
+                const isChatInitiated = Boolean(activeChat?.roomId || activeCall?.resumeToChat);
+                const graceMs = isChatInitiated ? 5000 : 60000;
+                console.log(`[DOWNGRADE] 👋 user-left — uid: ${user.uid}, starting ${graceMs / 1000}s grace timer (chatInitiated: ${isChatInitiated})`);
                 if (userLeftTimerRef.current) clearTimeout(userLeftTimerRef.current);
                 userLeftTimerRef.current = setTimeout(() => {
+                  if (isUpgradingRef.current || unmountedRef.current) {
+                    console.log("⚠️ [DOWNGRADE] Grace timer fired but upgrade/unmount in progress — ignoring");
+                    return;
+                  }
                   console.log("[DOWNGRADE] ⏰ user-left grace timer expired — ending call");
                   handleRemoteUserLeft();
-                }, 60000); // 60s grace period — matches backend disconnect grace
+                }, graceMs);
               });
 
               clientRef.current.on("user-joined", (user) => {
@@ -295,12 +309,26 @@ const AgoraVoiceCalling = ({ callData }) => {
             console.log("⚠️ Ignoring user-left — upgrade in progress");
             return;
           }
-          console.log("[VoiceCall] 👋 user-left — uid:", user.uid, "starting 60s grace timer");
+          // Ignore if VoiceCall already unmounted (stale Agora callback)
+          if (unmountedRef.current) {
+            console.log("⚠️ [VoiceCall] Ignoring user-left — component already unmounted");
+            return;
+          }
+          // Use shorter grace period when call was initiated from chat,
+          // since user likely disconnected intentionally to return to chat
+          const isChatInitiated = Boolean(activeChat?.roomId || activeCall?.resumeToChat);
+          const graceMs = isChatInitiated ? 5000 : 60000;
+          console.log(`[VoiceCall] 👋 user-left — uid: ${user.uid}, starting ${graceMs / 1000}s grace timer (chatInitiated: ${isChatInitiated})`);
           if (userLeftTimerRef.current) clearTimeout(userLeftTimerRef.current);
           userLeftTimerRef.current = setTimeout(() => {
+            // Double-check upgrade/unmount state when timer fires
+            if (isUpgradingRef.current || unmountedRef.current) {
+              console.log("⚠️ [VoiceCall] Grace timer fired but upgrade/unmount in progress — ignoring");
+              return;
+            }
             console.log("[VoiceCall] ⏰ user-left grace timer expired — ending call");
             handleRemoteUserLeft();
-          }, 60000); // 60s grace period — matches backend disconnect grace
+          }, graceMs);
         });
 
         client.on("user-joined", (user) => {
@@ -358,15 +386,17 @@ const AgoraVoiceCalling = ({ callData }) => {
 
     return () => {
       console.log("[VoiceCall] 🧹 useEffect cleanup (unmount) — isRefreshing:", isRefreshingRef.current);
-      // If upgrading to video, skip cleanup entirely
-      // Check both the ref AND the shared state (ref may not be updated yet due to React batching)
-      if (isUpgradingRef.current || sharedAgoraState.isUpgrading) {
-        console.log("🔄 Skipping cleanup - upgrading to video");
-        return;
-      }
+      unmountedRef.current = true;
+      // Always clear the user-left grace timer on unmount to prevent stale
+      // callbacks from killing a newly upgraded video call
       if (userLeftTimerRef.current) {
         clearTimeout(userLeftTimerRef.current);
         userLeftTimerRef.current = null;
+      }
+      // If upgrading to video, skip Agora resource cleanup (client/tracks are shared)
+      if (isUpgradingRef.current || sharedAgoraState.isUpgrading) {
+        console.log("🔄 Skipping cleanup - upgrading to video");
+        return;
       }
       // On refresh: only release Agora resources, do NOT clear activeCall
       // so it persists in sessionStorage for reconnect

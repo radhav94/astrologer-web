@@ -37,6 +37,8 @@ export const ChatProvider = ({ children }) => {
   const reconnectTimeoutRef = useRef(null);
   const restorePendingRef = useRef(false);
   const timerRef = useRef(null);
+  const activeChatRef = useRef(null);
+  const networkDisconnectedRef = useRef(false);
 
   const startTimer = () => {
     if (timerRef.current) return;
@@ -102,15 +104,16 @@ export const ChatProvider = ({ children }) => {
   /* ================= SET ACTIVE CHAT (wrapper with persistence) ================= */
   const setActiveChat = useCallback((chatData) => {
     // Get current roomId before clearing (for cleanup)
-    const currentRoomId = activeChat?.roomId;
+    const currentRoomId = activeChatRef.current?.roomId;
     
+    activeChatRef.current = chatData;
     setActiveChatState(chatData);
     if (chatData) {
       persistChatState(chatData);
     } else {
       clearPersistedChatState(currentRoomId);
     }
-  }, [persistChatState, clearPersistedChatState, activeChat?.roomId]);
+  }, [persistChatState, clearPersistedChatState]);
 
   const startReconnectGraceWindow = useCallback((chatData) => {
     if (!chatData?.roomId) return;
@@ -119,11 +122,14 @@ export const ChatProvider = ({ children }) => {
       clearTimeout(reconnectTimeoutRef.current);
     }
 
+    networkDisconnectedRef.current = true;
     setNetworkDisconnected(true);
     setIsReconnecting(true);
 
     reconnectTimeoutRef.current = setTimeout(() => {
       console.log("[ChatContext] Grace window expired — chat likely ended by backend");
+      activeChatRef.current = null;
+      networkDisconnectedRef.current = false;
       setNetworkDisconnected(false);
       setIsReconnecting(false);
       setActiveChatState(null);
@@ -137,7 +143,7 @@ export const ChatProvider = ({ children }) => {
   // Handle chat:reconnected response from backend
   const handleChatReconnected = useCallback((data) => {
     console.log("[ChatContext] chat:reconnected received:", data);
-    const currentChat = activeChat || restoreChatState();
+    const currentChat = activeChatRef.current || restoreChatState();
     const hasMismatchedRoom =
       data?.roomId &&
       currentChat?.roomId &&
@@ -161,6 +167,7 @@ export const ChatProvider = ({ children }) => {
       reconnectTimeoutRef.current = null;
     }
     
+    networkDisconnectedRef.current = false;
     setIsReconnecting(false);
     setNetworkDisconnected(false);
     restorePendingRef.current = false;
@@ -171,6 +178,7 @@ export const ChatProvider = ({ children }) => {
         ...currentChat,
         remainingTime: data?.remainingTime || currentChat?.remainingTime,
       };
+      activeChatRef.current = restoredChat;
       setActiveChatState(restoredChat);
       persistChatState(restoredChat);
 
@@ -183,24 +191,27 @@ export const ChatProvider = ({ children }) => {
     } else if (isExplicitlyInactive || !currentChat?.roomId) {
       // Chat is no longer active — backend ended it
       console.log("[ChatContext] Chat no longer active:", data?.status || data?.reason);
+      activeChatRef.current = null;
       setActiveChatState(null);
       clearPersistedChatState(currentChat?.roomId);
       resetTimer();
     } else {
       console.log("[ChatContext] Ambiguous reconnect response — preserving current chat:", data);
       if (currentChat) {
+        activeChatRef.current = currentChat;
         setActiveChatState(currentChat);
         persistChatState(currentChat);
         startTimer();
       }
     }
-  }, [activeChat, restoreChatState, persistChatState, clearPersistedChatState]);
+  }, [restoreChatState, persistChatState, clearPersistedChatState]);
 
   // Emit chat:reconnect immediately when socket reconnects
   const emitChatReconnect = useCallback(() => {
     // Use current activeChat state or restore from localStorage
-    const currentChat = activeChat || restoreChatState();
+    const currentChat = activeChatRef.current || restoreChatState();
     if (!currentChat || !currentChat.roomId) {
+      networkDisconnectedRef.current = false;
       setNetworkDisconnected(false);
       setIsReconnecting(false);
       restorePendingRef.current = false;
@@ -214,40 +225,33 @@ export const ChatProvider = ({ children }) => {
       roomId: currentChat.roomId,
       userId: currentChat.userId || currentChat.chaterId,
       astrologerId: currentChat.astrologerId || astroId,
+      callType: currentChat.callType || "chat",
     });
-  }, [activeChat, restoreChatState, astroId]);
+  }, [restoreChatState, astroId]);
 
   // Handle socket disconnect — start grace window countdown
   const handleSocketDisconnect = useCallback((reason) => {
-    if (!activeChat) return;
-    
+    const currentChat = activeChatRef.current || restoreChatState();
+    if (!currentChat?.roomId) return;
+
     console.log("[ChatContext] Socket disconnected during active chat:", reason);
-    setNetworkDisconnected(true);
-    
-    // Start grace window timeout — if we don't reconnect in time, chat will end
-    reconnectTimeoutRef.current = setTimeout(() => {
-      console.log("[ChatContext] Grace window expired — chat likely ended by backend");
-      setNetworkDisconnected(false);
-      setIsReconnecting(false);
-      setActiveChatState(null);
-      clearPersistedChatState(activeChat?.roomId);
-      resetTimer();
-    }, RECONNECT_GRACE_TIMEOUT);
-  }, [activeChat, clearPersistedChatState]);
+    startReconnectGraceWindow(currentChat);
+  }, [restoreChatState, startReconnectGraceWindow]);
 
   // Handle socket connect — emit reconnect if we were disconnected during a chat
   const handleSocketConnect = useCallback(() => {
     // Only emit reconnect if we were actually disconnected during an active chat
     // Don't emit for fresh chats that are just starting
-    if (networkDisconnected || restorePendingRef.current) {
+    if (networkDisconnectedRef.current || restorePendingRef.current) {
       emitChatReconnect();
     } else {
       // On initial mount (page refresh), try to restore from localStorage
       // But only if there's no current activeChat (to avoid interfering with fresh chats)
-      if (!activeChat) {
+      if (!activeChatRef.current) {
         const savedChat = restoreChatState();
         if (savedChat && savedChat.roomId) {
           console.log("[ChatContext] Restoring chat from localStorage on connect");
+          activeChatRef.current = savedChat;
           setActiveChatState(savedChat);
           // Small delay to let state settle before emitting reconnect
           setTimeout(() => {
@@ -256,7 +260,7 @@ export const ChatProvider = ({ children }) => {
         }
       }
     }
-  }, [networkDisconnected, activeChat, emitChatReconnect, restoreChatState]);
+  }, [emitChatReconnect, restoreChatState]);
 
   // On page refresh, restore the chat immediately so the UI can show the
   // reconnecting overlay before the socket finishes reconnecting.
@@ -268,6 +272,7 @@ export const ChatProvider = ({ children }) => {
 
     console.log("[ChatContext] Priming restored chat before socket reconnect");
     restorePendingRef.current = true;
+    activeChatRef.current = savedChat;
     setActiveChatState(savedChat);
     setIsReconnecting(true);
   }, [astroId, activeChat, restoreChatState]);
@@ -278,7 +283,7 @@ export const ChatProvider = ({ children }) => {
   }, [emitChatReconnect]);
 
   const recoverChatAfterSystemDisconnect = useCallback((data) => {
-    const currentChat = activeChat || restoreChatState();
+    const currentChat = activeChatRef.current || restoreChatState();
     const isRecoverable =
       data?.endedBy === "SYSTEM" &&
       data?.endReason === "socket-disconnect" &&
@@ -291,6 +296,7 @@ export const ChatProvider = ({ children }) => {
 
     console.log("[ChatContext] Recovering chat after system socket disconnect:", JSON.stringify(data));
 
+    activeChatRef.current = currentChat;
     setActiveChatState(currentChat);
     persistChatState(currentChat);
     startReconnectGraceWindow(currentChat);
@@ -302,7 +308,15 @@ export const ChatProvider = ({ children }) => {
     }
 
     return true;
-  }, [activeChat, restoreChatState, persistChatState, startReconnectGraceWindow, emitChatReconnect]);
+  }, [restoreChatState, persistChatState, startReconnectGraceWindow, emitChatReconnect]);
+
+  useEffect(() => {
+    activeChatRef.current = activeChat;
+  }, [activeChat]);
+
+  useEffect(() => {
+    networkDisconnectedRef.current = networkDisconnected;
+  }, [networkDisconnected]);
 
   // Use refs for handlers to avoid useEffect re-running when handlers change
   const handleSocketConnectRef = useRef(handleSocketConnect);
@@ -315,6 +329,44 @@ export const ChatProvider = ({ children }) => {
     handleSocketDisconnectRef.current = handleSocketDisconnect;
     handleChatReconnectedRef.current = handleChatReconnected;
   }, [handleSocketConnect, handleSocketDisconnect, handleChatReconnected]);
+
+  useEffect(() => {
+    if (!astroId) {
+      return;
+    }
+
+    const handleOffline = () => {
+      const currentChat = activeChatRef.current || restoreChatState();
+      if (!currentChat?.roomId) return;
+
+      console.log("[ChatContext] Browser went offline during active chat");
+      persistChatState(currentChat);
+      startReconnectGraceWindow(currentChat);
+    };
+
+    const handleOnline = () => {
+      const currentChat = activeChatRef.current || restoreChatState();
+      if (!currentChat?.roomId) return;
+      if (!networkDisconnectedRef.current && !restorePendingRef.current) return;
+
+      console.log("[ChatContext] Browser is back online - retrying chat reconnect");
+
+      if (voiceSocket.connected) {
+        emitChatReconnect();
+        return;
+      }
+
+      voiceSocket.connect();
+    };
+
+    window.addEventListener("offline", handleOffline);
+    window.addEventListener("online", handleOnline);
+
+    return () => {
+      window.removeEventListener("offline", handleOffline);
+      window.removeEventListener("online", handleOnline);
+    };
+  }, [astroId, restoreChatState, persistChatState, startReconnectGraceWindow, emitChatReconnect]);
 
 useEffect(() => {
   if (!astroId) {

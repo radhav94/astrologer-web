@@ -326,12 +326,15 @@ const VideoCalling = ({ callData }) => {
         });
 
         client.on("user-left", (user) => {
-          console.log("[VideoCall] 👋 user-left — uid:", user.uid, "starting 30s grace timer");
+          // Use shorter grace period when call was initiated from chat
+          const isChatInitiated = Boolean(activeChat?.roomId || activeCall?.resumeToChat);
+          const graceMs = isChatInitiated ? 5000 : 60000;
+          console.log(`[VideoCall] 👋 user-left — uid: ${user.uid}, starting ${graceMs / 1000}s grace timer (chatInitiated: ${isChatInitiated})`);
           if (userLeftTimerRef.current) clearTimeout(userLeftTimerRef.current);
           userLeftTimerRef.current = setTimeout(() => {
             console.log("[VideoCall] ⏰ user-left grace timer expired — ending call");
             handleRemoteCallEnd();
-          }, 60000); // 60s grace period — matches backend disconnect grace
+          }, graceMs);
         });
 
         client.on("user-joined", (user) => {

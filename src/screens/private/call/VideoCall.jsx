@@ -6,7 +6,8 @@ import {
   IoVideocam,
   IoVideocamOff,
   IoArrowBack,
-  IoFilter
+  IoFilter,
+  IoCallSharp
 } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
 import styles from "./VideoCalling.module.scss";
@@ -18,6 +19,9 @@ import { PATH } from "../../../utils/routes/Paths";
 import CallIcon from "../../../assets/chat/Call.svg";
 import { ReconnectingOverlay } from "../../../components/UI";
 import SuggestRemedyPanel from "./SuggestRemedyPanel";
+import ReportCaller from "../chat/review/ReportCaller";
+import { useSubmitReportMutation } from "../../../redux/review/reviewApi";
+import { Toast } from "../../../components";
 
 const APP_ID = "cf5e31fa03584573aacaf42daebd493c";
 
@@ -61,6 +65,8 @@ const VideoCalling = ({ callData }) => {
   const [isChatOpen, setIsChatOpen] = useState(false); // Chat panel state
   const [hasRemoteVideo, setHasRemoteVideo] = useState(false); // Track if remote user has video on
   const [isRemedyOpen, setIsRemedyOpen] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [submitReport, { isLoading: isReportSubmitting }] = useSubmitReportMutation();
 
   /* ================= LOCAL VIDEO ================= */
   const playLocalVideo = (container) => {
@@ -698,6 +704,29 @@ const VideoCalling = ({ callData }) => {
     }
   };
 
+  /* ================= REPORT CALLER ================= */
+  const handleReportSubmit = async (values) => {
+    try {
+      const res = await submitReport({
+        reasonId: values.reasonId,
+        userId: activeCall?.userId,
+        astrologerId: activeCall?.astrologerId,
+        description: values.description,
+      }).unwrap();
+
+      if (res?.success) {
+        Toast.success(res?.message || "Report submitted successfully");
+      } else {
+        Toast.error(res?.message || "Failed to submit report");
+      }
+
+      setShowReportModal(false);
+      safeEndCall();
+    } catch (err) {
+      Toast.error(err?.data?.message || "Failed to submit report");
+    }
+  };
+
   /* ================= SAFE END CALL (User initiated) ================= */
   const safeEndCall = async () => {
     // Don't emit call:end if downgrading
@@ -1266,13 +1295,9 @@ const VideoCalling = ({ callData }) => {
                       onClick={safeEndCall}
                       className="w-16 h-16 rounded-full bg-red-500 flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors"
                     >
-                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-                        <path d="M12 2L2 20h20L12 2z" fill="white" />
-                        <rect x="11" y="8" width="2" height="6" fill="#ef4444" rx="1" />
-                        <circle cx="12" cy="17" r="1" fill="#ef4444" />
-                      </svg>
+                      <IoCallSharp color="white" size={24} />
                     </button>
-                    <span className="text-sm font-medium text-white">Report Caller</span>
+                    <span className="text-sm font-medium text-white">End Call</span>
                   </div>
 
                   {/* SPEAKER BUTTON */}
@@ -1299,6 +1324,20 @@ const VideoCalling = ({ callData }) => {
                     </span>
                   </div>
 
+                  <div className="flex flex-col items-center gap-2">
+                    <button
+                      onClick={() => setShowReportModal(true)}
+                      className="w-16 h-16 rounded-full bg-red-500 flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors"
+                    >
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                        <path d="M12 2L2 20h20L12 2z" fill="white" />
+                        <rect x="11" y="8" width="2" height="6" fill="#ef4444" rx="1" />
+                        <circle cx="12" cy="17" r="1" fill="#ef4444" />
+                      </svg>
+                    </button>
+                    <span className="text-sm font-medium text-white">Report Caller</span>
+                  </div>
+
                 </div>
               </div>
             </div>
@@ -1317,6 +1356,15 @@ const VideoCalling = ({ callData }) => {
           isOpen={isRemedyOpen}
           onClose={() => setIsRemedyOpen(false)}
           roomId={activeCall?.chatRoomId || roomId}
+        />
+
+        {/* Report Caller Modal */}
+        <ReportCaller
+          isOpen={showReportModal}
+          onClose={() => setShowReportModal(false)}
+          onSubmit={handleReportSubmit}
+          isSubmitting={isReportSubmitting}
+          callerName={callerName}
         />
       </div>
     </>

@@ -3,7 +3,8 @@ import AgoraRTC from "agora-rtc-sdk-ng";
 import {
   IoMic,
   IoMicOff,
-  IoArrowBack
+  IoArrowBack,
+  IoCallSharp
 } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
 import styles from "./VoiceCall.module.scss";
@@ -18,6 +19,9 @@ import CallIcon from "../../../assets/chat/Call.svg";
 import VideoCallChat from "./VideoCallChat";
 import { ReconnectingOverlay } from "../../../components/UI";
 import SuggestRemedyPanel from "./SuggestRemedyPanel";
+import ReportCaller from "../chat/review/ReportCaller";
+import { useSubmitReportMutation } from "../../../redux/review/reviewApi";
+import { Toast } from "../../../components";
 
 const APP_ID = "cf5e31fa03584573aacaf42daebd493c";
 
@@ -58,6 +62,8 @@ const AgoraVoiceCalling = ({ callData }) => {
   const [speakerOn, setSpeakerOn] = useState(true);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isRemedyOpen, setIsRemedyOpen] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [submitReport, { isLoading: isReportSubmitting }] = useSubmitReportMutation();
 
   /* ================= PREVENT ACCIDENTAL REFRESH & DETECT REFRESH ================= */
   useEffect(() => {
@@ -540,6 +546,29 @@ const AgoraVoiceCalling = ({ callData }) => {
   };
 
   /* ================= END CALL (User initiated) ================= */
+
+  const handleReportSubmit = async (values) => {
+    try {
+      const res = await submitReport({
+        reasonId: values.reasonId,
+        userId: activeCall?.userId,
+        astrologerId: activeCall?.astrologerId,
+        description: values.description,
+      }).unwrap();
+
+      if (res?.success) {
+        Toast.success(res?.message || "Report submitted successfully");
+      } else {
+        Toast.error(res?.message || "Failed to submit report");
+      }
+
+      setShowReportModal(false);
+      endCall();
+    } catch (err) {
+      Toast.error(err?.data?.message || "Failed to submit report");
+    }
+  };
+
   const endCall = async () => {
     // Don't emit call:end if upgrading or downgrading
     if (isUpgradingRef.current || sharedAgoraState.isUpgrading) {
@@ -1124,19 +1153,15 @@ const AgoraVoiceCalling = ({ callData }) => {
                     </span>
                   </div>
 
-                  {/* REPORT CALLER BUTTON */}
+                  {/* END CALL BUTTON */}
                   <div className="flex flex-col items-center gap-2">
                     <button
                       onClick={endCall}
                       className="w-16 h-16 rounded-full bg-red-500 flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors"
                     >
-                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-                        <path d="M12 2L2 20h20L12 2z" fill="white" />
-                        <rect x="11" y="8" width="2" height="6" fill="#ef4444" rx="1" />
-                        <circle cx="12" cy="17" r="1" fill="#ef4444" />
-                      </svg>
+                      <IoCallSharp color="white" size={24} />
                     </button>
-                    <span className={`text-sm font-medium ${isRemoteVideo ? 'text-white' : 'text-gray-600'}`}>Report Caller</span>
+                    <span className={`text-sm font-medium ${isRemoteVideo ? 'text-white' : 'text-gray-600'}`}>End Call</span>
                   </div>
 
                   {/* SPEAKER BUTTON */}
@@ -1163,6 +1188,21 @@ const AgoraVoiceCalling = ({ callData }) => {
                     </span>
                   </div>
 
+{/* Report Caller */}
+                  <div className="flex flex-col items-center gap-2">
+                    <button
+                      onClick={() => setShowReportModal(true)}
+                      className="w-16 h-16 rounded-full bg-red-500 flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors"
+                    >
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                        <path d="M12 2L2 20h20L12 2z" fill="white" />
+                        <rect x="11" y="8" width="2" height="6" fill="#ef4444" rx="1" />
+                        <circle cx="12" cy="17" r="1" fill="#ef4444" />
+                      </svg>
+                    </button>
+                    <span className={`text-sm font-medium ${isRemoteVideo ? 'text-white' : 'text-gray-600'}`}>Report Caller</span>
+                  </div>
+
                 </div>
               </div>
             </div>
@@ -1181,6 +1221,15 @@ const AgoraVoiceCalling = ({ callData }) => {
             isOpen={isRemedyOpen}
             onClose={() => setIsRemedyOpen(false)}
             roomId={activeCall?.chatRoomId || roomId}
+          />
+
+          {/* Report Caller Modal */}
+          <ReportCaller
+            isOpen={showReportModal}
+            onClose={() => setShowReportModal(false)}
+            onSubmit={handleReportSubmit}
+            isSubmitting={isReportSubmitting}
+            callerName={callerName}
           />
         </div>
       )}

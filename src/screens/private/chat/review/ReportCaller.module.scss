@@ -1,0 +1,156 @@
+.reportForm {
+  padding: 1rem 1.25rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.callerInfo {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+
+  span {
+    font-weight: 600;
+    color: #1f2937;
+  }
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.label {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.optionalText {
+  font-weight: 400;
+  font-style: italic;
+  color: #9ca3af;
+}
+
+.radioGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.radioItem {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  background-color: #fff;
+
+  &:hover {
+    border-color: #d1d5db;
+    background-color: #f9fafb;
+  }
+
+  &:has(input:checked) {
+    border-color: var(--main-primary-start, #F75801);
+    background-color: #fff7ed;
+  }
+}
+
+.radioInput {
+  width: 1.125rem;
+  height: 1.125rem;
+  accent-color: var(--main-primary-start, #F75801);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.radioLabel {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.textarea {
+  width: 100%;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  color: #1f2937;
+  resize: vertical;
+  min-height: 80px;
+  outline: none;
+  transition: border-color 0.15s;
+  font-family: inherit;
+
+  &:focus {
+    border-color: var(--main-primary-start, #F75801);
+  }
+
+  &::placeholder {
+    color: #9ca3af;
+  }
+}
+
+.errorText {
+  color: #ef4444;
+  font-size: 0.75rem;
+  margin: 0;
+}
+
+.actions {
+  display: flex;
+  gap: 0.75rem;
+  padding-top: 0.25rem;
+}
+
+.cancelButton {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 9999px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #374151;
+  background-color: #fff;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover:not(:disabled) {
+    background-color: #f3f4f6;
+    border-color: #d1d5db;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.submitButton {
+  flex: 1;
+  background: linear-gradient(90deg, var(--main-primary-start, #F75801) 0%, var(--main-primary-end, #D43400) 100%);
+  color: #fff;
+  border: none;
+  border-radius: 9999px;
+  padding: 0.75rem 1rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &:hover:not(:disabled) {
+    opacity: 0.9;
+  }
+}

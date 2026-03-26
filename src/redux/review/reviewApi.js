@@ -13,8 +13,26 @@ export const reviewApi = privateApi.injectEndpoints({
           isAnonymous
         },
       }),
-    })
+    }),
+
+    // GET /api/report/reasons — fetch report categories for ReportCaller
+    getReportReasons: builder.query({
+      query: () => ({
+        url: "report/reasons",
+        method: "GET",
+      }),
+    }),
+
+    // POST /api/report/submit — submit a report against a caller
+    submitReport: builder.mutation({
+      query: ({ reasonId, userId, astrologerId, description }) => ({
+        url: "report/submit",
+        method: "POST",
+        body: { reasonId, userId, astrologerId, description },
+      }),
+    }),
+    
   }),
 });
 
-export const { useAddUserReviewMutation } = reviewApi;
+export const { useAddUserReviewMutation, useGetReportReasonsQuery, useSubmitReportMutation } = reviewApi;

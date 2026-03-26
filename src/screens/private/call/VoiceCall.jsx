@@ -560,6 +560,7 @@ const AgoraVoiceCalling = ({ callData }) => {
     setReviewData({
       userID: activeCall?.userID,
       fullName: activeCall?.callerName,
+      roomId: activeCall?.roomId,
     });
     // Don't show review popup if chat is still active
     if (!shouldSkipReview) {
@@ -581,6 +582,7 @@ const AgoraVoiceCalling = ({ callData }) => {
     setReviewData({
       userID: activeCall?.userID,
       fullName: activeCall?.callerName,
+      roomId: activeCall?.roomId,
     });
     // Don't show review popup if chat is still active
     if (!shouldSkipReview) {
@@ -602,6 +604,7 @@ const AgoraVoiceCalling = ({ callData }) => {
     setReviewData({
       userID: activeCall?.userID,
       fullName: activeCall?.callerName,
+      roomId: activeCall?.roomId,
     });
     // Don't show review popup if chat is still active
     if (!shouldSkipReview) {

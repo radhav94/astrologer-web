@@ -629,10 +629,11 @@ const ChatWindow = () => {
     try {
       const res = await addUserReview({
         userID,
+        roomId,
         rating,
         review,
         isAnonymous,
-      }).unwrap();
+      }).unwrap
 
       if (res.success) {
         Toast.success(res.message);

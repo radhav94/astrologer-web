@@ -712,6 +712,7 @@ const VideoCalling = ({ callData }) => {
     setReviewData({
       userID: activeCall.userID,
       fullName: activeCall.callerName,
+      roomId: activeCall.roomId,
     });
 
     voiceSocket.emit("call:end", {
@@ -740,6 +741,7 @@ const VideoCalling = ({ callData }) => {
     setReviewData({
       userID: activeCall.userID,
       fullName: activeCall.callerName,
+      roomId: activeCall.roomId,
     });
 
     // Don't emit call:end - already ended by remote/server

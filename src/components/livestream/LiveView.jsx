@@ -13,6 +13,7 @@ import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { getDefaultImgBasedOnGender } from "../../utils/utlis";
 import { useLiveStream } from "../../context/LiveStreamContext";
+import eyeIcon from "../../assets/images/eye.png";
 
 
 const LiveView = (props) => {
@@ -171,7 +172,7 @@ const LiveView = (props) => {
             LIVE
           </div>
           <div className="viewer-pill">
-            <span className="viewer-icon">👁</span>
+            <img src={eyeIcon} alt="viewers" className="viewer-icon" />
             <span className="viewer-count">{viewerCount >= 1000 ? `${(viewerCount / 1000).toFixed(1)}k` : viewerCount}</span>
           </div>
           <button

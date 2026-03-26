@@ -60,12 +60,11 @@
   gap: 6px;
   padding: 6px 14px;
   border-radius: 20px;
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: linear-gradient(135deg, #ffa940, #ff6b00);
   color: #fff;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
+  box-shadow: 0 2px 10px rgba(255, 107, 0, 0.4);
 }
 
 /* Close button — top left */

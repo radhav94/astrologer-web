@@ -21,6 +21,7 @@ const StickyReviewFooter = () => {
     try {
       const res = await addUserReview({
         userID: reviewData?.userID,
+        roomId: reviewData?.roomId,
         rating,
         review,
         isAnonymous,

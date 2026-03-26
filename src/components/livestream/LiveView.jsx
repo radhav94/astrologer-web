@@ -1,6 +1,6 @@
 import { useEffect, useCallback, useState, useRef } from "react";
 import { LocalUser, RemoteUser } from "agora-rtc-react";
-import { MicOff, Mic, VideoOff, Video, Send, Timer, Gift, Share2, ChevronLeft } from "lucide-react";
+import { MicOff, Mic, VideoOff, Video, Send, Timer, Gift, ChevronLeft } from "lucide-react";
 import "./styles/videoBox.scss";
 import { useLiveViewLogic } from "./useLiveViewLogic";
 import GiftPopup from "./GiftPopup";
@@ -13,6 +13,7 @@ import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { getDefaultImgBasedOnGender } from "../../utils/utlis";
 import { useLiveStream } from "../../context/LiveStreamContext";
+import eyeIcon from "../../assets/images/eye.png";
 
 
 const LiveView = (props) => {
@@ -33,6 +34,7 @@ const LiveView = (props) => {
 
   const hasEndedRef = useRef(false);
   const isMountedRef = useRef(false);
+  const messagesOverlayRef = useRef(null);
 
   const hostData = {
     name: "Anaisha",
@@ -73,6 +75,13 @@ const LiveView = (props) => {
     clearLiveSession,
     isMicMutedByCall,
   } = props;
+
+  // Auto-scroll messages to bottom
+  useEffect(() => {
+    if (messagesOverlayRef.current) {
+      messagesOverlayRef.current.scrollTop = messagesOverlayRef.current.scrollHeight;
+    }
+  }, [messages.length]);
 
   const handleEndLive = useCallback(async () => {
     if (ROLE !== "host") return;
@@ -171,7 +180,7 @@ const LiveView = (props) => {
             LIVE
           </div>
           <div className="viewer-pill">
-            <span className="viewer-icon">👁</span>
+            <img src={eyeIcon} alt="viewers" className="viewer-icon" />
             <span className="viewer-count">{viewerCount >= 1000 ? `${(viewerCount / 1000).toFixed(1)}k` : viewerCount}</span>
           </div>
           <button
@@ -191,7 +200,7 @@ const LiveView = (props) => {
             audioTrack={localMicrophoneTrack}
             videoTrack={localCameraTrack}
             cameraOn={cameraOn}
-            micOn={micOn}
+            micOn={micOn && !isMicMutedByCall}
           />
         )}
 
@@ -229,27 +238,27 @@ const LiveView = (props) => {
         </div>
       </div>
 
-      {/* CHAT OVERLAY */}
-      <div className="chat-panel">
-        <div className="chat-messages">
-          {messages.map((m) => (
-            <div
-              key={m.id}
-              className={`chat-message ${m.isSelf ? "self" : ""} ${m.text?.toLowerCase().includes("joined") ? "joined-msg" : ""}`}
-            >
-              <div className="chat-avatar">
-                {getInitials(m.senderName)}
-              </div>
-              <div className="chat-bubble">
-                <span className="chat-sender">
+      {/* Inline Messages Overlay */}
+      <div className="inline-messages-overlay" ref={messagesOverlayRef}>
+        {messages.map((m) => (
+          <div
+            key={m.id}
+            className={`inline-message ${m.role === "host" ? "inline-host-message" : ""}`}
+          >
+            <span className="inline-initial">
+              {(m.senderName || (m.role === "host" ? "A" : "U")).charAt(0).toUpperCase()}
+            </span>
+            <div className="inline-message-body">
+              {m.senderName && (
+                <span className="inline-sender">
                   {m.role === "host" ? "You" : m.senderName}
                 </span>
-                <span className="chat-text">{m.text}</span>
-              </div>
+              )}
+              <span className="inline-text">{m.text}</span>
             </div>
-          ))}
-          <div ref={messagesEndRef} />
-        </div>
+          </div>
+        ))}
+        <div ref={messagesEndRef} />
       </div>
 
       {/* BOTTOM COMPOSER */}
@@ -266,11 +275,19 @@ const LiveView = (props) => {
             <>
               <button
                 type="button"
-                className={`composer-icon-btn mic-btn ${!micOn ? "active" : ""}`}
-                onClick={() => setMic((v) => !v)}
-                aria-label={micOn ? "Mute microphone" : "Unmute microphone"}
+                className={`composer-icon-btn mic-btn ${(!micOn || isMicMutedByCall) ? "active" : ""}`}
+                onClick={() => !isMicMutedByCall && setMic((v) => !v)}
+                disabled={isMicMutedByCall}
+                aria-label={
+                  isMicMutedByCall
+                    ? "Microphone muted during call"
+                    : micOn
+                      ? "Mute microphone"
+                      : "Unmute microphone"
+                }
+                title={isMicMutedByCall ? "Mic is off during active call" : ""}
               >
-                {micOn ? <Mic size={18} /> : <MicOff size={18} />}
+                {(micOn && !isMicMutedByCall) ? <Mic size={18} /> : <MicOff size={18} />}
               </button>
               <button
                 type="button"

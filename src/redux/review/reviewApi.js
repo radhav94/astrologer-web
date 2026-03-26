@@ -3,7 +3,7 @@ import { privateApi } from "../../services/appServices/privateRequest";
 export const reviewApi = privateApi.injectEndpoints({
   endpoints: (builder) => ({
     addUserReview: builder.mutation({
-      query: ({ userID, rating, review, isAnonymous }) => ({
+      query: ({ userID, rating, review, isAnonymous, roomId }) => ({
         url: "review/addCustomerReview",
         method: "POST",
         body: {
@@ -11,6 +11,7 @@ export const reviewApi = privateApi.injectEndpoints({
           rating,
           review,
           isAnonymous,
+          roomId
         },
       }),
     }),

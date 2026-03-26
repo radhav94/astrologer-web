@@ -13,7 +13,8 @@ export default function useChat({
   roomId,
   isUserSide,
   kundliId,
-  setOpenReview
+  setOpenReview,
+  redirectOnEnded = false
 }) {
   const [messages, setMessages] = useState([]);
   const [error, setError] = useState(null);
@@ -51,8 +52,8 @@ export default function useChat({
     if (recoverChatAfterSystemDisconnect(data)) {
       return;
     }
+
     setIsMessageDisabled(true);
-    setOpenReview(true);
     resetTimer();
     setActiveChat(null);
     setMessages([]); // Clear local messages — they're now in history
@@ -62,6 +63,13 @@ export default function useChat({
       localStorage.removeItem(`shubhtalk_chat_init_${roomId}`);
     }
     localStorage.removeItem("shubhtalk_chat_start_time");
+
+    if (redirectOnEnded) {
+      navigate("/chats", { replace: true });
+      return;
+    }
+
+    setOpenReview(true);
   };
 
   // Derive disabled state from activeChat / activeCall
@@ -154,7 +162,7 @@ export default function useChat({
       voiceSocket.off("typing", handleTyping);
       voiceSocket.off("chat:ended", handleChatEndedFromServer);
     }
-  }, [roomId]);
+  }, [roomId, userId, astrologerId, redirectOnEnded]);
 
   // ASTRO SEND
   const astroReply = (text, type = "message") => {

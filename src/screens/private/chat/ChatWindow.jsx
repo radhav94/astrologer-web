@@ -458,7 +458,8 @@ const ChatWindow = () => {
     roomId,
     isUserSide,
     kundliId,
-    setOpenReview
+    setOpenReview,
+    redirectOnEnded: true
   });
 
   /* --------- Normalize & Merge Messages --------- */

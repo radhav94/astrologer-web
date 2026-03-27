@@ -88,8 +88,8 @@ const ConsultationHistory = () => {
   const [filterBy, setFilterBy] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchText, setSearchText] = useState("");
-  const [selectedMonth, setSelectedMonth] = useState("");
-  const [selectedYear, setSelectedYear] = useState("");
+  const [selectedMonth, setSelectedMonth] = useState([]);
+  const [selectedYear, setSelectedYear] = useState([]);
 
   // Filter modal state
   const [showFilterModal, setShowFilterModal] = useState(false);
@@ -97,8 +97,8 @@ const ConsultationHistory = () => {
   // Temp filter state (applied only on "Apply")
   const [tempFilterBy, setTempFilterBy] = useState("");
   const [tempSortOrder, setTempSortOrder] = useState("");
-  const [tempMonth, setTempMonth] = useState("");
-  const [tempYear, setTempYear] = useState("");
+  const [tempMonth, setTempMonth] = useState([]);
+  const [tempYear, setTempYear] = useState([]);
 
   const navigate = useNavigate();
   const debounceRef = useRef(null);
@@ -115,8 +115,8 @@ const ConsultationHistory = () => {
   const applyFilters = () => {
     setFilterBy(tempFilterBy);
     setSortOrder(tempSortOrder);
-    setSelectedMonth(tempMonth === "all" ? "" : tempMonth);
-    setSelectedYear(tempYear === "all" ? "" : tempYear);
+    setSelectedMonth(tempMonth);
+    setSelectedYear(tempYear);
     setPage(1);
     setShowFilterModal(false);
   };
@@ -124,12 +124,12 @@ const ConsultationHistory = () => {
   const resetFilters = () => {
     setTempFilterBy("");
     setTempSortOrder("");
-    setTempMonth("");
-    setTempYear("");
+    setTempMonth([]);
+    setTempYear([]);
     setFilterBy("");
     setSortOrder("");
-    setSelectedMonth("");
-    setSelectedYear("");
+    setSelectedMonth([]);
+    setSelectedYear([]);
     setPage(1);
     setShowFilterModal(false);
   };
@@ -173,8 +173,8 @@ const ConsultationHistory = () => {
     sortOrder,
     filterBy,
     ...(searchText && { search: searchText }),
-    ...(selectedMonth && { month: selectedMonth }),
-    ...(selectedYear && { year: selectedYear }),
+    ...(selectedMonth.length > 0 && { month: selectedMonth.join(",") }),
+    ...(selectedYear.length > 0 && { year: selectedYear.join(",") }),
   }, {
     refetchOnMountOrArgChange: true,
   });
@@ -333,7 +333,7 @@ const ConsultationHistory = () => {
 
   // Error state
   // Track whether any search/filter is active
-  const hasActiveFilters = searchText || selectedMonth || selectedYear || filterBy || sortOrder;
+  const hasActiveFilters = searchText || selectedMonth.length > 0 || selectedYear.length > 0 || filterBy || sortOrder;
 
   // Error state — only show full-page error when NO filters are active
   if (isError && !hasActiveFilters) {
@@ -461,8 +461,8 @@ const ConsultationHistory = () => {
                   onClick={() => {
                     setSearchQuery("");
                     setSearchText("");
-                    setSelectedMonth("");
-                    setSelectedYear("");
+                    setSelectedMonth([]);
+                    setSelectedYear([]);
                     setFilterBy("");
                     setSortOrder("");
                     setPage(1);
@@ -886,16 +886,16 @@ const ConsultationHistory = () => {
                   <>
                     <div className={styles.filterOptionHeader}>
                       <span>Select Month</span>
-                      <button className={styles.filterSelectAll} onClick={() => setTempMonth("all")}>Select all</button>
+                      <button className={styles.filterSelectAll} onClick={() => setTempMonth(MONTHS.map(m => m.value))}>Select all</button>
                     </div>
                     {MONTHS.map((m) => (
                       <div
                         key={m.value}
                         className={styles.filterOptionItem}
-                        onClick={() => setTempMonth(tempMonth === m.value ? "" : m.value)}
+                        onClick={() => setTempMonth(prev => prev.includes(m.value) ? prev.filter(v => v !== m.value) : [...prev, m.value])}
                       >
-                        <span className={`${styles.tickIcon} ${tempMonth === "all" || tempMonth === m.value ? styles.tickIconActive : ""}`}>
-                          {(tempMonth === "all" || tempMonth === m.value) && <Icons.Check size={16} />}
+                        <span className={`${styles.tickIcon} ${tempMonth.includes(m.value) ? styles.tickIconActive : ""}`}>
+                          {tempMonth.includes(m.value) && <Icons.Check size={16} />}
                         </span>
                         <span className={styles.filterOptionLabel}>{m.label}</span>
                       </div>
@@ -907,16 +907,16 @@ const ConsultationHistory = () => {
                   <>
                     <div className={styles.filterOptionHeader}>
                       <span>Select Year</span>
-                      <button className={styles.filterSelectAll} onClick={() => setTempYear("all")}>Select all</button>
+                      <button className={styles.filterSelectAll} onClick={() => setTempYear(Array.from({ length: 5 }, (_, i) => String(new Date().getFullYear() - i)))}>Select all</button>
                     </div>
                     {Array.from({ length: 5 }, (_, i) => String(new Date().getFullYear() - i)).map((yr) => (
                       <div
                         key={yr}
                         className={styles.filterOptionItem}
-                        onClick={() => setTempYear(tempYear === yr ? "" : yr)}
+                        onClick={() => setTempYear(prev => prev.includes(yr) ? prev.filter(v => v !== yr) : [...prev, yr])}
                       >
-                        <span className={`${styles.tickIcon} ${tempYear === "all" || tempYear === yr ? styles.tickIconActive : ""}`}>
-                          {(tempYear === "all" || tempYear === yr) && <Icons.Check size={16} />}
+                        <span className={`${styles.tickIcon} ${tempYear.includes(yr) ? styles.tickIconActive : ""}`}>
+                          {tempYear.includes(yr) && <Icons.Check size={16} />}
                         </span>
                         <span className={styles.filterOptionLabel}>{yr}</span>
                       </div>
@@ -930,8 +930,8 @@ const ConsultationHistory = () => {
                       <span>Sort Order</span>
                     </div>
                     {[
-                      { value: "desc", label: "Newest First" },
-                      { value: "asc", label: "Oldest First" },
+                      { value: "desc", label: "Sort By Ascending Order" },
+                      { value: "asc", label: " Sort By Descending Order" },
                     ].map((opt) => (
                       <div
                         key={opt.value}

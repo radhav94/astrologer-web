@@ -50,6 +50,15 @@ export const bankAccountApi = privateApi.injectEndpoints({
       }),
       invalidatesTags: ["BankAccounts"],
     }),
+
+    // POST withdraw request
+    withdrawRequest: builder.mutation({
+      query: ({ requested_amount, bank_detail, remarks }) => ({
+        url: "astrologers/withdrawRequest",
+        method: "POST",
+        body: { requested_amount, bank_detail, remarks },
+      }),
+    }),
   }),
 });
 
@@ -59,4 +68,5 @@ export const {
   useUpdateBankAccountMutation,
   useDeactivateBankAccountMutation,
   useActivateBankAccountMutation,
+  useWithdrawRequestMutation,
 } = bankAccountApi;

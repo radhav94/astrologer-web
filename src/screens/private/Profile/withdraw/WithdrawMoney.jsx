@@ -2,7 +2,10 @@ import { useState } from "react";
 import { Icons } from "../../../../components/Icons";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { useGetBankAccountsQuery } from "../../../../redux/bankAccountApi/bankAccountApi";
+import { useGetBankAccountsQuery, useWithdrawRequestMutation } from "../../../../redux/bankAccountApi/bankAccountApi";
+import { useGetAllWalletsQuery } from "../../../../redux/astrologer/astrologerApi";
+import { Toast } from "../../../../components";
+import styles from "./WithdrawMoney.module.scss";
 
 // Bank logo color map for visual distinction
 const BANK_COLORS = {
@@ -47,7 +50,13 @@ const WithdrawMoney = () => {
   const [selectedAccount, setSelectedAccount] = useState(null);
 
   const astrologerDetails = useSelector((state) => state.register?.astrologerDetails);
-  const walletBalance = astrologerDetails?.wallet || 0;
+
+  const { data: walletResponse } = useGetAllWalletsQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+  });
+  const walletBalance = walletResponse?.data ?? astrologerDetails?.wallet ?? 0;
+
+  const [withdrawRequest, { isLoading: isWithdrawing }] = useWithdrawRequestMutation();
 
   const { data, isLoading } = useGetBankAccountsQuery("active");
   const accounts = data?.data || [];
@@ -69,111 +78,110 @@ const WithdrawMoney = () => {
     setAmount(raw);
   };
 
+  const handleWithdraw = async () => {
+    const selectedAcc = accounts.find((a) => a._id === selectedAccount);
+    if (!selectedAcc || !amount || Number(amount) <= 0 || Number(amount) > walletBalance) return;
+    try {
+      const res = await withdrawRequest({
+        requested_amount: Number(amount),
+        bank_detail: {
+          account_number: selectedAcc.accountNumber,
+          ifsc_code: selectedAcc.ifscCode,
+          account_holder_name: selectedAcc.accountHolderName,
+          bank_name: selectedAcc.bankName,
+          branch_name: selectedAcc.branchName || "",
+          account_type: selectedAcc.accountType || "savings",
+        },
+        remarks: withdrawalType === "instant" ? "Instant withdrawal" : "Standard withdrawal",
+      }).unwrap();
+
+      if (res?.success) {
+        Toast.success(res?.message || "Withdrawal request submitted");
+        navigate(-1);
+      } else {
+        Toast.error(res?.message || "Withdrawal failed");
+      }
+    } catch (err) {
+      Toast.error(err?.data?.message || "Withdrawal request failed");
+    }
+  };
+
   const displayAmount = amount ? `₹${formatAmount(amount)}` : "";
 
   return (
-    <div className="h-full flex flex-col max-w-lg mx-auto px-1">
+    <div className={styles.container}>
       {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
-        <button
-          onClick={() => navigate(-1)}
-          className="w-9 h-9 flex items-center justify-center rounded-full"
-          style={{ backgroundColor: "#F26B2B" }}
-          aria-label="Go back"
-        >
-          <Icons.ChevronLeft size={18} className="text-white" />
+      <div className={styles.header}>
+        <button onClick={() => navigate(-1)} className={styles.backButton} aria-label="Go back">
+          <Icons.ChevronLeft size={18} />
         </button>
-        <h1 className="text-base font-semibold text-gray-900">Withdraw Money</h1>
+        <h1 className={styles.headerTitle}>Withdraw Money</h1>
       </div>
 
-      <div className="flex-1 space-y-6 overflow-y-auto">
+      <div className={styles.content}>
         {/* Enter Amount */}
         <div>
-          <p className="text-sm font-semibold text-gray-800 mb-3">Enter Amount</p>
-          <div className="border border-gray-300 rounded-xl px-4 py-5 flex items-center justify-center">
+          <p className={styles.sectionLabel}>Enter Amount</p>
+          <div className={styles.amountBox}>
             <input
               type="text"
               value={displayAmount}
               onChange={handleAmountChange}
               placeholder="₹"
-              className="w-full text-center text-3xl font-bold text-gray-800 focus:outline-none placeholder-gray-300 bg-transparent"
+              className={styles.amountInput}
             />
           </div>
-          <div className="flex items-center justify-between mt-2 px-1">
-            <p className="text-xs text-gray-500">Available Balance</p>
-            <p className="text-xs font-bold text-gray-900">₹{walletBalance.toLocaleString("en-IN")}</p>
+          <div className={styles.balanceRow}>
+            <p className={styles.balanceLabel}>Available Balance</p>
+            <p className={styles.balanceValue}>₹{walletBalance.toLocaleString("en-IN")}</p>
           </div>
+          {amount && Number(amount) > walletBalance && (
+            <p className={styles.errorText}>Amount exceeds available balance</p>
+          )}
+          {amount && Number(amount) <= 0 && (
+            <p className={styles.errorText}>Please enter a valid amount</p>
+          )}
         </div>
 
         {/* Withdrawal Type */}
-        <div className="space-y-2.5">
-          <label
-            className="flex items-start gap-3 cursor-pointer"
-            onClick={() => setWithdrawalType("instant")}
-          >
-            <div className="mt-0.5">
-              <div
-                className={`w-[18px] h-[18px] rounded-full border-2 flex items-center justify-center ${
-                  withdrawalType === "instant" ? "border-[#F26B2B]" : "border-gray-300"
-                }`}
-              >
-                {withdrawalType === "instant" && (
-                  <div className="w-[10px] h-[10px] rounded-full bg-[#F26B2B]" />
-                )}
+          {/* <div className={styles.typeGroup}>
+            <label className={styles.typeLabel} onClick={() => setWithdrawalType("instant")}>
+              <div className={`${styles.radioOuter} ${withdrawalType === "instant" ? styles.radioOuterActive : ""}`}>
+                {withdrawalType === "instant" && <div className={styles.radioInner} />}
               </div>
-            </div>
-            <span className="text-xs text-gray-700 leading-relaxed">
-              Instant Withdrawal <span className="font-bold">(Max. ₹20,000)</span>
-            </span>
-          </label>
+              <span className={styles.typeText}>
+                Instant Withdrawal <span className={styles.typeBold}>(Max. ₹20,000)</span>
+              </span>
+            </label>
 
-          <label
-            className="flex items-start gap-3 cursor-pointer"
-            onClick={() => setWithdrawalType("standard")}
-          >
-            <div className="mt-0.5">
-              <div
-                className={`w-[18px] h-[18px] rounded-full border-2 flex items-center justify-center ${
-                  withdrawalType === "standard" ? "border-[#F26B2B]" : "border-gray-300"
-                }`}
-              >
-                {withdrawalType === "standard" && (
-                  <div className="w-[10px] h-[10px] rounded-full bg-[#F26B2B]" />
-                )}
+            <label className={styles.typeLabel} onClick={() => setWithdrawalType("standard")}>
+              <div className={`${styles.radioOuter} ${withdrawalType === "standard" ? styles.radioOuterActive : ""}`}>
+                {withdrawalType === "standard" && <div className={styles.radioInner} />}
               </div>
-            </div>
-            <span className="text-xs text-gray-700 leading-relaxed">
-              24-48 hours for Withdrawal of <span className="font-bold">₹20,000 and more</span>
-            </span>
-          </label>
-        </div>
+              <span className={styles.typeText}>
+                24-48 hours for Withdrawal of <span className={styles.typeBold}>₹20,000 and more</span>
+              </span>
+            </label>
+          </div> */}
 
         {/* Withdraw Money to */}
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-sm font-semibold text-gray-800">Withdraw Money to</p>
-            <Link
-              to="/bank-accounts/add"
-              className="flex items-center gap-1 text-[11px] font-semibold text-white px-3 py-1.5 rounded-md"
-              style={{ backgroundColor: "#F26B2B" }}
-            >
+        <div className={styles.accountContainer}>
+          <div className={styles.accountHeader}>
+            <p className={styles.sectionLabel}>Withdraw Money to</p>
+            <Link to="/bank-accounts/add" className={styles.addAccountLink}>
               <Icons.Plus size={12} /> Add Account
             </Link>
           </div>
 
-          <div className="space-y-2.5">
+          <div className={styles.accountList}>
             {isLoading ? (
-              <div className="flex justify-center py-8">
-                <div className="w-7 h-7 border-[3px] border-[#F26B2B] border-t-transparent rounded-full animate-spin" />
+              <div className={styles.loadingSpinner}>
+                <div className={styles.spinner} />
               </div>
             ) : accounts.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-xs text-gray-400">No bank accounts added yet</p>
-                <Link
-                  to="/bank-accounts/add"
-                  className="text-xs font-medium mt-2 inline-block"
-                  style={{ color: "#F26B2B" }}
-                >
+              <div className={styles.emptyAccounts}>
+                <p className={styles.emptyText}>No bank accounts added yet</p>
+                <Link to="/bank-accounts/add" className={styles.emptyLink}>
                   + Add your first account
                 </Link>
               </div>
@@ -185,37 +193,27 @@ const WithdrawMoney = () => {
                   <div
                     key={acc._id}
                     onClick={() => setSelectedAccount(acc._id)}
-                    className={`px-3 py-3 rounded-xl flex items-center justify-between cursor-pointer transition-all ${
-                      isSelected ? "bg-[#FFF5F0] ring-1 ring-[#F26B2B]/30" : "bg-[#F5F5F5]"
-                    }`}
+                    className={`${styles.accountCard} ${isSelected ? styles.accountCardSelected : ""}`}
                   >
-                    <div className="flex items-center gap-3">
-                      {/* Bank Logo */}
+                    <div className={styles.accountInfo}>
                       <div
-                        className="w-11 h-11 rounded-lg flex items-center justify-center text-xs font-bold shrink-0"
+                        className={styles.bankLogo}
                         style={{ backgroundColor: bankStyle.bg, color: bankStyle.text }}
                       >
                         {getBankInitials(acc.bankName)}
                       </div>
                       <div>
-                        <p className="text-[13px] font-semibold text-gray-800">
+                        <p className={styles.bankName}>
                           {acc.isPrimary ? "Primary Bank Account" : acc.bankName || "Bank Account"}
                         </p>
-                        <p className="text-[11px] text-gray-400 mt-0.5">
+                        <p className={styles.bankAccount}>
                           {maskAccountNumber(acc.accountNumber)}
                         </p>
                       </div>
                     </div>
 
-                    {/* Radio */}
-                    <div
-                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                        isSelected ? "border-[#F26B2B]" : "border-gray-300"
-                      }`}
-                    >
-                      {isSelected && (
-                        <div className="w-[10px] h-[10px] rounded-full bg-[#F26B2B]" />
-                      )}
+                    <div className={`${styles.accountRadio} ${isSelected ? styles.accountRadioActive : ""}`}>
+                      {isSelected && <div className={styles.accountRadioInner} />}
                     </div>
                   </div>
                 );
@@ -226,14 +224,14 @@ const WithdrawMoney = () => {
       </div>
 
       {/* Withdraw Button */}
-      <div className="pt-4 pb-6">
+      <div className={styles.footer}>
         <button
-          className="w-full text-white font-semibold py-3.5 rounded-full flex items-center justify-center gap-2 transition-colors disabled:opacity-40"
-          style={{ backgroundColor: "#F26B2B" }}
-          disabled={!amount || !selectedAccount}
+          className={styles.withdrawButton}
+          disabled={!amount || !selectedAccount || Number(amount) <= 0 || Number(amount) > walletBalance || isWithdrawing}
+          onClick={handleWithdraw}
         >
-          Withdraw Money
-          <Icons.ChevronRight size={16} />
+          {isWithdrawing ? "Processing..." : "Withdraw Money"}
+          {!isWithdrawing && <Icons.ChevronRight size={16} />}
         </button>
       </div>
     </div>

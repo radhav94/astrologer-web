@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { Icons } from "../../../components/Icons";
 import { Link } from "react-router";
 import { useNavigate } from "react-router-dom";
@@ -57,6 +57,23 @@ const groupByDate = (transactions) => {
   return groups;
 };
 
+const MONTHS = [
+  { value: "1", label: "January" },
+  { value: "2", label: "February" },
+  { value: "3", label: "March" },
+  { value: "4", label: "April" },
+  { value: "5", label: "May" },
+  { value: "6", label: "June" },
+  { value: "7", label: "July" },
+  { value: "8", label: "August" },
+  { value: "9", label: "September" },
+  { value: "10", label: "October" },
+  { value: "11", label: "November" },
+  { value: "12", label: "December" },
+];
+
+const FILTER_CATEGORIES = ["Type", "Month", "Year", "Sorting"];
+
 const ConsultationHistory = () => {
   const [page, setPage] = useState(1);
   const [openMenuId, setOpenMenuId] = useState(null);
@@ -67,10 +84,79 @@ const ConsultationHistory = () => {
   const [refundMinutes, setRefundMinutes] = useState("");
   // Track refund type: "partial" for Refund, "total" for Total Refund
   const [refundType, setRefundType] = useState("partial");
-  const [sortOrder, setSortOrder] = useState("desc");
-  const [filterBy, setFilterBy] = useState("call");
+  const [sortOrder, setSortOrder] = useState("");
+  const [filterBy, setFilterBy] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchText, setSearchText] = useState("");
+  const [selectedMonth, setSelectedMonth] = useState([]);
+  const [selectedYear, setSelectedYear] = useState([]);
+
+  // Filter modal state
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [activeFilterTab, setActiveFilterTab] = useState("Type");
+  // Temp filter state (applied only on "Apply")
+  const [tempFilterBy, setTempFilterBy] = useState("");
+  const [tempSortOrder, setTempSortOrder] = useState("");
+  const [tempMonth, setTempMonth] = useState([]);
+  const [tempYear, setTempYear] = useState([]);
+
   const navigate = useNavigate();
+  const debounceRef = useRef(null);
+
+  const openFilterModal = () => {
+    setTempFilterBy(filterBy);
+    setTempSortOrder(sortOrder);
+    setTempMonth(selectedMonth);
+    setTempYear(selectedYear);
+    setActiveFilterTab("Type");
+    setShowFilterModal(true);
+  };
+
+  const applyFilters = () => {
+    setFilterBy(tempFilterBy);
+    setSortOrder(tempSortOrder);
+    setSelectedMonth(tempMonth);
+    setSelectedYear(tempYear);
+    setPage(1);
+    setShowFilterModal(false);
+  };
+
+  const resetFilters = () => {
+    setTempFilterBy("");
+    setTempSortOrder("");
+    setTempMonth([]);
+    setTempYear([]);
+    setFilterBy("");
+    setSortOrder("");
+    setSelectedMonth([]);
+    setSelectedYear([]);
+    setPage(1);
+    setShowFilterModal(false);
+  };
+
+  const activeFilterCount = [
+    filterBy ? 1 : 0,
+    sortOrder ? 1 : 0,
+    selectedMonth ? 1 : 0,
+    selectedYear ? 1 : 0,
+  ].reduce((a, b) => a + b, 0);
+
+  // Debounced search: updates searchText after 500ms of inactivity
+  const handleSearchChange = useCallback((value) => {
+    setSearchQuery(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setSearchText(value.trim());
+      setPage(1);
+    }, 500);
+  }, []);
+
+  // Cleanup debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
 
   // Old: no refetch on remount — stale cached data shown after session ends
   // const { data, isLoading, isFetching, isError } = useGetOrderHistoryQuery({
@@ -86,6 +172,9 @@ const ConsultationHistory = () => {
     limit: 10,
     sortOrder,
     filterBy,
+    ...(searchText && { search: searchText }),
+    ...(selectedMonth.length > 0 && { month: selectedMonth.join(",") }),
+    ...(selectedYear.length > 0 && { year: selectedYear.join(",") }),
   }, {
     refetchOnMountOrArgChange: true,
   });
@@ -243,7 +332,11 @@ const ConsultationHistory = () => {
   const isLoadingOrFetching = isLoading || isFetching;
 
   // Error state
-  if (isError) {
+  // Track whether any search/filter is active
+  const hasActiveFilters = searchText || selectedMonth.length > 0 || selectedYear.length > 0 || filterBy || sortOrder;
+
+  // Error state — only show full-page error when NO filters are active
+  if (isError && !hasActiveFilters) {
     return (
       <div className={styles.errorContainer}>
         <div className={styles.errorContent}>
@@ -263,8 +356,8 @@ const ConsultationHistory = () => {
     );
   }
 
-  // Empty state
-  if (!isLoading && transactions.length === 0) {
+  // Empty state — only show full-page empty when NO filters are active
+  if (!isLoading && transactions.length === 0 && !hasActiveFilters) {
     return (
       <div className={styles.emptyContainer}>
         <div className={styles.emptyHeader}>
@@ -315,48 +408,73 @@ const ConsultationHistory = () => {
                   type="text"
                   placeholder="Search name"
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      if (debounceRef.current) clearTimeout(debounceRef.current);
+                      setSearchText(searchQuery.trim());
+                      setPage(1);
+                    }
+                  }}
                   className={styles.searchInput}
                 />
                 {searchQuery && (
                   <button
                     className={styles.searchClear}
-                    onClick={() => setSearchQuery("")}
+                    onClick={() => {
+                      setSearchQuery("");
+                      if (debounceRef.current) clearTimeout(debounceRef.current);
+                      setSearchText("");
+                      setPage(1);
+                    }}
                   >
                     <Icons.X size={16} />
                   </button>
                 )}
               </div>
-              {/* Filter dropdown: shows icon + label, select changes filterBy */}
-              <div className={styles.actionButton}>
-                <Icons.Filter size={14} />
-                <select
-                  value={filterBy}
-                  onChange={(e) => {
-                    setFilterBy(e.target.value);
-                    setPage(1);
-                  }}
-                  className={styles.filterSelect}
-                >
-                  <option value="call">Call</option>
-                  <option value="chat">Chat</option>
-                </select>
-              </div>
+
+              {/* Filter Button */}
               <button
-                className={styles.actionButton}
-                onClick={() =>
-                  setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))
-                }
+                className={styles.filterButton}
+                onClick={openFilterModal}
               >
-                <Icons.ArrowUpDown size={14} />
-                <span>Sort By</span>
+                <Icons.Filter size={16} />
+                <span>Filter</span>
               </button>
             </div>
           </div>
 
           {/* List grouped by date */}
           <div className={styles.listContainer}>
-            {Object.entries(groupByDate(transactions)).map(([date, items]) => (
+            {/* Inline empty/error state when filters produce no results */}
+            {!isLoading && (transactions.length === 0 || isError) && hasActiveFilters && (
+              <div className={styles.noResultsContainer}>
+                <div className={styles.emptyIcon}>
+                  <Icons.FileText size={48} />
+                </div>
+                <p className={styles.emptyTitle}>No results found</p>
+                <p className={styles.emptySubtitle}>
+                  Try adjusting your search or filters
+                </p>
+                <button
+                  className={styles.resetButton}
+                  onClick={() => {
+                    setSearchQuery("");
+                    setSearchText("");
+                    setSelectedMonth([]);
+                    setSelectedYear([]);
+                    setFilterBy("");
+                    setSortOrder("");
+                    setPage(1);
+                  }}
+                >
+                  <Icons.X size={14} />
+                  <span>Reset Filters</span>
+                </button>
+              </div>
+            )}
+
+            {!isError && Object.entries(groupByDate(transactions)).map(([date, items]) => (
               <div key={date} className={styles.dateGroup}>
                 {/* Date Header - Left Aligned */}
                 <h3 className={styles.dateHeader}>{date}</h3>
@@ -561,7 +679,7 @@ const ConsultationHistory = () => {
            
 
             {/* Pagination Controls */}
-            {pagination && pagination.totalPages > 1 && (
+            {!isError && pagination && pagination.totalPages > 1 && (
               <div className={styles.paginationContainer}>
                 <div className={styles.paginationContent}>
                   {/* Page Info */}
@@ -711,6 +829,131 @@ const ConsultationHistory = () => {
           <div className={styles.loadingContent}>
             <div className={styles.spinner}></div>
             <p className={styles.loadingText}>Loading consultation history...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Filter Modal */}
+      {showFilterModal && (
+        <div className={styles.filterModalOverlay} onClick={() => setShowFilterModal(false)}>
+          <div className={styles.filterModal} onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div className={styles.filterModalHeader}>
+              <h3 className={styles.filterModalTitle}>Filters</h3>
+              <button className={styles.filterModalClose} onClick={() => setShowFilterModal(false)}>
+                <Icons.X size={20} />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className={styles.filterModalBody}>
+              {/* Left: Category tabs */}
+              <div className={styles.filterTabs}>
+                {FILTER_CATEGORIES.map((cat) => (
+                  <button
+                    key={cat}
+                    className={`${styles.filterTab} ${activeFilterTab === cat ? styles.filterTabActive : ""}`}
+                    onClick={() => setActiveFilterTab(cat)}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+
+              {/* Right: Options */}
+              <div className={styles.filterOptions}>
+                {activeFilterTab === "Type" && (
+                  <>
+                    <div className={styles.filterOptionHeader}>
+                      <span>Select Type</span>
+                    </div>
+                    {["call", "chat"].map((type) => (
+                      <div
+                        key={type}
+                        className={styles.filterOptionItem}
+                        onClick={() => setTempFilterBy(tempFilterBy === type ? "" : type)}
+                      >
+                        <span className={`${styles.tickIcon} ${tempFilterBy === type || tempFilterBy === "all" ? styles.tickIconActive : ""}`}>
+                          {(tempFilterBy === type || tempFilterBy === "all") && <Icons.Check size={16} />}
+                        </span>
+                        <span className={styles.filterOptionLabel}>{type.charAt(0).toUpperCase() + type.slice(1)}</span>
+                      </div>
+                    ))}
+                  </>
+                )}
+
+                {activeFilterTab === "Month" && (
+                  <>
+                    <div className={styles.filterOptionHeader}>
+                      <span>Select Month</span>
+                      <button className={styles.filterSelectAll} onClick={() => setTempMonth(MONTHS.map(m => m.value))}>Select all</button>
+                    </div>
+                    {MONTHS.map((m) => (
+                      <div
+                        key={m.value}
+                        className={styles.filterOptionItem}
+                        onClick={() => setTempMonth(prev => prev.includes(m.value) ? prev.filter(v => v !== m.value) : [...prev, m.value])}
+                      >
+                        <span className={`${styles.tickIcon} ${tempMonth.includes(m.value) ? styles.tickIconActive : ""}`}>
+                          {tempMonth.includes(m.value) && <Icons.Check size={16} />}
+                        </span>
+                        <span className={styles.filterOptionLabel}>{m.label}</span>
+                      </div>
+                    ))}
+                  </>
+                )}
+
+                {activeFilterTab === "Year" && (
+                  <>
+                    <div className={styles.filterOptionHeader}>
+                      <span>Select Year</span>
+                      <button className={styles.filterSelectAll} onClick={() => setTempYear(Array.from({ length: 5 }, (_, i) => String(new Date().getFullYear() - i)))}>Select all</button>
+                    </div>
+                    {Array.from({ length: 5 }, (_, i) => String(new Date().getFullYear() - i)).map((yr) => (
+                      <div
+                        key={yr}
+                        className={styles.filterOptionItem}
+                        onClick={() => setTempYear(prev => prev.includes(yr) ? prev.filter(v => v !== yr) : [...prev, yr])}
+                      >
+                        <span className={`${styles.tickIcon} ${tempYear.includes(yr) ? styles.tickIconActive : ""}`}>
+                          {tempYear.includes(yr) && <Icons.Check size={16} />}
+                        </span>
+                        <span className={styles.filterOptionLabel}>{yr}</span>
+                      </div>
+                    ))}
+                  </>
+                )}
+
+                {activeFilterTab === "Sorting" && (
+                  <>
+                    <div className={styles.filterOptionHeader}>
+                      <span>Sort Order</span>
+                    </div>
+                    {[
+                      { value: "desc", label: "Sort By Ascending Order" },
+                      { value: "asc", label: " Sort By Descending Order" },
+                    ].map((opt) => (
+                      <div
+                        key={opt.value}
+                        className={styles.filterOptionItem}
+                        onClick={() => setTempSortOrder(tempSortOrder === opt.value ? "" : opt.value)}
+                      >
+                        <span className={`${styles.tickIcon} ${tempSortOrder === opt.value ? styles.tickIconActive : ""}`}>
+                          {tempSortOrder === opt.value && <Icons.Check size={16} />}
+                        </span>
+                        <span className={styles.filterOptionLabel}>{opt.label}</span>
+                      </div>
+                    ))}
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className={styles.filterModalFooter}>
+              <button className={styles.filterResetBtn} onClick={resetFilters}>Reset</button>
+              <button className={styles.filterApplyBtn} onClick={applyFilters}>Apply</button>
+            </div>
           </div>
         </div>
       )}

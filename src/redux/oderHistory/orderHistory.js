@@ -3,7 +3,7 @@ import { epicApi } from "../baseApi/epicApi";
 export const orderHistory = epicApi.injectEndpoints({
   endpoints: (builder) => ({
     getOrderHistory: builder.query({
-      query: ({ page = 1, limit = 10, sortOrder="desc", filterBy } = {}) => ({
+      query: ({ page = 1, limit = 10, sortOrder, filterBy, search, month, year } = {}) => ({
         url: "transactions/allAstroTransactions",
         method: "GET",
         params: {
@@ -11,6 +11,9 @@ export const orderHistory = epicApi.injectEndpoints({
           limit,
           ...(sortOrder && { sortOrder }),
           ...(filterBy && { filterBy }),
+          ...(search && { search }),
+          ...(month && { month }),
+          ...(year && { year }),
         },
       }),
       providesTags: ["Transactions"],

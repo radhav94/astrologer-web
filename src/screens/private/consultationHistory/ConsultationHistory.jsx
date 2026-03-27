@@ -175,7 +175,6 @@ const ConsultationHistory = () => {
   // });
 
   // New: refetchOnMountOrArgChange ensures fresh data when navigating back
-<<<<<<< Updated upstream
   const { data, isLoading, isFetching, isError } = useGetOrderHistoryQuery({
     page,
     limit: 10,
@@ -187,19 +186,6 @@ const ConsultationHistory = () => {
   }, {
     refetchOnMountOrArgChange: true,
   });
-=======
-  const { data, isLoading, isFetching, isError } = useGetOrderHistoryQuery(
-    {
-      page,
-      limit: 10,
-      sortOrder,
-      filterBy,
-    },
-    {
-      refetchOnMountOrArgChange: true,
-    },
-  );
->>>>>>> Stashed changes
 
   const astrologerDetails = useSelector(
     (state) => state.register?.astrologerDetails,
@@ -452,26 +438,8 @@ const ConsultationHistory = () => {
                   </button>
                 )}
               </div>
-<<<<<<< Updated upstream
 
               {/* Filter Button */}
-=======
-              {/* Filter dropdown */}
-              <div className={styles.actionButton}>
-                <Icons.Filter size={14} />
-                <select
-                  value={filterBy}
-                  onChange={(e) => {
-                    setFilterBy(e.target.value);
-                    setPage(1);
-                  }}
-                  className={styles.filterSelect}
-                >
-                  <option value="call">Call</option>
-                  <option value="chat">Chat</option>
-                </select>
-              </div>
->>>>>>> Stashed changes
               <button
                 className={styles.filterButton}
                 onClick={openFilterModal}
@@ -733,87 +701,20 @@ const ConsultationHistory = () => {
             ))}
 
             {/* Pagination Controls */}
-<<<<<<< Updated upstream
-            {!isError && pagination && pagination.totalPages > 1 && (
-              <div className={styles.paginationContainer}>
-                <div className={styles.paginationContent}>
-                  {/* Page Info */}
-                  <div className={styles.pageInfo}>
-                    Showing <span>{(pagination.currentPage - 1) * 10 + 1}</span>{" "}
-                    to{" "}
-                    <span>
-                      {Math.min(
-                        pagination.currentPage * 10,
-                        pagination.totalItems,
-                      )}
-                    </span>{" "}
-                    of <span>{pagination.totalItems}</span> results
-                  </div>
-
-                  {/* Pagination Buttons */}
-                  <div className={styles.paginationButtons}>
-                    {/* Previous Button */}
-                    <button
-                      onClick={handlePreviousPage}
-                      disabled={!pagination.hasPreviousPage || isFetching}
-                      className={styles.paginationButton}
-                    >
-                      <Icons.ChevronLeft size={16} />
-                    </button>
-
-                    {/* Page Numbers */}
-                    <div className={styles.pageNumbers}>
-                      {getPageNumbers().map((pageNum, index) =>
-                        pageNum === "..." ? (
-                          <span
-                            key={`ellipsis-${index}`}
-                            className={styles.ellipsis}
-                          >
-                            ...
-                          </span>
-                        ) : (
-                          <button
-                            key={pageNum}
-                            onClick={() => handlePageClick(pageNum)}
-                            disabled={isFetching}
-                            className={
-                              pageNum === pagination.currentPage
-                                ? styles.pageNumberButtonActive
-                                : styles.pageNumberButtonInactive
-                            }
-                          >
-                            {pageNum}
-                          </button>
-                        ),
-                      )}
-                    </div>
-
-                    {/* Next Button */}
-                    <button
-                      onClick={handleNextPage}
-                      disabled={!pagination.hasNextPage || isFetching}
-                      className={styles.paginationButton}
-                    >
-                      <Icons.ChevronRight size={16} />
-                    </button>
-                  </div>
-                </div>
-              </div>
+            {!isError && (
+              <Pagination
+                currentPage={pagination?.currentPage}
+                totalPages={pagination?.totalPages}
+                totalItems={pagination?.totalItems}
+                limit={10}
+                hasPreviousPage={pagination?.hasPreviousPage}
+                hasNextPage={pagination?.hasNextPage}
+                onPageChange={setPage}
+                disabled={isFetching}
+              />
             )}
 
             
-=======
-            <Pagination
-              currentPage={pagination?.currentPage}
-              totalPages={pagination?.totalPages}
-              totalItems={pagination?.totalItems}
-              limit={10}
-              hasPreviousPage={pagination?.hasPreviousPage}
-              hasNextPage={pagination?.hasNextPage}
-              onPageChange={setPage}
-              disabled={isFetching}
-            />
->>>>>>> Stashed changes
           </div>
 
           {/* Withdrawals section moved to Profile.jsx → WithdrawalsList component */}

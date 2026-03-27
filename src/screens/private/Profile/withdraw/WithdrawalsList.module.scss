@@ -9,262 +9,263 @@
     flex-direction: column;
     gap: 0.75rem;
 
-.loadingCenter {
-    display: flex;
-    justify-content: center;
-    padding: 3rem 0;
-}
-
-.spinner {
-    width: 2rem;
-    height: 2rem;
-    border: 3px solid var(--main-primary-start, #f97316);
-    border-top-color: transparent;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-.emptyState {
-    text-align: center;
-    padding: 3rem 0;
-    color: #9ca3af;
-
-    p {
-        margin-top: 0.75rem;
-        font-size: 0.875rem;
-    }
-}
-
-.card {
-    background: #fff;
-    border-radius: 16px;
-    border: 1px solid #e5e7eb;
-    overflow: hidden;
-    transition: box-shadow 0.15s;
-
-    &:hover {
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-    }
-}
-
-.cardHeader {
-    padding: 0.75rem 1rem;
-    border-bottom: 1px solid #f3f4f6;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-}
-
-.cardId {
-    font-size: 11px;
-    font-weight: 500;
-    color: #6b7280;
-}
-
-.cardDate {
-    font-size: 11px;
-    color: #9ca3af;
-}
-
-.cardBody {
-    padding: 1rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-}
-
-.cardInfo {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    min-width: 0;
-}
-
-.cardIcon {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    background: #fff7ed;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    color: #f97316;
-}
-
-.cardTitle {
-    font-size: 14px;
-    font-weight: 600;
-    color: #1f2937;
-    margin: 0;
-}
-
-.cardBank {
-    font-size: 12px;
-    color: #6b7280;
-    margin: 0.125rem 0 0;
-}
-
-.cardRight {
-    text-align: right;
-    flex-shrink: 0;
-}
-
-.cardAmount {
-    font-size: 15px;
-    font-weight: 700;
-    color: #ef4444;
-    margin: 0 0 0.25rem;
-}
-
-.statusPending {
-    display: inline-block;
-    font-size: 11px;
-    font-weight: 500;
-    padding: 0.125rem 0.625rem;
-    border-radius: 9999px;
-    background: #fff7ed;
-    color: #f97316;
-    border: 1px solid #fed7aa;
-}
-
-.statusApproved {
-    display: inline-block;
-    font-size: 11px;
-    font-weight: 500;
-    padding: 0.125rem 0.625rem;
-    border-radius: 9999px;
-    background: #f0fdf4;
-    color: #16a34a;
-    border: 1px solid #bbf7d0;
-}
-
-.statusRejected {
-    display: inline-block;
-    font-size: 11px;
-    font-weight: 500;
-    padding: 0.125rem 0.625rem;
-    border-radius: 9999px;
-    background: #fef2f2;
-    color: #ef4444;
-    border: 1px solid #fecaca;
-}
-
-.paginationContainer {
-    background: #fff;
-    border-radius: 0.75rem;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-    border: 1px solid #e5e7eb;
-    padding: 1rem;
-    margin-top: 1rem;
-}
-
-.paginationContent {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-
-    @media (min-width: 640px) {
-        flex-direction: row;
-    }
-}
-
-.pageInfo {
-    font-size: 0.75rem;
-    color: #4b5563;
-    text-align: center;
-
-    span {
-        font-weight: 600;
+    .loadingCenter {
+        display: flex;
+        justify-content: center;
+        padding: 3rem 0;
     }
 
-    @media (min-width: 640px) {
-        font-size: 0.875rem;
-        text-align: left;
+    .spinner {
+        width: 2rem;
+        height: 2rem;
+        border: 3px solid var(--main-primary-start, #f97316);
+        border-top-color: transparent;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
     }
-}
 
-.paginationButtons {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
 
-    @media (min-width: 640px) {
+    .emptyState {
+        text-align: center;
+        padding: 3rem 0;
+        color: #9ca3af;
+
+        p {
+            margin-top: 0.75rem;
+            font-size: 0.875rem;
+        }
+    }
+
+    .card {
+        background: #fff;
+        border-radius: 16px;
+        border: 1px solid #e5e7eb;
+        overflow: hidden;
+        transition: box-shadow 0.15s;
+
+        &:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+    }
+
+    .cardHeader {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid #f3f4f6;
+        display: flex;
+        align-items: center;
         gap: 0.5rem;
-    }
-}
-
-.paginationButton {
-    flex-shrink: 0;
-    padding: 0.5rem 0.75rem;
-    border-radius: 0.5rem;
-    border: 2px solid #d1d5db;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: #374151;
-    transition: background 0.15s;
-
-    &:hover:not(:disabled) {
-        background: #f9fafb;
+        flex-wrap: wrap;
     }
 
-    &:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
+    .cardId {
+        font-size: 11px;
+        font-weight: 500;
+        color: #6b7280;
     }
-}
 
-.pageNumbers {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-}
-
-.ellipsis {
-    padding: 0 0.5rem;
-    color: #6b7280;
-}
-
-.pageActive {
-    min-width: 36px;
-    height: 2.25rem;
-    padding: 0 0.5rem;
-    border-radius: 0.5rem;
-    font-size: 0.75rem;
-    font-weight: 500;
-    background: #f97316;
-    color: #fff;
-    border: none;
-    cursor: pointer;
-
-    &:hover:not(:disabled) {
-        background: #ea580c;
+    .cardDate {
+        font-size: 11px;
+        color: #9ca3af;
     }
-}
 
-.pageInactive {
-    min-width: 36px;
-    height: 2.25rem;
-    padding: 0 0.5rem;
-    border-radius: 0.5rem;
-    font-size: 0.75rem;
-    font-weight: 500;
-    border: 2px solid #d1d5db;
-    color: #374151;
-    background: none;
-    cursor: pointer;
+    .cardBody {
+        padding: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+    }
 
-    &:hover:not(:disabled) {
-        background: #f9fafb;
+    .cardInfo {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        min-width: 0;
+    }
+
+    .cardIcon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: #fff7ed;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        color: #f97316;
+    }
+
+    .cardTitle {
+        font-size: 14px;
+        font-weight: 600;
+        color: #1f2937;
+        margin: 0;
+    }
+
+    .cardBank {
+        font-size: 12px;
+        color: #6b7280;
+        margin: 0.125rem 0 0;
+    }
+
+    .cardRight {
+        text-align: right;
+        flex-shrink: 0;
+    }
+
+    .cardAmount {
+        font-size: 15px;
+        font-weight: 700;
+        color: #ef4444;
+        margin: 0 0 0.25rem;
+    }
+
+    .statusPending {
+        display: inline-block;
+        font-size: 11px;
+        font-weight: 500;
+        padding: 0.125rem 0.625rem;
+        border-radius: 9999px;
+        background: #fff7ed;
+        color: #f97316;
+        border: 1px solid #fed7aa;
+    }
+
+    .statusApproved {
+        display: inline-block;
+        font-size: 11px;
+        font-weight: 500;
+        padding: 0.125rem 0.625rem;
+        border-radius: 9999px;
+        background: #f0fdf4;
+        color: #16a34a;
+        border: 1px solid #bbf7d0;
+    }
+
+    .statusRejected {
+        display: inline-block;
+        font-size: 11px;
+        font-weight: 500;
+        padding: 0.125rem 0.625rem;
+        border-radius: 9999px;
+        background: #fef2f2;
+        color: #ef4444;
+        border: 1px solid #fecaca;
+    }
+
+    .paginationContainer {
+        background: #fff;
+        border-radius: 0.75rem;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e5e7eb;
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+
+    .paginationContent {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+
+        @media (min-width: 640px) {
+            flex-direction: row;
+        }
+    }
+
+    .pageInfo {
+        font-size: 0.75rem;
+        color: #4b5563;
+        text-align: center;
+
+        span {
+            font-weight: 600;
+        }
+
+        @media (min-width: 640px) {
+            font-size: 0.875rem;
+            text-align: left;
+        }
+    }
+
+    .paginationButtons {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+
+        @media (min-width: 640px) {
+            gap: 0.5rem;
+        }
+    }
+
+    .paginationButton {
+        flex-shrink: 0;
+        padding: 0.5rem 0.75rem;
+        border-radius: 0.5rem;
+        border: 2px solid #d1d5db;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #374151;
+        transition: background 0.15s;
+
+        &:hover:not(:disabled) {
+            background: #f9fafb;
+        }
+
+        &:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    }
+
+    .pageNumbers {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .ellipsis {
+        padding: 0 0.5rem;
+        color: #6b7280;
+    }
+
+    .pageActive {
+        min-width: 36px;
+        height: 2.25rem;
+        padding: 0 0.5rem;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+        background: #f97316;
+        color: #fff;
+        border: none;
+        cursor: pointer;
+
+        &:hover:not(:disabled) {
+            background: #ea580c;
+        }
+    }
+
+    .pageInactive {
+        min-width: 36px;
+        height: 2.25rem;
+        padding: 0 0.5rem;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+        border: 2px solid #d1d5db;
+        color: #374151;
+        background: none;
+        cursor: pointer;
+
+        &:hover:not(:disabled) {
+            background: #f9fafb;
+        }
     }
 }

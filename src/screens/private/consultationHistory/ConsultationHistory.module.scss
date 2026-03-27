@@ -1146,7 +1146,6 @@
     }
 }
 
-<<<<<<< Updated upstream
 // Filter Button
 .filterButton {
     display: flex;
@@ -1422,52 +1421,12 @@
     background: #fff;
     cursor: pointer;
     transition: background-color 0.15s;
-=======
-
-// Tab Navigation
-.tabAndActionsRow {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    margin: 1.5rem 0 1.5rem 0;
-
-  
-}
-
-.tabContainer {
-    display: flex;
-    gap: 0.5rem;
-
-    @media (min-width: 640px) {
-        gap: 0.625rem;
-    }
-}
-
-.tab {
-    padding: 0.5rem 1.25rem;
-    border-radius: 9999px;
-    font-size: 0.8125rem;
-    font-weight: 500;
-    border: 1px solid #e5e7eb;
-    background-color: #fff;
-    color: #374151;
-    cursor: pointer;
-    transition: all 0.15s;
-
-    @media (min-width: 640px) {
-        padding: 0.5rem 1.5rem;
-        font-size: 0.875rem;
-    }
->>>>>>> Stashed changes
 
     &:hover {
         background-color: #f9fafb;
     }
 }
 
-<<<<<<< Updated upstream
 .filterApplyBtn {
     padding: 0.625rem 2rem;
     border: none;
@@ -1478,149 +1437,8 @@
     background: linear-gradient(90deg, var(--main-primary-start) 0%, var(--main-primary-end) 100%);
     cursor: pointer;
     transition: opacity 0.15s;
-=======
-.tabActive {
-    background: linear-gradient(90deg, var(--main-primary-start) 0%, var(--main-primary-end) 100%);
-    color: #fff;
-    border-color: transparent;
->>>>>>> Stashed changes
 
     &:hover {
         opacity: 0.9;
     }
 }
-<<<<<<< Updated upstream
-=======
-
-// Withdrawal Cards
-.withdrawalEmpty {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 3rem 0;
-    color: #9ca3af;
-
-    p {
-        margin-top: 0.75rem;
-        font-size: 0.875rem;
-    }
-}
-
-.withdrawalCard {
-    background-color: #fff;
-    border-radius: 16px;
-    border: 1px solid #e5e7eb;
-    overflow: hidden;
-    transition: box-shadow 0.15s;
-
-    &:hover {
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-    }
-}
-
-.withdrawalCardHeader {
-    padding: 0.75rem 1rem;
-    border-bottom: 1px solid #f3f4f6;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-}
-
-.withdrawalId {
-    font-size: 11px;
-    font-weight: 500;
-    color: #6b7280;
-}
-
-.withdrawalDate {
-    font-size: 11px;
-    color: #9ca3af;
-}
-
-.withdrawalCardBody {
-    padding: 1rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-}
-
-.withdrawalInfo {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    min-width: 0;
-}
-
-.withdrawalIcon {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    background-color: #fff7ed;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    color: #f97316;
-}
-
-.withdrawalTitle {
-    font-size: 14px;
-    font-weight: 600;
-    color: #1f2937;
-    margin: 0;
-}
-
-.withdrawalBank {
-    font-size: 12px;
-    color: #6b7280;
-    margin: 0.125rem 0 0;
-}
-
-.withdrawalRight {
-    text-align: right;
-    flex-shrink: 0;
-}
-
-.withdrawalAmount {
-    font-size: 15px;
-    font-weight: 700;
-    color: #ef4444;
-    margin: 0 0 0.25rem;
-}
-
-.statusPending {
-    display: inline-block;
-    font-size: 11px;
-    font-weight: 500;
-    padding: 0.125rem 0.625rem;
-    border-radius: 9999px;
-    background-color: #fff7ed;
-    color: #f97316;
-    border: 1px solid #fed7aa;
-}
-
-.statusApproved {
-    display: inline-block;
-    font-size: 11px;
-    font-weight: 500;
-    padding: 0.125rem 0.625rem;
-    border-radius: 9999px;
-    background-color: #f0fdf4;
-    color: #16a34a;
-    border: 1px solid #bbf7d0;
-}
-
-.statusRejected {
-    display: inline-block;
-    font-size: 11px;
-    font-weight: 500;
-    padding: 0.125rem 0.625rem;
-    border-radius: 9999px;
-    background-color: #fef2f2;
-    color: #ef4444;
-    border: 1px solid #fecaca;
-}
->>>>>>> Stashed changes

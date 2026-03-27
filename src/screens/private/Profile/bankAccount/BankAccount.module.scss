@@ -25,6 +25,19 @@
   &:hover { background-color: #e5e7eb; }
 }
 
+.backBtn {
+  width: 2.25rem;
+  height: 2.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1.5px solid var(--main-primary-start, #F26B2B);
+  background: none;
+  cursor: pointer;
+  color: var(--main-primary-start, #F26B2B);
+}
+
 .headerTitle {
   font-size: 1.25rem;
   font-weight: 700;
@@ -258,9 +271,15 @@
 }
 
 .label {
-  font-size: 0.75rem;
-  color: #6b7280;
-  margin-bottom: 0.25rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 0.375rem;
+  text-align: left;
+}
+
+.required {
+  color: #ef4444;
 }
 
 .input {
@@ -309,8 +328,8 @@
   flex: 1;
   text-align: center;
   padding: 0.625rem;
-  border-radius: 0.75rem;
-  font-size: 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.8125rem;
   font-weight: 500;
   cursor: pointer;
   border: 1px solid #e5e7eb;
@@ -323,8 +342,8 @@
 
 .typeOptionActive {
   border-color: #f97316;
-  background-color: #fff7ed;
-  color: #ea580c;
+  background-color: #f97316;
+  color: #fff;
 }
 
 .srOnly {
@@ -342,9 +361,9 @@
 .primaryToggle {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  justify-content: space-between;
   cursor: pointer;
-  padding: 0.5rem 0;
+  padding: 0.75rem 0;
 }
 
 .toggleTrack {
@@ -388,11 +407,10 @@
 
 .submitButton {
   width: 100%;
-  background-color: #f97316;
   color: #fff;
-  font-weight: 500;
+  font-weight: 600;
   padding: 0.875rem;
-  border-radius: 1rem;
+  border-radius: 9999px;
   border: none;
   cursor: pointer;
   display: flex;
@@ -400,8 +418,9 @@
   justify-content: center;
   gap: 0.5rem;
   font-size: 1rem;
-  transition: background-color 0.15s;
+  background: linear-gradient(90deg, var(--main-primary-start, #F75801) 0%, var(--main-primary-end, #D43400) 100%);
+  transition: opacity 0.15s;
 
-  &:hover { background-color: #ea580c; }
+  &:hover { opacity: 0.9; }
   &:disabled { opacity: 0.5; cursor: not-allowed; }
 }

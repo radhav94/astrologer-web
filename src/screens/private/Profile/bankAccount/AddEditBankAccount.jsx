@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
+import { useFormik } from "formik";
+import * as Yup from "yup";
 import { Icons } from "../../../../components/Icons";
 import toast from "../../../../components/toast";
 import {
@@ -8,17 +9,35 @@ import {
 } from "../../../../redux/bankAccountApi/bankAccountApi";
 import styles from "./BankAccount.module.scss";
 
-const INITIAL_FORM = {
-  accountHolderName: "",
-  bankName: "",
-  accountNumber: "",
-  confirmAccountNumber: "",
-  ifscCode: "",
-  branchName: "",
-  upiId: "",
-  accountType: "savings",
-  isPrimary: false,
-};
+const getAddSchema = () =>
+  Yup.object().shape({
+    accountHolderName: Yup.string().trim().required("Account holder name is required"),
+    accountNumber: Yup.string()
+      .trim()
+      .required("Account number is required")
+      .matches(/^\d{9,18}$/, "Enter a valid 9-18 digit account number"),
+    confirmAccountNumber: Yup.string()
+      .trim()
+      .required("Please confirm account number")
+      .oneOf([Yup.ref("accountNumber")], "Account numbers don't match"),
+    ifscCode: Yup.string()
+      .trim()
+      .required("IFSC code is required")
+      .matches(/^[A-Za-z]{4}0[A-Za-z0-9]{6}$/, "Enter a valid IFSC code"),
+    bankName: Yup.string().trim().required("Bank name is required"),
+    branchName: Yup.string().trim(),
+    accountType: Yup.string().oneOf(["savings", "current"]).required(),
+    isPrimary: Yup.boolean(),
+  });
+
+const getEditSchema = () =>
+  Yup.object().shape({
+    accountHolderName: Yup.string().trim().required("Account holder name is required"),
+    bankName: Yup.string().trim().required("Bank name is required"),
+    branchName: Yup.string().trim(),
+    accountType: Yup.string().oneOf(["savings", "current"]).required(),
+    isPrimary: Yup.boolean(),
+  });
 
 const AddEditBankAccount = () => {
   const navigate = useNavigate();
@@ -27,165 +46,175 @@ const AddEditBankAccount = () => {
   const isEdit = Boolean(bankAccId);
   const existingAccount = location.state?.account;
 
-  const [form, setForm] = useState(INITIAL_FORM);
-  const [errors, setErrors] = useState({});
-
   const [addBankAccount, { isLoading: isAdding }] = useAddBankAccountMutation();
   const [updateBankAccount, { isLoading: isUpdating }] = useUpdateBankAccountMutation();
   const isSubmitting = isAdding || isUpdating;
 
-  useEffect(() => {
-    if (isEdit && existingAccount) {
-      setForm({
-        accountHolderName: existingAccount.accountHolderName || "",
-        bankName: existingAccount.bankName || "",
-        accountNumber: existingAccount.accountNumber || "",
-        confirmAccountNumber: existingAccount.accountNumber || "",
-        ifscCode: existingAccount.ifscCode || "",
-        branchName: existingAccount.branchName || "",
-        upiId: existingAccount.upiId || "",
-        accountType: existingAccount.accountType || "savings",
-        isPrimary: existingAccount.isPrimary || false,
-      });
-    }
-  }, [isEdit, existingAccount]);
-
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setForm((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
-    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
-  };
-
-  const validate = () => {
-    const newErrors = {};
-    if (!form.accountHolderName.trim()) newErrors.accountHolderName = "Required";
-    if (!form.bankName.trim()) newErrors.bankName = "Required";
-    if (!isEdit) {
-      if (!form.accountNumber.trim()) newErrors.accountNumber = "Required";
-      else if (!/^\d{9,18}$/.test(form.accountNumber)) newErrors.accountNumber = "Invalid account number";
-      if (form.accountNumber !== form.confirmAccountNumber) newErrors.confirmAccountNumber = "Account numbers don't match";
-      if (!form.ifscCode.trim()) newErrors.ifscCode = "Required";
-      else if (!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(form.ifscCode.toUpperCase())) newErrors.ifscCode = "Invalid IFSC code";
-    }
-    if (!form.branchName.trim()) newErrors.branchName = "Required";
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validate()) return;
-
-    try {
-      if (isEdit) {
-        const { confirmAccountNumber, accountNumber, ifscCode, ...updateData } = form;
-        await updateBankAccount({ bankAccId, ...updateData }).unwrap();
-        toast.success("Bank account updated successfully");
-      } else {
-        const { confirmAccountNumber, ...addData } = form;
-        await addBankAccount(addData).unwrap();
-        toast.success("Bank account added successfully");
+  const formik = useFormik({
+    initialValues: {
+      accountHolderName: existingAccount?.accountHolderName || "",
+      accountNumber: isEdit ? existingAccount?.accountNumber || "" : "",
+      confirmAccountNumber: isEdit ? existingAccount?.accountNumber || "" : "",
+      ifscCode: isEdit ? existingAccount?.ifscCode || "" : "",
+      bankName: existingAccount?.bankName || "",
+      branchName: existingAccount?.branchName || "",
+      accountType: existingAccount?.accountType || "savings",
+      isPrimary: existingAccount?.isPrimary || false,
+    },
+    validationSchema: isEdit ? getEditSchema() : getAddSchema(),
+    enableReinitialize: true,
+    onSubmit: async (values) => {
+      try {
+        if (isEdit) {
+          const { confirmAccountNumber, accountNumber, ifscCode, ...updateData } = values;
+          await updateBankAccount({ bankAccId, ...updateData }).unwrap();
+          toast.success("Bank account updated successfully");
+          navigate("/withdraw-money");
+        } else {
+          const { confirmAccountNumber, ...addData } = values;
+          await addBankAccount(addData).unwrap();
+          navigate("/bank-account-success", { replace: true });
+        }
+      } catch (err) {
+        toast.error(err?.data?.message || "Something went wrong");
       }
-      navigate("/bank-accounts");
-    } catch (err) {
-      toast.error(err?.data?.message || "Something went wrong");
-    }
-  };
+    },
+  });
+
+  const { values, errors, touched, handleChange, handleBlur, handleSubmit, setFieldValue } = formik;
 
   const getInputClass = (field) =>
-    `${styles.input} ${errors[field] ? styles.inputError : ""}`;
+    `${styles.input} ${touched[field] && errors[field] ? styles.inputError : ""}`;
+
+  const showError = (field) => touched[field] && errors[field];
 
   return (
     <div className={styles.container}>
       {/* Header */}
       <div className={styles.header}>
-        <button className={styles.backButton} onClick={() => navigate(-1)}>
-          <Icons.ChevronLeft size={20} />
+        <button className={styles.backBtn} onClick={() => navigate(-1)} aria-label="Go back">
+          <Icons.ChevronLeft size={18} />
         </button>
         <h1 className={styles.headerTitle}>
           {isEdit ? "Edit Bank Account" : "Add Bank Account"}
         </h1>
       </div>
 
-      <form onSubmit={handleSubmit} className={styles.form}>
+      <form onSubmit={handleSubmit} className={styles.form} noValidate>
         {/* Account Holder Name */}
         <div className={styles.formGroup}>
-          <label className={styles.label}>Account Holder Name</label>
-          <input name="accountHolderName" value={form.accountHolderName} onChange={handleChange} className={getInputClass("accountHolderName")} placeholder="Enter account holder name" />
-          {errors.accountHolderName && <p className={styles.errorText}>{errors.accountHolderName}</p>}
+          <label className={styles.label}>Account Holder Name <span className={styles.required}>*</span></label>
+          <input
+            name="accountHolderName"
+            value={values.accountHolderName}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            className={getInputClass("accountHolderName")}
+            placeholder="Enter account holder name"
+          />
+          {showError("accountHolderName") && <p className={styles.errorText}>{errors.accountHolderName}</p>}
         </div>
 
-        {/* Bank Name */}
-        <div className={styles.formGroup}>
-          <label className={styles.label}>Bank Name</label>
-          <input name="bankName" value={form.bankName} onChange={handleChange} className={getInputClass("bankName")} placeholder="Enter bank name" />
-          {errors.bankName && <p className={styles.errorText}>{errors.bankName}</p>}
-        </div>
-
-        {/* Account Number (only for add) */}
+        {/* Account Number & Confirm (add only) */}
         {!isEdit && (
           <>
             <div className={styles.formGroup}>
-              <label className={styles.label}>Account Number</label>
-              <input name="accountNumber" value={form.accountNumber} onChange={handleChange} className={getInputClass("accountNumber")} placeholder="Enter account number" maxLength={18} />
-              {errors.accountNumber && <p className={styles.errorText}>{errors.accountNumber}</p>}
+              <label className={styles.label}>Account Number <span className={styles.required}>*</span></label>
+              <input
+                name="accountNumber"
+                value={values.accountNumber}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                className={getInputClass("accountNumber")}
+                placeholder="Enter account number"
+                maxLength={18}
+                inputMode="numeric"
+              />
+              {showError("accountNumber") && <p className={styles.errorText}>{errors.accountNumber}</p>}
             </div>
             <div className={styles.formGroup}>
-              <label className={styles.label}>Confirm Account Number</label>
-              <input name="confirmAccountNumber" value={form.confirmAccountNumber} onChange={handleChange} className={getInputClass("confirmAccountNumber")} placeholder="Re-enter account number" maxLength={18} />
-              {errors.confirmAccountNumber && <p className={styles.errorText}>{errors.confirmAccountNumber}</p>}
+              <label className={styles.label}>Confirm Account Number <span className={styles.required}>*</span></label>
+              <input
+                name="confirmAccountNumber"
+                value={values.confirmAccountNumber}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                className={getInputClass("confirmAccountNumber")}
+                placeholder="Re-enter account number"
+                maxLength={18}
+                inputMode="numeric"
+              />
+              {showError("confirmAccountNumber") && <p className={styles.errorText}>{errors.confirmAccountNumber}</p>}
             </div>
             <div className={styles.formGroup}>
-              <label className={styles.label}>IFSC Code</label>
-              <input name="ifscCode" value={form.ifscCode} onChange={handleChange} className={`${getInputClass("ifscCode")} ${styles.inputUppercase}`} placeholder="e.g. ICIC0001959" />
-              {errors.ifscCode && <p className={styles.errorText}>{errors.ifscCode}</p>}
+              <label className={styles.label}>IFSC Code <span className={styles.required}>*</span></label>
+              <input
+                name="ifscCode"
+                value={values.ifscCode}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                className={`${getInputClass("ifscCode")} ${styles.inputUppercase}`}
+                placeholder="Enter IFSC code"
+              />
+              {showError("ifscCode") && <p className={styles.errorText}>{errors.ifscCode}</p>}
             </div>
           </>
         )}
 
-        {/* Branch Name */}
+        {/* Bank Name */}
         <div className={styles.formGroup}>
-          <label className={styles.label}>Branch Name</label>
-          <input name="branchName" value={form.branchName} onChange={handleChange} className={getInputClass("branchName")} placeholder="Enter branch name" />
-          {errors.branchName && <p className={styles.errorText}>{errors.branchName}</p>}
+          <label className={styles.label}>Bank Name <span className={styles.required}>*</span></label>
+          <input
+            name="bankName"
+            value={values.bankName}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            className={getInputClass("bankName")}
+            placeholder="Enter bank name"
+          />
+          {showError("bankName") && <p className={styles.errorText}>{errors.bankName}</p>}
         </div>
 
-        {/* UPI ID */}
+        {/* Branch Name (Optional) */}
         <div className={styles.formGroup}>
-          <label className={styles.label}>UPI ID (Optional)</label>
-          <input name="upiId" value={form.upiId} onChange={handleChange} className={styles.input} placeholder="e.g. name@upi" />
+          <label className={styles.label}>Branch Name (Optional)</label>
+          <input
+            name="branchName"
+            value={values.branchName}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            className={styles.input}
+            placeholder="Enter branch name"
+          />
         </div>
 
         {/* Account Type */}
         <div className={styles.formGroup}>
-          <label className={styles.label}>Account Type</label>
+          <label className={styles.label}>Account Type <span className={styles.required}>*</span></label>
           <div className={styles.typeGroup}>
             {["savings", "current"].map((type) => (
-              <label
+              <button
                 key={type}
-                className={`${styles.typeOption} ${form.accountType === type ? styles.typeOptionActive : ""}`}
+                type="button"
+                className={`${styles.typeOption} ${values.accountType === type ? styles.typeOptionActive : ""}`}
+                onClick={() => setFieldValue("accountType", type)}
               >
-                <input
-                  type="radio"
-                  name="accountType"
-                  value={type}
-                  checked={form.accountType === type}
-                  onChange={handleChange}
-                  className={styles.srOnly}
-                />
                 {type.charAt(0).toUpperCase() + type.slice(1)}
-              </label>
+              </button>
             ))}
           </div>
         </div>
 
         {/* Primary Toggle */}
         <label className={styles.primaryToggle}>
-          <div className={`${styles.toggleTrack} ${form.isPrimary ? styles.toggleTrackActive : ""}`}>
-            <div className={`${styles.toggleThumb} ${form.isPrimary ? styles.toggleThumbActive : ""}`} />
+          <span className={styles.toggleText}>Set as Primary Account</span>
+          <div
+            className={`${styles.toggleTrack} ${values.isPrimary ? styles.toggleTrackActive : ""}`}
+            onClick={() => setFieldValue("isPrimary", !values.isPrimary)}
+          >
+            <div className={`${styles.toggleThumb} ${values.isPrimary ? styles.toggleThumbActive : ""}`} />
           </div>
-          <input type="checkbox" name="isPrimary" checked={form.isPrimary} onChange={handleChange} className={styles.srOnly} />
-          <span className={styles.toggleText}>Set as primary account</span>
+          <input type="checkbox" name="isPrimary" checked={values.isPrimary} onChange={handleChange} className={styles.srOnly} />
         </label>
 
         {/* Submit */}
@@ -195,8 +224,8 @@ const AddEditBankAccount = () => {
               <div className={styles.spinnerSmall} />
             ) : (
               <>
-                {isEdit ? "Update Account" : "Add Account"}
-                <Icons.ArrowRight size={16} />
+                {isEdit ? "Update Bank" : "Add Bank"}
+                <Icons.ChevronRight size={16} />
               </>
             )}
           </button>

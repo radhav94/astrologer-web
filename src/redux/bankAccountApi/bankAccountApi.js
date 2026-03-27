@@ -4,7 +4,7 @@ export const bankAccountApi = privateApi.injectEndpoints({
   endpoints: (builder) => ({
     // GET all bank accounts
     getBankAccounts: builder.query({
-      query: (status = "active") => ({
+      query: (status) => ({
         url: `astrologer-bank/bank-accounts`,
         method: "GET",
         params: { status },

@@ -24,8 +24,10 @@ import ChatWindow from "../../screens/private/chat/ChatWindow";
 import ChatPage from "../../screens/private/chat/ChatPage";
 import AgoraVoiceCalling from "../../screens/private/call/VoiceCall";
 import EducationDetails from "../../screens/private/Profile/profileForms/EducationDetails";
-import BankAccountList from "../../screens/private/Profile/bankAccount/BankAccountList";
 import AddEditBankAccount from "../../screens/private/Profile/bankAccount/AddEditBankAccount";
+import ConfirmWithdrawal from "../../screens/private/Profile/bankAccount/ConfirmWithdrawal";
+import SuccessEditAddAccount from "../../screens/private/Profile/bankAccount/SuccessEditAddAccount";
+import SuccessWithdrawal from "../../screens/private/Profile/bankAccount/SuccessWithdrawal";
 
 export const PATH = {
   publicRoutes: {
@@ -144,10 +146,7 @@ export const PATH = {
       header: false,
       footer: false,
     },
-    BANK_ACCOUNTS: {
-      path: "/bank-accounts",
-      element: BankAccountList,
-    },
+   
     ADD_BANK_ACCOUNT: {
       path: "/bank-accounts/add",
       element: AddEditBankAccount,
@@ -155,6 +154,18 @@ export const PATH = {
     EDIT_BANK_ACCOUNT: {
       path: "/bank-accounts/edit/:bankAccId",
       element: AddEditBankAccount,
+    },
+    CONFIRM_WITHDRAWAL: {
+      path: "/confirm-withdrawal",
+      element: ConfirmWithdrawal,
+    },
+    WITHDRAWAL_SUCCESS: {
+      path: "/withdrawal-success",
+      element: SuccessWithdrawal,
+    },
+    BANK_ACCOUNT_SUCCESS: {
+      path: "/bank-account-success",
+      element: SuccessEditAddAccount,
     },
   },
 };

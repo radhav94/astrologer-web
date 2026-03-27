@@ -106,6 +106,16 @@ const Profile = ({ onBack }) => {
         </Link>
       </div>
 
+      {/* Bank Accounts Quick Link */}
+      <div className="flex justify-end px-1 mt-2 mb-1">
+        <Link
+          to="/bank-accounts"
+          className="text-xs text-orange-500 font-medium flex items-center gap-1 hover:underline"
+        >
+          Manage Bank Accounts <Icons.ArrowRight size={12} />
+        </Link>
+      </div>
+
       <hr className={styles.divider} />
 
       {/* Tabs */}

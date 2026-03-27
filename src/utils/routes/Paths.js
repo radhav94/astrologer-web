@@ -24,6 +24,8 @@ import ChatWindow from "../../screens/private/chat/ChatWindow";
 import ChatPage from "../../screens/private/chat/ChatPage";
 import AgoraVoiceCalling from "../../screens/private/call/VoiceCall";
 import EducationDetails from "../../screens/private/Profile/profileForms/EducationDetails";
+import BankAccountList from "../../screens/private/Profile/bankAccount/BankAccountList";
+import AddEditBankAccount from "../../screens/private/Profile/bankAccount/AddEditBankAccount";
 
 export const PATH = {
   publicRoutes: {
@@ -141,6 +143,18 @@ export const PATH = {
       element: Kundli,
       header: false,
       footer: false,
+    },
+    BANK_ACCOUNTS: {
+      path: "/bank-accounts",
+      element: BankAccountList,
+    },
+    ADD_BANK_ACCOUNT: {
+      path: "/bank-accounts/add",
+      element: AddEditBankAccount,
+    },
+    EDIT_BANK_ACCOUNT: {
+      path: "/bank-accounts/edit/:bankAccId",
+      element: AddEditBankAccount,
     },
   },
 };

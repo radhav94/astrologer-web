@@ -16,6 +16,7 @@ import FAQs from "../../screens/private/Profile/support/FAQs/FAQs";
 import Guidelines from "../../screens/private/Profile/support/guidelines/Guidelines";
 import TermsConditions from "../../screens/private/Profile/support/guidelines/TermsConditions/TermsCondition";
 import RecentTickets from "../../screens/private/Profile/support/tickets/RecentTickets";
+import TicketDetail from "../../screens/private/Profile/support/tickets/TicketDetail";
 import WithdrawMoney from "../../screens/private/Profile/withdraw/WithdrawMoney";
 import Basic from "../../screens/private/Profile/profileForms/Basic";
 import InteractiveLiveStreaming from "../../components/livestream/InteractiveLiveStreaming";
@@ -81,6 +82,10 @@ export const PATH = {
     RECENT_TICKETS: {
       path: "/recent-tickets",
       element: RecentTickets,
+    },
+    TICKET_DETAIL: {
+      path: "/ticket/:ticketId",
+      element: TicketDetail,
     },
     GUIDELINES: {
       path: "/guidelines",

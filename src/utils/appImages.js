@@ -80,7 +80,10 @@ import ProfileAchivment from "../assets/images/profile-achivement.png";
 import Letter1 from "../assets/images/letter1.png";
 import AchivmentImg from "../assets/images/achivments.png"
 import CosmicCircle from "../assets/images/cosmic-circle.png";
-import MobileViewAccount from "../assets/images/mobile-view-account.png"
+import MobileViewAccount from "../assets/images/mobile-view-account.png";
+import BankImage from "../assets/images/Bank Account.png"
+import SuccessCheck from "../assets/images/success-check.png";
+import SuccessCheckBg from "../assets/images/success-check-bg.png";
 
 
 export const AppImages = {
@@ -108,7 +111,9 @@ export const AppImages = {
   AchivmentImg,
   CosmicCircle,
   MobileViewAccount,
-  
+  BankImage,
+  SuccessCheck,
+  SuccessCheckBg
 };
 
 
@@ -116,10 +121,12 @@ export const AppImages = {
 
 import DefaultMaleAstrologer from "../assets/default-img/astrologer male_v.1.png";
 import DefaultFemaleAstrologer from "../assets/default-img/astrologer female_v.1.png";
+import DefaultBank from "../assets/default-img/Default Bank.png"
 
 export const AppDefaultImg = {
   DefaultMaleAstrologer,
-  DefaultFemaleAstrologer
+  DefaultFemaleAstrologer,
+  DefaultBank
 }
 
 //svgs

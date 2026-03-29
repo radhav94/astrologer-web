@@ -2,10 +2,15 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { Icons } from "../../../components/Icons";
 import { Link } from "react-router";
 import { useNavigate } from "react-router-dom";
-import { useGetOrderHistoryQuery, useRefundInitiateByAstrologerMutation } from "../../../redux/oderHistory/orderHistory";
+import {
+  useGetOrderHistoryQuery,
+  useRefundInitiateByAstrologerMutation,
+  useGetWithdrawalHistoryQuery,
+} from "../../../redux/oderHistory/orderHistory";
 // Import default profile image
 import { AppDefaultImg, AppIcons } from "../../../utils/appImages";
 import SectionHeader from "../../../components/UI/SectionHeader";
+import Pagination from "../../../components/UI/pagination/Pagination";
 import styles from "./ConsultationHistory.module.scss";
 import dayjs from "dayjs";
 import { PATH } from "../../../utils/routes/Paths";
@@ -75,6 +80,9 @@ const MONTHS = [
 const FILTER_CATEGORIES = ["Type", "Month", "Year", "Sorting"];
 
 const ConsultationHistory = () => {
+  // Withdrawal tab moved to Profile.jsx — keeping state for reference
+  // const [activeTab, setActiveTab] = useState("Transaction");
+  // const [withdrawalPage, setWithdrawalPage] = useState(1);
   const [page, setPage] = useState(1);
   const [openMenuId, setOpenMenuId] = useState(null);
   const [refundItem, setRefundItem] = useState(null);
@@ -183,8 +191,22 @@ const ConsultationHistory = () => {
     (state) => state.register?.astrologerDetails,
   );
 
+  // Withdrawal query moved to Profile.jsx → WithdrawalsList component
+  // const {
+  //   data: withdrawalData,
+  //   isLoading: isWithdrawalLoading,
+  //   isFetching: isWithdrawalFetching,
+  // } = useGetWithdrawalHistoryQuery(
+  //   { page: withdrawalPage, limit: 10 },
+  //   { skip: activeTab === "Transaction", refetchOnMountOrArgChange: true },
+  // );
+  // const withdrawalsRaw = withdrawalData?.data?.withdrawals || withdrawalData?.data?.data || withdrawalData?.data;
+  // const withdrawals = Array.isArray(withdrawalsRaw) ? withdrawalsRaw : [];
+  // const withdrawalPagination = withdrawalData?.data?.pagination || withdrawalData?.pagination;
+
   // Refund mutation hook
-  const [refundInitiate, { isLoading: isRefunding }] = useRefundInitiateByAstrologerMutation();
+  const [refundInitiate, { isLoading: isRefunding }] =
+    useRefundInitiateByAstrologerMutation();
 
   // Handle refund API call with proper success/error toast messages
   const handleRefund = async () => {
@@ -316,18 +338,6 @@ const ConsultationHistory = () => {
     return pages;
   };
 
-  // Old: Loading state — early return replaced entire page, condition too strict
-  // if (isLoading && isFetching ) {
-  //   return (
-  //     <div className={styles.loadingContainer}>
-  //       <div className={styles.loadingContent}>
-  //         <div className={styles.spinner}></div>
-  //         <p className={styles.loadingText}>Loading consultation history...</p>
-  //       </div>
-  //     </div>
-  //   );
-  // }
-
   // New: isLoadingOrFetching flag — used for overlay rendering below
   const isLoadingOrFetching = isLoading || isFetching;
 
@@ -393,13 +403,9 @@ const ConsultationHistory = () => {
       </div>
 
       <div className={styles.mainContainer}>
-        {/* Main Content */}
         <main className={styles.mainContent}>
           {/* Orders Count and Actions */}
           <div className={styles.ordersHeader}>
-            {/* <h2 className={styles.ordersCount}>
-              Total Orders: {data?.data?.pagination?.totalItems || 0}
-            </h2> */}
             <div className={styles.actionButtons}>
               {/* Search Bar */}
               <div className={styles.searchBar}>
@@ -487,7 +493,7 @@ const ConsultationHistory = () => {
                         {/* Order ID and Menu */}
                         <div className={styles.orderHeader}>
                           <span className={styles.orderNumber}>
-                           #{item?._id?.slice(-4)}
+                            #{item?._id?.slice(-4)}
                           </span>
                           <div
                             className={styles.menuContainer}
@@ -508,7 +514,8 @@ const ConsultationHistory = () => {
                               <div className={styles.menuDropdown}>
                                 {/* Refund actions: disabled when durationSeconds is null or 0 */}
                                 {(() => {
-                                  const isRefundEnabled = item?.sessionDetails?.durationSeconds > 0;
+                                  const isRefundEnabled =
+                                    item?.sessionDetails?.durationSeconds > 0;
                                   return (
                                     <>
                                       <button
@@ -520,7 +527,14 @@ const ConsultationHistory = () => {
                                           setOpenMenuId(null);
                                         }}
                                         className={styles.menuItem}
-                                        style={!isRefundEnabled ? { opacity: 0.4, pointerEvents: "none" } : {}}
+                                        style={
+                                          !isRefundEnabled
+                                            ? {
+                                                opacity: 0.4,
+                                                pointerEvents: "none",
+                                              }
+                                            : {}
+                                        }
                                         disabled={!isRefundEnabled}
                                       >
                                         Refund
@@ -529,14 +543,24 @@ const ConsultationHistory = () => {
                                         onClick={() => {
                                           if (!isRefundEnabled) return;
                                           // Total Refund: pre-fill with full session duration in minutes
-                                          const totalMins = Math.floor((item?.sessionDetails?.durationSeconds || 0) / 60);
+                                          const totalMins = Math.floor(
+                                            (item?.sessionDetails
+                                              ?.durationSeconds || 0) / 60,
+                                          );
                                           setRefundItem(item);
                                           setRefundMinutes(String(totalMins));
                                           setRefundType("total");
                                           setOpenMenuId(null);
                                         }}
                                         className={styles.menuItemDanger}
-                                        style={!isRefundEnabled ? { opacity: 0.4, pointerEvents: "none" } : {}}
+                                        style={
+                                          !isRefundEnabled
+                                            ? {
+                                                opacity: 0.4,
+                                                pointerEvents: "none",
+                                              }
+                                            : {}
+                                        }
                                         disabled={!isRefundEnabled}
                                       >
                                         Total Refund
@@ -652,12 +676,12 @@ const ConsultationHistory = () => {
 
                             {/* Duration - Only show if exists */}
                             {/* {item.sessionDetails?.durationSeconds && ( */}
-                              <p className={styles.duration}>
-                                Duration :{" "}
-                                {formatDuration(
-                                  item.sessionDetails?.durationSeconds,
-                                )}
-                              </p>
+                            <p className={styles.duration}>
+                              Duration :{" "}
+                              {formatDuration(
+                                item.sessionDetails?.durationSeconds,
+                              )}
+                            </p>
                             {/* )} */}
 
                             {/* Amount - Left Aligned */}
@@ -676,78 +700,24 @@ const ConsultationHistory = () => {
               </div>
             ))}
 
-           
-
             {/* Pagination Controls */}
-            {!isError && pagination && pagination.totalPages > 1 && (
-              <div className={styles.paginationContainer}>
-                <div className={styles.paginationContent}>
-                  {/* Page Info */}
-                  <div className={styles.pageInfo}>
-                    Showing <span>{(pagination.currentPage - 1) * 10 + 1}</span>{" "}
-                    to{" "}
-                    <span>
-                      {Math.min(
-                        pagination.currentPage * 10,
-                        pagination.totalItems,
-                      )}
-                    </span>{" "}
-                    of <span>{pagination.totalItems}</span> results
-                  </div>
-
-                  {/* Pagination Buttons */}
-                  <div className={styles.paginationButtons}>
-                    {/* Previous Button */}
-                    <button
-                      onClick={handlePreviousPage}
-                      disabled={!pagination.hasPreviousPage || isFetching}
-                      className={styles.paginationButton}
-                    >
-                      <Icons.ChevronLeft size={16} />
-                    </button>
-
-                    {/* Page Numbers */}
-                    <div className={styles.pageNumbers}>
-                      {getPageNumbers().map((pageNum, index) =>
-                        pageNum === "..." ? (
-                          <span
-                            key={`ellipsis-${index}`}
-                            className={styles.ellipsis}
-                          >
-                            ...
-                          </span>
-                        ) : (
-                          <button
-                            key={pageNum}
-                            onClick={() => handlePageClick(pageNum)}
-                            disabled={isFetching}
-                            className={
-                              pageNum === pagination.currentPage
-                                ? styles.pageNumberButtonActive
-                                : styles.pageNumberButtonInactive
-                            }
-                          >
-                            {pageNum}
-                          </button>
-                        ),
-                      )}
-                    </div>
-
-                    {/* Next Button */}
-                    <button
-                      onClick={handleNextPage}
-                      disabled={!pagination.hasNextPage || isFetching}
-                      className={styles.paginationButton}
-                    >
-                      <Icons.ChevronRight size={16} />
-                    </button>
-                  </div>
-                </div>
-              </div>
+            {!isError && (
+              <Pagination
+                currentPage={pagination?.currentPage}
+                totalPages={pagination?.totalPages}
+                totalItems={pagination?.totalItems}
+                limit={10}
+                hasPreviousPage={pagination?.hasPreviousPage}
+                hasNextPage={pagination?.hasNextPage}
+                onPageChange={setPage}
+                disabled={isFetching}
+              />
             )}
 
             
           </div>
+
+          {/* Withdrawals section moved to Profile.jsx → WithdrawalsList component */}
 
           {/* Refund Modal - Shared for both Refund (partial) and Total Refund */}
           {refundItem && (
@@ -760,18 +730,12 @@ const ConsultationHistory = () => {
                 {/* Session duration info - shown only for partial refund */}
                 {refundType === "partial" && (
                   <p className={styles.modalSubtext}>
-                    Session Duration: {formatDuration(refundItem?.sessionDetails?.durationSeconds || 0)}
+                    Session Duration:{" "}
+                    {formatDuration(
+                      refundItem?.sessionDetails?.durationSeconds || 0,
+                    )}
                   </p>
                 )}
-
-                {/* Old: amount input */}
-                {/* <input
-                  type="number"
-                  placeholder="Enter refund amount"
-                  value={refundAmount}
-                  onChange={(e) => setRefundAmount(e.target.value)}
-                  className={styles.modalInput}
-                /> */}
 
                 {/* Minutes input: editable for partial, disabled & pre-filled for total */}
                 <input
@@ -784,7 +748,9 @@ const ConsultationHistory = () => {
                     const val = e.target.value;
                     // Accept only numeric values
                     if (val === "" || /^\d+$/.test(val)) {
-                      const maxMinutes = Math.floor((refundItem?.sessionDetails?.durationSeconds || 0) / 60);
+                      const maxMinutes = Math.floor(
+                        (refundItem?.sessionDetails?.durationSeconds || 0) / 60,
+                      );
                       // Do not allow minutes greater than session duration
                       if (val === "" || Number(val) <= maxMinutes) {
                         setRefundMinutes(val);
@@ -793,9 +759,15 @@ const ConsultationHistory = () => {
                   }}
                   disabled={refundType === "total"}
                   min="0"
-                  max={Math.floor((refundItem?.sessionDetails?.durationSeconds || 0) / 60)}
+                  max={Math.floor(
+                    (refundItem?.sessionDetails?.durationSeconds || 0) / 60,
+                  )}
                   className={styles.modalInput}
-                  style={refundType === "total" ? { backgroundColor: "#f3f4f6", cursor: "not-allowed" } : {}}
+                  style={
+                    refundType === "total"
+                      ? { backgroundColor: "#f3f4f6", cursor: "not-allowed" }
+                      : {}
+                  }
                 />
 
                 <div className={styles.modalButtons}>
@@ -828,7 +800,9 @@ const ConsultationHistory = () => {
         <div className={styles.loadingOverlay}>
           <div className={styles.loadingContent}>
             <div className={styles.spinner}></div>
-            <p className={styles.loadingText}>Loading consultation history...</p>
+            <p className={styles.loadingText}>
+              Loading consultation history...
+            </p>
           </div>
         </div>
       )}

@@ -454,6 +454,9 @@
 
 // List Container
 .listContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
     padding: 0 1.25rem;
     margin-bottom: 1.5rem;
 

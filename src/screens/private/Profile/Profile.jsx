@@ -6,6 +6,7 @@ import SwitchTabs from "../../../components/UI/tabs/SwitchTabs.jsx";
 import Transactions from "./transactions/Transactions.jsx";
 import SetAvailability from "./availability/SetAvailability.jsx";
 import Support from "./support/Support.jsx";
+import WithdrawalsList from "./withdraw/WithdrawalsList.jsx";
 import { AppIcons, AppImages } from "../../../utils/appImages.js";
 import styles from "./Profile.module.scss";
 import { selectBasicInfo, selectProfileTabData } from "../../../utils/astrologerSelectors.js";
@@ -19,13 +20,6 @@ const Profile = ({ onBack }) => {
   
   // Get astrologer details from Redux state
   const astrologerDetails = useSelector((state) => state.register.astrologerDetails);
-  
-  // Fallback to localStorage if Redux doesn't have the data (for backward compatibility)
-  // const userData = JSON.parse(
-  //   localStorage.getItem("shubhtalk_astrologer_details"),
-  // );
-  // const astrologerId = userData?._id;
-  // const { data: astrologerData, refetch } = useGetAstrologerByIdQuery(astrologerId);
   
   // Use Redux state as primary source
   const astrologerData = astrologerDetails ? { data: astrologerDetails, success: true } : null;
@@ -43,8 +37,10 @@ const Profile = ({ onBack }) => {
   // Old: wallet from astrologer details
   // const wallet = basicInfo?.wallet || 0;
 
-  // New: wallet from dedicated wallet API
-  const { data: walletResponse } = useGetAllWalletsQuery({ refetchOnMountOrArgChange: true});
+  // New: wallet from dedicated wallet API — refetch on navigation back
+  const { data: walletResponse } = useGetAllWalletsQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+  });
   const wallet = walletResponse?.data || 0;
 
 
@@ -63,6 +59,11 @@ const Profile = ({ onBack }) => {
       label: "Availability",
       value: "availability",
       component: SetAvailability,
+    },
+    {
+      label: "Withdrawals",
+      value: "withdrawals",
+      component: WithdrawalsList,
     },
     {
       label: "Support",
@@ -126,6 +127,8 @@ const Profile = ({ onBack }) => {
           </Link>
         
       </div>
+
+      
 
       <hr className={styles.divider} />
 

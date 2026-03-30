@@ -11,7 +11,7 @@ import {
 import { getAgoraToken } from "../../services/appServices/getLiveStreamService";
 import { useCall } from "../../context/CallContext";
 
-const APP_ID = "cf5e31fa03584573aacaf42daebd493c";
+const APP_ID = "8575e5681f7142f4bced0b83332caa15";
 const SESSION_KEY = "shubhtalk_live_session";
 
 export const useLiveStreaming = (client, ROLE, previewSettings = {}) => {

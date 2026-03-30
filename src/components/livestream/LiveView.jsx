@@ -87,6 +87,8 @@ const LiveView = (props) => {
     if (ROLE !== "host") return;
 
     try {
+      setCamera(false);
+      setMic(false);
       endRoom?.();
       await stopLiveStream(channelName);
       clearLiveSession?.();
@@ -97,7 +99,7 @@ const LiveView = (props) => {
     } finally {
       setCalling(false);
     }
-  }, [ROLE, channelName, setCalling, navigate, endRoom, clearLiveSession]);
+  }, [ROLE, channelName, setCalling, setCamera, setMic, navigate, endRoom, clearLiveSession]);
 
   const endLiveSafely = useCallback(async () => {
     if (ROLE !== "host") return;
@@ -106,6 +108,8 @@ const LiveView = (props) => {
     hasEndedRef.current = true;
 
     try {
+      setCamera(false);
+      setMic(false);
       endRoom?.();
       await stopLiveStream(channelName);
       clearLiveSession?.();
@@ -115,7 +119,7 @@ const LiveView = (props) => {
     } finally {
       setCalling(false);
     }
-  }, [ROLE, channelName, setCalling, endRoom, clearLiveSession]);
+  }, [ROLE, channelName, setCalling, setCamera, setMic, endRoom, clearLiveSession]);
 
   const isHost = ROLE === "host";
   const viewerCount = participantCount || (remoteUsers?.length || 0) + 1;

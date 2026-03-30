@@ -4,7 +4,7 @@ import { useFormik } from "formik";
 import { useDispatch, useSelector } from "react-redux";
 import * as Yup from "yup";
 import { updateRegisterData, setCurrentStep } from "../../../reducer/registerSlice";
-import { createAchievementsValidation } from "../../../utils/utlis";
+import { createAchievementsValidation } from "../../../utils/utils";
 import { useFileUpload } from "../../../hooks/useFileUpload";
 import Button from "../../../components/UI/button/Button";
 import FormStep from "./FormStep";

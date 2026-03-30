@@ -4,7 +4,7 @@ import { useFormik } from "formik";
 import { useDispatch, useSelector } from "react-redux";
 import * as Yup from "yup";
 import { updateRegisterData, setCurrentStep, clearRegisterData } from "../../../reducer/registerSlice";
-import { createFileValidation } from "../../../utils/utlis";
+import { createFileValidation } from "../../../utils/utils";
 import { useFileUpload } from "../../../hooks/useFileUpload";
 import { useRegisterAstrologerMutation } from "../../../redux/register/registerAstroApi";
 import { Toast } from "../../../components";

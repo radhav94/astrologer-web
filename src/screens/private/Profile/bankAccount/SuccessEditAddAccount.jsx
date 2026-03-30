@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
-import styles from "./SuccessEditAddAccount.module.scss";
+import Button from "../../../../components/UI/button/Button";
 import { AppImages } from "../../../../utils/appImages";
+import styles from "./SuccessEditAddAccount.module.scss";
 
 const SuccessEditAddAccount = () => {
   const navigate = useNavigate();
@@ -8,7 +9,6 @@ const SuccessEditAddAccount = () => {
   return (
     <div className={styles.container}>
       <div className={styles.content}>
-        {/* Green badge checkmark */}
         <div className={styles.badgeWrapper}>
           <img
             src={AppImages.SuccessCheck}
@@ -25,12 +25,12 @@ const SuccessEditAddAccount = () => {
       </div>
 
       <div className={styles.footer}>
-        <button
-          className={styles.ctaButton}
+        <Button
+          variant="primary"
           onClick={() => navigate("/withdraw-money", { replace: true })}
         >
           Go to Withdraw Money
-        </button>
+        </Button>
       </div>
     </div>
   );

@@ -11,7 +11,7 @@ import { stopLiveStream } from "../../services/appServices/authservice";
 import { getUserFromStorage } from "../../utils/authStorage";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { getDefaultImgBasedOnGender } from "../../utils/utlis";
+import { getDefaultImgBasedOnGender } from "../../utils/utils";
 import { useLiveStream } from "../../context/LiveStreamContext";
 import eyeIcon from "../../assets/images/eye.png";
 

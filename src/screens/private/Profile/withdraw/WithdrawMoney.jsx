@@ -6,8 +6,9 @@ import { useGetBankAccountsQuery, useDeactivateBankAccountMutation } from "../..
 import { useGetAllWalletsQuery } from "../../../../redux/astrologer/astrologerApi";
 import { Toast } from "../../../../components";
 import { AppDefaultImg } from "../../../../utils/appImages";
+import SectionHeader from "../../../../components/UI/sectionHeader/SectionHeader";
+import Button from "../../../../components/UI/button/Button";
 import styles from "./WithdrawMoney.module.scss";
-import { AppIcons } from "../../../../utils/appImages";
 
 // Bank logo color map for visual distinction
 const BANK_COLORS = {
@@ -62,7 +63,7 @@ const WithdrawMoney = () => {
   const [deactivateBankAccount] = useDeactivateBankAccountMutation();
 
   const { data, isLoading } = useGetBankAccountsQuery();
-  const accounts = (data?.data || []).filter((a) => a.status === "active");
+  const accounts = [...(data?.data || [])].sort((a, b) => (b.isPrimary ? 1 : 0) - (a.isPrimary ? 1 : 0));
 
   // Auto-select primary account
   useState(() => {
@@ -109,12 +110,7 @@ const WithdrawMoney = () => {
   return (
     <div className={styles.container}>
       {/* Header */}
-      <div className={styles.header}>
-        <button onClick={() => navigate(-1)} className={styles.backButton} aria-label="Go back">
-          <Icons.ChevronLeft size={18} />
-        </button>
-        <h1 className={styles.headerTitle}>Withdraw Money</h1>
-      </div>
+      <SectionHeader title="Withdraw Money" />
 
       <div className={styles.content}>
         {/* Enter Amount */}
@@ -188,13 +184,17 @@ const WithdrawMoney = () => {
                 const bankStyle = getBankStyle(acc.bankName);
                 const isSelected = selectedAccount === acc._id;
                 const accLast4 = acc.accountNumber?.slice(-4) || "****";
-                const isApproved = acc.verificationStatus !== "pending";
                 return (
                   <div
                     key={acc._id}
-                    onClick={() => isApproved && setSelectedAccount(acc._id)}
-                    className={`${styles.accountCard} ${isSelected ? styles.accountCardSelected : ""} ${!isApproved ? styles.accountCardPending : ""}`}
+                    onClick={() => setSelectedAccount(acc._id)}
+                    className={`${styles.accountCard} ${isSelected ? styles.accountCardSelected : ""}`}
                   >
+                    {/* Pending badge */}
+                    {acc.verificationStatus === "pending" && (
+                      <span className={styles.pendingBadge}>Waiting for approval</span>
+                    )}
+
                     {/* Radio */}
                     <div className={`${styles.accountRadio} ${isSelected ? styles.accountRadioActive : ""}`}>
                       {isSelected && <div className={styles.accountRadioInner} />}
@@ -218,9 +218,6 @@ const WithdrawMoney = () => {
 
                     {/* Details */}
                     <div className={styles.bankDetails}>
-                      {!isApproved && (
-                        <span className={styles.pendingBadge}>Waiting for approval</span>
-                      )}
                       <p className={styles.bankName}>
                         {acc.bankName || "Bank"} {accLast4}
                       </p>
@@ -279,14 +276,14 @@ const WithdrawMoney = () => {
 
       {/* Withdraw Button */}
       <div className={styles.footer}>
-        <button
-          className={styles.withdrawButton}
+        <Button
+          variant="primary"
           disabled={!amount || !selectedAccount || Number(amount) <= 0 || Number(amount) > walletBalance}
           onClick={handleWithdraw}
+          icon={<Icons.ChevronRight size={16} />}
         >
           Withdraw Money
-          <Icons.ChevronRight size={16} />
-        </button>
+        </Button>
       </div>
     </div>
   );

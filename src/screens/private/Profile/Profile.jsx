@@ -43,6 +43,8 @@ const Profile = ({ onBack }) => {
   });
   const wallet = walletResponse?.data || 0;
 
+  
+
 
   const tabs = [
     {
@@ -81,11 +83,12 @@ const Profile = ({ onBack }) => {
         <div className={styles.userInfo}>
           <div className={styles.nameRow}>
             <h1 className={styles.userName}>{userName}</h1>
-            <img
+            {astrologerData?.data?.manualVerification && <img
               src={AppIcons.Verified}
               alt="verified"
               className={styles.verifiedBadge}
-            />
+            />}
+            
           </div>
           {experience && (
             <p className={styles.userExperience}>Exp. {experience} Years</p>

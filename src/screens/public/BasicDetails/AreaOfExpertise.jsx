@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import * as Yup from "yup";
 import { updateRegisterData, setCurrentStep } from "../../../reducer/registerSlice";
 // Old: string-based validation import
-// import { createMultiSelectValidation } from "../../../utils/utlis";
+// import { createMultiSelectValidation } from "../../../utils/utils";
 import { EXPERTISE_AREAS } from "../../../utils/config";
 import Button from "../../../components/UI/button/Button";
 import FormStep from "./FormStep";

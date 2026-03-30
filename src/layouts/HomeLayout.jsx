@@ -14,7 +14,7 @@ import { useGetAstrologerByIdQuery } from "../redux/astrologer/astrologerApi";
 import StickyReviewFooter from "../screens/private/chat/review/StickyReviewFooter";
 import { AppDefaultImg } from "../utils/appImages";
 import { setAstrologerDetails } from "../reducer/registerSlice";
-import { getDefaultImgBasedOnGender } from "../utils/utlis";
+import { getDefaultImgBasedOnGender } from "../utils/utils";
 import styles from "./HomeLayout.module.scss";
 import StickyChatFooter from "../components/StickyChatFooter";
 import MiniLiveBar from "../components/livestream/MiniLiveBar";

@@ -1,8 +1,11 @@
 import { useLocation, useNavigate } from "react-router-dom";
+import dayjs from "dayjs";
 import { Icons } from "../../../../components/Icons";
 import { useWithdrawRequestMutation } from "../../../../redux/bankAccountApi/bankAccountApi";
 import { Toast } from "../../../../components";
 import { AppDefaultImg } from "../../../../utils/appImages";
+import SectionHeader from "../../../../components/UI/sectionHeader/SectionHeader";
+import Button from "../../../../components/UI/button/Button";
 import styles from "./ConfirmWithdrawal.module.scss";
 
 const getBankInitials = (name) => {
@@ -49,7 +52,7 @@ const ConfirmWithdrawal = () => {
             withdrawalType,
             account,
             requestId: res?.data?.requestId || res?.data?._id || "",
-            timestamp: new Date().toISOString(),
+            timestamp: dayjs().toISOString(),
           },
           replace: true,
         });
@@ -64,12 +67,7 @@ const ConfirmWithdrawal = () => {
   return (
     <div className={styles.container}>
       {/* Header */}
-      <div className={styles.header}>
-        <button onClick={() => navigate(-1)} className={styles.backBtn}>
-          <Icons.ChevronLeft size={18} />
-        </button>
-        <h1 className={styles.headerTitle}>Confirm Withdrawal</h1>
-      </div>
+      <SectionHeader title="Confirm Withdrawal" />
 
       <div className={styles.content}>
         {/* Amount Banner */}
@@ -147,14 +145,14 @@ const ConfirmWithdrawal = () => {
 
       {/* Confirm Button */}
       <div className={styles.footer}>
-        <button
-          className={styles.confirmBtn}
+        <Button
+          variant="primary"
           onClick={handleConfirm}
           disabled={isLoading}
+          icon={!isLoading ? <Icons.ChevronRight size={16} /> : undefined}
         >
           {isLoading ? "Processing..." : "Confirm Withdraw"}
-          {!isLoading && <Icons.ChevronRight size={16} />}
-        </button>
+        </Button>
       </div>
     </div>
   );

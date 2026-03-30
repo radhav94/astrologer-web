@@ -1,20 +1,13 @@
 import { useLocation, useNavigate } from "react-router-dom";
+import dayjs from "dayjs";
 import { Icons } from "../../../../components/Icons";
-import { AppImages } from "../../../../utils/appImages";
+import { appGifs } from "../../../../utils/appImages";
+import Button from "../../../../components/UI/button/Button";
 import styles from "./SuccessWithdrawal.module.scss";
 
 const formatDateTime = (isoString) => {
   if (!isoString) return "";
-  const d = new Date(isoString);
-  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  const month = months[d.getMonth()];
-  const day = String(d.getDate()).padStart(2, "0");
-  const year = d.getFullYear();
-  let hours = d.getHours();
-  const mins = String(d.getMinutes()).padStart(2, "0");
-  const ampm = hours >= 12 ? "PM" : "AM";
-  hours = hours % 12 || 12;
-  return `${month} ${day}, ${year} • ${String(hours).padStart(2, "0")}:${mins} ${ampm}`;
+  return dayjs(isoString).format("MMM DD, YYYY • hh:mm A");
 };
 
 const SuccessWithdrawal = () => {
@@ -38,31 +31,31 @@ const SuccessWithdrawal = () => {
         {/* Success badge with confetti */}
         <div className={styles.badgeArea}>
           <img
-            src={AppImages.SuccessCheckBg}
-            alt=""
-            aria-hidden="true"
-            className={styles.badgeBg}
-          />
-          <img
-            src={AppImages.SuccessCheck}
+            src={appGifs.SuccessConfetti}
             alt="Success"
-            className={styles.badge}
+            className={styles.badgeGif}
           />
         </div>
 
         <h1 className={styles.title}>Withdrawal Successful!</h1>
-        <p className={styles.subtitle}>Your withdrawal request has been submitted</p>
+        <p className={styles.subtitle}>
+          Your withdrawal request has been submitted
+        </p>
 
         {/* Details card */}
         <div className={styles.card}>
           <div className={styles.amountSection}>
             <span className={styles.amountLabel}>Withdrawal Amount</span>
-            <span className={styles.amountValue}>₹{Number(amount).toLocaleString("en-IN")}</span>
+            <span className={styles.amountValue}>
+              ₹{Number(amount).toLocaleString("en-IN")}
+            </span>
           </div>
           <div className={styles.divider} />
           <div className={styles.detailRow}>
             <span className={styles.detailLabel}>Time</span>
-            <span className={styles.detailValue}>{formatDateTime(timestamp)}</span>
+            <span className={styles.detailValue}>
+              {formatDateTime(timestamp)}
+            </span>
           </div>
           {requestId && (
             <div className={styles.detailRow}>
@@ -85,13 +78,15 @@ const SuccessWithdrawal = () => {
 
         {/* Processing info box */}
         <div className={styles.infoBox}>
-          <div className={styles.infoIcon}>
-            <Icons.AlertCircle size={18} />
+          <div className={styles.infoIconWrap}>
+            <Icons.AlertCircle size={20} />
+             <p className={styles.infoTitle}>Processing Now</p>
           </div>
-          <div>
-            <p className={styles.infoTitle}>Processing Now</p>
+          <div className={styles.infoContent}>
+           
             <p className={styles.infoText}>
-              Your withdrawal request has been submitted successfully. We are processing your request.
+              Your withdrawal request has been submitted successfully. We are
+              processing your request.
             </p>
           </div>
         </div>
@@ -99,18 +94,18 @@ const SuccessWithdrawal = () => {
 
       {/* Footer buttons */}
       <div className={styles.footer}>
-        <button
-          className={styles.primaryBtn}
+        <Button
+          variant="primary"
           onClick={() => navigate("/profile", { replace: true })}
         >
           View Transaction Details
-        </button>
-        <button
-          className={styles.secondaryBtn}
+        </Button>
+        <Button
+          className={styles.backhomebtn}
           onClick={() => navigate("/dashboard", { replace: true })}
         >
           Back to Home
-        </button>
+        </Button>
       </div>
     </div>
   );

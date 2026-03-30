@@ -1,43 +1,16 @@
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { useFormik } from "formik";
-import * as Yup from "yup";
 import { Icons } from "../../../../components/Icons";
 import toast from "../../../../components/toast";
 import {
   useAddBankAccountMutation,
   useUpdateBankAccountMutation,
 } from "../../../../redux/bankAccountApi/bankAccountApi";
+import SectionHeader from "../../../../components/UI/sectionHeader/SectionHeader";
+import Button from "../../../../components/UI/button/Button";
+import Toggle from "../../../../components/UI/toggle/Toggle";
+import { getAddBankAccountSchema, getEditBankAccountSchema } from "../../../../utils/utils";
 import styles from "./BankAccount.module.scss";
-
-const getAddSchema = () =>
-  Yup.object().shape({
-    accountHolderName: Yup.string().trim().required("Account holder name is required"),
-    accountNumber: Yup.string()
-      .trim()
-      .required("Account number is required")
-      .matches(/^\d{9,18}$/, "Enter a valid 9-18 digit account number"),
-    confirmAccountNumber: Yup.string()
-      .trim()
-      .required("Please confirm account number")
-      .oneOf([Yup.ref("accountNumber")], "Account numbers don't match"),
-    ifscCode: Yup.string()
-      .trim()
-      .required("IFSC code is required")
-      .matches(/^[A-Za-z]{4}0[A-Za-z0-9]{6}$/, "Enter a valid IFSC code"),
-    bankName: Yup.string().trim().required("Bank name is required"),
-    branchName: Yup.string().trim(),
-    accountType: Yup.string().oneOf(["savings", "current"]).required(),
-    isPrimary: Yup.boolean(),
-  });
-
-const getEditSchema = () =>
-  Yup.object().shape({
-    accountHolderName: Yup.string().trim().required("Account holder name is required"),
-    bankName: Yup.string().trim().required("Bank name is required"),
-    branchName: Yup.string().trim(),
-    accountType: Yup.string().oneOf(["savings", "current"]).required(),
-    isPrimary: Yup.boolean(),
-  });
 
 const AddEditBankAccount = () => {
   const navigate = useNavigate();
@@ -61,7 +34,7 @@ const AddEditBankAccount = () => {
       accountType: existingAccount?.accountType || "savings",
       isPrimary: existingAccount?.isPrimary || false,
     },
-    validationSchema: isEdit ? getEditSchema() : getAddSchema(),
+    validationSchema: isEdit ? getEditBankAccountSchema() : getAddBankAccountSchema(),
     enableReinitialize: true,
     onSubmit: async (values) => {
       try {
@@ -91,14 +64,7 @@ const AddEditBankAccount = () => {
   return (
     <div className={styles.container}>
       {/* Header */}
-      <div className={styles.header}>
-        <button className={styles.backBtn} onClick={() => navigate(-1)} aria-label="Go back">
-          <Icons.ChevronLeft size={18} />
-        </button>
-        <h1 className={styles.headerTitle}>
-          {isEdit ? "Edit Bank Account" : "Add Bank Account"}
-        </h1>
-      </div>
+      <SectionHeader title={isEdit ? "Edit Bank Account" : "Add Bank Account"} />
 
       <form onSubmit={handleSubmit} className={styles.form} noValidate>
         {/* Account Holder Name */}
@@ -206,29 +172,23 @@ const AddEditBankAccount = () => {
         </div>
 
         {/* Primary Toggle */}
-        <label className={styles.primaryToggle}>
-          <span className={styles.toggleText}>Set as Primary Account</span>
-          <div
-            className={`${styles.toggleTrack} ${values.isPrimary ? styles.toggleTrackActive : ""}`}
-            onClick={() => setFieldValue("isPrimary", !values.isPrimary)}
-          >
-            <div className={`${styles.toggleThumb} ${values.isPrimary ? styles.toggleThumbActive : ""}`} />
-          </div>
-          <input type="checkbox" name="isPrimary" checked={values.isPrimary} onChange={handleChange} className={styles.srOnly} />
-        </label>
+        <Toggle
+          label="Set as Primary Account"
+          checked={values.isPrimary}
+          onChange={(val) => setFieldValue("isPrimary", val)}
+          className={styles.primaryToggle}
+        />
 
         {/* Submit */}
         <div className={styles.submitFooter}>
-          <button type="submit" disabled={isSubmitting} className={styles.submitButton}>
-            {isSubmitting ? (
-              <div className={styles.spinnerSmall} />
-            ) : (
-              <>
-                {isEdit ? "Update Bank" : "Add Bank"}
-                <Icons.ChevronRight size={16} />
-              </>
-            )}
-          </button>
+          <Button
+            type="submit"
+            variant="primary"
+            disabled={isSubmitting}
+            icon={!isSubmitting ? <Icons.ChevronRight size={16} /> : undefined}
+          >
+            {isSubmitting ? <div className={styles.spinnerSmall} /> : (isEdit ? "Update Bank" : "Add Bank")}
+          </Button>
         </div>
       </form>
     </div>

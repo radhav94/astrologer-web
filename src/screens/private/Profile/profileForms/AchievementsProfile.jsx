@@ -9,7 +9,7 @@ import SectionHeader from "../../../../components/UI/sectionHeader/SectionHeader
 import Toggle from "../../../../components/UI/toggle/Toggle";
 import FileUploadInput from "../../../../components/UI/fileUploadInput/FileUploadInput";
 import styles from "./ProfileForms.module.scss";
-import { createAchievementsValidation } from "../../../../utils/utlis";
+import { createAchievementsValidation } from "../../../../utils/utils";
 import { useFileUpload } from "../../../../hooks/useFileUpload";
 import { useSetAstroEditProfileMutation } from "../../../../redux/profileApi/profileApi";
 import toast from "../../../../components/toast";

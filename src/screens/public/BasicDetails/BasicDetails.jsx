@@ -15,7 +15,7 @@ import {
   genderValidationSchema,
   dobValidationSchema,
   emailValidationSchema,
-} from "../../../utils/utlis";
+} from "../../../utils/utils";
 
 const BasicDetails = () => {
   const navigate = useNavigate();

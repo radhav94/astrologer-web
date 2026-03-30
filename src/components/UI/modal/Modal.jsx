@@ -1,6 +1,6 @@
 import { createPortal } from "react-dom";
 import styles from "./Modal.module.scss";
-import { combineClasses } from "../../../utils/utlis";
+import { combineClasses } from "../../../utils/utils";
 import { useEffect } from "react";
 import BackButton from "../backButton/BackButton";
 import { useNavigate } from "react-router-dom";

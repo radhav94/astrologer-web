@@ -1,5 +1,5 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import { getToken } from "../../utils/utlis";
+import { getToken } from "../../utils/utils";
 
 export const epicApi = createApi({
   reducerPath: "epicApi",

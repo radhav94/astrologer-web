@@ -3,7 +3,7 @@ import { useFormik } from "formik";
 import { useDispatch, useSelector } from "react-redux";
 import * as Yup from "yup";
 import { updateRegisterData, setCurrentStep } from "../../../reducer/registerSlice";
-import { createDropdownValidation, createMultiSelectValidation } from "../../../utils/utlis";
+import { createDropdownValidation, createMultiSelectValidation } from "../../../utils/utils";
 import { useGetExpertiseListQuery } from "../../../redux/register/registerAstroApi";
 import Button from "../../../components/UI/button/Button";
 import styles from "./BasicForms.module.scss";

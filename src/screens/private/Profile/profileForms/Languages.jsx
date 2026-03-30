@@ -8,7 +8,7 @@ import styles from "./ProfileForms.module.scss";
 import Button from "../../../../components/UI/button/Button";
 import SectionHeader from "../../../../components/UI/sectionHeader/SectionHeader";
 import Chip from "../../../../components/UI/chip/Chip";
-import { createLanguagePreferencesValidation } from "../../../../utils/utlis";
+import { createLanguagePreferencesValidation } from "../../../../utils/utils";
 import { useSetAstroEditProfileMutation } from "../../../../redux/profileApi/profileApi";
 import toast from "../../../../components/toast";
 import { useSelector } from "react-redux";

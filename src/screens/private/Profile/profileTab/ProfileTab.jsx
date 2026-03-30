@@ -4,7 +4,7 @@ import { LuPencilLine } from "react-icons/lu";
 import styles from "./ProfileTab.module.scss";
 import { AppDefaultImg, AppImages } from "../../../../utils/appImages";
 import dayjs from "dayjs";
-import { formatIndianPhone, getDefaultImgBasedOnGender } from "../../../../utils/utlis";
+import { formatIndianPhone, getDefaultImgBasedOnGender } from "../../../../utils/utils";
 
 const ProfileTab = ({ profileData }) => {
   const [isAchievementExpanded, setIsAchievementExpanded] = useState(false);

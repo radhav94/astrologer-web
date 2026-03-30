@@ -3,7 +3,7 @@ import { useFormik } from "formik";
 import { useDispatch, useSelector } from "react-redux";
 import * as Yup from "yup";
 import { updateRegisterData, setCurrentStep } from "../../../reducer/registerSlice";
-import { createLanguagePreferencesValidation } from "../../../utils/utlis";
+import { createLanguagePreferencesValidation } from "../../../utils/utils";
 import Button from "../../../components/UI/button/Button";
 import FormStep from "./FormStep";
 import styles from "./BasicForms.module.scss";

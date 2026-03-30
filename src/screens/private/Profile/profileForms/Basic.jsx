@@ -17,7 +17,7 @@ import {
   genderValidationSchema,
   dobValidationSchema,
   emailValidationSchema,
-} from "../../../../utils/utlis";
+} from "../../../../utils/utils";
 import dayjs from "dayjs";
 
 const Basic = () => {

@@ -8,7 +8,7 @@ import {
   updateRegisterData,
   setCurrentStep,
 } from "../../../reducer/registerSlice";
-import { createEducationValidation } from "../../../utils/utlis";
+import { createEducationValidation } from "../../../utils/utils";
 import { useFileUpload } from "../../../hooks/useFileUpload";
 import Button from "../../../components/UI/button/Button";
 import FormStep from "./FormStep";

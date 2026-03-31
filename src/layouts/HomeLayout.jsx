@@ -43,10 +43,14 @@ const HomeLayout = () => {
     JSON.parse(localStorage.getItem("shubhtalk_astrologer_details") || "{}");
   const astrologerId = astrologerIdFromRedux || userData?._id || userData?.id;
 
-  const { data: astrologerResponse } = useGetAstrologerByIdQuery(astrologerId);
+  const { data: astrologerResponse } = useGetAstrologerByIdQuery(astrologerId, {
+    skip: !astrologerId,
+  });
 
   const isRegister = astrologerDetails?.isRegister;
   const isVerified = astrologerDetails?.isVerified;
+
+  console.log("astrologerResponse",astrologerId,astrologerResponse)
 
   // Only check manualVerification if both isRegister and isVerified are true
   const isManualVerification = astrologerDetails?.manualVerification;

@@ -1,3 +1,4 @@
+import { setAstrologerDetails } from "../../reducer/registerSlice";
 import { epicApi } from "../baseApi/epicApi";
 
 export const astrologerApi = epicApi.injectEndpoints({
@@ -27,17 +28,20 @@ export const astrologerApi = epicApi.injectEndpoints({
       }),
       providesTags: (result, error, id) => [
         { type: "Astrologer", id },
+        "Astrologer",
         "Availability",
         "Price",
       ],
       // Invalidate Wallets tag so wallet data refetches when astrologer data is fetched
       async onQueryStarted(arg, { dispatch, queryFulfilled }) {
         try {
-          await queryFulfilled;
+          const { data } = await queryFulfilled;
+          // Store astrologer details in Redux
+          dispatch(setAstrologerDetails(data?.data));
           // After astrologer data is fetched, invalidate Wallets to trigger refetch
           dispatch(epicApi.util.invalidateTags(["Wallets"]));
         } catch {
-          // Silently ignore — wallet invalidation is non-critical
+          // Silently ignore — non-critical
         }
       },
     }),

@@ -1,31 +1,21 @@
-import { setAstrologerDetails } from "../../reducer/registerSlice";
 import { epicApi } from "../baseApi/epicApi";
 
 export const profileApi = epicApi.injectEndpoints({
   endpoints: (builder) => ({
-    getAstrologerById: builder.query({
-      query: ({ id }) => ({
-        url: `astrologers/astrologer?astrologerId=${id}&change=false`,
-        method: "GET",
-      }),
-      providesTags: (result, error, { id }) => [
-        { type: "Astrologer", id },
-      ],
-      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
-    try {
-      const { data } = await queryFulfilled;
-
-      dispatch(setAstrologerDetails(data?.data));
-    } catch (error) {
-      console.error("Failed to store astrologer details:", error);
-    }
-  },
-    }),
     getTransactionList: builder.query({
-      query: ({ page = 1, limit = 10 } = {}) => ({
+      query: ({ page = 1, limit = 10, sortBy, filterBy, search, dateRange, customFromDate, customToDate } = {}) => ({
         url: "transactions/all",
         method: "GET",
-        params: { page, limit },
+        params: {
+          page,
+          limit,
+          ...(sortBy && { sortBy }),
+          ...(filterBy && { filterBy }),
+          ...(search && { search }),
+          ...(dateRange && { dateRange }),
+          ...(customFromDate && { customFromDate }),
+          ...(customToDate && { customToDate }),
+        },
       }),
       providesTags: ["Transactions"],
     }),
@@ -43,4 +33,4 @@ export const profileApi = epicApi.injectEndpoints({
   }),
 });
 
-export const { useGetAstrologerByIdQuery, useGetTransactionListQuery, useSetAstroEditProfileMutation } = profileApi;
+export const { useGetTransactionListQuery, useSetAstroEditProfileMutation } = profileApi;

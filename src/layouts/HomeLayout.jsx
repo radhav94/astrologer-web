@@ -353,7 +353,7 @@ const HomeLayout = () => {
             {/* RIGHT: Followers + Status */}
             {isManualVerification && (
               <div className={styles.rightSection}>
-                <p className={styles.followers}>1.15k followers</p>
+                {/* <p className={styles.followers}>1.15k followers</p> */}
 
                 <div className={styles.statusButtons}>
                   {/* Call Button */}

@@ -58,7 +58,7 @@ const WithdrawalsList = () => {
           return (
             <div key={item._id} className={styles.card}>
               <div className={styles.cardHeader}>
-                <span className={styles.cardId}>#WR_{item._id?.slice(-10)}</span>
+                <span className={styles.cardId}>#{item?.request_id}</span>
                 <span className={styles.cardDate}>
                   {formatDate(item.createdAt)} • {formatTime(item.createdAt)}
                 </span>

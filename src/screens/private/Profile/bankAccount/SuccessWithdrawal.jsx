@@ -1,9 +1,10 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import { Icons } from "../../../../components/Icons";
-import { appGifs } from "../../../../utils/appImages";
+import { appJson } from "../../../../utils/appImages";
 import Button from "../../../../components/UI/button/Button";
 import styles from "./SuccessWithdrawal.module.scss";
+import Lottie from "lottie-react";
 
 const formatDateTime = (isoString) => {
   if (!isoString) return "";
@@ -30,9 +31,10 @@ const SuccessWithdrawal = () => {
       <div className={styles.content}>
         {/* Success badge with confetti */}
         <div className={styles.badgeArea}>
-          <img
-            src={appGifs.SuccessConfetti}
-            alt="Success"
+          <Lottie
+            animationData={appJson?.SuccessFile}
+            loop={false}
+            autoplay={true}
             className={styles.badgeGif}
           />
         </div>
@@ -80,10 +82,9 @@ const SuccessWithdrawal = () => {
         <div className={styles.infoBox}>
           <div className={styles.infoIconWrap}>
             <Icons.AlertCircle size={20} />
-             <p className={styles.infoTitle}>Processing Now</p>
+            <p className={styles.infoTitle}>Processing Now</p>
           </div>
           <div className={styles.infoContent}>
-           
             <p className={styles.infoText}>
               Your withdrawal request has been submitted successfully. We are
               processing your request.

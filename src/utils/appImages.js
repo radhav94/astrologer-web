@@ -193,8 +193,8 @@ export const appSvgs = {
   OfflineCloud,
 };
 
-import SuccessConfetti from "../assets/gif/success confetti.gif";
+import SuccessFile from "../assets/json/Success.json";
 
-export const appGifs = {
-  SuccessConfetti,
+export const appJson = {
+  SuccessFile,
 };

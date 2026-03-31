@@ -46,6 +46,13 @@ export const supportApi = epicApi.injectEndpoints({
         body: { message },
       }),
     }),
+    rateTicket: builder.mutation({
+      query: ({ ticketId, rating, feedback }) => ({
+        url: `support/tickets/${ticketId}/rate`,
+        method: "POST",
+        body: { rating, ...(feedback ? { feedback } : {}) },
+      }),
+    }),
   }),
 });
 
@@ -57,4 +64,5 @@ export const {
   useLazyGetMyTicketsQuery,
   useGetTicketDetailQuery,
   useSendTicketMessageMutation,
+  useRateTicketMutation,
 } = supportApi;

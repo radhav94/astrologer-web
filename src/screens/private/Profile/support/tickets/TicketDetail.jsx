@@ -1,14 +1,24 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Icons } from "../../../../../components/Icons";
-import { useGetTicketDetailQuery } from "../../../../../redux/supportApi/supportApi";
+import { useGetTicketDetailQuery, useRateTicketMutation } from "../../../../../redux/supportApi/supportApi";
 
 const TicketDetail = () => {
   const { ticketId } = useParams();
   const { data: apiData, isLoading } = useGetTicketDetailQuery(ticketId);
+  const [rateTicket] = useRateTicketMutation();
   const ticket = apiData?.data;
   const chatEndRef = useRef(null);
   const messages = ticket?.messages || ticket?.conversation || [];
+  const [selectedRating, setSelectedRating] = useState(0);
+  const [ratingSubmitted, setRatingSubmitted] = useState(false);
+
+  useEffect(() => {
+    if (ticket?.rating) {
+      setSelectedRating(ticket.rating);
+      setRatingSubmitted(true);
+    }
+  }, [ticket?.rating]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -78,15 +88,33 @@ const TicketDetail = () => {
 
       {/* Rating - fixed at bottom */}
       <div className="flex justify-center py-4 bg-white border-t border-gray-100">
-        <div className="bg-white rounded-2xl border border-gray-100 px-8 py-5 text-center shadow-sm">
-          <div className="flex justify-center gap-1 mb-3">
+        <div className="bg-[#E8E8E8] rounded-xl p-4 flex flex-col items-center gap-3 w-[90%] max-w-sm">
+          <div className="bg-white rounded-xl px-6 py-4 flex gap-2 w-full justify-center">
             {[1, 2, 3, 4, 5].map((star) => (
-              <svg key={star} width="32" height="32" viewBox="0 0 24 24" fill={star <= (ticket.rating || 0) ? "#F75801" : "#e5c9b0"}>
-                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-              </svg>
+              <button
+                key={star}
+                onClick={async () => {
+                  if (ratingSubmitted) return;
+                  setSelectedRating(star);
+                  try {
+                    await rateTicket({ ticketId, rating: star }).unwrap();
+                    setRatingSubmitted(true);
+                  } catch {
+                    // keep the selection, user can retry
+                  }
+                }}
+                disabled={ratingSubmitted}
+                className="transition-transform hover:scale-110 disabled:cursor-default"
+              >
+                <svg width="32" height="32" viewBox="0 0 24 24" fill={star <= selectedRating ? "#F75801" : "#F4C2A3"} stroke="none">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                </svg>
+              </button>
             ))}
           </div>
-          <p className="text-sm font-semibold text-gray-700">Please Rate your Experience</p>
+          <p className="text-sm font-bold text-gray-900">
+            {ratingSubmitted ? "Thank you for your feedback!" : "Please Rate your Experience"}
+          </p>
         </div>
       </div>
     </div>

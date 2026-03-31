@@ -8,6 +8,8 @@ import styles from "./ConsultationPriceSection.module.scss";
  * Displays current consultation rates and allows updating them
  */
 const ConsultationPriceSection = ({ astrologerData }) => {
+
+  // console.log("astrologerData:::",astrologerData)
   return (
     <div className="grid grid-cols-1">
       <div className="bg-[#FFE4BA] rounded-3xl p-4 sm:p-8 lg:p-6 text-left shadow-sm relative overflow-hidden">

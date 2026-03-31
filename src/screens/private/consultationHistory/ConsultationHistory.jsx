@@ -44,15 +44,28 @@ const ConsultationHistory = () => {
   // Shared filter hook for both tabs
   const filterHook = useHistoryFilters();
   const {
-    page, setPage, searchQuery, queryParams, hasActiveFilters,
-    showFilterModal, activeFilterTab, setActiveFilterTab, tempFilters,
-    handleSearchChange, handleSearchSubmit, clearSearch,
-    openFilterModal, applyFilters, resetFilters, updateTempFilter, setShowFilterModal,
+    orderPage, setOrderPage,
+    txnPage, setTxnPage,
+    searchQuery,
+    orderQueryParams, txnQueryParams,
+    hasActiveFilters,
+    showFilterModal,
+    activeFilterTab,
+    setActiveFilterTab,
+    tempFilters,
+    handleSearchChange,
+    handleSearchSubmit,
+    clearSearch,
+    openFilterModal,
+    applyFilters,
+    resetFilters,
+    updateTempFilter,
+    setShowFilterModal,
   } = filterHook;
 
   const navigate = useNavigate();
 
-  const { data, isLoading, isFetching, isError } = useGetOrderHistoryQuery(queryParams, {
+  const { data, isLoading, isFetching, isError } = useGetOrderHistoryQuery(orderQueryParams, {
     refetchOnMountOrArgChange: true,
   });
 
@@ -61,7 +74,7 @@ const ConsultationHistory = () => {
     data: txnData,
     isFetching: txnFetching,
     isError: txnError,
-  } = useGetTransactionListQuery(queryParams, {
+  } = useGetTransactionListQuery(txnQueryParams, {
     refetchOnMountOrArgChange: true,
   });
   const txnTransactions = txnData?.data?.transactions || [];
@@ -116,7 +129,7 @@ const ConsultationHistory = () => {
   // Scroll to top when page changes
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [page]);
+  }, [orderPage, txnPage]);
 
   const handleNavigation = (type, item) => {
     if (type !== "chat") {
@@ -135,8 +148,8 @@ const ConsultationHistory = () => {
     });
   };
 
-  // isLoadingOrFetching flag — used for overlay rendering
-  const isLoadingOrFetching = isLoading || isFetching;
+  // Show loading overlay only on initial load, not during pagination
+  const isInitialLoading = isLoading && transactions.length === 0;
 
   // Error state — only show full-page error when NO filters are active
   if (isError && !hasActiveFilters) {
@@ -259,7 +272,7 @@ const ConsultationHistory = () => {
               setRefundItem={setRefundItem}
               setRefundMinutes={setRefundMinutes}
               setRefundType={setRefundType}
-              setPage={setPage}
+              setPage={setOrderPage}
               onResetFilters={resetFilters}
               onNavigate={handleNavigation}
             />
@@ -274,8 +287,8 @@ const ConsultationHistory = () => {
               isError={txnError}
               hasActiveFilters={hasActiveFilters}
               onResetFilters={resetFilters}
-              page={page}
-              setPage={setPage}
+              page={txnPage}
+              setPage={setTxnPage}
             />
           )}
 
@@ -357,8 +370,8 @@ const ConsultationHistory = () => {
         </main>
       </div>
 
-      {/* Loading Overlay — shown during isLoading or isFetching */}
-      {isLoadingOrFetching && (
+      {/* Loading Overlay — shown only during initial load */}
+      {isInitialLoading && (
         <div className={styles.loadingOverlay}>
           <div className={styles.loadingContent}>
             <div className={styles.spinner}></div>

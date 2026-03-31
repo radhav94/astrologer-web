@@ -45,14 +45,15 @@ const Dashboard = () => {
     localStorage.getItem("shubhtalk_astrologer_details")
   );
 
-  console.log("Astrologer Details::",userData)
-  const astrologerId = userData?.id;
+  
+  const astrologerId = userData?._id || userData?.id;
   const { data } = useGetAstrologerByIdQuery(astrologerId, {
-  skip: !astrologerId,
-  refetchOnMountOrArgChange: true,
-});
+    skip: !astrologerId,
+    refetchOnMountOrArgChange: true,
+  });
   const astrologerData = data?.data || {};
 
+  console.log("Astrologer Details Dashboard::", astrologerData);
   
 
   // Fetch homepage sections with ordering

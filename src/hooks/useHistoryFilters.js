@@ -10,7 +10,8 @@ const INITIAL_FILTERS = {
 };
 
 const useHistoryFilters = () => {
-  const [page, setPage] = useState(1);
+  const [orderPage, setOrderPage] = useState(1);
+  const [txnPage, setTxnPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState(INITIAL_FILTERS);
   const [showFilterModal, setShowFilterModal] = useState(false);
@@ -18,27 +19,32 @@ const useHistoryFilters = () => {
   const [activeFilterTab, setActiveFilterTab] = useState("Type");
   const debounceRef = useRef(null);
 
+  const resetPages = () => {
+    setOrderPage(1);
+    setTxnPage(1);
+  };
+
   // Debounced search
   const handleSearchChange = useCallback((value) => {
     setSearchQuery(value);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       setFilters((prev) => ({ ...prev, search: value.trim() }));
-      setPage(1);
+      resetPages();
     }, 500);
   }, []);
 
   const handleSearchSubmit = useCallback(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     setFilters((prev) => ({ ...prev, search: searchQuery.trim() }));
-    setPage(1);
+    resetPages();
   }, [searchQuery]);
 
   const clearSearch = useCallback(() => {
     setSearchQuery("");
     if (debounceRef.current) clearTimeout(debounceRef.current);
     setFilters((prev) => ({ ...prev, search: "" }));
-    setPage(1);
+    resetPages();
   }, []);
 
   useEffect(() => {
@@ -55,13 +61,12 @@ const useHistoryFilters = () => {
   }, [filters]);
 
   const applyFilters = useCallback(() => {
-    // Validate custom dates
     const { customFromDate, customToDate } = tempFilters;
     if ((customFromDate && !customToDate) || (!customFromDate && customToDate)) {
-      return; // Both must be provided
+      return;
     }
     setFilters(tempFilters);
-    setPage(1);
+    resetPages();
     setShowFilterModal(false);
   }, [tempFilters]);
 
@@ -69,13 +74,12 @@ const useHistoryFilters = () => {
     setTempFilters(INITIAL_FILTERS);
     setFilters(INITIAL_FILTERS);
     setSearchQuery("");
-    setPage(1);
+    resetPages();
     setShowFilterModal(false);
   }, []);
 
   const updateTempFilter = useCallback((key, value) => {
     setTempFilters((prev) => {
-      // If selecting dateRange, clear custom dates and vice versa
       if (key === "dateRange" && value) {
         return { ...prev, dateRange: value, customFromDate: "", customToDate: "" };
       }
@@ -86,10 +90,8 @@ const useHistoryFilters = () => {
     });
   }, []);
 
-  // Build query params for API calls
-  const queryParams = {
-    page,
-    limit: 10,
+  // Build shared filter params (without page)
+  const filterParams = {
     ...(filters.sortBy && { sortBy: filters.sortBy }),
     ...(filters.filterBy && { filterBy: filters.filterBy }),
     ...(filters.search && { search: filters.search }),
@@ -97,6 +99,10 @@ const useHistoryFilters = () => {
     ...(filters.customFromDate && { customFromDate: filters.customFromDate }),
     ...(filters.customToDate && { customToDate: filters.customToDate }),
   };
+
+  // Separate query params per tab
+  const orderQueryParams = { page: orderPage, limit: 10, ...filterParams };
+  const txnQueryParams = { page: txnPage, limit: 10, ...filterParams };
 
   const hasActiveFilters = !!(
     filters.search ||
@@ -114,12 +120,15 @@ const useHistoryFilters = () => {
   ].filter(Boolean).length;
 
   return {
-    page,
-    setPage,
+    orderPage,
+    setOrderPage,
+    txnPage,
+    setTxnPage,
     searchQuery,
     filters,
     tempFilters,
-    queryParams,
+    orderQueryParams,
+    txnQueryParams,
     hasActiveFilters,
     activeFilterCount,
     showFilterModal,

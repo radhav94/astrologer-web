@@ -63,6 +63,7 @@ const HomeLayout = () => {
     firstName && lastName ? `${firstName} ${lastName}` : "Unknown";
   const avatar =
     userData?.profileImgUrl || getDefaultImgBasedOnGender(userData?.gender);
+  const followers = userData?.followersList?.length || 0;
 
   //Chat
   const { setActiveChat, setChatSeconds, resetTimer, recoverChatAfterSystemDisconnect } =
@@ -353,7 +354,7 @@ const HomeLayout = () => {
             {/* RIGHT: Followers + Status */}
             {isManualVerification && (
               <div className={styles.rightSection}>
-                {/* <p className={styles.followers}>1.15k followers</p> */}
+                <p className={styles.followers}>{followers} followers</p>
 
                 <div className={styles.statusButtons}>
                   {/* Call Button */}

@@ -65,7 +65,7 @@ const AreaOfExpertise = () => {
       dispatch(setCurrentStep(7));
       
       // Navigate to next step
-      navigate("/verifyprofile");
+      navigate("/kyc-verification");
     },
   });
 
@@ -104,7 +104,7 @@ const AreaOfExpertise = () => {
     // Mark current step as completed and move to next step
     dispatch(setCurrentStep(7));
     // Navigate to next step
-    navigate("/verifyprofile");
+    navigate("/kyc-verification");
   };
 
   return (
@@ -113,7 +113,7 @@ const AreaOfExpertise = () => {
         <div className={styles.formLayoutContent}>
           {/* Progress + Skip */}
           <div className={styles.progressWithSkip}>
-            <FormStep totalSteps={7} currentStep={6} />
+            <FormStep totalSteps={8} currentStep={6} />
 
             <button 
               type="button"

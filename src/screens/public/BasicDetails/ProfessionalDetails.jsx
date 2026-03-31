@@ -123,7 +123,7 @@ const ProfessionalDetails = () => {
       <div className={styles.formLayoutContainer}>
         <div className={styles.formLayoutContent}>
           {/* Progress Dots */}
-          <FormStep totalSteps={7} currentStep={2} />
+          <FormStep totalSteps={8} currentStep={2} />
 
           {/* Heading */}
           <h1 className={styles.heading}>

@@ -11,7 +11,8 @@ const STEP_ROUTES = {
   4: "/education",
   5: "/achievements",
   6: "/areaofexpertise",
-  7: "/verifyprofile",
+  7: "/kyc-verification",
+  8: "/verifyprofile",
 };
 
 const FormStep = ({ totalSteps = 6, currentStep = 1 }) => {

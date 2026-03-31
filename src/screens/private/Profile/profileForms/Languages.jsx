@@ -42,6 +42,7 @@ const Languages = () => {
     "Punjabi",
     "Telugu",
     "Kannada",
+    "Odia"
   ];
   const proficiencies = ["Fluent", "Basic", "Conversational", "Native"];
 

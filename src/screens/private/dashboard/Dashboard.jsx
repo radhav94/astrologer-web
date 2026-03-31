@@ -45,7 +45,7 @@ const Dashboard = () => {
     localStorage.getItem("shubhtalk_astrologer_details")
   );
 
-  console.log("Astrologer Details::",userData)
+  
   const astrologerId = userData?.id;
   const { data } = useGetAstrologerByIdQuery(astrologerId, {
   skip: !astrologerId,
@@ -53,6 +53,8 @@ const Dashboard = () => {
 });
   const astrologerData = data?.data || {};
 
+
+  // console.log("Astrologer Details::",astrologerData)
   
 
   // Fetch homepage sections with ordering

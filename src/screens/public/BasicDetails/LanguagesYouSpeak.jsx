@@ -10,7 +10,7 @@ import styles from "./BasicForms.module.scss";
 import { X } from "lucide-react";
 import { useState } from "react";
 
-const LANGUAGES = ["English", "Hindi", "Marathi", "Punjabi", "Telugu", "Kannada"];
+const LANGUAGES = ["English", "Hindi", "Marathi", "Punjabi", "Telugu", "Kannada","Odia"];
 const LEVELS = ["Basic", "Conversational", "Native", "Fluent"];
 
 const LanguagesYouSpeak = () => {

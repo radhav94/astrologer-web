@@ -100,7 +100,7 @@ const LanguagesYouSpeak = () => {
                 <span style={{ color: "#F75801", fontSize: 18, lineHeight: 1 }}>‹</span>
               </button>
             </div>
-            <FormStep totalSteps={7} currentStep={3} />
+            <FormStep totalSteps={8} currentStep={3} />
             <h1 className={styles.heading}>Languages You Speak</h1>
             <p className={styles.subheading}>We verify every astrologer to maintain authenticity and trust.</p>
 
@@ -155,7 +155,7 @@ const LanguagesYouSpeak = () => {
     <div className={styles.formLayoutWrapper}>
       <div className={styles.formLayoutContainer}>
         <div className={styles.formLayoutContent}>
-          <FormStep totalSteps={7} currentStep={3} />
+          <FormStep totalSteps={8} currentStep={3} />
           <h1 className={styles.heading}>Languages You Speak</h1>
           <p className={styles.subheading}>We verify every astrologer to maintain authenticity and trust.</p>
 

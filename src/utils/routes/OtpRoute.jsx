@@ -13,6 +13,7 @@ const OtpRoute = () => {
     "/education",
     "/achievements",
     "/areaofexpertise",
+    "/kyc-verification",
     "/verifyprofile",
     "/verificationpending",
   ];

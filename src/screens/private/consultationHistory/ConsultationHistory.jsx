@@ -189,7 +189,7 @@ const ConsultationHistory = () => {
   return (
     <>
       <div className={styles.headerWrapper}>
-        <SectionHeader title={"Order History"} />
+        <SectionHeader title={activeTab === "orders"?"Order History":"Transaction History"} />
         <h2 className={styles.ordersCount}>
           Total Records: {data?.data?.pagination?.totalItems || 0}
         </h2>

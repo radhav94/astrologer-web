@@ -39,8 +39,6 @@ const BasicDetails = () => {
       gender: registerData?.gender ? registerData.gender.charAt(0).toUpperCase() + registerData.gender.slice(1) : "Female",
       dateOfBirth: registerData?.dateOfBirth || "2002-01-01",
       email: registerData?.email || "",
-      place: "New Delhi, India",
-      password: "test@12389",
     },
     validationSchema,
     validateOnChange: true,
@@ -55,8 +53,6 @@ const BasicDetails = () => {
           gender: values.gender.toLowerCase(),
           dateOfBirth: values.dateOfBirth,
           email: values.email,
-          place: "New Delhi, India",
-          password: "test@12389",
         }),
       );
 

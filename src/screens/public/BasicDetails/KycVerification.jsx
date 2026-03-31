@@ -122,7 +122,17 @@ const KycVerification = () => {
         kycAadhaarDob: aadhaarDob,
       }));
     } catch (err) {
+      const status = err?.status;
       Toast.error(err?.data?.message || "OTP verification failed");
+      if (status === 400) {
+        // Invalid name/dob/number — reset the entire OTP flow
+        setOtpSent(false);
+        setOtp(Array(OTP_LENGTH).fill(""));
+        setKycRecordId(null);
+      } else {
+        // 502 or other — wrong OTP, just clear the OTP inputs to retry
+        setOtp(Array(OTP_LENGTH).fill(""));
+      }
     }
   }, [otp, kycRecordId, verifyOtp, dispatch]);
 

@@ -403,16 +403,20 @@ const ConsultationHistory = () => {
                     <div className={styles.filterOptionHeader}>
                       <span>Filter by Type</span>
                     </div>
-                    {["call", "chat"].map((type) => (
+                    {[
+                      { value: "", label: "All" },
+                      { value: "call", label: "Call" },
+                      { value: "chat", label: "Chat" },
+                    ].map((opt) => (
                       <div
-                        key={type}
+                        key={opt.value}
                         className={styles.filterOptionItem}
-                        onClick={() => updateTempFilter("filterBy", tempFilters.filterBy === type ? "" : type)}
+                        onClick={() => updateTempFilter("filterBy", tempFilters.filterBy === opt.value ? "" : opt.value)}
                       >
-                        <span className={`${styles.tickIcon} ${tempFilters.filterBy === type ? styles.tickIconActive : ""}`}>
-                          {tempFilters.filterBy === type && <Icons.Check size={16} />}
+                        <span className={`${styles.tickIcon} ${tempFilters.filterBy === opt.value ? styles.tickIconActive : ""}`}>
+                          {tempFilters.filterBy === opt.value && <Icons.Check size={16} />}
                         </span>
-                        <span className={styles.filterOptionLabel}>{type.charAt(0).toUpperCase() + type.slice(1)}</span>
+                        <span className={styles.filterOptionLabel}>{opt.label}</span>
                       </div>
                     ))}
                   </>

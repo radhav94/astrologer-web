@@ -6,6 +6,7 @@ import { useLiveViewLogic } from "./useLiveViewLogic";
 import GiftPopup from "./GiftPopup";
 import CallRequestPopup from "./CallRequestPopup";
 import SharePopup from "./SharePopup";
+import IncomingWaitingNotification from "./IncomingWaitingNotification";
 import { Toast } from "../../components";
 import { stopLiveStream } from "../../services/appServices/authservice";
 import { getUserFromStorage } from "../../utils/authStorage";
@@ -344,6 +345,9 @@ const LiveView = (props) => {
         }}
         host={hostData}
       />
+
+      {/* Waiting list notification (calls/chats arriving while live) */}
+      <IncomingWaitingNotification />
     </div>
   );
 };

@@ -386,11 +386,11 @@
 
 // List Container
 .listContainer {
-    padding: 0 1.25rem;
-    margin-bottom: 1.5rem;
-
-    @media (min-width: 640px) {
-        padding: 0 1.5rem;
+    
+    padding: 0 1.5rem;
+    @media (max-width: 640px) {
+        padding: 0 1.25rem;
+        margin-bottom: 7.5rem;
     }
 }
 

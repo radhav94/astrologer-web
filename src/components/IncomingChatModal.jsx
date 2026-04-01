@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import toast from "./toast";
 
 const IncomingChatModal = () => {
-  const { incomingChat, setIncomingChat, setActiveChat } = useChat();
+  const { incomingChat, setIncomingChat, setActiveChat, resetTimer } = useChat();
   const navigate = useNavigate();
   const astroIdLocal = localStorage.getItem("shubhtalk_astro_id");
   const [isAccepting, setIsAccepting] = useState(false);
@@ -38,6 +38,7 @@ const IncomingChatModal = () => {
       
       // Only set active chat and navigate when server confirms success
       if (incomingChat) {
+        resetTimer();
         setActiveChat({
           roomId: incomingChat.roomId,
           isUserSide: false,

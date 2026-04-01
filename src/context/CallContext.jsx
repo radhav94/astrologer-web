@@ -261,7 +261,7 @@ export const CallProvider = ({ children }) => {
       roomId: currentCall.roomId,
       userId: currentCall.userId,
       astrologerId: currentCall.astrologerId,
-      callType: currentCall.callType,
+      callType: currentCall.callType || "audio",
     });
   }, [activeCall, restoreCallState]);
 

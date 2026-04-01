@@ -7,14 +7,26 @@ import styles from "./ProfileForms.module.scss";
 import Button from "../../../../components/UI/button/Button";
 import SectionHeader from "../../../../components/UI/sectionHeader/SectionHeader";
 import Chip from "../../../../components/UI/chip/Chip";
-import { useGetExpertiseListQuery, useSetAstroEditProfileMutation } from "../../../../redux/profileApi/profileApi";
+import { useSetAstroEditProfileMutation } from "../../../../redux/profileApi/profileApi";
+import { useGetExpertiseListQuery } from "../../../../redux/register/registerAstroApi";
 import toast from "../../../../components/toast";
 
 const ProfessionalProfileDtls = () => {
   const navigate = useNavigate();
   const [setAstroEditProfile, { isLoading: isUpdating }] =
     useSetAstroEditProfileMutation();
-  // const [baseExpertiseOptions,{ isLoading: isLoadingExpertise }] = useGetExpertiseListQuery();
+
+  const {data:expertiseApiResponse} = useGetExpertiseListQuery();
+
+  const skillCategory = expertiseApiResponse?.data?.find(
+    (item) => item?.title === "Skill"
+  );
+  const baseExpertiseOptions = (skillCategory?.list || []).map((item) => ({
+    title: item.title,
+    slug: item.slug,
+    ID: item.ID || item._id,
+    type: item.type,
+  }));
 
   // Get astrologer details from Redux state
   const astrologerDetails = useSelector(
@@ -32,14 +44,6 @@ const ProfessionalProfileDtls = () => {
 
   // Use Redux state as primary source for prefilling form
   const existingData = astrologerDetails || userData;
-
-  const baseExpertiseOptions = [
-    { title: "Tarot", slug: "tarot" },
-    { title: "Face Reading", slug: "face-reading" },
-    { title: "Vedic", slug: "vedic" },
-    { title: "Numerology", slug: "numerology" },
-    { title: "Palmistry", slug: "palmistry" },
-  ];
 
   // Get existing expertise from Redux
   const existingExpertise =
@@ -64,12 +68,7 @@ const ProfessionalProfileDtls = () => {
     experience: Yup.number()
       .min(0, "Experience must be at least 0 years")
       .required("Experience is required"),
-    // Old: expertise was array of strings
-    // expertise: Yup.array()
-    //   .of(Yup.string())
-    //   .min(1, "Please select at least one area of expertise")
-    //   .required("Area of expertise is required"),
-    // New: expertise is array of objects { title, slug }
+  
     expertise: Yup.array()
       .of(Yup.object().shape({ title: Yup.string(), slug: Yup.string() }))
       .min(1, "Please select at least one area of expertise")

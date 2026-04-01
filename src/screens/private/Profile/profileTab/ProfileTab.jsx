@@ -4,7 +4,7 @@ import { LuPencilLine } from "react-icons/lu";
 import styles from "./ProfileTab.module.scss";
 import { AppDefaultImg, AppImages } from "../../../../utils/appImages";
 import dayjs from "dayjs";
-import { formatIndianPhone, getDefaultImgBasedOnGender } from "../../../../utils/utlis";
+import { formatIndianPhone, getDefaultImgBasedOnGender } from "../../../../utils/utils";
 
 const ProfileTab = ({ profileData }) => {
   const [isAchievementExpanded, setIsAchievementExpanded] = useState(false);
@@ -29,7 +29,6 @@ const ProfileTab = ({ profileData }) => {
 
   const formattedPhone = formatIndianPhone(phone);
 
-  console.log("profileDataTab::", achievements);
 
   return (
     <div className={styles.profileTabContainer}>
@@ -115,7 +114,7 @@ const ProfileTab = ({ profileData }) => {
               .filter((edu) => edu?.qualification)
               .map((edu, index) => (
                 <span key={index} className={styles.tag}>
-                  {edu.qualification}
+                  {edu?.qualification || edu?.levelOfEducation}
                 </span>
               ))
           ) : (
@@ -133,7 +132,7 @@ const ProfileTab = ({ profileData }) => {
         <span className={styles.sectionTitle}>Achievements</span>
 
         <p className={styles.achievementsText}>
-          {achievements[0]?.achievementName ? (
+          {achievements[0]?.achievementName && (
             <>
               {isAchievementExpanded
                 ? achievements[0].achievementName
@@ -154,9 +153,7 @@ const ProfileTab = ({ profileData }) => {
                   </>
                 )}
             </>
-          ) : (
-            "No achievements added yet."
-          )}
+          ) }
         </p>
         <div className={styles.imagesGrid}>
         {achievements.length > 0 ? (

@@ -4,7 +4,7 @@ import { useFormik } from "formik";
 import { useDispatch, useSelector } from "react-redux";
 import * as Yup from "yup";
 import { updateRegisterData, setCurrentStep } from "../../../reducer/registerSlice";
-import { createAchievementsValidation } from "../../../utils/utlis";
+import { createAchievementsValidation } from "../../../utils/utils";
 import { useFileUpload } from "../../../hooks/useFileUpload";
 import Button from "../../../components/UI/button/Button";
 import FormStep from "./FormStep";
@@ -99,7 +99,7 @@ const Achievements = () => {
         <div className={styles.formLayoutContent}>
           {/* Progress + Skip */}
           <div className={styles.progressWithSkip}>
-            <FormStep totalSteps={7} currentStep={5} />
+            <FormStep totalSteps={8} currentStep={5} />
 
             <button 
               type="button"

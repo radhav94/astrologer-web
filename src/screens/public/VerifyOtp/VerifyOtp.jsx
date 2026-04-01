@@ -37,6 +37,11 @@ const VerifyOtp = () => {
     return () => clearInterval(interval);
   }, [timer]);
 
+  /* 🎯 Auto-focus first OTP input on mount */
+  useEffect(() => {
+    inputsRef.current[0]?.focus();
+  }, []);
+
   /* 🔙 BLOCK BACK BUTTON */
   useEffect(() => {
     const handleBack = () => {
@@ -148,7 +153,7 @@ const VerifyOtp = () => {
           <div className={styles.content}>
             <h1 className={styles.heading}>Enter OTP</h1>
             <p className={styles.description}>
-              We've sent a 4-digit code to your mobile {mobile}. Enter it below to continue.
+              We've sent a 6-digit code to your mobile {mobile}. Enter it below to continue.
             </p>
 
             {/* OTP INPUTS */}

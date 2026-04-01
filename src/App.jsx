@@ -24,6 +24,7 @@ import Education from "./screens/public/BasicDetails/Education";
 import Achievements from "./screens/public/BasicDetails/Achievements";
 import AreaOfExpertise from "./screens/public/BasicDetails/AreaOfExpertise";
 import VerifyProfile from "./screens/public/BasicDetails/VerifyProfile";
+import KycVerification from "./screens/public/BasicDetails/KycVerification";
 import VerificationPending from "./screens/public/BasicDetails/VerificationPending";
 import IncomingCallModal from "./components/IncomingCallModal";
 import AudioVideoContainer from "./screens/private/call/AudioVideoContainer";
@@ -50,6 +51,7 @@ function App() {
         { path: "/education", element: <Education /> },
         { path: "/achievements", element: <Achievements /> },
         { path: "/areaofexpertise", element: <AreaOfExpertise /> },
+        { path: "/kyc-verification", element: <KycVerification /> },
         { path: "/verifyprofile", element: <VerifyProfile /> },
         { path: "/verificationpending", element: <VerificationPending /> },
       ],
@@ -71,6 +73,7 @@ function App() {
                   "/education",
                   "/achievements",
                   "/areaofexpertise",
+                  "/kyc-verification",
                   "/verifyprofile",
                   "/verificationpending",
                 ].includes(route.path)

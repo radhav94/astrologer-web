@@ -1,16 +1,23 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import { getToken } from "../../utils/utlis";
+import { getToken } from "../../utils/utils";
 
 export const epicApi = createApi({
   reducerPath: "epicApi",
   baseQuery: fetchBaseQuery({
     baseUrl: `${import.meta.env.VITE_APP_API_BASE_URL}/api/`,
     prepareHeaders: (headers) => {
-      headers.set("Authorization", `Bearer ${getToken()}`);
+      const role = localStorage.getItem("shubhtalk_role");
+      const token =
+        role === "ASTROLOGER"
+          ? localStorage.getItem("shubhtalk_astro_token")
+          : localStorage.getItem("shubhtalk_customer_token");
+      if (token) {
+        headers.set("Authorization", `Bearer ${token}`);
+      }
       headers.set("Content-Type", "application/json");
       return headers;
     },
   }),
-  tagTypes: ["Astrologer", "Availability", "Price", "Transactions"],
+  tagTypes: ["Astrologer", "Availability", "Price", "Transactions", "Wallets"],
   endpoints: () => ({}),
 });

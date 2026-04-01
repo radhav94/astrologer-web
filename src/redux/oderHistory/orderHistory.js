@@ -3,14 +3,18 @@ import { epicApi } from "../baseApi/epicApi";
 export const orderHistory = epicApi.injectEndpoints({
   endpoints: (builder) => ({
     getOrderHistory: builder.query({
-      query: ({ page = 1, limit = 10, sortOrder="desc", filterBy } = {}) => ({
+      query: ({ page = 1, limit = 10, sortBy, filterBy, search, dateRange, customFromDate, customToDate } = {}) => ({
         url: "transactions/allAstroTransactions",
         method: "GET",
         params: {
           page,
           limit,
-          ...(sortOrder && { sortOrder }),
+          ...(sortBy && { sortBy }),
           ...(filterBy && { filterBy }),
+          ...(search && { search }),
+          ...(dateRange && { dateRange }),
+          ...(customFromDate && { customFromDate }),
+          ...(customToDate && { customToDate }),
         },
       }),
       providesTags: ["Transactions"],
@@ -23,11 +27,24 @@ export const orderHistory = epicApi.injectEndpoints({
         method: "POST",
         body: { astrologerId, minutes, roomId, userId },
       }),
-      // Invalidate Transactions tag to refresh order history after refund
       invalidatesTags: ["Transactions"],
+    }),
+
+    // GET /api/astrologers/withdrawalHistory — fetch withdrawal requests
+    getWithdrawalHistory: builder.query({
+      query: ({ page = 1, limit = 10 } = {}) => ({
+        url: "astrologers/withdrawRequest",
+        method: "GET",
+        params: { page, limit },
+      }),
+      providesTags: ["Withdrawals"],
     }),
   }),
   overrideExisting: false,
 });
 
-export const { useGetOrderHistoryQuery, useRefundInitiateByAstrologerMutation } = orderHistory;
+export const {
+  useGetOrderHistoryQuery,
+  useRefundInitiateByAstrologerMutation,
+  useGetWithdrawalHistoryQuery,
+} = orderHistory;

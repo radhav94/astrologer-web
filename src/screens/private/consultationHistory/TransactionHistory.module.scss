@@ -1,0 +1,104 @@
+.listContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0 0.25rem;
+}
+
+.transactionItem {
+  background-color: var(--white-color, #fff);
+  padding: 1.25rem;
+  border-radius: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+
+  @media (max-width: 768px) {
+    padding: 1rem;
+  }
+}
+
+.transactionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.5rem;
+}
+
+.transactionId {
+  font-size: 0.8125rem;
+  color: var(--grey-color-1, #6b7280);
+  font-weight: 400;
+
+  @media (max-width: 768px) {
+    font-size: 0.75rem;
+  }
+}
+
+.transactionAmount {
+  font-size: 1.125rem;
+  font-weight: 600;
+  white-space: nowrap;
+
+  &.credit {
+    color: var(--green-color-1, #16a34a);
+  }
+
+  &.debit {
+    color: var(--red-color-1, #ef4444);
+  }
+
+  @media (max-width: 768px) {
+    font-size: 1rem;
+  }
+}
+
+.transactionTitle {
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--title, #111827);
+  margin: 0;
+  text-align: left;
+
+  @media (max-width: 768px) {
+    font-size: 0.9375rem;
+  }
+}
+
+.displayProfile {
+  text-transform: capitalize;
+  font-weight: 600;
+  color: var(--title, #111827);
+}
+
+.emptyState {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 3rem 1rem;
+}
+
+.emptyText {
+  font-size: 0.875rem;
+  color: var(--grey-color-1, #9ca3af);
+  margin: 0;
+}
+
+.loadingState {
+  display: flex;
+  justify-content: center;
+  padding: 3rem 0;
+}
+
+.spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 3px solid var(--main-primary-start, #F26B2B);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

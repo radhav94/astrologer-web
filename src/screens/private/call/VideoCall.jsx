@@ -6,7 +6,8 @@ import {
   IoVideocam,
   IoVideocamOff,
   IoArrowBack,
-  IoFilter
+  IoFilter,
+  IoCallSharp
 } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
 import styles from "./VideoCalling.module.scss";
@@ -17,8 +18,12 @@ import VideoCallChat from "./VideoCallChat";
 import { PATH } from "../../../utils/routes/Paths";
 import CallIcon from "../../../assets/chat/Call.svg";
 import { ReconnectingOverlay } from "../../../components/UI";
+import SuggestRemedyPanel from "./SuggestRemedyPanel";
+import ReportCaller from "../chat/review/ReportCaller";
+import { useSubmitReportMutation } from "../../../redux/review/reviewApi";
+import { Toast } from "../../../components";
 
-const APP_ID = "cf5e31fa03584573aacaf42daebd493c";
+const APP_ID = "8575e5681f7142f4bced0b83332caa15";
 
 const VideoCalling = ({ callData }) => {
   const { activeCall, setActiveCall, setReviewData, setOpenReview, sharedAgoraState, setSharedAgoraState, isUpgradingRef, callStartTime, setCallStartTime, isCallMinimized, setIsCallMinimized, isReconnecting, networkDisconnected, recoverCallAfterSystemDisconnect } = useCall();
@@ -59,6 +64,9 @@ const VideoCalling = ({ callData }) => {
   const timerRef = useRef(null);
   const [isChatOpen, setIsChatOpen] = useState(false); // Chat panel state
   const [hasRemoteVideo, setHasRemoteVideo] = useState(false); // Track if remote user has video on
+  const [isRemedyOpen, setIsRemedyOpen] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [submitReport, { isLoading: isReportSubmitting }] = useSubmitReportMutation();
 
   /* ================= LOCAL VIDEO ================= */
   const playLocalVideo = (container) => {
@@ -324,12 +332,15 @@ const VideoCalling = ({ callData }) => {
         });
 
         client.on("user-left", (user) => {
-          console.log("[VideoCall] 👋 user-left — uid:", user.uid, "starting 30s grace timer");
+          // Use shorter grace period when call was initiated from chat
+          const isChatInitiated = Boolean(activeChat?.roomId || activeCall?.resumeToChat);
+          const graceMs = isChatInitiated ? 5000 : 60000;
+          console.log(`[VideoCall] 👋 user-left — uid: ${user.uid}, starting ${graceMs / 1000}s grace timer (chatInitiated: ${isChatInitiated})`);
           if (userLeftTimerRef.current) clearTimeout(userLeftTimerRef.current);
           userLeftTimerRef.current = setTimeout(() => {
             console.log("[VideoCall] ⏰ user-left grace timer expired — ending call");
             handleRemoteCallEnd();
-          }, 60000); // 60s grace period — matches backend disconnect grace
+          }, graceMs);
         });
 
         client.on("user-joined", (user) => {
@@ -693,6 +704,29 @@ const VideoCalling = ({ callData }) => {
     }
   };
 
+  /* ================= REPORT CALLER ================= */
+  const handleReportSubmit = async (values) => {
+    try {
+      const res = await submitReport({
+        reasonId: values.reasonId,
+        userId: activeCall?.userId,
+        // astrologerId: activeCall?.astrologerId,
+        description: values.description,
+      }).unwrap();
+
+      if (res?.success) {
+        Toast.success(res?.message || "Report submitted successfully");
+      } else {
+        Toast.error(res?.message || "Failed to submit report");
+      }
+
+      setShowReportModal(false);
+      safeEndCall();
+    } catch (err) {
+      Toast.error(err?.data?.message || "Failed to submit report");
+    }
+  };
+
   /* ================= SAFE END CALL (User initiated) ================= */
   const safeEndCall = async () => {
     // Don't emit call:end if downgrading
@@ -707,6 +741,7 @@ const VideoCalling = ({ callData }) => {
     setReviewData({
       userID: activeCall.userID,
       fullName: activeCall.callerName,
+      roomId: activeCall.roomId,
     });
 
     voiceSocket.emit("call:end", {
@@ -735,6 +770,7 @@ const VideoCalling = ({ callData }) => {
     setReviewData({
       userID: activeCall.userID,
       fullName: activeCall.callerName,
+      roomId: activeCall.roomId,
     });
 
     // Don't emit call:end - already ended by remote/server
@@ -790,27 +826,27 @@ const VideoCalling = ({ callData }) => {
       handleRemoteCallEndRef.current();
     };
 
-    const onCallCanceled = () => {
-      console.log("📞 call:canceled received in VideoCall");
-      // Don't end call if we're downgrading to audio
-      if (isDowngradingRef.current) {
-        console.log("🔽 Ignoring call:canceled - downgrading to audio");
-        return;
-      }
-      if (endCallRef.current || cleanupRef.current) return;
-      endCallRef.current = true;
-      cleanup();
-    };
+    // const onCallCanceled = () => {
+    //   console.log("📞 call:canceled received in VideoCall");
+    //   // Don't end call if we're downgrading to audio
+    //   if (isDowngradingRef.current) {
+    //     console.log("🔽 Ignoring call:canceled - downgrading to audio");
+    //     return;
+    //   }
+    //   if (endCallRef.current || cleanupRef.current) return;
+    //   endCallRef.current = true;
+    //   cleanup();
+    // };
 
     voiceSocket.on("call:ended", onCallEnded);
     voiceSocket.on("force_call_end", onForceCallEnd);
-    voiceSocket.on("call:canceled", onCallCanceled);
+    // voiceSocket.on("call:canceled", onCallCanceled);
 
     return () => {
       console.log("[VideoCall] Cleaning up socket listeners for room:", roomId);
       voiceSocket.off("call:ended", onCallEnded);
       voiceSocket.off("force_call_end", onForceCallEnd);
-      voiceSocket.off("call:canceled", onCallCanceled);
+      // voiceSocket.off("call:canceled", onCallCanceled);
     };
   }, [roomId]);
 
@@ -923,6 +959,16 @@ const VideoCalling = ({ callData }) => {
             className={`w-8 h-8 rounded-full flex items-center justify-center ${micOn ? "bg-white/20" : "bg-red-500/80"}`}
           >
             {micOn ? <IoMic size={14} /> : <IoMicOff size={14} />}
+          </button>
+
+          <button
+            onClick={(e) => { e.stopPropagation(); safeEndCall(); }}
+            className="w-8 h-8 rounded-full bg-red-500 flex items-center justify-center"
+            title="End Call"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="white">
+              <path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08a.956.956 0 010-1.36C3.42 8.63 7.46 7 12 7s8.58 1.63 11.71 4.72c.18.18.29.44.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.1-.7-.28-.79-.73-1.68-1.36-2.66-1.85a.993.993 0 01-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/>
+            </svg>
           </button>
 
           <button
@@ -1205,6 +1251,7 @@ const VideoCalling = ({ callData }) => {
                 }}
               >
                 <button
+                  onClick={() => setIsRemedyOpen(true)}
                   className="px-8 py-3 text-white rounded-full text-base font-semibold hover:opacity-90 transition-opacity shadow-lg flex items-center gap-2"
                   style={{
                     background: 'linear-gradient(135deg, #f75801, #d43400)'
@@ -1250,13 +1297,9 @@ const VideoCalling = ({ callData }) => {
                       onClick={safeEndCall}
                       className="w-16 h-16 rounded-full bg-red-500 flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors"
                     >
-                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-                        <path d="M12 2L2 20h20L12 2z" fill="white" />
-                        <rect x="11" y="8" width="2" height="6" fill="#ef4444" rx="1" />
-                        <circle cx="12" cy="17" r="1" fill="#ef4444" />
-                      </svg>
+                      <IoCallSharp color="white" size={24} />
                     </button>
-                    <span className="text-sm font-medium text-white">Report Caller</span>
+                    <span className="text-sm font-medium text-white">End Call</span>
                   </div>
 
                   {/* SPEAKER BUTTON */}
@@ -1283,6 +1326,20 @@ const VideoCalling = ({ callData }) => {
                     </span>
                   </div>
 
+                  <div className="flex flex-col items-center gap-2">
+                    <button
+                      onClick={() => setShowReportModal(true)}
+                      className="w-16 h-16 rounded-full bg-red-500 flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors"
+                    >
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                        <path d="M12 2L2 20h20L12 2z" fill="white" />
+                        <rect x="11" y="8" width="2" height="6" fill="#ef4444" rx="1" />
+                        <circle cx="12" cy="17" r="1" fill="#ef4444" />
+                      </svg>
+                    </button>
+                    <span className="text-sm font-medium text-white">Report Caller</span>
+                  </div>
+
                 </div>
               </div>
             </div>
@@ -1296,6 +1353,21 @@ const VideoCalling = ({ callData }) => {
             videoCallData={chatData}
           />
         )}
+        {/* Suggest Remedy Panel */}
+        <SuggestRemedyPanel
+          isOpen={isRemedyOpen}
+          onClose={() => setIsRemedyOpen(false)}
+          roomId={activeCall?.chatRoomId || roomId}
+        />
+
+        {/* Report Caller Modal */}
+        <ReportCaller
+          isOpen={showReportModal}
+          onClose={() => setShowReportModal(false)}
+          onSubmit={handleReportSubmit}
+          isSubmitting={isReportSubmitting}
+          callerName={callerName}
+        />
       </div>
     </>
   );

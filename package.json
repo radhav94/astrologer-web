@@ -24,6 +24,7 @@
     "env-cmd": "^11.0.0",
     "formik": "^2.4.9",
     "framer-motion": "^12.23.26",
+    "lottie-react": "^2.4.1",
     "lucide-react": "^0.556.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

@@ -5,11 +5,10 @@ import * as Yup from "yup";
 import { EllipsisVertical, Pencil, Trash2 } from "lucide-react";
 import { Icons } from "../../../../components/Icons";
 import styles from "./ProfileForms.module.scss";
-import { AppImages } from "../../../../utils/appImages";
 import Button from "../../../../components/UI/button/Button";
 import SectionHeader from "../../../../components/UI/sectionHeader/SectionHeader";
 import Chip from "../../../../components/UI/chip/Chip";
-import { createLanguagePreferencesValidation } from "../../../../utils/utlis";
+import { createLanguagePreferencesValidation } from "../../../../utils/utils";
 import { useSetAstroEditProfileMutation } from "../../../../redux/profileApi/profileApi";
 import toast from "../../../../components/toast";
 import { useSelector } from "react-redux";
@@ -43,13 +42,18 @@ const Languages = () => {
     "Punjabi",
     "Telugu",
     "Kannada",
+    "Odia"
   ];
   const proficiencies = ["Fluent", "Basic", "Conversational", "Native"];
 
   const [menuOpen, setMenuOpen] = useState(null);
-  const [editingLang, setEditingLang] = useState([]);
+  const [editingLang, setEditingLang] = useState(null);
   const [newlyAdded, setNewlyAdded] = useState([]);
   const [showCustomInput, setShowCustomInput] = useState(false);
+  const [editValue, setEditValue] = useState("");
+  const [draftName, setDraftName] = useState("");
+  const [draftProficiency, setDraftProficiency] = useState("");
+  const [duplicateError, setDuplicateError] = useState("");
   const menuRef = useRef(null);
 
   // Close menu on outside click
@@ -84,15 +88,53 @@ const Languages = () => {
     validateOnMount: true,
     onSubmit: async (values) => {
       try {
+      let finalPreferences = [...values.languagePreferences];
+
+      // Add draft custom language if present
+      if (draftName.trim() && showCustomInput && !editingLang) {
+        if (!draftProficiency) {
+          toast.error("Please select a proficiency level");
+          return;
+        }
+        const formatted = draftName.trim().charAt(0).toUpperCase() + draftName.trim().slice(1).toLowerCase();
+        const alreadyExists = finalPreferences.some((item) => item.languageName.toLowerCase() === formatted.toLowerCase());
+        if (alreadyExists) {
+          toast.error(`"${formatted}" already exists`);
+          return;
+        }
+        finalPreferences.push({ languageName: formatted, proficiencyLevel: draftProficiency });
+      }
+
+      // Apply pending edit rename
+      if (editingLang && editValue.trim()) {
+        const formatted = editValue.trim().charAt(0).toUpperCase() + editValue.trim().slice(1).toLowerCase();
+        if (formatted !== editingLang) {
+          const alreadyExists = finalPreferences.some((item) => item.languageName.toLowerCase() === formatted.toLowerCase() && item.languageName !== editingLang);
+          if (!alreadyExists) {
+            finalPreferences = finalPreferences.map((item) =>
+              item.languageName === editingLang
+                ? { ...item, languageName: formatted }
+                : item
+            );
+          }
+        }
+      }
 
       await setAstroEditProfile({
         id: astrologerId,
-        languagePreferences: values.languagePreferences,
+        languagePreferences: finalPreferences,
       }).unwrap();
 
       toast.success("Languages updated successfully");
-
-      navigate("/profile");
+      setEditingLang(null);
+      setEditValue("");
+      setDraftName("");
+      setDraftProficiency("");
+      setShowCustomInput(false);
+      setDuplicateError("");
+      setNewlyAdded([]);
+      // Stay on same page, refresh after toast is visible
+      setTimeout(() => window.location.reload(), 1500);
     } catch (error) {
         // Handle error
         console.error("Failed to update languages:", error);
@@ -102,23 +144,12 @@ const Languages = () => {
   });
 
   const toggleLanguage = (lang) => {
-    const currentPreferences = formik.values.languagePreferences;
-    const existingIndex = currentPreferences.findIndex(
-      (item) => item.languageName === lang
-    );
-
-    if (existingIndex !== -1) {
-      // Already exists — just open proficiency editor, don't remove
-      setEditingLang((prev) => prev.includes(lang) ? prev : [...prev, lang]);
-    } else {
-      // Add language with default proficiency
-      formik.setFieldValue("languagePreferences", [
-        ...currentPreferences,
-        { languageName: lang, proficiencyLevel: "Beginner" },
-      ]);
-      setNewlyAdded((prev) => [...prev, lang]);
-      setEditingLang((prev) => [...prev, lang]);
-    }
+    // Don't add to formik — just set as draft, card will be created on Save
+    setDraftName(lang);
+    setDraftProficiency("");
+    setDuplicateError("");
+    setEditingLang(null);
+    setShowCustomInput(true);
   };
 
   const setProficiency = (lang, level) => {
@@ -131,59 +162,57 @@ const Languages = () => {
     formik.setFieldValue("languagePreferences", updatedPreferences);
   };
 
-  const addCustomLanguage = () => {
-    const customLang = formik.values.customLanguage.trim();
-    if (!customLang) return;
-
-    const lang =
-      customLang.charAt(0).toUpperCase() +
-      customLang.slice(1).toLowerCase();
-
-    const currentPreferences = formik.values.languagePreferences;
-    const alreadyExists = currentPreferences.some(
-      (item) => item.languageName === lang
-    );
-
-    if (alreadyExists) return; // Already exists, do nothing
-
-    // If we're editing a previously added custom lang, rename it
-    if (editingLang.length > 0 && newlyAdded.includes(editingLang[editingLang.length - 1]) && editingLang[editingLang.length - 1] !== lang) {
-      const lastEditing = editingLang[editingLang.length - 1];
-      const updated = currentPreferences.map((item) =>
-        item.languageName === lastEditing
-          ? { ...item, languageName: lang }
-          : item
-      );
-      formik.setFieldValue("languagePreferences", updated);
-      setNewlyAdded((prev) => prev.map((l) => (l === lastEditing ? lang : l)));
-      setEditingLang((prev) => prev.map((l) => (l === lastEditing ? lang : l)));
-      return;
-    }
-
-    // Add new language
-    formik.setFieldValue("languagePreferences", [
-      ...currentPreferences,
-      { languageName: lang, proficiencyLevel: "Beginner" },
-    ]);
-    setNewlyAdded((prev) => [...prev, lang]);
-    setEditingLang((prev) => [...prev, lang]);
-  };
-
-  /* Delete a language from the list */
-  const deleteLanguage = (langName) => {
+  /* Delete a language from the list and update API */
+  const deleteLanguage = async (langName) => {
     const updated = formik.values.languagePreferences.filter(
       (item) => item.languageName !== langName
     );
     formik.setFieldValue("languagePreferences", updated);
     setNewlyAdded((prev) => prev.filter((l) => l !== langName));
-    setEditingLang((prev) => prev.filter((l) => l !== langName));
+    if (editingLang === langName) setEditingLang(null);
+    setMenuOpen(null);
+
+    try {
+      await setAstroEditProfile({
+        id: astrologerId,
+        languagePreferences: updated,
+      }).unwrap();
+      toast.success("Language deleted successfully");
+      setTimeout(() => window.location.reload(), 1500);
+    } catch (error) {
+      console.error("Failed to delete language:", error);
+      toast.error(error?.data?.message || "Failed to delete language");
+    }
+  };
+
+  const handleEdit = (langName) => {
+    setEditingLang(langName);
+    setEditValue(langName);
+    setShowCustomInput(true);
     setMenuOpen(null);
   };
 
-  /* Start editing — show proficiency section for that language */
-  const handleEdit = (langName) => {
-    setEditingLang((prev) => prev.includes(langName) ? prev : [...prev, langName]);
-    setMenuOpen(null);
+  /* Save edited language name */
+  const saveEditName = () => {
+    const trimmed = editValue.trim();
+    if (!trimmed || !editingLang) return;
+    const formatted = trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
+    if (formatted === editingLang) return; // no change
+    const currentPreferences = formik.values.languagePreferences;
+    const alreadyExists = currentPreferences.some(
+      (item) => item.languageName === formatted
+    );
+    if (alreadyExists) return;
+    const updated = currentPreferences.map((item) =>
+      item.languageName === editingLang
+        ? { ...item, languageName: formatted }
+        : item
+    );
+    formik.setFieldValue("languagePreferences", updated).then(() => {
+      setNewlyAdded((prev) => prev.map((l) => (l === editingLang ? formatted : l)));
+      setEditingLang(formatted);
+      setEditValue(formatted);
+    });
   };
 
   const selectedLanguages = formik.values.languagePreferences.map(
@@ -250,32 +279,40 @@ const Languages = () => {
         <div className={styles.formGroup}>
           <label className={styles.label}>Select Language</label>
           <div className={styles.expertiseOptions}>
-            {/* Custom languages (not in preset list) shown first */}
-            {formik.values.languagePreferences
-              .filter((item) => !suggestedLanguages.includes(item.languageName))
-              .map((item) => (
+            {/* Custom languages added in this session shown first */}
+            {newlyAdded
+              .filter((lang) => !suggestedLanguages.includes(lang))
+              .map((lang) => {
+                return (
+                  <Chip
+                    key={lang}
+                    label={lang}
+                    selected={true}
+                    onClick={() => toggleLanguage(lang)}
+                  />
+                );
+              })}
+            {suggestedLanguages
+              .filter((lang) => !selectedLanguages.includes(lang))
+              .map((lang) => {
+              const isSelected = newlyAdded.includes(lang) || draftName === lang;
+              return (
                 <Chip
-                  key={item.languageName}
-                  label={item.languageName}
-                  selected={newlyAdded.includes(item.languageName)}
-                  onClick={() => toggleLanguage(item.languageName)}
+                  key={lang}
+                  label={lang}
+                  selected={isSelected}
+                  onClick={() => toggleLanguage(lang)}
+                  {...(!isSelected && { style: { backgroundColor: "#ffffff" } })}
                 />
-              ))}
-            {suggestedLanguages.map((lang) => (
-              <Chip
-                key={lang}
-                label={lang}
-                selected={newlyAdded.includes(lang)}
-                onClick={() => toggleLanguage(lang)}
-              />
-            ))}
+              );
+            })}
             <Chip
-              label={showCustomInput ? "− Close" : "Add Language +"}
+              label="Add Language +"
               selected={false}
               onClick={() => setShowCustomInput(!showCustomInput)}
             />
           </div>
-          <p className={styles.helperText}>*You can select more than 1.</p>
+          {/* <p className={styles.helperText}>*You can select more than 1.</p> */}
           {formik.touched.languagePreferences && formik.errors.languagePreferences && (
             <p className={styles.errorText}>
               {typeof formik.errors.languagePreferences === 'string' 
@@ -290,45 +327,82 @@ const Languages = () => {
           <div className={styles.formGroup}>
             <input
               type="text"
-              name="customLanguage"
-              value={formik.values.customLanguage}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
+              value={editingLang ? editValue : draftName}
+              onChange={(e) => {
+                const val = e.target.value;
+                setDuplicateError("");
+                if (editingLang) {
+                  setEditValue(val);
+                } else {
+                  setDraftName(val);
+                  // Check duplicate
+                  const trimmed = val.trim();
+                  if (trimmed) {
+                    const formatted = trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
+                    const alreadyExists = formik.values.languagePreferences.some(
+                      (item) => item.languageName.toLowerCase() === formatted.toLowerCase()
+                    );
+                    if (alreadyExists) {
+                      setDuplicateError(`"${formatted}" already exists`);
+                    }
+                  }
+                }
+              }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   e.preventDefault();
-                  addCustomLanguage();
+                  if (editingLang) saveEditName();
                 }
               }}
               autoFocus
               className={styles.input}
               placeholder="Enter Language"
             />
+            {duplicateError && <p className={styles.errorText}>{duplicateError}</p>}
           </div>
         )}
 
-        {/* Add Proficiency Level - shows for all languages being edited */}
-        {editingLang.length > 0 && (
+        {/* Proficiency for draft custom language (not yet saved) */}
+        {showCustomInput && draftName.trim() && !duplicateError && !editingLang && (
+          <div className={styles.formGroup}>
+            <label className={styles.label}>Select Proficiency Level</label>
+            <div
+              className={styles.proficiencySection}
+              style={{ border: "1.5px solid #F75801", borderRadius: 12, padding: 12, marginBottom: 12 }}
+            >
+              <div className={styles.expertiseOptions}>
+                {proficiencies.map((level) => (
+                  <Chip
+                    key={level}
+                    label={level}
+                    selected={draftProficiency === level}
+                    onClick={() => setDraftProficiency(level)}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Proficiency Level - only for existing card being edited */}
+        {editingLang && (
           <div className={styles.formGroup}>
             <label className={styles.label}>Edit Proficiency Level</label>
             {formik.values.languagePreferences
-              .filter((langPref) => editingLang.includes(langPref.languageName))
+              .filter((langPref) => langPref.languageName === editingLang)
               .map((langPref) => (
               <div
                 key={langPref.languageName}
                 className={styles.proficiencySection}
                 style={{ border: "1.5px solid #F75801", borderRadius: 12, padding: 12, marginBottom: 12 }}
               >
-                <h4 className={styles.label}>{langPref.languageName}</h4>
                 <div className={styles.expertiseOptions}>
                   {proficiencies.map((level) => (
                     <Chip
                       key={level}
                       label={level}
                       selected={langPref.proficiencyLevel === level}
-                      onClick={() => {
-                        setProficiency(langPref.languageName, level);
-                      }}
+                      onClick={() => setProficiency(langPref.languageName, level)}
                     />
                   ))}
                 </div>
@@ -338,15 +412,17 @@ const Languages = () => {
         )}
       </div>
 
-      {/* Save Button */}
-      <Button 
-        type="submit"
-        onClick={formik.handleSubmit}
-        className={styles.saveButton}
-        disabled={isButtonDisabled}
-      >
-        {isUpdating ? "Saving..." : "Save"} <Icons.ChevronRight size={20} />
-      </Button>
+      {/* Save Button - only show when user has made changes */}
+      {(editingLang || newlyAdded.length > 0 || draftName.trim()) && (
+        <Button 
+          type="submit"
+          onClick={formik.handleSubmit}
+          className={styles.saveButton}
+          disabled={isButtonDisabled}
+        >
+          {isUpdating ? "Saving..." : "Save"} <Icons.ChevronRight size={20} />
+        </Button>
+      )}
     </div>
   );
 };

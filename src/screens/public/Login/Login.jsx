@@ -1,6 +1,6 @@
 import { ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import styles from "./Login.module.scss";
 import * as AuthServices from "../../../services/appServices/authservice";
 import { AppImages } from "../../../utils/appImages";
@@ -10,11 +10,12 @@ import Button from "../../../components/UI/button/Button";
 
 const Login = () => {
   const navigate = useNavigate();
-  const [isOpen,setIsOpen] = useState(true)
+  const [isOpen, setIsOpen] = useState(true);
   const [mobile, setMobile] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigatedRef = useRef(false);
+  const inputRef = useRef(null);
 
   // ✅ Allow numbers only & max 10 digits
   const handleMobileChange = (e) => {
@@ -64,7 +65,8 @@ const Login = () => {
       });
       return; // exit early, skip finally state updates
     } catch (err) {
-      const apiMessage = err?.response?.data?.message || err.message || "Something went wrong";
+      const apiMessage =
+        err?.response?.data?.message || err.message || "Something went wrong";
       setError(apiMessage);
       setLoading(false);
     }
@@ -75,6 +77,10 @@ const Login = () => {
       handleGetOtp();
     }
   };
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
 
   return (
     <div className={styles.loginContainer}>
@@ -126,6 +132,7 @@ const Login = () => {
 
             <div className={styles.inputWrapper}>
               <input
+                ref={inputRef}
                 type="tel"
                 value={mobile}
                 onChange={handleMobileChange}

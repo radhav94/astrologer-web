@@ -1,174 +1,289 @@
 import { useState } from "react";
 import { Icons } from "../../../../components/Icons";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { useGetBankAccountsQuery, useDeactivateBankAccountMutation } from "../../../../redux/bankAccountApi/bankAccountApi";
+import { useGetAllWalletsQuery } from "../../../../redux/astrologer/astrologerApi";
+import { Toast } from "../../../../components";
+import { AppDefaultImg } from "../../../../utils/appImages";
+import SectionHeader from "../../../../components/UI/sectionHeader/SectionHeader";
+import Button from "../../../../components/UI/button/Button";
+import styles from "./WithdrawMoney.module.scss";
+
+// Bank logo color map for visual distinction
+const BANK_COLORS = {
+  hdfc: { bg: "#EBF0F9", text: "#004B87" },
+  icici: { bg: "#FFF3E6", text: "#F58220" },
+  sbi: { bg: "#E8F0FE", text: "#1A5DAD" },
+  axis: { bg: "#FDEAEF", text: "#97144D" },
+  pnb: { bg: "#FFF3E6", text: "#D4213D" },
+  kotak: { bg: "#FFF3E6", text: "#ED1C24" },
+  bob: { bg: "#FFF0E6", text: "#F47920" },
+  idfc: { bg: "#EBF5F0", text: "#9C1D26" },
+  default: { bg: "#F3F4F6", text: "#6B7280" },
+};
+
+const getBankStyle = (bankName) => {
+  if (!bankName) return BANK_COLORS.default;
+  const lower = bankName.toLowerCase();
+  const match = Object.keys(BANK_COLORS).find((key) => lower.includes(key));
+  return BANK_COLORS[match] || BANK_COLORS.default;
+};
+
+const getBankInitials = (bankName) => {
+  if (!bankName) return "B";
+  return bankName
+    .split(" ")
+    .filter((w) => w.length > 0)
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+};
+
+const maskAccountNumber = (num) => {
+  if (!num || num.length < 4) return num || "";
+  return "•••• •••• •••• " + num.slice(-4);
+};
 
 const WithdrawMoney = () => {
+  const navigate = useNavigate();
   const [amount, setAmount] = useState("");
-  const [withdrawalType, setWithdrawalType] = useState("instant"); // ✅ FIXED
-  const [selectedAccount, setSelectedAccount] = useState("1");
+  const [withdrawalType, setWithdrawalType] = useState("instant");
+  const [selectedAccount, setSelectedAccount] = useState(null);
+  const [openMenuId, setOpenMenuId] = useState(null);
 
-  const accounts = [
-    { id: "1", name: "Primary Bank Account", number: "•••• •••• •••• 2222" },
-    { id: "2", name: "Secondary Bank Account", number: "•••• •••• •••• 3333" },
-  ];
+  const astrologerDetails = useSelector((state) => state.register?.astrologerDetails);
+
+  const { data: walletResponse } = useGetAllWalletsQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+  });
+  const walletBalance = walletResponse?.data ?? astrologerDetails?.wallet ?? 0;
+
+  const [deactivateBankAccount] = useDeactivateBankAccountMutation();
+
+  const { data, isLoading } = useGetBankAccountsQuery();
+  const accounts = [...(data?.data || [])].sort((a, b) => (b.isPrimary ? 1 : 0) - (a.isPrimary ? 1 : 0));
+
+  // Auto-select primary account
+  useState(() => {
+    const primary = accounts.find((a) => a.isPrimary);
+    if (primary) setSelectedAccount(primary._id);
+  }, [accounts]);
+
+  const formatAmount = (val) => {
+    const num = val.replace(/[^0-9]/g, "");
+    if (!num) return "";
+    return Number(num).toLocaleString("en-IN");
+  };
+
+  const handleAmountChange = (e) => {
+    const raw = e.target.value.replace(/[^0-9]/g, "");
+    setAmount(raw);
+  };
+
+  const handleWithdraw = () => {
+    const selectedAcc = accounts.find((a) => a._id === selectedAccount);
+    if (!selectedAcc || !amount || Number(amount) <= 0 || Number(amount) > walletBalance) return;
+    navigate("/confirm-withdrawal", {
+      state: {
+        amount: Number(amount),
+        withdrawalType,
+        account: selectedAcc,
+      },
+    });
+  };
+
+  const handleDeleteAccount = async (accId) => {
+    try {
+      await deactivateBankAccount(accId).unwrap();
+      Toast.success("Bank account removed");
+      setOpenMenuId(null);
+      if (selectedAccount === accId) setSelectedAccount(null);
+    } catch (err) {
+      Toast.error(err?.data?.message || "Failed to remove account");
+    }
+  };
+
+  const displayAmount = amount ? `₹${formatAmount(amount)}` : "";
 
   return (
-    <div className="h-full flex flex-col max-w-lg mx-auto">
+    <div className={styles.container}>
       {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
-        <button className="p-2 bg-[#FFF5EC] border border-[#FFE8C5] rounded-xl hover:bg-[#FFEDD5] transition-colors">
-          <Link to="/profile">
-            <Icons.ChevronLeft size={20} className="text-[#F75801]" />
-          </Link>
-        </button>
-        <h1 className="text-xl font-bold text-gray-900">Withdraw Money</h1>
-      </div>
+      <SectionHeader title="Withdraw Money" />
 
-      <div className="flex-1 space-y-8">
-        {/* Amount Input */}
-        <div className="text-center">
-          <label className="text-sm text-gray-400 mb-2 block">
-            Enter Amount
-          </label>
-
-          <div className="relative max-w-xs mx-auto">
+      <div className={styles.content}>
+        {/* Enter Amount */}
+        <div>
+          <p className={styles.sectionLabel}>Enter Amount</p>
+          <div className={styles.amountBox}>
             <input
               type="text"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              value={displayAmount}
+              onChange={handleAmountChange}
               placeholder="₹"
-              className="w-full border border-gray-400 rounded-2xl py-4 text-center text-3xl font-bold text-gray-900 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-all placeholder-gray-300"
+              className={styles.amountInput}
             />
           </div>
-
-          <p className="text-xs text-gray-500 mt-2 font-medium">
-            Available Balance{" "}
-            <span className="text-black font-bold">₹28,000</span>
-          </p>
+          <div className={styles.balanceRow}>
+            <p className={styles.balanceLabel}>Available Balance</p>
+            <p className={styles.balanceValue}>₹{walletBalance.toLocaleString("en-IN")}</p>
+          </div>
+          {amount && Number(amount) > walletBalance && (
+            <p className={styles.errorText}>Amount exceeds available balance</p>
+          )}
+          {amount && Number(amount) <= 0 && (
+            <p className={styles.errorText}>Please enter a valid amount</p>
+          )}
         </div>
 
-        {/* Withdrawal Options */}
-        <div className="space-y-3">
-          {/* Instant Withdraw */}
-          <label
-            className="flex items-center gap-3 cursor-pointer"
-            onClick={() => setWithdrawalType("instant")}
-          >
-            <div
-              className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                withdrawalType === "instant"
-                  ? "border-black"
-                  : "border-gray-400"
-              }`}
-            >
-              {withdrawalType === "instant" && (
-                <div className="w-2 h-2 rounded-full bg-black"></div>
-              )}
-            </div>
+        {/* Withdrawal Type */}
+          <div className={styles.typeGroup}>
+            <label className={styles.typeLabel} onClick={() => setWithdrawalType("instant")}>
+              <div className={`${styles.radioOuter} ${withdrawalType === "instant" ? styles.radioOuterActive : ""}`}>
+                {withdrawalType === "instant" && <div className={styles.radioInner} />}
+              </div>
+              <span className={styles.typeText}>
+                Instant Withdrawal <span className={styles.typeBold}>(Max. ₹20,000)</span>
+              </span>
+            </label>
 
-            <span
-              className={`text-xs ${
-                withdrawalType === "instant"
-                  ? "text-gray-900 font-medium"
-                  : "text-gray-500"
-              }`}
-            >
-              Instant Withdrawal{" "}
-              <span className="font-bold">(Max. ₹20,000)</span>
-            </span>
-          </label>
-
-          {/* Standard Withdraw */}
-          <label
-            className="flex items-center gap-3 cursor-pointer"
-            onClick={() => setWithdrawalType("standard")}
-          >
-            <div
-              className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                withdrawalType === "standard"
-                  ? "border-black"
-                  : "border-gray-400"
-              }`}
-            >
-              {withdrawalType === "standard" && (
-                <div className="w-2 h-2 rounded-full bg-black"></div>
-              )}
-            </div>
-
-            <span
-              className={`text-xs ${
-                withdrawalType === "standard"
-                  ? "text-gray-900 font-medium"
-                  : "text-gray-500"
-              }`}
-            >
-              24–48 hours for Withdrawal of{" "}
-              <span className="font-bold">₹20,000 and more</span>
-            </span>
-          </label>
-        </div>
-
-        {/* Bank Accounts */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-bold text-gray-900">
-              Withdraw Money to
-            </h3>
-
-            <button className="bg-black text-white text-[10px] px-3 py-1.5 rounded-full flex items-center gap-1 hover:bg-gray-800 transition-colors">
-              <span className="text-sm leading-none">+</span> Add Beneficiary
-              Account
-            </button>
+            <label className={styles.typeLabel} onClick={() => setWithdrawalType("standard")}>
+              <div className={`${styles.radioOuter} ${withdrawalType === "standard" ? styles.radioOuterActive : ""}`}>
+                {withdrawalType === "standard" && <div className={styles.radioInner} />}
+              </div>
+              <span className={styles.typeText}>
+                24-48 hours for Withdrawal of <span className={styles.typeBold}>₹20,000 and more</span>
+              </span>
+            </label>
           </div>
 
-          <div className="space-y-3">
-            {accounts.map((acc) => (
-              <div
-                key={acc.id}
-                onClick={() => setSelectedAccount(acc.id)}
-                className={`p-4 rounded-xl flex items-center justify-between cursor-pointer transition-colors ${
-                  selectedAccount === acc.id
-                    ? "bg-[#EAEAEA]"
-                    : "bg-[#EAEAEA]/60"
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-[#D9D9D9] rounded-md"></div>
+        {/* Withdraw Money to */}
+        <div className={styles.accountContainer}>
+          <div className={styles.accountHeader}>
+            <p className={styles.sectionLabel}>Withdraw Money to</p>
+            <Link to="/bank-accounts/add" className={styles.addAccountLink}>
+              <Icons.Plus size={12} /> Add Account
+            </Link>
+          </div>
 
-                  <div>
-                    <p className="text-xs font-bold text-gray-800">
-                      {acc.name}
-                    </p>
-                    <p className="text-[10px] text-gray-500 font-medium mt-0.5">
-                      {acc.number}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="relative">
-                  {selectedAccount === acc.id ? (
-                    <Icons.CheckCircle
-                      size={24}
-                      className="text-black fill-transparent"
-                    />
-                  ) : (
-                    <div className="w-6 h-6 rounded-full border-2 border-gray-400"></div>
-                  )}
-                </div>
+          <div className={styles.accountList}>
+            {isLoading ? (
+              <div className={styles.loadingSpinner}>
+                <div className={styles.spinner} />
               </div>
-            ))}
+            ) : accounts.length === 0 ? (
+              <div className={styles.emptyAccounts}>
+                <p className={styles.emptyText}>No bank accounts added yet</p>
+                <Link to="/bank-accounts/add" className={styles.emptyLink}>
+                  + Add your first account
+                </Link>
+              </div>
+            ) : (
+              accounts.map((acc) => {
+                const bankStyle = getBankStyle(acc.bankName);
+                const isSelected = selectedAccount === acc._id;
+                const accLast4 = acc.accountNumber?.slice(-4) || "****";
+                return (
+                  <div
+                    key={acc._id}
+                    onClick={() => setSelectedAccount(acc._id)}
+                    className={`${styles.accountCard} ${isSelected ? styles.accountCardSelected : ""}`}
+                  >
+                    {/* Pending badge */}
+                    {acc.verificationStatus === "pending" && (
+                      <span className={styles.pendingBadge}>Waiting for approval</span>
+                    )}
+
+                    {/* Radio */}
+                    <div className={`${styles.accountRadio} ${isSelected ? styles.accountRadioActive : ""}`}>
+                      {isSelected && <div className={styles.accountRadioInner} />}
+                    </div>
+
+                    {/* Bank Logo */}
+                    <div className={styles.bankLogo}>
+                      <img
+                        src={acc.bankImage || acc.logo || AppDefaultImg.DefaultBank}
+                        alt={acc.bankName || "Bank"}
+                        className={styles.bankLogoImg}
+                        onError={(e) => { e.target.style.display = "none"; e.target.nextSibling.style.display = "flex"; }}
+                      />
+                      <span
+                        className={styles.bankLogoFallback}
+                        style={{ backgroundColor: bankStyle.bg, color: bankStyle.text, display: "none" }}
+                      >
+                        {getBankInitials(acc.bankName)}
+                      </span>
+                    </div>
+
+                    {/* Details */}
+                    <div className={styles.bankDetails}>
+                      <p className={styles.bankName}>
+                        {acc.bankName || "Bank"} {accLast4}
+                      </p>
+                      <p className={styles.bankAccount}>
+                        {acc.accountType ? acc.accountType.charAt(0).toUpperCase() + acc.accountType.slice(1) : "Savings"} Account
+                        {acc.isPrimary && " (Primary)"}
+                      </p>
+                    </div>
+
+                    {/* Menu */}
+                    <div className={styles.accountMenuWrapper}>
+                      <button
+                        className={styles.accountMenuBtn}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpenMenuId(openMenuId === acc._id ? null : acc._id);
+                        }}
+                        aria-label="Account options"
+                      >
+                        <Icons.MoreVertical size={22} />
+                      </button>
+
+                      {openMenuId === acc._id && (
+                        <div className={styles.accountDropdown} onClick={(e) => e.stopPropagation()}>
+                          <button
+                            className={styles.accountDropdownItem}
+                            onClick={() => {
+                              setOpenMenuId(null);
+                              navigate(`/bank-accounts/edit/${acc._id}`, { state: { account: acc } });
+                            }}
+                          >
+                            <Icons.Edit size={16} className={styles.dropdownIconPrimary} />
+                            Edit account
+                          </button>
+                          <div className={styles.accountDropdownDivider} />
+                          <button
+                            className={styles.accountDropdownItemDanger}
+                            onClick={() => {
+                              setOpenMenuId(null);
+                              handleDeleteAccount(acc._id);
+                            }}
+                          >
+                            <Icons.Trash size={16} />
+                            Deactivate
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
         </div>
       </div>
 
       {/* Withdraw Button */}
-
-      <div className="mt-auto pb-6 pt-4">
-        <Link to="/profile">
-          <button className="w-full bg-black text-white font-medium py-4 rounded-2xl hover:bg-gray-900 transition-colors">
-            Withdraw Money
-          </button>
-        </Link>
+      <div className={styles.footer}>
+        <Button
+          variant="primary"
+          disabled={!amount || !selectedAccount || Number(amount) <= 0 || Number(amount) > walletBalance}
+          onClick={handleWithdraw}
+          icon={<Icons.ChevronRight size={16} />}
+        >
+          Withdraw Money
+        </Button>
       </div>
     </div>
   );

@@ -13,13 +13,14 @@ export default function useChat({
   roomId,
   isUserSide,
   kundliId,
-  setOpenReview
+  setOpenReview,
+  redirectOnEnded = false
 }) {
   const [messages, setMessages] = useState([]);
   const [error, setError] = useState(null);
   const [isTyping, setIsTyping] = useState(false);
   const [isMessageDisabled, setIsMessageDisabled] = useState(false);
-  const {setActiveChat, activeChat, startTimer, stopTimer, chatSeconds, recoverChatAfterSystemDisconnect} = useChatContext();
+  const {setActiveChat, activeChat, startTimer, stopTimer, resetTimer, chatSeconds, recoverChatAfterSystemDisconnect} = useChatContext();
   const { activeCall } = useCall();
   const navigate = useNavigate();
 
@@ -51,9 +52,9 @@ export default function useChat({
     if (recoverChatAfterSystemDisconnect(data)) {
       return;
     }
+
     setIsMessageDisabled(true);
-    setOpenReview(true);
-    stopTimer();
+    resetTimer();
     setActiveChat(null);
     setMessages([]); // Clear local messages — they're now in history
     
@@ -62,6 +63,13 @@ export default function useChat({
       localStorage.removeItem(`shubhtalk_chat_init_${roomId}`);
     }
     localStorage.removeItem("shubhtalk_chat_start_time");
+
+    if (redirectOnEnded) {
+      navigate("/chats", { replace: true });
+      return;
+    }
+
+    setOpenReview(true);
   };
 
   // Derive disabled state from activeChat / activeCall
@@ -109,7 +117,7 @@ export default function useChat({
         setError(errMsg)
         if(errMsg === 'Chat no longer available' || errMsg === 'Chat has already ended' || errMsg === 'Session not found'){
           setIsMessageDisabled(true);
-          stopTimer();
+          resetTimer();
           setActiveChat(null);
           navigate("/chats");
         }
@@ -128,7 +136,9 @@ export default function useChat({
           time: formatTime(),
           dateTime: data?.dateTime,
           type: data?.type,
-          kundliName: data?.kundliName
+          kundliName: data?.kundliName,
+           kundliId: data?.kundliId,
+          suggestedProducts: data?.suggestedProducts
         });
     }
 
@@ -152,7 +162,7 @@ export default function useChat({
       voiceSocket.off("typing", handleTyping);
       voiceSocket.off("chat:ended", handleChatEndedFromServer);
     }
-  }, [roomId]);
+  }, [roomId, userId, astrologerId, redirectOnEnded]);
 
   // ASTRO SEND
   const astroReply = (text, type = "message") => {

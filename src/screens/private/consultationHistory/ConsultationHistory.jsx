@@ -2,42 +2,19 @@ import { useEffect, useState } from "react";
 import { Icons } from "../../../components/Icons";
 import { Link } from "react-router";
 import { useNavigate } from "react-router-dom";
-import { useGetOrderHistoryQuery, useRefundInitiateByAstrologerMutation } from "../../../redux/oderHistory/orderHistory";
-// Import default profile image
-import { AppDefaultImg, AppIcons } from "../../../utils/appImages";
+import {
+  useGetOrderHistoryQuery,
+  useRefundInitiateByAstrologerMutation,
+} from "../../../redux/oderHistory/orderHistory";
 import SectionHeader from "../../../components/UI/SectionHeader";
+import TransactionHistory from "./TransactionHistory";
+import OrderHistory from "./OrderHistory";
+import { useGetTransactionListQuery } from "../../../redux/profileApi/profileApi";
 import styles from "./ConsultationHistory.module.scss";
 import dayjs from "dayjs";
 import { PATH } from "../../../utils/routes/Paths";
-import useChat from "../../../hooks/useChatWindow";
-import { useSelector } from "react-redux";
+import useHistoryFilters from "../../../hooks/useHistoryFilters";
 import { Toast } from "../../../components";
-// const { activeChat } = useChat();
-
-const formatDate = (iso) => {
-  const date = new Date(iso);
-  return date
-    .toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    })
-    .replace(",", ",");
-};
-
-const formatDateHeader = (iso) =>
-  new Date(iso).toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
-
-const formatTime = (iso) =>
-  new Date(iso).toLocaleTimeString("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true,
-  });
 
 const formatDuration = (seconds = 0) => {
   const mins = Math.floor(seconds / 60);
@@ -58,33 +35,54 @@ const groupByDate = (transactions) => {
 };
 
 const ConsultationHistory = () => {
-  const [page, setPage] = useState(1);
+  const [activeTab, setActiveTab] = useState("orders");
   const [openMenuId, setOpenMenuId] = useState(null);
   const [refundItem, setRefundItem] = useState(null);
-  // Old: amount-based refund input
-  // const [refundAmount, setRefundAmount] = useState("");
-  // New: minutes-based refund input (system calculates amount internally)
   const [refundMinutes, setRefundMinutes] = useState("");
-  // Track refund type: "partial" for Refund, "total" for Total Refund
   const [refundType, setRefundType] = useState("partial");
-  const [sortOrder, setSortOrder] = useState("desc");
-  const [filterBy, setFilterBy] = useState("call");
-  const [searchQuery, setSearchQuery] = useState("");
+
+  // Shared filter hook for both tabs
+  const filterHook = useHistoryFilters();
+  const {
+    orderPage, setOrderPage,
+    txnPage, setTxnPage,
+    searchQuery,
+    orderQueryParams, txnQueryParams,
+    hasActiveFilters,
+    showFilterModal,
+    activeFilterTab,
+    setActiveFilterTab,
+    tempFilters,
+    handleSearchChange,
+    handleSearchSubmit,
+    clearSearch,
+    openFilterModal,
+    applyFilters,
+    resetFilters,
+    updateTempFilter,
+    setShowFilterModal,
+  } = filterHook;
+
   const navigate = useNavigate();
 
-  const { data, isLoading, isFetching, isError } = useGetOrderHistoryQuery({
-    page,
-    limit: 10,
-    sortOrder,
-    filterBy,
+  const { data, isLoading, isFetching, isError } = useGetOrderHistoryQuery(orderQueryParams, {
+    refetchOnMountOrArgChange: true,
   });
 
-  const astrologerDetails = useSelector(
-    (state) => state.register?.astrologerDetails,
-  );
+  // Transaction history API — shared filters from the hook
+  const {
+    data: txnData,
+    isFetching: txnFetching,
+    isError: txnError,
+  } = useGetTransactionListQuery(txnQueryParams, {
+    refetchOnMountOrArgChange: true,
+  });
+  const txnTransactions = txnData?.data?.transactions || [];
+  const txnPagination = txnData?.data?.pagination;
 
   // Refund mutation hook
-  const [refundInitiate, { isLoading: isRefunding }] = useRefundInitiateByAstrologerMutation();
+  const [refundInitiate, { isLoading: isRefunding }] =
+    useRefundInitiateByAstrologerMutation();
 
   // Handle refund API call with proper success/error toast messages
   const handleRefund = async () => {
@@ -131,23 +129,7 @@ const ConsultationHistory = () => {
   // Scroll to top when page changes
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [page]);
-
-  const handlePreviousPage = () => {
-    if (pagination?.hasPreviousPage) {
-      setPage((prev) => prev - 1);
-    }
-  };
-
-  const handleNextPage = () => {
-    if (pagination?.hasNextPage) {
-      setPage((prev) => prev + 1);
-    }
-  };
-
-  const handlePageClick = (pageNum) => {
-    setPage(pageNum);
-  };
+  }, [orderPage, txnPage]);
 
   const handleNavigation = (type, item) => {
     if (type !== "chat") {
@@ -166,70 +148,11 @@ const ConsultationHistory = () => {
     });
   };
 
-  // Generate page numbers to display
-  const getPageNumbers = () => {
-    if (!pagination) return [];
+  // Show loading overlay only on initial load, not during pagination
+  const isInitialLoading = isLoading && transactions.length === 0;
 
-    const { currentPage, totalPages } = pagination;
-    const pages = [];
-    const maxPagesToShow = 5;
-
-    if (totalPages <= maxPagesToShow) {
-      // Show all pages if total is less than max
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i);
-      }
-    } else {
-      // Show current page with 2 pages on each side
-      let startPage = Math.max(1, currentPage - 2);
-      let endPage = Math.min(totalPages, currentPage + 2);
-
-      // Adjust if we're near the start or end
-      if (currentPage <= 3) {
-        endPage = maxPagesToShow;
-      } else if (currentPage >= totalPages - 2) {
-        startPage = totalPages - maxPagesToShow + 1;
-      }
-
-      // Add first page and ellipsis if needed
-      if (startPage > 1) {
-        pages.push(1);
-        if (startPage > 2) {
-          pages.push("...");
-        }
-      }
-
-      // Add middle pages
-      for (let i = startPage; i <= endPage; i++) {
-        pages.push(i);
-      }
-
-      // Add ellipsis and last page if needed
-      if (endPage < totalPages) {
-        if (endPage < totalPages - 1) {
-          pages.push("...");
-        }
-        pages.push(totalPages);
-      }
-    }
-
-    return pages;
-  };
-
-  // Loading state
-  if (isLoading && page === 1) {
-    return (
-      <div className={styles.loadingContainer}>
-        <div className={styles.loadingContent}>
-          <div className={styles.spinner}></div>
-          <p className={styles.loadingText}>Loading consultation history...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Error state
-  if (isError) {
+  // Error state — only show full-page error when NO filters are active
+  if (isError && !hasActiveFilters) {
     return (
       <div className={styles.errorContainer}>
         <div className={styles.errorContent}>
@@ -249,8 +172,8 @@ const ConsultationHistory = () => {
     );
   }
 
-  // Empty state
-  if (!isLoading && transactions.length === 0) {
+  // Empty state — only show full-page empty when NO filters are active
+  if (!isLoading && transactions.length === 0 && !hasActiveFilters) {
     return (
       <div className={styles.emptyContainer}>
         <div className={styles.emptyHeader}>
@@ -279,20 +202,32 @@ const ConsultationHistory = () => {
   return (
     <>
       <div className={styles.headerWrapper}>
-        <SectionHeader title={"Order History"} />
+        <SectionHeader title={activeTab === "orders"?"Order History":"Transaction History"} />
         <h2 className={styles.ordersCount}>
-          Total Orders: {data?.data?.pagination?.totalItems || 0}
+          Total Records: {data?.data?.pagination?.totalItems || 0}
         </h2>
       </div>
 
       <div className={styles.mainContainer}>
-        {/* Main Content */}
         <main className={styles.mainContent}>
           {/* Orders Count and Actions */}
           <div className={styles.ordersHeader}>
-            {/* <h2 className={styles.ordersCount}>
-              Total Orders: {data?.data?.pagination?.totalItems || 0}
-            </h2> */}
+            {/* Tab Buttons */}
+            <div className={styles.tabButtons}>
+              <button
+                className={`${styles.tabBtn} ${activeTab === "orders" ? styles.tabBtnActive : ""}`}
+                onClick={() => setActiveTab("orders")}
+              >
+                Order History
+              </button>
+              <button
+                className={`${styles.tabBtn} ${activeTab === "transactions" ? styles.tabBtnActive : ""}`}
+                onClick={() => setActiveTab("transactions")}
+              >
+                Transaction
+              </button>
+            </div>
+
             <div className={styles.actionButtons}>
               {/* Search Bar */}
               <div className={styles.searchBar}>
@@ -301,324 +236,63 @@ const ConsultationHistory = () => {
                   type="text"
                   placeholder="Search name"
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleSearchSubmit();
+                  }}
                   className={styles.searchInput}
                 />
                 {searchQuery && (
-                  <button
-                    className={styles.searchClear}
-                    onClick={() => setSearchQuery("")}
-                  >
+                  <button className={styles.searchClear} onClick={clearSearch}>
                     <Icons.X size={16} />
                   </button>
                 )}
               </div>
-              {/* Filter dropdown: shows icon + label, select changes filterBy */}
-              <div className={styles.actionButton}>
-                <Icons.Filter size={14} />
-                <select
-                  value={filterBy}
-                  onChange={(e) => {
-                    setFilterBy(e.target.value);
-                    setPage(1);
-                  }}
-                  className={styles.filterSelect}
-                >
-                  <option value="call">Call</option>
-                  <option value="chat">Chat</option>
-                </select>
-              </div>
-              <button
-                className={styles.actionButton}
-                onClick={() =>
-                  setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))
-                }
-              >
-                <Icons.ArrowUpDown size={14} />
-                <span>Sort By</span>
+
+              {/* Filter Button */}
+              <button className={styles.filterButton} onClick={openFilterModal}>
+                <Icons.Filter size={16} />
+                <span>Filter</span>
               </button>
             </div>
           </div>
 
           {/* List grouped by date */}
-          <div className={styles.listContainer}>
-            {Object.entries(groupByDate(transactions)).map(([date, items]) => (
-              <div key={date} className={styles.dateGroup}>
-                {/* Date Header - Left Aligned */}
-                <h3 className={styles.dateHeader}>{date}</h3>
+          {activeTab === "orders" && (
+            <OrderHistory
+              transactions={transactions}
+              groupByDate={groupByDate}
+              pagination={pagination}
+              isLoading={isLoading}
+              isError={isError}
+              isFetching={isFetching}
+              hasActiveFilters={hasActiveFilters}
+              openMenuId={openMenuId}
+              setOpenMenuId={setOpenMenuId}
+              setRefundItem={setRefundItem}
+              setRefundMinutes={setRefundMinutes}
+              setRefundType={setRefundType}
+              setPage={setOrderPage}
+              onResetFilters={resetFilters}
+              onNavigate={handleNavigation}
+            />
+          )}
 
-                {/* Items for this date */}
-                <div className={styles.itemsList}>
-                  {items.map((item, index) => {
-                    return (
-                      <div key={item._id} className={styles.orderCard}>
-                        {/* Order ID and Menu */}
-                        <div className={styles.orderHeader}>
-                          <span className={styles.orderNumber}>
-                           #{item?._id?.slice(-4)}
-                          </span>
-                          <div
-                            className={styles.menuContainer}
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <button
-                              onClick={() =>
-                                setOpenMenuId(
-                                  openMenuId === item._id ? null : item._id,
-                                )
-                              }
-                              className={styles.menuButton}
-                            >
-                              <Icons.MoreVertical size={18} />
-                            </button>
+          {/* Transaction History Tab */}
+          {activeTab === "transactions" && (
+            <TransactionHistory
+              transactions={txnTransactions}
+              pagination={txnPagination}
+              isFetching={txnFetching}
+              isError={txnError}
+              hasActiveFilters={hasActiveFilters}
+              onResetFilters={resetFilters}
+              page={txnPage}
+              setPage={setTxnPage}
+            />
+          )}
 
-                            {openMenuId === item._id && (
-                              <div className={styles.menuDropdown}>
-                                {/* Refund actions: disabled when durationSeconds is null or 0 */}
-                                {(() => {
-                                  const isRefundEnabled = item?.sessionDetails?.durationSeconds > 0;
-                                  return (
-                                    <>
-                                      <button
-                                        onClick={() => {
-                                          if (!isRefundEnabled) return;
-                                          setRefundItem(item);
-                                          setRefundMinutes("");
-                                          setRefundType("partial");
-                                          setOpenMenuId(null);
-                                        }}
-                                        className={styles.menuItem}
-                                        style={!isRefundEnabled ? { opacity: 0.4, pointerEvents: "none" } : {}}
-                                        disabled={!isRefundEnabled}
-                                      >
-                                        Refund
-                                      </button>
-                                      <button
-                                        onClick={() => {
-                                          if (!isRefundEnabled) return;
-                                          // Total Refund: pre-fill with full session duration in minutes
-                                          const totalMins = Math.floor((item?.sessionDetails?.durationSeconds || 0) / 60);
-                                          setRefundItem(item);
-                                          setRefundMinutes(String(totalMins));
-                                          setRefundType("total");
-                                          setOpenMenuId(null);
-                                        }}
-                                        className={styles.menuItemDanger}
-                                        style={!isRefundEnabled ? { opacity: 0.4, pointerEvents: "none" } : {}}
-                                        disabled={!isRefundEnabled}
-                                      >
-                                        Total Refund
-                                      </button>
-                                    </>
-                                  );
-                                })()}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Main Content */}
-                        <div
-                          className={styles.orderContent}
-                          onClick={() => handleNavigation(item?.type, item)}
-                          style={{
-                            cursor:
-                              item?.type == "chat" ? "pointer" : "default",
-                          }}
-                        >
-                          {/* Profile Image - Vertically Centered */}
-                          <div className={styles.profileImageContainer}>
-                            <div className={styles.profileImage}>
-                              <img
-                                src={
-                                  item.displayProfile?.profileImage ||
-                                  AppDefaultImg.DefaultMaleAstrologer
-                                }
-                                alt={item.displayProfile?.name || "User"}
-                                onError={(e) => {
-                                  e.target.src = defaultProfileImage;
-                                }}
-                              />
-                            </div>
-                          </div>
-
-                          {/* Details - Full Width Container */}
-                          <div className={styles.detailsContainer}>
-                            <svg width="0" height="0">
-                              <defs>
-                                <linearGradient
-                                  id="starGradient"
-                                  x1="0%"
-                                  y1="0%"
-                                  x2="100%"
-                                  y2="0%"
-                                >
-                                  <stop
-                                    offset="0%"
-                                    stopColor="var(--main-primary-start)"
-                                  />
-                                  <stop
-                                    offset="100%"
-                                    stopColor="var(--main-primary-end)"
-                                  />
-                                </linearGradient>
-                              </defs>
-                            </svg>
-                            {/* Stars and Call Button Row */}
-                            <div className={styles.starsAndCallRow}>
-                              <div className={styles.starsContainer}>
-                                {[1, 2, 3, 4, 5].map((star) => {
-                                  const isFilled = star <= (item?.rating || 0);
-
-                                  return (
-                                    <Icons.Star
-                                      key={star}
-                                      size={20}
-                                      strokeWidth={2}
-                                      className={`${styles.star} ${
-                                        isFilled
-                                          ? styles.starFilled
-                                          : styles.starEmpty
-                                      }`}
-                                    />
-                                  );
-                                })}
-                              </div>
-                              {item.type === "call" && (
-                                <button className={styles.callButton}>
-                                  <img src={AppIcons.Call1} alt="call" />
-                                </button>
-                              )}
-                              {item.type === "chat" && (
-                                <button className={styles.callButton}>
-                                  <img src={AppIcons.Chat1} alt="chat" />
-                                </button>
-                              )}
-                              {item.type === "video" && (
-                                <button className={styles.callButton}>
-                                  <img src={AppIcons.Video1Icon} alt="video" />
-                                </button>
-                              )}
-                            </div>
-
-                            {/* Name - Left Aligned */}
-                            <h4 className={styles.userName}>
-                              {item.displayProfile?.name || "Unknown User"}
-                            </h4>
-
-                            {/* Date and Time Row - Left Aligned */}
-                            <div className={styles.dateTimeRow}>
-                              <div className={styles.dateTimeItem}>
-                                <Icons.Calendar size={16} strokeWidth={2} />
-                                <span>{formatDate(item.createdAt)}</span>
-                              </div>
-                              <div className={styles.dateTimeItem}>
-                                <Icons.Clock size={16} strokeWidth={2} />
-                                <span>{formatTime(item.createdAt)}</span>
-                              </div>
-                            </div>
-
-                            {/* Duration - Only show if exists */}
-                            {/* {item.sessionDetails?.durationSeconds && ( */}
-                              <p className={styles.duration}>
-                                Duration :{" "}
-                                {formatDuration(
-                                  item.sessionDetails?.durationSeconds,
-                                )}
-                              </p>
-                            {/* )} */}
-
-                            {/* Amount - Left Aligned */}
-                            <p className={styles.amount}>
-                              ₹
-                              {item.billing?.astrologer?.creditAmount ||
-                                item.sessionDetails?.amount ||
-                                0}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-
-            {/* Pagination Controls */}
-            {pagination && pagination.totalPages > 1 && (
-              <div className={styles.paginationContainer}>
-                <div className={styles.paginationContent}>
-                  {/* Page Info */}
-                  <div className={styles.pageInfo}>
-                    Showing <span>{(pagination.currentPage - 1) * 10 + 1}</span>{" "}
-                    to{" "}
-                    <span>
-                      {Math.min(
-                        pagination.currentPage * 10,
-                        pagination.totalItems,
-                      )}
-                    </span>{" "}
-                    of <span>{pagination.totalItems}</span> results
-                  </div>
-
-                  {/* Pagination Buttons */}
-                  <div className={styles.paginationButtons}>
-                    {/* Previous Button */}
-                    <button
-                      onClick={handlePreviousPage}
-                      disabled={!pagination.hasPreviousPage || isFetching}
-                      className={styles.paginationButton}
-                    >
-                      <Icons.ChevronLeft size={16} />
-                    </button>
-
-                    {/* Page Numbers */}
-                    <div className={styles.pageNumbers}>
-                      {getPageNumbers().map((pageNum, index) =>
-                        pageNum === "..." ? (
-                          <span
-                            key={`ellipsis-${index}`}
-                            className={styles.ellipsis}
-                          >
-                            ...
-                          </span>
-                        ) : (
-                          <button
-                            key={pageNum}
-                            onClick={() => handlePageClick(pageNum)}
-                            disabled={isFetching}
-                            className={
-                              pageNum === pagination.currentPage
-                                ? styles.pageNumberButtonActive
-                                : styles.pageNumberButtonInactive
-                            }
-                          >
-                            {pageNum}
-                          </button>
-                        ),
-                      )}
-                    </div>
-
-                    {/* Next Button */}
-                    <button
-                      onClick={handleNextPage}
-                      disabled={!pagination.hasNextPage || isFetching}
-                      className={styles.paginationButton}
-                    >
-                      <Icons.ChevronRight size={16} />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Loading Indicator */}
-            {isFetching && (
-              <div className={styles.loadingIndicator}>
-                <div className={styles.loadingSpinner}></div>
-              </div>
-            )}
-          </div>
+          {/* Withdrawals section moved to Profile.jsx → WithdrawalsList component */}
 
           {/* Refund Modal - Shared for both Refund (partial) and Total Refund */}
           {refundItem && (
@@ -631,18 +305,12 @@ const ConsultationHistory = () => {
                 {/* Session duration info - shown only for partial refund */}
                 {refundType === "partial" && (
                   <p className={styles.modalSubtext}>
-                    Session Duration: {formatDuration(refundItem?.sessionDetails?.durationSeconds || 0)}
+                    Session Duration:{" "}
+                    {formatDuration(
+                      refundItem?.sessionDetails?.durationSeconds || 0,
+                    )}
                   </p>
                 )}
-
-                {/* Old: amount input */}
-                {/* <input
-                  type="number"
-                  placeholder="Enter refund amount"
-                  value={refundAmount}
-                  onChange={(e) => setRefundAmount(e.target.value)}
-                  className={styles.modalInput}
-                /> */}
 
                 {/* Minutes input: editable for partial, disabled & pre-filled for total */}
                 <input
@@ -655,7 +323,9 @@ const ConsultationHistory = () => {
                     const val = e.target.value;
                     // Accept only numeric values
                     if (val === "" || /^\d+$/.test(val)) {
-                      const maxMinutes = Math.floor((refundItem?.sessionDetails?.durationSeconds || 0) / 60);
+                      const maxMinutes = Math.floor(
+                        (refundItem?.sessionDetails?.durationSeconds || 0) / 60,
+                      );
                       // Do not allow minutes greater than session duration
                       if (val === "" || Number(val) <= maxMinutes) {
                         setRefundMinutes(val);
@@ -664,9 +334,15 @@ const ConsultationHistory = () => {
                   }}
                   disabled={refundType === "total"}
                   min="0"
-                  max={Math.floor((refundItem?.sessionDetails?.durationSeconds || 0) / 60)}
+                  max={Math.floor(
+                    (refundItem?.sessionDetails?.durationSeconds || 0) / 60,
+                  )}
                   className={styles.modalInput}
-                  style={refundType === "total" ? { backgroundColor: "#f3f4f6", cursor: "not-allowed" } : {}}
+                  style={
+                    refundType === "total"
+                      ? { backgroundColor: "#f3f4f6", cursor: "not-allowed" }
+                      : {}
+                  }
                 />
 
                 <div className={styles.modalButtons}>
@@ -693,6 +369,167 @@ const ConsultationHistory = () => {
           )}
         </main>
       </div>
+
+      {/* Loading Overlay — shown only during initial load */}
+      {isInitialLoading && (
+        <div className={styles.loadingOverlay}>
+          <div className={styles.loadingContent}>
+            <div className={styles.spinner}></div>
+            <p className={styles.loadingText}>
+              Loading consultation history...
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Filter Modal */}
+      {showFilterModal && (
+        <div className={styles.filterModalOverlay} onClick={() => setShowFilterModal(false)}>
+          <div className={styles.filterModal} onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div className={styles.filterModalHeader}>
+              <h3 className={styles.filterModalTitle}>Filters</h3>
+              <button className={styles.filterModalClose} onClick={() => setShowFilterModal(false)}>
+                <Icons.X size={20} />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className={styles.filterModalBody}>
+              {/* Left: Category tabs */}
+              <div className={styles.filterTabs}>
+                {["Type", "Date Range", "Custom Date", "Sort By"].map((cat) => (
+                  <button
+                    key={cat}
+                    className={`${styles.filterTab} ${activeFilterTab === cat ? styles.filterTabActive : ""}`}
+                    onClick={() => setActiveFilterTab(cat)}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+
+              {/* Right: Options */}
+              <div className={styles.filterOptions}>
+                {activeFilterTab === "Type" && (
+                  <>
+                    <div className={styles.filterOptionHeader}>
+                      <span>Filter by Type</span>
+                    </div>
+                    {[
+                      { value: "", label: "All" },
+                      { value: "call", label: "Call" },
+                      { value: "chat", label: "Chat" },
+                    ].map((opt) => (
+                      <div
+                        key={opt.value}
+                        className={styles.filterOptionItem}
+                        onClick={() => updateTempFilter("filterBy", tempFilters.filterBy === opt.value ? "" : opt.value)}
+                      >
+                        <span className={`${styles.tickIcon} ${tempFilters.filterBy === opt.value ? styles.tickIconActive : ""}`}>
+                          {tempFilters.filterBy === opt.value && <Icons.Check size={16} />}
+                        </span>
+                        <span className={styles.filterOptionLabel}>{opt.label}</span>
+                      </div>
+                    ))}
+                  </>
+                )}
+
+                {activeFilterTab === "Date Range" && (
+                  <>
+                    <div className={styles.filterOptionHeader}>
+                      <span>Select Date Range</span>
+                    </div>
+                    {[
+                      { value: "today", label: "Today" },
+                      { value: "yesterday", label: "Yesterday" },
+                      { value: "last7days", label: "Last 7 Days" },
+                      { value: "last30days", label: "Last 30 Days" },
+                    ].map((opt) => (
+                      <div
+                        key={opt.value}
+                        className={styles.filterOptionItem}
+                        onClick={() => updateTempFilter("dateRange", tempFilters.dateRange === opt.value ? "" : opt.value)}
+                      >
+                        <span className={`${styles.tickIcon} ${tempFilters.dateRange === opt.value ? styles.tickIconActive : ""}`}>
+                          {tempFilters.dateRange === opt.value && <Icons.Check size={16} />}
+                        </span>
+                        <span className={styles.filterOptionLabel}>{opt.label}</span>
+                      </div>
+                    ))}
+                  </>
+                )}
+
+                {activeFilterTab === "Custom Date" && (
+                  <>
+                    <div className={styles.filterOptionHeader}>
+                      <span>Custom Date Range</span>
+                    </div>
+                    <div className={styles.customDateGroup}>
+                      <label className={styles.customDateLabel}>
+                        From Date
+                        <input
+                          type="date"
+                          value={tempFilters.customFromDate}
+                          onChange={(e) => updateTempFilter("customFromDate", e.target.value)}
+                          className={styles.customDateInput}
+                        />
+                      </label>
+                      <label className={styles.customDateLabel}>
+                        To Date
+                        <input
+                          type="date"
+                          value={tempFilters.customToDate}
+                          onChange={(e) => updateTempFilter("customToDate", e.target.value)}
+                          min={tempFilters.customFromDate || undefined}
+                          className={styles.customDateInput}
+                        />
+                      </label>
+                      {((tempFilters.customFromDate && !tempFilters.customToDate) ||
+                        (!tempFilters.customFromDate && tempFilters.customToDate)) && (
+                        <p className={styles.customDateError}>Both dates are required</p>
+                      )}
+                    </div>
+                  </>
+                )}
+
+                {activeFilterTab === "Sort By" && (
+                  <>
+                    <div className={styles.filterOptionHeader}>
+                      <span>Sort By</span>
+                    </div>
+                    {[
+                      { value: "latestFirst", label: "Latest First" },
+                      { value: "oldestFirst", label: "Oldest First" },
+                      { value: "highestPrice", label: "Highest Price" },
+                      { value: "lowestPrice", label: "Lowest Price" },
+                      { value: "longestDuration", label: "Longest Duration" },
+                      { value: "shortestDuration", label: "Shortest Duration" },
+                    ].map((opt) => (
+                      <div
+                        key={opt.value}
+                        className={styles.filterOptionItem}
+                        onClick={() => updateTempFilter("sortBy", tempFilters.sortBy === opt.value ? "" : opt.value)}
+                      >
+                        <span className={`${styles.tickIcon} ${tempFilters.sortBy === opt.value ? styles.tickIconActive : ""}`}>
+                          {tempFilters.sortBy === opt.value && <Icons.Check size={16} />}
+                        </span>
+                        <span className={styles.filterOptionLabel}>{opt.label}</span>
+                      </div>
+                    ))}
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className={styles.filterModalFooter}>
+              <button className={styles.filterResetBtn} onClick={resetFilters}>Reset</button>
+              <button className={styles.filterApplyBtn} onClick={applyFilters}>Apply</button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

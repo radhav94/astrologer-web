@@ -1,6 +1,6 @@
 import axios from "axios";
 import { Toast } from "../../components";
-import { getToken } from "../../utils/utlis";
+import { getToken } from "../../utils/utils";
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 let unAuthorizedCount = 0;

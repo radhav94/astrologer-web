@@ -20,6 +20,7 @@ import {
   Edit2,
   Filter,
   SlidersHorizontal,
+  Check,
   CheckCircle,
   User,
   MoreVertical,
@@ -37,7 +38,8 @@ import {
   ArrowUpDown,
   RefreshCw,
   BookOpen,
-  Search
+  Search,
+  Paperclip
 } from "lucide-react";
 
 export const Icons = {
@@ -63,6 +65,7 @@ export const Icons = {
   Edit: Edit2,
   Filter,
   Sliders: SlidersHorizontal,
+  Check,
   CheckCircle,
   User,
   MoreVertical,
@@ -79,5 +82,6 @@ export const Icons = {
   Chats: MessageSquare,
   ArrowUpDown,
   BookOpen,
-  Search
+  Search,
+  Paperclip
 };

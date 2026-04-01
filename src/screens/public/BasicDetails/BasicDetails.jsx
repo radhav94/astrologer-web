@@ -15,7 +15,7 @@ import {
   genderValidationSchema,
   dobValidationSchema,
   emailValidationSchema,
-} from "../../../utils/utlis";
+} from "../../../utils/utils";
 
 const BasicDetails = () => {
   const navigate = useNavigate();
@@ -39,8 +39,6 @@ const BasicDetails = () => {
       gender: registerData?.gender ? registerData.gender.charAt(0).toUpperCase() + registerData.gender.slice(1) : "Female",
       dateOfBirth: registerData?.dateOfBirth || "2002-01-01",
       email: registerData?.email || "",
-      place: "New Delhi, India",
-      password: "test@12389",
     },
     validationSchema,
     validateOnChange: true,
@@ -55,8 +53,6 @@ const BasicDetails = () => {
           gender: values.gender.toLowerCase(),
           dateOfBirth: values.dateOfBirth,
           email: values.email,
-          place: "New Delhi, India",
-          password: "test@12389",
         }),
       );
 
@@ -87,7 +83,7 @@ const BasicDetails = () => {
       <div className={styles.formLayoutContainer}>
         <div className={styles.formLayoutContent}>
           {/* Progress Dots */}
-          <FormStep totalSteps={7} currentStep={1} />
+          <FormStep totalSteps={8} currentStep={1} />
 
           {/* Heading */}
           <h1 className={styles.heading}>Let's Begin</h1>

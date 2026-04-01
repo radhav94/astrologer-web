@@ -14,7 +14,7 @@ import { useGetAstrologerByIdQuery } from "../redux/astrologer/astrologerApi";
 import StickyReviewFooter from "../screens/private/chat/review/StickyReviewFooter";
 import { AppDefaultImg } from "../utils/appImages";
 import { setAstrologerDetails } from "../reducer/registerSlice";
-import { getDefaultImgBasedOnGender } from "../utils/utlis";
+import { getDefaultImgBasedOnGender } from "../utils/utils";
 import styles from "./HomeLayout.module.scss";
 import StickyChatFooter from "../components/StickyChatFooter";
 import MiniLiveBar from "../components/livestream/MiniLiveBar";
@@ -43,10 +43,14 @@ const HomeLayout = () => {
     JSON.parse(localStorage.getItem("shubhtalk_astrologer_details") || "{}");
   const astrologerId = astrologerIdFromRedux || userData?._id || userData?.id;
 
-  const { data: astrologerResponse } = useGetAstrologerByIdQuery(astrologerId);
+  const { data: astrologerResponse } = useGetAstrologerByIdQuery(astrologerId, {
+    skip: !astrologerId,
+  });
 
   const isRegister = astrologerDetails?.isRegister;
   const isVerified = astrologerDetails?.isVerified;
+
+  console.log("astrologerResponse",astrologerId,astrologerResponse)
 
   // Only check manualVerification if both isRegister and isVerified are true
   const isManualVerification = astrologerDetails?.manualVerification;
@@ -63,9 +67,10 @@ const HomeLayout = () => {
     firstName && lastName ? `${firstName} ${lastName}` : "Unknown";
   const avatar =
     userData?.profileImgUrl || getDefaultImgBasedOnGender(userData?.gender);
+  const followers = userData?.followersList?.length || 0;
 
   //Chat
-  const { setActiveChat, setChatSeconds, recoverChatAfterSystemDisconnect } =
+  const { setActiveChat, setChatSeconds, resetTimer, recoverChatAfterSystemDisconnect } =
     useChatContext();
   const navigate = useNavigate();
 
@@ -256,6 +261,7 @@ const HomeLayout = () => {
         formattedFirstName && formattedLastName
           ? `${formattedFirstName} ${formattedLastName}`
           : formattedFirstName || "Customer";
+          resetTimer();
       setActiveChat({
         roomId: roomId,
         isUserSide: false,
@@ -352,7 +358,7 @@ const HomeLayout = () => {
             {/* RIGHT: Followers + Status */}
             {isManualVerification && (
               <div className={styles.rightSection}>
-                <p className={styles.followers}>1.15k followers</p>
+                <p className={styles.followers}>{followers} followers</p>
 
                 <div className={styles.statusButtons}>
                   {/* Call Button */}

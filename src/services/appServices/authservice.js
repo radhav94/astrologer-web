@@ -48,7 +48,7 @@ export const totalEarning = async () => {
 export const getAstrologerById = async (id) => {
   try {
     return await privateRequest.get(
-      `astrologers/astrologer?astrologerId=${id}`,
+      `astrologers/astrologer?astrologerId=${id}&change=false`,
     );
   } catch (error) {
     console.error("Fetch astrologer failed:", error?.response?.status);

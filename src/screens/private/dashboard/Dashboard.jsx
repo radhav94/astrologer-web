@@ -34,6 +34,8 @@ const Dashboard = () => {
   const isRegister = astrologerDetails?.isRegister ?? false;
   const isVerified = astrologerDetails?.isVerified ?? false;
 
+  
+
   // Only check manualVerification if both isRegister and isVerified are true
   const isManualVerification = (isRegister && isVerified)
     ? (astrologerDetails?.manualVerification ?? false)
@@ -42,10 +44,16 @@ const Dashboard = () => {
   const userData = JSON.parse(
     localStorage.getItem("shubhtalk_astrologer_details")
   );
+
+  
   const astrologerId = userData?._id || userData?.id;
-  const { data } = useGetAstrologerByIdQuery(astrologerId);
+  const { data } = useGetAstrologerByIdQuery(astrologerId, {
+    skip: !astrologerId,
+    refetchOnMountOrArgChange: true,
+  });
   const astrologerData = data?.data || {};
 
+  console.log("Astrologer Details Dashboard::", astrologerData);
   
 
   // Fetch homepage sections with ordering

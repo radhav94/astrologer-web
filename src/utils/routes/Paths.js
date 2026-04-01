@@ -16,6 +16,7 @@ import FAQs from "../../screens/private/Profile/support/FAQs/FAQs";
 import Guidelines from "../../screens/private/Profile/support/guidelines/Guidelines";
 import TermsConditions from "../../screens/private/Profile/support/guidelines/TermsConditions/TermsCondition";
 import RecentTickets from "../../screens/private/Profile/support/tickets/RecentTickets";
+import TicketDetail from "../../screens/private/Profile/support/tickets/TicketDetail";
 import WithdrawMoney from "../../screens/private/Profile/withdraw/WithdrawMoney";
 import Basic from "../../screens/private/Profile/profileForms/Basic";
 import InteractiveLiveStreaming from "../../components/livestream/InteractiveLiveStreaming";
@@ -24,6 +25,10 @@ import ChatWindow from "../../screens/private/chat/ChatWindow";
 import ChatPage from "../../screens/private/chat/ChatPage";
 import AgoraVoiceCalling from "../../screens/private/call/VoiceCall";
 import EducationDetails from "../../screens/private/Profile/profileForms/EducationDetails";
+import AddEditBankAccount from "../../screens/private/Profile/bankAccount/AddEditBankAccount";
+import ConfirmWithdrawal from "../../screens/private/Profile/bankAccount/ConfirmWithdrawal";
+import SuccessEditAddAccount from "../../screens/private/Profile/bankAccount/SuccessEditAddAccount";
+import SuccessWithdrawal from "../../screens/private/Profile/bankAccount/SuccessWithdrawal";
 
 export const PATH = {
   publicRoutes: {
@@ -81,6 +86,10 @@ export const PATH = {
     RECENT_TICKETS: {
       path: "/recent-tickets",
       element: RecentTickets,
+    },
+    TICKET_DETAIL: {
+      path: "/ticket/:ticketId",
+      element: TicketDetail,
     },
     GUIDELINES: {
       path: "/guidelines",
@@ -141,6 +150,27 @@ export const PATH = {
       element: Kundli,
       header: false,
       footer: false,
+    },
+   
+    ADD_BANK_ACCOUNT: {
+      path: "/bank-accounts/add",
+      element: AddEditBankAccount,
+    },
+    EDIT_BANK_ACCOUNT: {
+      path: "/bank-accounts/edit/:bankAccId",
+      element: AddEditBankAccount,
+    },
+    CONFIRM_WITHDRAWAL: {
+      path: "/confirm-withdrawal",
+      element: ConfirmWithdrawal,
+    },
+    WITHDRAWAL_SUCCESS: {
+      path: "/withdrawal-success",
+      element: SuccessWithdrawal,
+    },
+    BANK_ACCOUNT_SUCCESS: {
+      path: "/bank-account-success",
+      element: SuccessEditAddAccount,
     },
   },
 };

@@ -521,3 +521,33 @@ export const getFieldProps = (formik, fieldName) => ({
   onBlur: formik.handleBlur,
   error: formik.touched[fieldName] && formik.errors[fieldName],
 });
+
+export const getAddBankAccountSchema = () =>
+  Yup.object().shape({
+    accountHolderName: Yup.string().trim().required("Account holder name is required"),
+    accountNumber: Yup.string()
+      .trim()
+      .required("Account number is required")
+      .matches(/^\d{9,18}$/, "Enter a valid 9-18 digit account number"),
+    confirmAccountNumber: Yup.string()
+      .trim()
+      .required("Please confirm account number")
+      .oneOf([Yup.ref("accountNumber")], "Account numbers don't match"),
+    ifscCode: Yup.string()
+      .trim()
+      .required("IFSC code is required")
+      .matches(/^[A-Za-z]{4}0[A-Za-z0-9]{6}$/, "Enter a valid IFSC code"),
+    bankName: Yup.string().trim().required("Bank name is required"),
+    branchName: Yup.string().trim(),
+    accountType: Yup.string().oneOf(["savings", "current"]).required(),
+    isPrimary: Yup.boolean(),
+  });
+
+export const getEditBankAccountSchema = () =>
+  Yup.object().shape({
+    accountHolderName: Yup.string().trim().required("Account holder name is required"),
+    bankName: Yup.string().trim().required("Bank name is required"),
+    branchName: Yup.string().trim(),
+    accountType: Yup.string().oneOf(["savings", "current"]).required(),
+    isPrimary: Yup.boolean(),
+  });

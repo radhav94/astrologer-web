@@ -3,7 +3,8 @@ import AgoraRTC from "agora-rtc-sdk-ng";
 import {
   IoMic,
   IoMicOff,
-  IoArrowBack
+  IoArrowBack,
+  IoCallSharp
 } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
 import styles from "./VoiceCall.module.scss";
@@ -17,8 +18,12 @@ import { useChat as useChatContext } from "../../../context/chatContext";
 import CallIcon from "../../../assets/chat/Call.svg";
 import VideoCallChat from "./VideoCallChat";
 import { ReconnectingOverlay } from "../../../components/UI";
+import SuggestRemedyPanel from "./SuggestRemedyPanel";
+import ReportCaller from "../chat/review/ReportCaller";
+import { useSubmitReportMutation } from "../../../redux/review/reviewApi";
+import { Toast } from "../../../components";
 
-const APP_ID = "cf5e31fa03584573aacaf42daebd493c";
+const APP_ID = "8575e5681f7142f4bced0b83332caa15";
 
 const AgoraVoiceCalling = ({ callData }) => {
   const { activeCall, setActiveCall, sharedAgoraState, setSharedAgoraState, isUpgradeRejectionProtected, upgradeRejectionRef, isUpgradingRef, setReviewData, setOpenReview, callStartTime, setCallStartTime, isCallMinimized, setIsCallMinimized, isReconnecting, networkDisconnected, recoverCallAfterSystemDisconnect } = useCall();
@@ -41,6 +46,7 @@ const AgoraVoiceCalling = ({ callData }) => {
   const localVideoRef = useRef(null);
   const userLeftTimerRef = useRef(null);
   const isRefreshingRef = useRef(false);
+  const unmountedRef = useRef(false); // Prevents stale Agora callbacks after unmount
   // Track if this mount is a refresh-resume (activeCall restored from sessionStorage)
   const isResumeFromRefresh = useRef(!!sessionStorage.getItem("shubhtalk_active_call"));
   const isDowngradingRef = useRef(false); // Track if downgrading from video
@@ -55,6 +61,9 @@ const AgoraVoiceCalling = ({ callData }) => {
   const [isVideoMode, setIsVideoMode] = useState(false);
   const [speakerOn, setSpeakerOn] = useState(true);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isRemedyOpen, setIsRemedyOpen] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [submitReport, { isLoading: isReportSubmitting }] = useSubmitReportMutation();
 
   /* ================= PREVENT ACCIDENTAL REFRESH & DETECT REFRESH ================= */
   useEffect(() => {
@@ -76,6 +85,7 @@ const AgoraVoiceCalling = ({ callData }) => {
   /* ================= START CALL ================= */
   useEffect(() => {
     cleanupRef.current = false;
+    unmountedRef.current = false;
 
     const startCall = async () => {
       try {
@@ -171,12 +181,24 @@ const AgoraVoiceCalling = ({ callData }) => {
                   console.log("⚠️ [DOWNGRADE] Ignoring user-left — upgrade in progress");
                   return;
                 }
-                console.log("[DOWNGRADE] 👋 user-left — uid:", user.uid, "starting 60s grace timer");
+                // Ignore if VoiceCall already unmounted (stale Agora callback)
+                if (unmountedRef.current) {
+                  console.log("⚠️ [DOWNGRADE] Ignoring user-left — component already unmounted");
+                  return;
+                }
+                // Use shorter grace period when call was initiated from chat
+                const isChatInitiated = Boolean(activeChat?.roomId || activeCall?.resumeToChat);
+                const graceMs = isChatInitiated ? 5000 : 60000;
+                console.log(`[DOWNGRADE] 👋 user-left — uid: ${user.uid}, starting ${graceMs / 1000}s grace timer (chatInitiated: ${isChatInitiated})`);
                 if (userLeftTimerRef.current) clearTimeout(userLeftTimerRef.current);
                 userLeftTimerRef.current = setTimeout(() => {
+                  if (isUpgradingRef.current || unmountedRef.current) {
+                    console.log("⚠️ [DOWNGRADE] Grace timer fired but upgrade/unmount in progress — ignoring");
+                    return;
+                  }
                   console.log("[DOWNGRADE] ⏰ user-left grace timer expired — ending call");
                   handleRemoteUserLeft();
-                }, 60000); // 60s grace period — matches backend disconnect grace
+                }, graceMs);
               });
 
               clientRef.current.on("user-joined", (user) => {
@@ -293,12 +315,26 @@ const AgoraVoiceCalling = ({ callData }) => {
             console.log("⚠️ Ignoring user-left — upgrade in progress");
             return;
           }
-          console.log("[VoiceCall] 👋 user-left — uid:", user.uid, "starting 60s grace timer");
+          // Ignore if VoiceCall already unmounted (stale Agora callback)
+          if (unmountedRef.current) {
+            console.log("⚠️ [VoiceCall] Ignoring user-left — component already unmounted");
+            return;
+          }
+          // Use shorter grace period when call was initiated from chat,
+          // since user likely disconnected intentionally to return to chat
+          const isChatInitiated = Boolean(activeChat?.roomId || activeCall?.resumeToChat);
+          const graceMs = isChatInitiated ? 5000 : 60000;
+          console.log(`[VoiceCall] 👋 user-left — uid: ${user.uid}, starting ${graceMs / 1000}s grace timer (chatInitiated: ${isChatInitiated})`);
           if (userLeftTimerRef.current) clearTimeout(userLeftTimerRef.current);
           userLeftTimerRef.current = setTimeout(() => {
+            // Double-check upgrade/unmount state when timer fires
+            if (isUpgradingRef.current || unmountedRef.current) {
+              console.log("⚠️ [VoiceCall] Grace timer fired but upgrade/unmount in progress — ignoring");
+              return;
+            }
             console.log("[VoiceCall] ⏰ user-left grace timer expired — ending call");
             handleRemoteUserLeft();
-          }, 60000); // 60s grace period — matches backend disconnect grace
+          }, graceMs);
         });
 
         client.on("user-joined", (user) => {
@@ -356,15 +392,17 @@ const AgoraVoiceCalling = ({ callData }) => {
 
     return () => {
       console.log("[VoiceCall] 🧹 useEffect cleanup (unmount) — isRefreshing:", isRefreshingRef.current);
-      // If upgrading to video, skip cleanup entirely
-      // Check both the ref AND the shared state (ref may not be updated yet due to React batching)
-      if (isUpgradingRef.current || sharedAgoraState.isUpgrading) {
-        console.log("🔄 Skipping cleanup - upgrading to video");
-        return;
-      }
+      unmountedRef.current = true;
+      // Always clear the user-left grace timer on unmount to prevent stale
+      // callbacks from killing a newly upgraded video call
       if (userLeftTimerRef.current) {
         clearTimeout(userLeftTimerRef.current);
         userLeftTimerRef.current = null;
+      }
+      // If upgrading to video, skip Agora resource cleanup (client/tracks are shared)
+      if (isUpgradingRef.current || sharedAgoraState.isUpgrading) {
+        console.log("🔄 Skipping cleanup - upgrading to video");
+        return;
       }
       // On refresh: only release Agora resources, do NOT clear activeCall
       // so it persists in sessionStorage for reconnect
@@ -508,6 +546,29 @@ const AgoraVoiceCalling = ({ callData }) => {
   };
 
   /* ================= END CALL (User initiated) ================= */
+
+  const handleReportSubmit = async (values) => {
+    try {
+      const res = await submitReport({
+        reasonId: values.reasonId,
+        userId: activeCall?.userId,
+        // astrologerId: activeCall?.astrologerId,
+        description: values.description,
+      }).unwrap();
+
+      if (res?.success) {
+        Toast.success(res?.message || "Report submitted successfully");
+      } else {
+        Toast.error(res?.message || "Failed to submit report");
+      }
+
+      setShowReportModal(false);
+      endCall();
+    } catch (err) {
+      Toast.error(err?.data?.message || "Failed to submit report");
+    }
+  };
+
   const endCall = async () => {
     // Don't emit call:end if upgrading or downgrading
     if (isUpgradingRef.current || sharedAgoraState.isUpgrading) {
@@ -528,6 +589,7 @@ const AgoraVoiceCalling = ({ callData }) => {
     setReviewData({
       userID: activeCall?.userID,
       fullName: activeCall?.callerName,
+      roomId: activeCall?.roomId,
     });
     // Don't show review popup if chat is still active
     if (!shouldSkipReview) {
@@ -549,6 +611,7 @@ const AgoraVoiceCalling = ({ callData }) => {
     setReviewData({
       userID: activeCall?.userID,
       fullName: activeCall?.callerName,
+      roomId: activeCall?.roomId,
     });
     // Don't show review popup if chat is still active
     if (!shouldSkipReview) {
@@ -570,6 +633,7 @@ const AgoraVoiceCalling = ({ callData }) => {
     setReviewData({
       userID: activeCall?.userID,
       fullName: activeCall?.callerName,
+      roomId: activeCall?.roomId,
     });
     // Don't show review popup if chat is still active
     if (!shouldSkipReview) {
@@ -620,21 +684,21 @@ const AgoraVoiceCalling = ({ callData }) => {
       }
     };
 
-    const handleCanceled = async () => {
-      await cleanup();
-    };
+    // const handleCanceled = async () => {
+    //   await cleanup();
+    // };
     
     voiceSocket.on("call:ended", handleCallEnded);
     voiceSocket.on("force_call_end", handleForceCallEnd);
     voiceSocket.on("call:rejected", handleCallRejected);
-    voiceSocket.on("call:canceled", handleCanceled);
+    // voiceSocket.on("call:canceled", handleCanceled);
 
     return () => {
       console.log("[VoiceCall] Cleaning up socket listeners for room:", roomId);
       voiceSocket.off("call:ended", handleCallEnded);
       voiceSocket.off("force_call_end", handleForceCallEnd);
       voiceSocket.off("call:rejected", handleCallRejected);
-      voiceSocket.off("call:canceled", handleCanceled);
+      // voiceSocket.off("call:canceled", handleCanceled);
     };
   }, [roomId]); // Only depend on roomId
 
@@ -781,6 +845,16 @@ const AgoraVoiceCalling = ({ callData }) => {
                 }`}
             >
               {micOn ? <IoMic /> : <IoMicOff />}
+            </button>
+
+            <button
+              onClick={(e) => { e.stopPropagation(); endCall(); }}
+              className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center"
+              title="End Call"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
+                <path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08a.956.956 0 010-1.36C3.42 8.63 7.46 7 12 7s8.58 1.63 11.71 4.72c.18.18.29.44.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.1-.7-.28-.79-.73-1.68-1.36-2.66-1.85a.993.993 0 01-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/>
+              </svg>
             </button>
 
             <button
@@ -1047,7 +1121,7 @@ const AgoraVoiceCalling = ({ callData }) => {
                   transition: 'all 0.3s'
                 }}
               >
-                <button className="px-8 py-3 text-white rounded-full text-base font-semibold hover:opacity-90 transition-opacity shadow-lg flex items-center gap-2" style={{ background: 'linear-gradient(135deg, #f75801, #d43400)' }}>
+                <button onClick={() => setIsRemedyOpen(true)} className="px-8 py-3 text-white rounded-full text-base font-semibold hover:opacity-90 transition-opacity shadow-lg flex items-center gap-2" style={{ background: 'linear-gradient(135deg, #f75801, #d43400)' }}>
                   Suggest Remedy
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
@@ -1082,19 +1156,15 @@ const AgoraVoiceCalling = ({ callData }) => {
                     </span>
                   </div>
 
-                  {/* REPORT CALLER BUTTON */}
+                  {/* END CALL BUTTON */}
                   <div className="flex flex-col items-center gap-2">
                     <button
                       onClick={endCall}
                       className="w-16 h-16 rounded-full bg-red-500 flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors"
                     >
-                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-                        <path d="M12 2L2 20h20L12 2z" fill="white" />
-                        <rect x="11" y="8" width="2" height="6" fill="#ef4444" rx="1" />
-                        <circle cx="12" cy="17" r="1" fill="#ef4444" />
-                      </svg>
+                      <IoCallSharp color="white" size={24} />
                     </button>
-                    <span className={`text-sm font-medium ${isRemoteVideo ? 'text-white' : 'text-gray-600'}`}>Report Caller</span>
+                    <span className={`text-sm font-medium ${isRemoteVideo ? 'text-white' : 'text-gray-600'}`}>End Call</span>
                   </div>
 
                   {/* SPEAKER BUTTON */}
@@ -1121,6 +1191,21 @@ const AgoraVoiceCalling = ({ callData }) => {
                     </span>
                   </div>
 
+{/* Report Caller */}
+                  <div className="flex flex-col items-center gap-2">
+                    <button
+                      onClick={() => setShowReportModal(true)}
+                      className="w-16 h-16 rounded-full bg-red-500 flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors"
+                    >
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                        <path d="M12 2L2 20h20L12 2z" fill="white" />
+                        <rect x="11" y="8" width="2" height="6" fill="#ef4444" rx="1" />
+                        <circle cx="12" cy="17" r="1" fill="#ef4444" />
+                      </svg>
+                    </button>
+                    <span className={`text-sm font-medium ${isRemoteVideo ? 'text-white' : 'text-gray-600'}`}>Report Caller</span>
+                  </div>
+
                 </div>
               </div>
             </div>
@@ -1134,6 +1219,21 @@ const AgoraVoiceCalling = ({ callData }) => {
               videoCallData={chatData}
             />
           )}
+          {/* Suggest Remedy Panel */}
+          <SuggestRemedyPanel
+            isOpen={isRemedyOpen}
+            onClose={() => setIsRemedyOpen(false)}
+            roomId={activeCall?.chatRoomId || roomId}
+          />
+
+          {/* Report Caller Modal */}
+          <ReportCaller
+            isOpen={showReportModal}
+            onClose={() => setShowReportModal(false)}
+            onSubmit={handleReportSubmit}
+            isSubmitting={isReportSubmitting}
+            callerName={callerName}
+          />
         </div>
       )}
     </>

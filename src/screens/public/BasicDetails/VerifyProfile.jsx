@@ -4,7 +4,7 @@ import { useFormik } from "formik";
 import { useDispatch, useSelector } from "react-redux";
 import * as Yup from "yup";
 import { updateRegisterData, setCurrentStep, clearRegisterData } from "../../../reducer/registerSlice";
-import { createFileValidation } from "../../../utils/utlis";
+import { createFileValidation } from "../../../utils/utils";
 import { useFileUpload } from "../../../hooks/useFileUpload";
 import { useRegisterAstrologerMutation } from "../../../redux/register/registerAstroApi";
 import { Toast } from "../../../components";
@@ -20,44 +20,48 @@ const VerifyProfile = () => {
   const [registerAstrologer, { isLoading: isRegistering }] = useRegisterAstrologerMutation();
   const registerData = useSelector((state) => state.register.registerData);
   
+  // Strip KYC details from the payload — KYC is verified separately
+  const KYC_FIELDS = [
+    "kycVerified",
+    "kycMethod",
+    "kycAadhaarNumber",
+    "kycAadhaarName",
+    "kycAadhaarDob",
+    "kycPanNumber",
+    "kycPanName",
+    "kycPanDob",
+  ];
+
+  const getRegisterPayload = () => {
+    if (!registerData) return {};
+    const payload = { ...registerData };
+    KYC_FIELDS.forEach((field) => delete payload[field]);
+    return payload;
+  };
+
   const [uploading, setUploading] = useState({
     profileImgUrl: false,
-    aadharCardImgUrl: false,
-    panCardImgUrl: false,
   });
 
-  // Validation schema using reusable utilities from utils.js
   const validationSchema = Yup.object().shape({
     profileImgUrl: createFileValidation({
       fieldName: "Profile photo",
       required: true,
     }),
-    aadharCardImgUrl: createFileValidation({
-      fieldName: "Aadhar card",
-      required: true,
-    }),
-    panCardImgUrl: createFileValidation({
-      fieldName: "PAN card",
-      required: true,
-    }),
   });
 
-  // Formik setup with Redux state hydration
   const formik = useFormik({
     initialValues: {
       profileImgUrl: registerData?.profileImgUrl || "",
-      aadharCardImgUrl: registerData?.aadharCardImgUrl || "",
-      panCardImgUrl: registerData?.panCardImgUrl || "",
     },
     validationSchema,
     validateOnChange: true,
     validateOnBlur: true,
-    validateOnMount: true, // Validate on mount to check initial state
-    enableReinitialize: true, // Allow form to reinitialize when Redux state changes
+    validateOnMount: true,
+    enableReinitialize: true,
     onSubmit: async () => {
       try {  
-        await registerAstrologer(registerData).unwrap();
-        
+        await registerAstrologer(getRegisterPayload()).unwrap();
         Toast.success("Registration successful!");
         dispatch(clearRegisterData());
         navigate("/verificationpending");
@@ -68,47 +72,22 @@ const VerifyProfile = () => {
     },
   });
 
-  // Re-validate form whenever values change to ensure button state is correct
   useEffect(() => {
     formik.validateForm();
-  }, [formik.values.profileImgUrl, formik.values.aadharCardImgUrl, formik.values.panCardImgUrl]);
+  }, [formik.values.profileImgUrl]);
 
   const handleFileUpload = async (fieldName, acceptTypes = "image/*,.pdf") => {
     try {
       setUploading((prev) => ({ ...prev, [fieldName]: true }));
-
-      // Use the custom hook to upload file
       const fileUrl = await uploadFile(acceptTypes);
 
       if (fileUrl) {
-        // Set the uploaded file URL in Formik
         await formik.setFieldValue(fieldName, fileUrl, false);
-        
-        // Mark field as touched to trigger validation
         await formik.setFieldTouched(fieldName, true, false);
-        
-        // Manually validate the form to update errors state
         await formik.validateForm();
 
-        // Get current form values with the new file URL
-        const updatedValues = {
-          ...formik.values,
-          [fieldName]: fileUrl,
-        };
-
-        // Check if all files are uploaded
-        if (updatedValues.profileImgUrl && updatedValues.aadharCardImgUrl && updatedValues.panCardImgUrl) {
-          // Dispatch to update registerData state
-          dispatch(updateRegisterData({
-            profileImgUrl: updatedValues.profileImgUrl,
-            aadharCardImgUrl: updatedValues.aadharCardImgUrl,
-            panCardImgUrl: updatedValues.panCardImgUrl,
-            
-          }));
-
-          // Update current step
-          dispatch(setCurrentStep(8));
-        }
+        dispatch(updateRegisterData({ [fieldName]: fileUrl }));
+        dispatch(setCurrentStep(8));
       }
     } catch (error) {
       console.error("File upload error:", error);
@@ -119,9 +98,7 @@ const VerifyProfile = () => {
 
   const handleSkip = async () => {
     try {
-      // Call register API with current registerData (without file uploads)
-      await registerAstrologer(registerData).unwrap();
-      
+      await registerAstrologer(getRegisterPayload()).unwrap();
       Toast.success("Registration successful!");
       dispatch(clearRegisterData());
       navigate("/verificationpending");
@@ -131,21 +108,16 @@ const VerifyProfile = () => {
     }
   };
 
-  // Check if all required fields are filled and valid
   const isFormValid = 
     formik.values.profileImgUrl !== "" &&
-    formik.values.aadharCardImgUrl !== "" &&
-    formik.values.panCardImgUrl !== "" &&
     Object.keys(formik.errors).length === 0;
 
   return (
     <div className={styles.formLayoutWrapper}>
       <div className={styles.formLayoutContainer}>
         <div className={styles.formLayoutContent}>
-          {/* Progress + Skip */}
           <div className={styles.progressWithSkip}>
-            <FormStep totalSteps={7} currentStep={7} />
-
+            <FormStep totalSteps={8} currentStep={8} />
             <button 
               type="button"
               onClick={handleSkip}
@@ -156,16 +128,12 @@ const VerifyProfile = () => {
             </button>
           </div>
 
-          {/* Heading */}
-          <h1 className={styles.heading}>
-            Verify Your Profile
-          </h1>
+          <h1 className={styles.heading}>Verify Your Profile</h1>
           <p className={styles.subheading}>
-            Help us ensure authenticity. Verified astrologers
-            gain more visibility and trust from clients.
+            Upload your profile photo to complete registration.
+            Verified astrologers gain more visibility and trust from clients.
           </p>
 
-          {/* Upload Fields */}
           <FileUploadInput
             label="Profile Photo"
             optionalText=""
@@ -176,31 +144,8 @@ const VerifyProfile = () => {
             uploadText="Tap here to add file"
             uploadSubtext="(.jpg, .png)"
           />
-
-          <FileUploadInput
-            label="Aadhar Card"
-            optionalText=""
-            accept="image/*,.pdf"
-            value={formik.values.aadharCardImgUrl}
-            isUploading={uploading.aadharCardImgUrl}
-            onUpload={() => handleFileUpload("aadharCardImgUrl")}
-            uploadText="Tap here to add file"
-            uploadSubtext="(.jpg, .png, .pdf)"
-          />
-
-          <FileUploadInput
-            label="PAN Card"
-            optionalText=""
-            accept="image/*,.pdf"
-            value={formik.values.panCardImgUrl}
-            isUploading={uploading.panCardImgUrl}
-            onUpload={() => handleFileUpload("panCardImgUrl")}
-            uploadText="Tap here to add file"
-            uploadSubtext="(.jpg, .png, .pdf)"
-          />
         </div>
 
-        {/* Submit Button */}
         <div className={styles.formLayoutFooter}>
           <Button
             type="submit"

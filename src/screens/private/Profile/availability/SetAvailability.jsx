@@ -52,7 +52,9 @@ const SetAvailability = () => {
     localStorage.getItem("shubhtalk_astrologer_details")
   );
   const astrologerId = userData?._id;
-  const { data: astrologerData } = useGetAstrologerByIdQuery(astrologerId);
+  const { data: astrologerData } = useGetAstrologerByIdQuery(astrologerId, {
+    skip: !astrologerId,
+  });
 
   const [schedule, setSchedule] = useState(() => getInitialSchedule());
   const [isScheduleOpen, setIsScheduleOpen] = useState(true);

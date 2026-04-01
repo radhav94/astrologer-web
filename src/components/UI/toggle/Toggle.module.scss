@@ -1,59 +1,112 @@
 // Toggle Container
 .toggleContainer {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.5rem 1rem;
-    border-radius: 2rem;
-    border: none;
-    background-color: #FEFEFE;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+}
+
+// Label positions
+.labelLeft {
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.labelRight {
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+}
+
+// Disabled state
+.disabled {
+  opacity: 0.5;
+  pointer-events: none;
 }
 
 // Toggle Label
 .toggleLabel {
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: #030303;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #030303;
+  cursor: pointer;
+  user-select: none;
+
+  .disabled & {
+    cursor: default;
+  }
 }
 
-// Toggle Switch
+// Toggle Switch — base
 .toggleSwitch {
-    position: relative;
-    display: inline-flex;
-    height: 1.75rem;
-    width: 3rem;
-    flex-shrink: 0;
-    cursor: pointer;
-    border-radius: 9999px;
-    border: 2px solid transparent;
-    transition: all 0.2s ease-in-out;
-    background-color: #FFE4BA;
-    padding: 0;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  transition: background-color 0.2s ease-in-out;
+  background-color: #d1d5db;
+  padding: 0;
 
-    &:focus {
-        outline: none;
-    }
+  &:focus-visible {
+    outline: 2px solid #F75801;
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+  }
 }
 
-// Active State (Orange)
+// Sizes
+.small {
+  height: 1.25rem;
+  width: 2.25rem;
+
+  .toggleThumb {
+    height: 0.875rem;
+    width: 0.875rem;
+  }
+}
+
+.medium {
+  height: 1.75rem;
+  width: 3rem;
+
+  .toggleThumb {
+    height: 1.25rem;
+    width: 1.25rem;
+  }
+}
+
+.large {
+  height: 2rem;
+  width: 3.5rem;
+
+  .toggleThumb {
+    height: 1.5rem;
+    width: 1.5rem;
+  }
+}
+
+// Active State
 .toggleActive {
-    background: #FFE4BA;
+  background-color: #FFE4BA;
 }
 
 // Toggle Thumb
 .toggleThumb {
-    pointer-events: none;
-    display: inline-block;
-    height: 1.25rem;
-    width: 1.25rem;
-    transform: translateX(0);
-    border-radius: 50%;
-    background: linear-gradient(90deg, #F75801 0%, #D43400 100%);
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-    transition: transform 0.2s ease-in-out;
-    margin: 0.125rem;
+  pointer-events: none;
+  display: inline-block;
+  border-radius: 50%;
+  background: linear-gradient(90deg, #F75801 0%, #D43400 100%);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  transition: transform 0.2s ease-in-out;
+  margin: 0.125rem;
+  transform: translateX(0);
 
-    .toggleActive & {
-        transform: translateX(1.25rem);
-    }
+  .toggleActive & {
+    transform: translateX(calc(100% + 0.125rem));
+  }
 }

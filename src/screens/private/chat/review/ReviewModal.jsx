@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { Icons } from "../../../../components/Icons";
+import styles from "./ReviewModal.module.scss";
+import { AppIcons } from "../../../../utils/appImages";
 
 const ReviewModal = ({ onClose, onSubmit, ratedUserName, reviewerName }) => {
   const [rating, setRating] = useState(0);
@@ -6,104 +9,70 @@ const ReviewModal = ({ onClose, onSubmit, ratedUserName, reviewerName }) => {
   const [isAnonymous, setAnonymous] = useState(false);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="relative w-[380px] rounded-2xl bg-white p-6 shadow-xl">
-        {/* Close button */}
-        <button
-          onClick={onClose}
-          className="absolute right-4 top-4 text-gray-500 hover:text-black"
-        >
-          ✕
-        </button>
-
+    <div className={styles.overlay}>
+      <div className={styles.modal}>
         {/* Header */}
-        <h2 className="text-center text-lg font-semibold capitalize">Rate {ratedUserName}</h2>
-
-        {/* Avatar */}
-        <div className="mt-4 flex justify-center">
-          <div className="h-20 w-20 rounded-full bg-gray-200 flex items-center justify-center">
-            <svg
-              className="h-10 w-10 text-gray-400"
-              fill="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-4.418 0-8 2.239-8 5v1h16v-1c0-2.761-3.582-5-8-5z" />
-            </svg>
-          </div>
+        <div className={styles.header}>
+          <h2 className={styles.title}>Please Rate your Experience</h2>
+          <button onClick={onClose} className={styles.closeBtn} aria-label="Close">
+            <Icons.X size={14} />
+          </button>
         </div>
 
-        {/* User info */}
-        <div className="mt-4 flex items-start gap-3">
-          <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
-            <svg
-              className="h-4 w-4 text-gray-400"
-              fill="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-4.418 0-8 2.239-8 5v1h16v-1c0-2.761-3.582-5-8-5z" />
-            </svg>
-          </div>
-          <div>
-            <p className="font-medium">{reviewerName}</p>
-            <p className="text-xs text-gray-500">
-              Reviews are public if you are not anonymous
-            </p>
-          </div>
-        </div>
-
-        {/* Anonymous checkbox */}
-        <label className="mt-4 flex items-center gap-2 text-sm text-gray-700">
-          <input
-            type="checkbox"
-            checked={isAnonymous}
-            onChange={(e) => setAnonymous(e.target.checked)}
-            className="h-4 w-4 rounded border-gray-300 text-yellow-500 focus:ring-yellow-500"
-          />
-          Hide my name from all public reviews
-        </label>
-
-        {/* Rating stars */}
-        <div className="mt-4 flex justify-center gap-1">
-          {[1, 2, 3, 4, 5].map((star) => (
+        {/* Stars */}
+        <div className={styles.stars}>
+         {[1, 2, 3, 4, 5].map((i) => (
             <button
-              key={star}
-              onClick={() => setRating(star)}
-              className={`text-2xl ${
-                rating >= star ? "text-yellow-400" : "text-gray-300"
-              }`}
+              key={i}
+              type="button"
+              className={`${styles.star} ${i <= rating ? styles.active : ""}`}
+              onClick={() => setRating(i)}
+              aria-label={`${i} star${i > 1 ? "s" : ""}`}
+              aria-checked={i <= rating}
+              role="radio"
             >
-              ★
+              <img
+                className={styles.starActive}
+                src={AppIcons.ActiveStarIcon}
+                alt=""
+              />
+              <img
+                className={styles.starInactive}
+                src={AppIcons.InActiveStarIcon}
+                alt=""
+              />
             </button>
           ))}
         </div>
 
-        {/* Review textarea */}
-        <div className="mt-4">
-          <textarea
-            value={review}
-            onChange={(e) => setReview(e.target.value.slice(0, 160))}
-            placeholder="Describe your experience (optional)"
-            className="w-full resize-none rounded-lg border border-gray-300 p-3 text-sm focus:border-yellow-500 focus:outline-none"
-            rows={3}
+        {/* Textarea */}
+        <textarea
+          value={review}
+          onChange={(e) => setReview(e.target.value)}
+          placeholder="Tell us about your experience (optional)"
+          className={styles.textarea}
+          rows={6}
+        />
+
+        {/* Anonymous checkbox */}
+        <label className={styles.checkboxRow}>
+          <input
+            type="checkbox"
+            checked={isAnonymous}
+            onChange={(e) => setAnonymous(e.target.checked)}
+            className={styles.checkbox}
           />
-          <div className="mt-1 text-right text-xs text-gray-400">
-            {review.length}/160
-          </div>
-        </div>
+          <span className={styles.checkboxLabel}>Hide my name from the review</span>
+        </label>
 
         {/* Submit */}
         <button
-          onClick={() =>
-            onSubmit({ rating, review, isAnonymous })
-          }
-          disabled={!rating}
-          className={`mt-4 w-full rounded-lg py-3 font-medium transition ${
-            rating
-              ? "bg-yellow-400 text-black hover:bg-yellow-500"
-              : "bg-gray-200 text-gray-400 cursor-not-allowed"
-          }`}
+          onClick={() => onSubmit({ rating, review, isAnonymous })}
+          disabled={rating === 0}
+          className={styles.submitBtn}
         >
           Submit
+          <Icons.ChevronRight size={16} />
         </button>
       </div>
     </div>

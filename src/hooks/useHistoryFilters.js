@@ -81,10 +81,15 @@ const useHistoryFilters = () => {
   const updateTempFilter = useCallback((key, value) => {
     setTempFilters((prev) => {
       if (key === "dateRange" && value) {
+        if (value === "custom") {
+          // Keep custom dates, just set dateRange to "custom"
+          return { ...prev, dateRange: "custom" };
+        }
+        // Preset selected — clear custom dates
         return { ...prev, dateRange: value, customFromDate: "", customToDate: "" };
       }
       if ((key === "customFromDate" || key === "customToDate") && value) {
-        return { ...prev, [key]: value, dateRange: "" };
+        return { ...prev, [key]: value };
       }
       return { ...prev, [key]: value };
     });
@@ -95,7 +100,7 @@ const useHistoryFilters = () => {
     ...(filters.sortBy && { sortBy: filters.sortBy }),
     ...(filters.filterBy && { filterBy: filters.filterBy }),
     ...(filters.search && { search: filters.search }),
-    ...(filters.dateRange && { dateRange: filters.dateRange }),
+    ...(filters.dateRange && filters.dateRange !== "custom" && { dateRange: filters.dateRange }),
     ...(filters.customFromDate && { customFromDate: filters.customFromDate }),
     ...(filters.customToDate && { customToDate: filters.customToDate }),
   };

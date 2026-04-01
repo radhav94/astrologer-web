@@ -6,8 +6,9 @@
     padding: 0 1.25rem;
     margin-bottom: 1.5rem;
 
-    @media (min-width: 640px) {
-        padding: 0 1.5rem;
+    @media (width <= 640px) {
+        padding: 0 1rem;
+        margin-bottom: 7.5rem;
     }
 }
 

@@ -357,10 +357,8 @@
     min-width: 0;
     max-width: 33.333%;
     transition: border-color 0.15s, box-shadow 0.15s;
-
-    @media (min-width: 640px) {
-        padding: 0.5rem 1rem;
-        gap: 0.625rem;
+    @media (width <= 767px) {
+        max-width: 100%;
     }
 
     &:focus-within {

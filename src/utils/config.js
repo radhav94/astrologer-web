@@ -1,3 +1,4 @@
+import { Icons } from "../components/Icons";
 import { appSvgs } from "./appImages";
 
 export const EXPERTISE_AREAS = [
@@ -48,5 +49,20 @@ export const EXPERTISE_AREAS = [
     icon: appSvgs.OtherIcon,
     iconBgColor: "#FFB74D",
     slug: "psychology",
+  },
+];
+
+export const availabilityConfig = [
+  {
+    type: "call",
+    title: "Calls",
+    subtitle: "Voice consultations",
+    icon: Icons.Phone,
+  },
+  {
+    type: "chat",
+    title: "Chats",
+    subtitle: "Text consultations",
+    icon: Icons.MessageSquare,
   },
 ];

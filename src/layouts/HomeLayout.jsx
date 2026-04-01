@@ -14,10 +14,13 @@ import { useGetAstrologerByIdQuery } from "../redux/astrologer/astrologerApi";
 import StickyReviewFooter from "../screens/private/chat/review/StickyReviewFooter";
 import { AppDefaultImg } from "../utils/appImages";
 import { setAstrologerDetails } from "../reducer/registerSlice";
+import dayjs from "dayjs";
 import { getDefaultImgBasedOnGender } from "../utils/utils";
 import styles from "./HomeLayout.module.scss";
 import StickyChatFooter from "../components/StickyChatFooter";
 import MiniLiveBar from "../components/livestream/MiniLiveBar";
+import AvailabilityCard from "../components/UI/availabilityCard/AvailabilityCard";
+import { availabilityConfig } from "../utils/config";
 
 const HomeLayout = () => {
   const { kundliId } = useParams();
@@ -316,7 +319,6 @@ const HomeLayout = () => {
           <div className={styles.headerContent}>
             {/* LEFT: Profile + Info */}
             <div className={styles.leftSection}>
-              {/* Mobile menu */}
               <button
                 onClick={() => setIsSidebarOpen(true)}
                 className={styles.menuButton}
@@ -324,107 +326,79 @@ const HomeLayout = () => {
                 <Icons.Menu size={22} />
               </button>
 
-              {/* Avatar */}
               <div className={styles.avatarWrapper}>
-                <div className={styles.avatarContainer}>
-                  <div className={styles.avatarInner}>
-                    <div className={styles.avatar}>
-                      <img
-                        src={avatar || AppDefaultImg.DefaultMaleAstrologer}
-                        alt="Profile"
-                      />
-                    </div>
-                    <div
-                      className={`${styles.statusDot} ${
-                        statusState.call.isOnline || statusState.chat.isOnline
-                          ? styles.online
-                          : styles.offline
-                      }`}
-                    ></div>
+                <div className={styles.avatarInner}>
+                  <div className={styles.avatar}>
+                    <img
+                      src={avatar || AppDefaultImg.DefaultMaleAstrologer}
+                      alt="Profile"
+                    />
                   </div>
+                  <div
+                    className={`${styles.statusDot} ${
+                      statusState.call.isOnline || statusState.chat.isOnline
+                        ? styles.online
+                        : styles.offline
+                    }`}
+                  />
                 </div>
               </div>
 
-              {/* Name + Date */}
               <div className={styles.userInfo}>
                 <p className={styles.greeting}>Namaste</p>
                 <p className={styles.userName}>{userName}</p>
-                <p className={styles.date}>
-                  {new Date().toLocaleDateString("en-GB")}
-                </p>
+                <p className={styles.date}>{dayjs().format("DD/MM/YYYY")}</p>
               </div>
             </div>
 
-            {/* RIGHT: Followers + Status */}
+            {/* CENTER: Availability Cards  Desktop view only*/}
+            <div className={styles.centerSection}>
+              <p className={styles.availableLabel}>Available for</p>
+              <div className={styles.availabilityCards}>
+                {/* Call/Chat Card */}
+                {availabilityConfig.map((item) => (
+                  <AvailabilityCard
+                    key={item.type}
+                    type={item.type}
+                    title={item.title}
+                    subtitle={item.subtitle}
+                    Icon={item.icon}
+                    isOnline={statusState[item.type].isOnline}
+                    loading={statusState[item.type].loading}
+                    onClick={() => handleStatusToggle(item.type)}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* RIGHT: Followers */}
             {isManualVerification && (
               <div className={styles.rightSection}>
-                <p className={styles.followers}>{followers} followers</p>
-
-                <div className={styles.statusButtons}>
-                  {/* Call Button */}
-                  <button
-                    disabled={statusState.call.loading}
-                    onClick={() => handleStatusToggle("call")}
-                    className={`${styles.statusButton} ${
-                      statusState.call.isOnline
-                        ? styles.active
-                        : styles.inactive
-                    } ${statusState.call.loading ? styles.loading : ""}`}
-                  >
-                    <span
-                      className={`${styles.statusLabel} ${
-                        statusState.call.isOnline
-                          ? styles.active
-                          : styles.inactive
-                      }`}
-                    >
-                      Call
-                    </span>
-                    <div
-                      className={`${styles.statusIcon} ${
-                        statusState.call.isOnline
-                          ? styles.active
-                          : styles.inactive
-                      }`}
-                    >
-                      <Icons.Phone size={18} strokeWidth={2.5} />
-                    </div>
-                  </button>
-
-                  {/* Chat Button */}
-                  <button
-                    disabled={statusState.chat.loading}
-                    onClick={() => handleStatusToggle("chat")}
-                    className={`${styles.statusButton} ${
-                      statusState.chat.isOnline
-                        ? styles.active
-                        : styles.inactive
-                    } ${statusState.chat.loading ? styles.loading : ""}`}
-                  >
-                    <span
-                      className={`${styles.statusLabel} ${
-                        statusState.chat.isOnline
-                          ? styles.active
-                          : styles.inactive
-                      }`}
-                    >
-                      Chat
-                    </span>
-                    <div
-                      className={`${styles.statusIcon} ${
-                        statusState.chat.isOnline
-                          ? styles.active
-                          : styles.inactive
-                      }`}
-                    >
-                      <Icons.MessageSquare size={18} strokeWidth={2.5} />
-                    </div>
-                  </button>
-                </div>
+                <p className={styles.followersCount}>{followers}</p>
+                <p className={styles.followersLabel}>Followers</p>
               </div>
             )}
           </div>
         </header>
+
+        {/* Mobile View only */}
+        <div className={styles.mobileCenterSection}>
+          <div className={styles.availabilityCards}>
+            {/* Call Card */}
+            {availabilityConfig.map((item) => (
+              <AvailabilityCard
+                key={item.type}
+                type={item.type}
+                title={item.title}
+                // subtitle={item.subtitle}
+                Icon={item.icon}
+                isOnline={statusState[item.type].isOnline}
+                loading={statusState[item.type].loading}
+                onClick={() => handleStatusToggle(item.type)}
+              />
+            ))}
+          </div>
+        </div>
 
         <Suspense fallback="..Loading">
           <div className={styles.content}>

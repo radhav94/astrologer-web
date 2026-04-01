@@ -460,7 +460,75 @@
         font-size: 0.875rem;
     }
 }
+// List Container
+.listContainer {
+    
+    padding: 0 1.5rem;
+    @media (max-width: 640px) {
+        padding: 0 1.25rem;
+        margin-bottom: 7.5rem;
+    }
+}
 
+.dateGroup {
+    //   max-width: 56rem;
+    margin-bottom: 1rem;
+
+    @media (min-width: 640px) {
+        margin-bottom: 1.5rem;
+    }
+}
+
+.dateHeader {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--title);
+    margin-bottom: 0.75rem;
+    text-align: left;
+
+    @media (min-width: 640px) {
+        font-size: 16px;
+        margin-bottom: 1.25rem;
+    }
+}
+
+.itemsList {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.625rem;
+
+    @media (min-width: 640px) {
+        gap: 1rem;
+    }
+
+    @media (min-width: 1024px) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1.5rem;
+    }
+}
+
+// Order Card
+.orderCard {
+    background-color: #fff;
+    border-radius: 16px;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
+    transition: box-shadow 0.15s;
+    width: 100%;
+
+    @media (min-width: 640px) {
+        border-radius: 20px;
+    }
+
+    &:hover {
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+}
+
+.orderHeader {
+    padding: 0.875rem 1rem;
+}
 // Reset Filters Button
 .resetButton {
     display: flex;

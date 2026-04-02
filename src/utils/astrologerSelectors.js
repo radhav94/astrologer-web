@@ -30,6 +30,7 @@ export const selectAstrologerProfile = (apiData) => {
     wallet: astrologer?.wallet || astrologer?.balance || 0,
     languages: astrologer?.languagePreferences || [],
     expertise: astrologer?.expertise || [],
+    specialties:astrologer?.specialties || [],
     education: normalizedEducation,
     achievements: astrologer?.achievements || [],
     achievementImages: astrologer?.achievementImages || [],
@@ -53,7 +54,7 @@ export const selectProfileTabData = (apiData) => {
   const profile = selectAstrologerProfile(apiData);
   if (!profile) return null;
 
-  // console?.log("profile:",profile,apiData)
+  console?.log("profile:",profile)
   
   return {
     name: profile?.name,
@@ -64,6 +65,7 @@ export const selectProfileTabData = (apiData) => {
     profileImage: profile?.profileImage,
     languages: profile?.languages,
     expertise: profile?.expertise,
+    specialties:profile?.specialties,
     education: profile?.education,
     achievements: profile?.achievements,
     achievementImages: profile?.achievementImages,

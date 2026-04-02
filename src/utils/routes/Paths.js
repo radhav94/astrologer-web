@@ -29,6 +29,7 @@ import AddEditBankAccount from "../../screens/private/Profile/bankAccount/AddEdi
 import ConfirmWithdrawal from "../../screens/private/Profile/bankAccount/ConfirmWithdrawal";
 import SuccessEditAddAccount from "../../screens/private/Profile/bankAccount/SuccessEditAddAccount";
 import SuccessWithdrawal from "../../screens/private/Profile/bankAccount/SuccessWithdrawal";
+import Specialties from "../../screens/private/Profile/profileForms/Specialties";
 
 export const PATH = {
   publicRoutes: {
@@ -114,6 +115,10 @@ export const PATH = {
     PROFESSIONALS_DETAILS: {
       path: "/profile/professional-details",
       element: ProfessionalProfileDtls,
+    },
+    SPECIALTIES_DETAILS: {
+      path: "/profile/specialties-details",
+      element: Specialties,
     },
     EDUCATIONAL_DETAILS: {
       path: "/profile/educational-details",

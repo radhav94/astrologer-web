@@ -3,9 +3,7 @@ import { useFormik } from "formik";
 import { useDispatch, useSelector } from "react-redux";
 import * as Yup from "yup";
 import { updateRegisterData, setCurrentStep } from "../../../reducer/registerSlice";
-// Old: string-based validation import
-// import { createMultiSelectValidation } from "../../../utils/utils";
-import { EXPERTISE_AREAS } from "../../../utils/config";
+import { useGetSpecialitiesListQuery } from "../../../redux/register/registerAstroApi";
 import Button from "../../../components/UI/button/Button";
 import FormStep from "./FormStep";
 import styles from "./BasicForms.module.scss";
@@ -14,6 +12,16 @@ const AreaOfExpertise = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const registerData = useSelector((state) => state.register.registerData);
+
+  // Fetch specialities from API
+  const { data: specialitiesData } = useGetSpecialitiesListQuery();
+
+  // Map API data directly — no static icons/colors (will come from API in future)
+  const expertiseAreas = (specialitiesData?.data?.[0]?.list || []).map((apiItem, index) => ({
+    id: index + 1,
+    title: apiItem.title,
+    slug: apiItem.slug,
+  }));
 
   // Normalize existing specialties from Redux: handle both old format (strings) and new format (objects)
   const normalizedExistingSpecialties = (registerData?.specialties || []).map((item) =>
@@ -136,10 +144,7 @@ const AreaOfExpertise = () => {
           {/* Cards Grid */}
           <div className={styles.formGroup}>
             <div className={styles.expertiseGridFigma}>
-              {EXPERTISE_AREAS.map((item) => {
-                // Old: string-based check
-                // const active = formik.values.specialties.includes(item.title);
-                // New: object-based check by slug
+              {expertiseAreas.map((item) => {
                 const active = isSpecialtySelected(item.slug);
 
                 return (
@@ -150,20 +155,14 @@ const AreaOfExpertise = () => {
                     className={`${styles.expertiseCardFigma} ${
                       active ? styles.expertiseCardFigmaActive : ""
                     }`}
-                    style={{ background: item.bgGradient }}
+                    style={{
+                      background: "linear-gradient(90deg, var(--main-primary-start) 0%, var(--main-primary-end) 100%)",
+                      opacity: active ? 1 : 0.6,
+                      
+                    }}
                   >
                     <div className={styles.expertiseCardContent}>
                       <h3 className={styles.expertiseCardTitle}>{item.title}</h3>
-                      <div 
-                        className={styles.expertiseIconCircle}
-                        style={{ backgroundColor: item.iconBgColor }}
-                      >
-                        <img 
-                          src={item.icon} 
-                          alt={item.title}
-                          className={styles.expertiseIcon}
-                        />
-                      </div>
                     </div>
                   </button>
                 );

@@ -16,7 +16,14 @@ export const registerAstroApi = epicApi.injectEndpoints({
         method: "GET",
       }),
     }),
+    // GET /api/filters/get-filters/specialities
+    getSpecialitiesList: builder.query({
+      query: () => ({
+        url: "filters/get-filters/specialities",
+        method: "GET",
+      }),
+    }),
   }),
 });
 
-export const { useRegisterAstrologerMutation ,useGetExpertiseListQuery} = registerAstroApi;
+export const { useRegisterAstrologerMutation, useGetExpertiseListQuery, useGetSpecialitiesListQuery } = registerAstroApi;

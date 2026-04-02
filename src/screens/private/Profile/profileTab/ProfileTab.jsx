@@ -24,6 +24,7 @@ const ProfileTab = ({ profileData }) => {
     expertise = [],
     education = [],
     achievements,
+    specialties = [],
     achievementImages = [],
   } = profileData;
 
@@ -89,6 +90,27 @@ const ProfileTab = ({ profileData }) => {
         <div className={styles.tagsContainer}>
           {expertise.length > 0 ? (
             expertise.map((expert, index) => (
+              <span key={index} className={styles.tag}>
+                {expert?.title}
+              </span>
+            ))
+          ) : (
+            <span className={styles.tag}>No expertise added</span>
+          )}
+        </div>
+      </div>
+
+      {/* specialties Details */}
+      <div className={styles.sectionCard}>
+        <Link to="/profile/specialties-details" className={styles.editButton}>
+          <LuPencilLine size={16} />
+        </Link>
+
+        <span className={styles.sectionTitle}>Specialties Details</span>
+
+        <div className={styles.tagsContainer}>
+          {specialties.length > 0 ? (
+            specialties.map((expert, index) => (
               <span key={index} className={styles.tag}>
                 {expert?.title}
               </span>

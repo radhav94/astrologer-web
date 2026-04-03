@@ -23,7 +23,7 @@ import ReportCaller from "../chat/review/ReportCaller";
 import { useSubmitReportMutation } from "../../../redux/review/reviewApi";
 import { Toast } from "../../../components";
 
-const APP_ID = "8575e5681f7142f4bced0b83332caa15";
+const APP_ID = import.meta.env.VITE_AGORA_APP_ID;
 
 const AgoraVoiceCalling = ({ callData }) => {
   const { activeCall, setActiveCall, sharedAgoraState, setSharedAgoraState, isUpgradeRejectionProtected, upgradeRejectionRef, isUpgradingRef, setReviewData, setOpenReview, callStartTime, setCallStartTime, isCallMinimized, setIsCallMinimized, isReconnecting, networkDisconnected, recoverCallAfterSystemDisconnect } = useCall();

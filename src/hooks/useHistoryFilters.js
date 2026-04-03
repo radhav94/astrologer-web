@@ -12,6 +12,7 @@ const INITIAL_FILTERS = {
 const useHistoryFilters = () => {
   const [orderPage, setOrderPage] = useState(1);
   const [txnPage, setTxnPage] = useState(1);
+  const [giftPage, setGiftPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState(INITIAL_FILTERS);
   const [showFilterModal, setShowFilterModal] = useState(false);
@@ -22,6 +23,7 @@ const useHistoryFilters = () => {
   const resetPages = () => {
     setOrderPage(1);
     setTxnPage(1);
+    setGiftPage(1);
   };
 
   // Debounced search
@@ -108,6 +110,7 @@ const useHistoryFilters = () => {
   // Separate query params per tab
   const orderQueryParams = { page: orderPage, limit: 10, ...filterParams };
   const txnQueryParams = { page: txnPage, limit: 10, ...filterParams };
+  const giftQueryParams = { page: giftPage, limit: 15, ...filterParams };
 
   const hasActiveFilters = !!(
     filters.search ||
@@ -129,11 +132,14 @@ const useHistoryFilters = () => {
     setOrderPage,
     txnPage,
     setTxnPage,
+    giftPage,
+    setGiftPage,
     searchQuery,
     filters,
     tempFilters,
     orderQueryParams,
     txnQueryParams,
+    giftQueryParams,
     hasActiveFilters,
     activeFilterCount,
     showFilterModal,

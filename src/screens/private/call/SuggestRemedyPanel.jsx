@@ -132,6 +132,10 @@ const SuggestRemedyPanel = ({ isOpen, onClose, roomId }) => {
               <div className="flex flex-col gap-3">
                 {products.map((product) => {
                   const isSelected = selectedProducts.some((p) => p.ID === product.ID);
+                  const dv = product.defaultVariant;
+                  const productImage = product.images?.[0] || dv?.images?.[0] || product.variants?.[0]?.images?.[0];
+                  const price = dv?.price ?? product.priceRange?.min ?? product.price;
+                  const mrp = dv?.mrp ?? product.mrp;
                   return (
                     <button
                       key={product._id}
@@ -141,7 +145,7 @@ const SuggestRemedyPanel = ({ isOpen, onClose, roomId }) => {
                       }`}
                     >
                       <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 relative">
-                        <img src={product.images?.[0]} alt={product.title} className="w-full h-full object-cover" onError={(e) => { e.target.style.display = "none"; }} />
+                        {productImage && <img src={productImage} alt={product.title} className="w-full h-full object-cover" onError={(e) => { e.target.style.display = "none"; }} />}
                         {isSelected && (
                           <div className="absolute inset-0 bg-orange-500/30 flex items-center justify-center">
                             <IoCheckmarkCircle size={24} className="text-orange-600" />
@@ -152,9 +156,9 @@ const SuggestRemedyPanel = ({ isOpen, onClose, roomId }) => {
                         <p className="text-sm font-medium text-gray-900 truncate">{product.title}</p>
                         <p className="text-xs text-gray-500 truncate mt-0.5">{product.short_description}</p>
                         <div className="flex items-center gap-2 mt-1">
-                          <span className="text-sm font-semibold text-orange-600">₹{product.price}</span>
-                          {product.mrp > product.price && (
-                            <span className="text-xs text-gray-400 line-through">₹{product.mrp}</span>
+                          {price != null && <span className="text-sm font-semibold text-orange-600">₹{price.toLocaleString("en-IN")}</span>}
+                          {mrp != null && mrp > price && (
+                            <span className="text-xs text-gray-400 line-through">₹{mrp.toLocaleString("en-IN")}</span>
                           )}
                         </div>
                       </div>

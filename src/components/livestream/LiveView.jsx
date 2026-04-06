@@ -24,7 +24,7 @@ const LiveView = (props) => {
   const [showCallPopup, setShowCallPopup] = useState(false);
 
   const navigate = useNavigate();
-  const { minimizeLive, maximizeLive, isLiveMinimized } = useLiveStream();
+  const { minimizeLive, maximizeLive, isLiveMinimized, endLiveSession } = useLiveStream();
 
   const user = getUserFromStorage();
   const astrologerDetails = useSelector((state) => state.register.astrologerDetails);
@@ -93,6 +93,7 @@ const LiveView = (props) => {
       endRoom?.();
       await stopLiveStream(channelName);
       clearLiveSession?.();
+      endLiveSession();
       Toast.success("Live ended successfully");
       navigate("/astrologer-dashboard", { replace: true });
     } catch (e) {
@@ -100,7 +101,7 @@ const LiveView = (props) => {
     } finally {
       setCalling(false);
     }
-  }, [ROLE, channelName, setCalling, setCamera, setMic, navigate, endRoom, clearLiveSession]);
+  }, [ROLE, channelName, setCalling, setCamera, setMic, navigate, endRoom, clearLiveSession, endLiveSession]);
 
   const endLiveSafely = useCallback(async () => {
     if (ROLE !== "host") return;
@@ -114,13 +115,14 @@ const LiveView = (props) => {
       endRoom?.();
       await stopLiveStream(channelName);
       clearLiveSession?.();
+      endLiveSession();
       Toast.success("Live ended");
     } catch (e) {
       console.error("Failed to end live", e);
     } finally {
       setCalling(false);
     }
-  }, [ROLE, channelName, setCalling, setCamera, setMic, endRoom, clearLiveSession]);
+  }, [ROLE, channelName, setCalling, setCamera, setMic, endRoom, clearLiveSession, endLiveSession]);
 
   const isHost = ROLE === "host";
   const viewerCount = participantCount || (remoteUsers?.length || 0) + 1;

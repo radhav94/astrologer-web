@@ -722,7 +722,7 @@ const ChatWindow = () => {
         rating,
         review,
         isAnonymous,
-      }).unwrap
+      }).unwrap();
 
       if (res.success) {
         Toast.success(res.message);

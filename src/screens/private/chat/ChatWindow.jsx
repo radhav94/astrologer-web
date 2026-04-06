@@ -132,16 +132,21 @@ const Message = ({
               {text}
             </p>
           )}
-          {products.map((p) => (
+          {products.map((p) => {
+            const dv = p.defaultVariant;
+            const productImage = p.image || p.images?.[0] || dv?.images?.[0] || p.variants?.[0]?.images?.[0];
+            const price = dv?.price ?? p.priceRange?.min ?? p.price;
+            const mrp = dv?.mrp ?? p.mrp;
+            return (
             <div
               key={p.productId || p._id || p.ID}
               className="flex gap-2.5 p-2 rounded-lg cursor-pointer active:opacity-80 transition-opacity"
               style={{ background: "rgba(0,0,0,0.04)" }}
               onClick={() => p.slug && navigate(`/product-details/${p.slug}`)}
             >
-              {(p.image || p.images?.[0]) && (
+              {productImage && (
                 <img
-                  src={p.image || p.images?.[0]}
+                  src={productImage}
                   alt={p.title}
                   className="w-14 h-14 rounded-md object-cover flex-shrink-0"
                   onError={(e) => {
@@ -178,24 +183,25 @@ const Message = ({
                   className="text-[13px] font-bold flex items-center gap-1.5"
                   style={{ color: "#f75801" }}
                 >
-                  ₹{p.price}
-                  {p.mrp && p.mrp > p.price && (
+                  {price != null && <>₹{price.toLocaleString("en-IN")}</>}
+                  {mrp != null && mrp > price && (
                     <s className="text-[11px] text-gray-400 font-normal">
-                      ₹{p.mrp}
+                      ₹{mrp.toLocaleString("en-IN")}
                     </s>
                   )}
-                  {p.mrp && p.mrp > p.price && (
+                  {mrp != null && mrp > price && (
                     <span
                       className="text-[10px] font-semibold"
                       style={{ color: "#0a8f08" }}
                     >
-                      {Math.round(((p.mrp - p.price) / p.mrp) * 100)}% off
+                      {Math.round(((mrp - price) / mrp) * 100)}% off
                     </span>
                   )}
                 </span>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       );
     }

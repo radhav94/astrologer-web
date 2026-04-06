@@ -33,8 +33,8 @@ $mobile-screen-width: 500px;
   }
   @media (max-width: 767px) {
     border-bottom: none;
+    padding: 0.5rem 0.5rem;
   }
-
 }
 
 .headerContent {
@@ -56,7 +56,7 @@ $mobile-screen-width: 500px;
 .menuButton {
   padding: 0.5rem;
   margin-left: -1rem;
-  color: #4b5563;
+  color: var(--main-primary-start);
   background: none;
   border: none;
   border-radius: 0.5rem;
@@ -67,6 +67,11 @@ $mobile-screen-width: 500px;
 
   &:hover {
     background-color: #f3f4f6;
+  }
+
+  @media (max-width: 767px) {
+    margin-left: -0.25rem;
+    padding: 0.375rem;
   }
 
   @media (min-width: 1024px) {
@@ -200,7 +205,7 @@ $mobile-screen-width: 500px;
     flex-direction: column;
     align-items: center;
     width: 100%;
-    padding: 0.5rem 0.5rem;
+    padding: 0.375rem 1rem;
     background-color: rgba(255, 255, 255, 0.9);
     border-bottom: 1px solid #f3f4f6;
   }
@@ -218,6 +223,13 @@ $mobile-screen-width: 500px;
   gap: 0.75rem;
 }
 
+.mobileAvailabilityCards {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: 0.75rem;
+}
 // Old status buttons (kept for mobile fallback)
 .statusButtons {
   display: flex;

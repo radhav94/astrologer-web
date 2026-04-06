@@ -218,7 +218,7 @@ const LiveView = (props) => {
       </div>
 
       {/* RIGHT FLOATING ACTION BUTTONS */}
-      <div className="right-action-bar">
+      {/* <div className="right-action-bar">
         <div className="action-item">
           <button
             className="action-btn"
@@ -241,7 +241,7 @@ const LiveView = (props) => {
           <span className="action-label">Gift</span>
           <span className="action-label">13</span>
         </div>
-      </div>
+      </div> */}
 
       {/* Inline Messages Overlay */}
       <div className="inline-messages-overlay" ref={messagesOverlayRef}>

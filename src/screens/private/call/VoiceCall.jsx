@@ -23,7 +23,7 @@ import ReportCaller from "../chat/review/ReportCaller";
 import { useSubmitReportMutation } from "../../../redux/review/reviewApi";
 import { Toast } from "../../../components";
 
-const APP_ID = "8575e5681f7142f4bced0b83332caa15";
+const APP_ID = import.meta.env.VITE_AGORA_APP_ID;
 
 const AgoraVoiceCalling = ({ callData }) => {
   const { activeCall, setActiveCall, sharedAgoraState, setSharedAgoraState, isUpgradeRejectionProtected, upgradeRejectionRef, isUpgradingRef, setReviewData, setOpenReview, callStartTime, setCallStartTime, isCallMinimized, setIsCallMinimized, isReconnecting, networkDisconnected, recoverCallAfterSystemDisconnect } = useCall();
@@ -35,7 +35,6 @@ const AgoraVoiceCalling = ({ callData }) => {
   }
 
   const { roomId, agoraToken, callerName, isUserSide } = callData;
-  const shouldSkipReview = Boolean(activeChat?.roomId || activeCall?.resumeToChat);
 
   /* ================= REFS ================= */
   const clientRef = useRef(null);
@@ -591,9 +590,10 @@ const AgoraVoiceCalling = ({ callData }) => {
       fullName: activeCall?.callerName,
       roomId: activeCall?.roomId,
     });
-    // Don't show review popup if chat is still active
-    if (!shouldSkipReview) {
+    // Show review popup only if there's no active chat to return to
+    if (!activeCall?.resumeToChat) {
       setOpenReview(true);
+      setActiveChat(null);
     }
     await cleanup();
   };
@@ -613,9 +613,10 @@ const AgoraVoiceCalling = ({ callData }) => {
       fullName: activeCall?.callerName,
       roomId: activeCall?.roomId,
     });
-    // Don't show review popup if chat is still active
-    if (!shouldSkipReview) {
+    // Show review popup only if there's no active chat to return to
+    if (!activeCall?.resumeToChat) {
       setOpenReview(true);
+      setActiveChat(null);
     }
     await cleanup();
   };
@@ -635,9 +636,10 @@ const AgoraVoiceCalling = ({ callData }) => {
       fullName: activeCall?.callerName,
       roomId: activeCall?.roomId,
     });
-    // Don't show review popup if chat is still active
-    if (!shouldSkipReview) {
+    // Show review popup only if there's no active chat to return to
+    if (!activeCall?.resumeToChat) {
       setOpenReview(true);
+      setActiveChat(null);
     }
     await cleanup();
   };

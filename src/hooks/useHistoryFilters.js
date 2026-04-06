@@ -12,6 +12,7 @@ const INITIAL_FILTERS = {
 const useHistoryFilters = () => {
   const [orderPage, setOrderPage] = useState(1);
   const [txnPage, setTxnPage] = useState(1);
+  const [giftPage, setGiftPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState(INITIAL_FILTERS);
   const [showFilterModal, setShowFilterModal] = useState(false);
@@ -22,6 +23,7 @@ const useHistoryFilters = () => {
   const resetPages = () => {
     setOrderPage(1);
     setTxnPage(1);
+    setGiftPage(1);
   };
 
   // Debounced search
@@ -81,10 +83,15 @@ const useHistoryFilters = () => {
   const updateTempFilter = useCallback((key, value) => {
     setTempFilters((prev) => {
       if (key === "dateRange" && value) {
+        if (value === "custom") {
+          // Keep custom dates, just set dateRange to "custom"
+          return { ...prev, dateRange: "custom" };
+        }
+        // Preset selected — clear custom dates
         return { ...prev, dateRange: value, customFromDate: "", customToDate: "" };
       }
       if ((key === "customFromDate" || key === "customToDate") && value) {
-        return { ...prev, [key]: value, dateRange: "" };
+        return { ...prev, [key]: value };
       }
       return { ...prev, [key]: value };
     });
@@ -95,7 +102,7 @@ const useHistoryFilters = () => {
     ...(filters.sortBy && { sortBy: filters.sortBy }),
     ...(filters.filterBy && { filterBy: filters.filterBy }),
     ...(filters.search && { search: filters.search }),
-    ...(filters.dateRange && { dateRange: filters.dateRange }),
+    ...(filters.dateRange && filters.dateRange !== "custom" && { dateRange: filters.dateRange }),
     ...(filters.customFromDate && { customFromDate: filters.customFromDate }),
     ...(filters.customToDate && { customToDate: filters.customToDate }),
   };
@@ -103,6 +110,7 @@ const useHistoryFilters = () => {
   // Separate query params per tab
   const orderQueryParams = { page: orderPage, limit: 10, ...filterParams };
   const txnQueryParams = { page: txnPage, limit: 10, ...filterParams };
+  const giftQueryParams = { page: giftPage, limit: 15, ...filterParams };
 
   const hasActiveFilters = !!(
     filters.search ||
@@ -124,11 +132,14 @@ const useHistoryFilters = () => {
     setOrderPage,
     txnPage,
     setTxnPage,
+    giftPage,
+    setGiftPage,
     searchQuery,
     filters,
     tempFilters,
     orderQueryParams,
     txnQueryParams,
+    giftQueryParams,
     hasActiveFilters,
     activeFilterCount,
     showFilterModal,

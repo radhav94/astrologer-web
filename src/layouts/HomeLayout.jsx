@@ -53,7 +53,7 @@ const HomeLayout = () => {
   const isRegister = astrologerDetails?.isRegister;
   const isVerified = astrologerDetails?.isVerified;
 
-  console.log("astrologerResponse",astrologerId,astrologerResponse)
+  console.log("astrologerResponse", astrologerId, astrologerResponse);
 
   // Only check manualVerification if both isRegister and isVerified are true
   const isManualVerification = astrologerDetails?.manualVerification;
@@ -73,8 +73,12 @@ const HomeLayout = () => {
   const followers = userData?.followersList?.length || 0;
 
   //Chat
-  const { setActiveChat, setChatSeconds, resetTimer, recoverChatAfterSystemDisconnect } =
-    useChatContext();
+  const {
+    setActiveChat,
+    setChatSeconds,
+    resetTimer,
+    recoverChatAfterSystemDisconnect,
+  } = useChatContext();
   const navigate = useNavigate();
 
   const handleStatusToggle = async (type) => {
@@ -264,7 +268,7 @@ const HomeLayout = () => {
         formattedFirstName && formattedLastName
           ? `${formattedFirstName} ${formattedLastName}`
           : formattedFirstName || "Customer";
-          resetTimer();
+      resetTimer();
       setActiveChat({
         roomId: roomId,
         isUserSide: false,
@@ -352,24 +356,26 @@ const HomeLayout = () => {
             </div>
 
             {/* CENTER: Availability Cards  Desktop view only*/}
-            <div className={styles.centerSection}>
-              <p className={styles.availableLabel}>Available for</p>
-              <div className={styles.availabilityCards}>
-                {/* Call/Chat Card */}
-                {availabilityConfig.map((item) => (
-                  <AvailabilityCard
-                    key={item.type}
-                    type={item.type}
-                    title={item.title}
-                    subtitle={item.subtitle}
-                    Icon={item.icon}
-                    isOnline={statusState[item.type].isOnline}
-                    loading={statusState[item.type].loading}
-                    onClick={() => handleStatusToggle(item.type)}
-                  />
-                ))}
+            {isManualVerification && (
+              <div className={styles.centerSection}>
+                <p className={styles.availableLabel}>Available for</p>
+                <div className={styles.availabilityCards}>
+                  {/* Call/Chat Card */}
+                  {availabilityConfig.map((item) => (
+                    <AvailabilityCard
+                      key={item.type}
+                      type={item.type}
+                      title={item.title}
+                      subtitle={item.subtitle}
+                      Icon={item.icon}
+                      isOnline={statusState[item.type].isOnline}
+                      loading={statusState[item.type].loading}
+                      onClick={() => handleStatusToggle(item.type)}
+                    />
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* RIGHT: Followers */}
             {isManualVerification && (
@@ -382,23 +388,25 @@ const HomeLayout = () => {
         </header>
 
         {/* Mobile View only */}
-        <div className={styles.mobileCenterSection}>
-          <div className={styles.availabilityCards}>
-            {/* Call Card */}
-            {availabilityConfig.map((item) => (
-              <AvailabilityCard
-                key={item.type}
-                type={item.type}
-                title={item.title}
-                // subtitle={item.subtitle}
-                Icon={item.icon}
-                isOnline={statusState[item.type].isOnline}
-                loading={statusState[item.type].loading}
-                onClick={() => handleStatusToggle(item.type)}
-              />
-            ))}
+        {isManualVerification && (
+          <div className={styles.mobileCenterSection}>
+            <div className={styles.mobileAvailabilityCards}>
+              {/* Call Card */}
+              {availabilityConfig.map((item) => (
+                <AvailabilityCard
+                  key={item.type}
+                  type={item.type}
+                  title={item.title}
+                  // subtitle={item.subtitle}
+                  Icon={item.icon}
+                  isOnline={statusState[item.type].isOnline}
+                  loading={statusState[item.type].loading}
+                  onClick={() => handleStatusToggle(item.type)}
+                />
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         <Suspense fallback="..Loading">
           <div className={styles.content}>

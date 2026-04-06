@@ -9,7 +9,8 @@ import {
 import SectionHeader from "../../../components/UI/SectionHeader";
 import TransactionHistory from "./TransactionHistory";
 import OrderHistory from "./OrderHistory";
-import { useGetTransactionListQuery } from "../../../redux/profileApi/profileApi";
+import GiftReceivedHistory from "./GiftReceivedHistory";
+import { useGetTransactionListQuery, useGetGiftReceivedListQuery } from "../../../redux/profileApi/profileApi";
 import styles from "./ConsultationHistory.module.scss";
 import dayjs from "dayjs";
 import { PATH } from "../../../utils/routes/Paths";
@@ -46,8 +47,9 @@ const ConsultationHistory = () => {
   const {
     orderPage, setOrderPage,
     txnPage, setTxnPage,
+    giftPage, setGiftPage,
     searchQuery,
-    orderQueryParams, txnQueryParams,
+    orderQueryParams, txnQueryParams, giftQueryParams,
     hasActiveFilters,
     showFilterModal,
     activeFilterTab,
@@ -79,6 +81,17 @@ const ConsultationHistory = () => {
   });
   const txnTransactions = txnData?.data?.transactions || [];
   const txnPagination = txnData?.data?.pagination;
+
+  // Gift received API
+  const {
+    data: giftData,
+    isFetching: giftFetching,
+    isError: giftError,
+  } = useGetGiftReceivedListQuery(giftQueryParams, {
+    refetchOnMountOrArgChange: true,
+  });
+  const giftTransactions = giftData?.data?.transactions || [];
+  const giftPagination = giftData?.data?.pagination;
 
   // Refund mutation hook
   const [refundInitiate, { isLoading: isRefunding }] =
@@ -129,7 +142,7 @@ const ConsultationHistory = () => {
   // Scroll to top when page changes
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [orderPage, txnPage]);
+  }, [orderPage, txnPage, giftPage]);
 
   const handleNavigation = (type, item) => {
     if (type !== "chat") {
@@ -202,7 +215,7 @@ const ConsultationHistory = () => {
   return (
     <>
       <div className={styles.headerWrapper}>
-        <SectionHeader title={activeTab === "orders"?"Order History":"Transaction History"} />
+        <SectionHeader title={activeTab === "orders" ? "Order History" : activeTab === "transactions" ? "Transaction History" : "Gift Received"} />
         <h2 className={styles.ordersCount}>
           Total Records: {data?.data?.pagination?.totalItems || 0}
         </h2>
@@ -225,6 +238,12 @@ const ConsultationHistory = () => {
                 onClick={() => setActiveTab("transactions")}
               >
                 Transaction
+              </button>
+              <button
+                className={`${styles.tabBtn} ${activeTab === "gifts" ? styles.tabBtnActive : ""}`}
+                onClick={() => setActiveTab("gifts")}
+              >
+                Gift Received
               </button>
             </div>
 
@@ -289,6 +308,20 @@ const ConsultationHistory = () => {
               onResetFilters={resetFilters}
               page={txnPage}
               setPage={setTxnPage}
+            />
+          )}
+
+          {/* Gift Received Tab */}
+          {activeTab === "gifts" && (
+            <GiftReceivedHistory
+              transactions={giftTransactions}
+              pagination={giftPagination}
+              isFetching={giftFetching}
+              isError={giftError}
+              hasActiveFilters={hasActiveFilters}
+              onResetFilters={resetFilters}
+              page={giftPage}
+              setPage={setGiftPage}
             />
           )}
 
@@ -398,7 +431,7 @@ const ConsultationHistory = () => {
             <div className={styles.filterModalBody}>
               {/* Left: Category tabs */}
               <div className={styles.filterTabs}>
-                {["Type", "Date Range", "Custom Date", "Sort By"].map((cat) => (
+                {["Type", "Date Range", "Sort By"].map((cat) => (
                   <button
                     key={cat}
                     className={`${styles.filterTab} ${activeFilterTab === cat ? styles.filterTabActive : ""}`}
@@ -445,11 +478,19 @@ const ConsultationHistory = () => {
                       { value: "yesterday", label: "Yesterday" },
                       { value: "last7days", label: "Last 7 Days" },
                       { value: "last30days", label: "Last 30 Days" },
+                      { value: "custom", label: "Custom Date Range" },
                     ].map((opt) => (
                       <div
                         key={opt.value}
                         className={styles.filterOptionItem}
-                        onClick={() => updateTempFilter("dateRange", tempFilters.dateRange === opt.value ? "" : opt.value)}
+                        onClick={() => {
+                          if (opt.value === "custom") {
+                            // Toggle custom date mode — clear dateRange preset
+                            updateTempFilter("dateRange", tempFilters.dateRange === "custom" ? "" : "custom");
+                          } else {
+                            updateTempFilter("dateRange", tempFilters.dateRange === opt.value ? "" : opt.value);
+                          }
+                        }}
                       >
                         <span className={`${styles.tickIcon} ${tempFilters.dateRange === opt.value ? styles.tickIconActive : ""}`}>
                           {tempFilters.dateRange === opt.value && <Icons.Check size={16} />}
@@ -457,39 +498,37 @@ const ConsultationHistory = () => {
                         <span className={styles.filterOptionLabel}>{opt.label}</span>
                       </div>
                     ))}
-                  </>
-                )}
 
-                {activeFilterTab === "Custom Date" && (
-                  <>
-                    <div className={styles.filterOptionHeader}>
-                      <span>Custom Date Range</span>
-                    </div>
-                    <div className={styles.customDateGroup}>
-                      <label className={styles.customDateLabel}>
-                        From Date
-                        <input
-                          type="date"
-                          value={tempFilters.customFromDate}
-                          onChange={(e) => updateTempFilter("customFromDate", e.target.value)}
-                          className={styles.customDateInput}
-                        />
-                      </label>
-                      <label className={styles.customDateLabel}>
-                        To Date
-                        <input
-                          type="date"
-                          value={tempFilters.customToDate}
-                          onChange={(e) => updateTempFilter("customToDate", e.target.value)}
-                          min={tempFilters.customFromDate || undefined}
-                          className={styles.customDateInput}
-                        />
-                      </label>
-                      {((tempFilters.customFromDate && !tempFilters.customToDate) ||
-                        (!tempFilters.customFromDate && tempFilters.customToDate)) && (
-                        <p className={styles.customDateError}>Both dates are required</p>
-                      )}
-                    </div>
+                    {/* Custom date pickers — shown when "Custom Date Range" is selected */}
+                    {tempFilters.dateRange === "custom" && (
+                      <div className={styles.customDateGroup}>
+                        <label className={styles.customDateLabel}>
+                          From Date
+                          <input
+                            type="date"
+                            value={tempFilters.customFromDate}
+                            onChange={(e) => updateTempFilter("customFromDate", e.target.value)}
+                            className={styles.customDateInput}
+                            max={dayjs().format("YYYY-MM-DD")}
+                          />
+                        </label>
+                        <label className={styles.customDateLabel}>
+                          To Date
+                          <input
+                            type="date"
+                            value={tempFilters.customToDate}
+                            onChange={(e) => updateTempFilter("customToDate", e.target.value)}
+                            min={tempFilters.customFromDate || undefined}
+                            max={dayjs().format("YYYY-MM-DD")}
+                            className={styles.customDateInput}
+                          />
+                        </label>
+                        {((tempFilters.customFromDate && !tempFilters.customToDate) ||
+                          (!tempFilters.customFromDate && tempFilters.customToDate)) && (
+                          <p className={styles.customDateError}>Both dates are required</p>
+                        )}
+                      </div>
+                    )}
                   </>
                 )}
 

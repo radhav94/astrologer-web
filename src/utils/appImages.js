@@ -25,6 +25,8 @@ import EditIcon from "../assets/icons/Edit Icon.png";
 import Video1Icon from "../assets/icons/video-1.png";
 import Education1 from "../assets/icons/education.png";
 import FileIcon from "../assets/icons/File Icon.png";
+import ActiveStarIcon from "../assets/icons/active-star.png";
+import InActiveStarIcon from "../assets/icons/inactive-star.png";
 
 export const AppIcons = {
   Logo,
@@ -54,6 +56,8 @@ export const AppIcons = {
   Video1Icon,
   Education1,
   FileIcon,
+  ActiveStarIcon,
+  InActiveStarIcon
 };
 
 //appImages

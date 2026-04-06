@@ -9,8 +9,8 @@ const StickyChatFooter = () => {
   // Hide on chat window page
   const onChatWindowPage = useMatch("/chat/:chatId");
 
-  // Don't show if no active chat or already on chat window page
-  if (!activeChat || onChatWindowPage) return null;
+  // Don't show if no active chat, already on chat window page, or inside an iframe (e.g. Kundli view)
+  if (!activeChat || onChatWindowPage || window.self !== window.top) return null;
 
   const formatTime = (seconds) => {
     if (!seconds || seconds < 0) return "0:00";

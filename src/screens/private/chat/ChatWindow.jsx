@@ -854,7 +854,7 @@ const ChatWindow = () => {
       />
 
       {/* ---------- Header ---------- */}
-      <div className="sticky top-30 z-20 bg-white">
+      <div className="fixed top-30 z-20 bg-white w-[100%]">
         <div className="flex items-center justify-between px-4 md:px-6 py-3 border-b border-gray-200">
           <div className="flex items-center gap-3">
             <button

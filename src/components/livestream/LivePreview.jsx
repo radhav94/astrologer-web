@@ -2,10 +2,13 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, X } from "lucide-react";
 import CountdownTimer from "./CountdownTimer";
+import { useLiveStream } from "../../context/LiveStreamContext";
+import { Toast } from "../../components";
 import "./styles/livePreview.scss";
 
 const LivePreview = () => {
   const navigate = useNavigate();
+  const { isLive } = useLiveStream();
   const videoRef = useRef(null);
   const streamRef = useRef(null);
 
@@ -60,6 +63,10 @@ const LivePreview = () => {
   }, [stopAllTracks, attachStream]);
 
   const handleGoLive = () => {
+    if (isLive) {
+      Toast.warn("You already have an ongoing live session");
+      return;
+    }
     setShowCountdown(true);
   };
 
@@ -127,9 +134,9 @@ const LivePreview = () => {
         <button
           className="go-live-btn"
           onClick={handleGoLive}
-          disabled={hasPermission === false || showCountdown}
+          disabled={hasPermission === false || showCountdown || isLive}
         >
-          Go Live
+          {isLive ? "Already Live" : "Go Live"}
         </button>
       </div>
 

@@ -51,7 +51,7 @@
 }
 
 .userName {
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 600;
   color: #1A1A1A;
   line-height: 1.2;
@@ -82,8 +82,8 @@
     var(--main-primary-start) 0%,
     var(--main-primary-end) 100%
   );
-  border-radius: 24px;
-  padding: 32px;
+  border-radius: 16px;
+  padding: 16px;
   margin-bottom: 6px;
   display: flex;
   align-items: center;
@@ -91,7 +91,7 @@
   box-shadow: 0 8px 24px var(--boxShadow);
   position: relative;
   overflow: hidden;
-  min-height: 160px;
+  // min-height: 160px;
 }
 
 .balanceCardBg {
@@ -152,7 +152,7 @@
 }
 
 .balanceAmount {
-  font-size: 48px;
+  font-size: 38px;
   font-weight: 600;
   color: #ffffff;
   line-height: 1;

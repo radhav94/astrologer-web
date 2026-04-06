@@ -41,7 +41,7 @@ const TodaysUpdatesSection = ({
         <div className="flex flex-col gap-3 sm:gap-4 lg:gap-4">
           {/* TODAY'S EARNINGS */}
           <div className="bg-gradient-to-br from-[#FFF5E8] to-[#FFE8D4] rounded-2xl sm:rounded-3xl lg:rounded-2xl p-4 sm:p-6 lg:p-5 flex flex-col justify-center min-h-[135px] sm:min-h-[150px] lg:min-h-[120px]">
-            <h3 className="text-3xl sm:text-5xl lg:text-4xl font-bold text-[#2D2D2D] mb-1 sm:mb-2 lg:mb-1">
+            <h3 className="text-2xl sm:text-5xl lg:text-4xl font-bold text-[#2D2D2D] mb-1 sm:mb-2 lg:mb-1">
               ₹{totalEarnings.toLocaleString('en-IN')}
             </h3>
             <p className="text-[#9CA3AF] text-sm sm:text-lg lg:text-base font-normal">
@@ -51,7 +51,7 @@ const TodaysUpdatesSection = ({
 
           {/* NEXT SESSION */}
           <div className="bg-gradient-to-br from-[#E7EEF8] to-[#B8D4F1] rounded-2xl sm:rounded-3xl lg:rounded-2xl p-4 sm:p-6 lg:p-5 flex flex-col justify-center min-h-[135px] sm:min-h-[150px] lg:min-h-[120px]">
-            <h3 className="text-2xl sm:text-4xl lg:text-3xl font-bold text-[#2D2D2D] mb-1 sm:mb-2 lg:mb-1">
+            <h3 className="text-1xl sm:text-4xl lg:text-3xl font-bold text-[#2D2D2D] mb-1 sm:mb-2 lg:mb-1">
               {totalQueue} in Queue
             </h3>
             <p className="text-[#9CA3AF] text-sm sm:text-lg lg:text-base font-normal mb-3 sm:mb-4 lg:mb-3">

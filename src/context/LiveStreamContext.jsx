@@ -5,6 +5,11 @@ const LiveStreamContext = createContext();
 export const LiveStreamProvider = ({ children }) => {
   const [isLiveMinimized, setIsLiveMinimized] = useState(false);
   const [liveMetadata, setLiveMetadata] = useState(null);
+  const [isLive, setIsLive] = useState(false);
+
+  const startLiveSession = useCallback(() => {
+    setIsLive(true);
+  }, []);
 
   const minimizeLive = useCallback((metadata) => {
     setLiveMetadata(metadata);
@@ -18,13 +23,16 @@ export const LiveStreamProvider = ({ children }) => {
   const endLiveSession = useCallback(() => {
     setIsLiveMinimized(false);
     setLiveMetadata(null);
+    setIsLive(false);
   }, []);
 
   return (
     <LiveStreamContext.Provider
       value={{
+        isLive,
         isLiveMinimized,
         liveMetadata,
+        startLiveSession,
         minimizeLive,
         maximizeLive,
         endLiveSession,

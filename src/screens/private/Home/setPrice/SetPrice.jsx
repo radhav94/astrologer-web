@@ -217,7 +217,7 @@ const SetPrice = () => {
             {/* Audio Call Rate */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <label htmlFor="audioRate" className="text-base font-semibold text-gray-900">
+                <label htmlFor="audioRate" className="text-sm font-semibold text-gray-900">
                   Audio Call Rate/Minute
                 </label>
                 <span className="px-3 py-1 bg-[#FFF5EC] border border-[#FFE8C5] rounded-full text-xs text-gray-700">
@@ -247,7 +247,7 @@ const SetPrice = () => {
             {/* Chat Rate */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <label htmlFor="chatRate" className="text-base font-semibold text-gray-900">
+                <label htmlFor="chatRate" className="text-sm font-semibold text-gray-900">
                   Chat Rate/Minute
                 </label>
                 <span className="px-3 py-1 bg-[#FFF5EC] border border-[#FFE8C5] rounded-full text-xs text-gray-700">
@@ -277,7 +277,7 @@ const SetPrice = () => {
             {/* Video Call Rate */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <label htmlFor="videoCallRate" className="text-base font-semibold text-gray-900">
+                <label htmlFor="videoCallRate" className="text-sm font-semibold text-gray-900">
                   Video Call Rate/Minute
                 </label>
                 <span className="px-3 py-1 bg-[#FFF5EC] border border-[#FFE8C5] rounded-full text-xs text-gray-700">

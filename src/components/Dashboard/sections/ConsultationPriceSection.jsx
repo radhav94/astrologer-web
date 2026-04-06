@@ -40,21 +40,21 @@ const ConsultationPriceSection = ({ astrologerData }) => {
             </div>
 
             <div className="flex flex-col items-center flex-1">
-              <img src={appSvgs.ChatIcon} alt="Chat" className="w-7 h-7 sm:w-10 sm:h-10 lg:w-8 lg:h-8 mb-1 sm:mb-2 lg:mb-1.5 object-contain" />
+              <img src={appSvgs.ChatIcon} alt="Chat" className="sm:w-10 sm:h-10 lg:w-8 lg:h-8 mb-1 sm:mb-2 lg:mb-1.5 object-contain" />
               <p className="text-sm sm:text-3xl lg:text-2xl font-bold text-[#2D2D2D] whitespace-nowrap">
                 ₹{astrologerData?.price?.chatRate?.amount || 0}/m
               </p>
             </div>
 
             <div className="flex flex-col items-center flex-1">
-              <img src={appSvgs.AudioIcon} alt="Call" className="w-7 h-7 sm:w-10 sm:h-10 lg:w-8 lg:h-8 mb-1 sm:mb-2 lg:mb-1.5 object-contain" />
+              <img src={appSvgs.AudioIcon} alt="Call" className="sm:w-10 sm:h-10 lg:w-8 lg:h-8 mb-1 sm:mb-2 lg:mb-1.5 object-contain" />
               <p className="text-sm sm:text-3xl lg:text-2xl font-bold text-[#2D2D2D] whitespace-nowrap">
                 ₹{astrologerData?.price?.audioRate?.amount || 0}/m
               </p>
             </div>
 
             <div className="flex flex-col items-center flex-1">
-              <img src={appSvgs.VideoIcon} alt="Video" className="w-7 h-7 sm:w-10 sm:h-10 lg:w-8 lg:h-8 mb-1 sm:mb-2 lg:mb-1.5 object-contain" />
+              <img src={appSvgs.VideoIcon} alt="Video" className="sm:w-10 sm:h-10 lg:w-8 lg:h-8 mb-1 sm:mb-2 lg:mb-1.5 object-contain" />
               <p className="text-sm sm:text-3xl lg:text-2xl font-bold text-[#2D2D2D] whitespace-nowrap">
                 ₹{astrologerData?.price?.videoCallRate?.amount || 0}/m
               </p>

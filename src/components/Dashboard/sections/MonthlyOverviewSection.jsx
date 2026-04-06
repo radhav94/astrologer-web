@@ -115,7 +115,7 @@ const MonthlyOverviewSection = ({
           </div>
         </div>
 
-        <div className="bg-[#FFF8F0] rounded-[2rem] p-3 sm:p-6 shadow-sm border border-[#F0E5D8]">
+        <div className="bg-[#FFF8F0] rounded-[1rem] p-2 sm:p-2 shadow-sm border border-[#F0E5D8]">
           <div className="space-y-3 sm:space-y-4">
             {/* TOP ROW: Earnings and Key Metrics Chart */}
             <div className="grid grid-cols-2 gap-3 sm:gap-4">

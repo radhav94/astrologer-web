@@ -92,7 +92,7 @@
   border-radius: 0.5rem;
   font-size: 0.75rem;
   font-weight: 500;
-  background-color: #f97316;
+  background: linear-gradient(90deg, var(--main-primary-start) 0%, var(--main-primary-end) 100%);
   color: #fff;
   border: none;
   cursor: pointer;
@@ -104,7 +104,7 @@
   }
 
   &:hover:not(:disabled) {
-    background-color: #ea580c;
+    background: linear-gradient(90deg, var(--main-primary-start) 0%, var(--main-primary-end) 100%);
   }
 
   &:disabled {

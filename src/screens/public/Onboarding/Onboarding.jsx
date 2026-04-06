@@ -66,7 +66,7 @@ const Onboarding = () => {
           
           {/* CTA Button */}
           <Button
-            onClick={() => navigate("/login")}
+            onClick={() => navigate("/")}
             className={styles.ctaButton}
           >
             Begin My Journey

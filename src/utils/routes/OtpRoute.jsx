@@ -20,12 +20,12 @@ const OtpRoute = () => {
 
   /* 🔒 OTP PAGE */
   if (location.pathname === "/verify-otp" && !otpSession) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/" replace />;
   }
 
   /* 🔒 ONBOARDING PAGES */
   if (onboardingRoutes.includes(location.pathname) && !onboardingSession) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/" replace />;
   }
 
   /* 🔒 LOGGED IN USERS (EXCEPT ONBOARDING) */

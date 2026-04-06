@@ -2,7 +2,6 @@ import ConsultationHistory from "../../screens/private/consultationHistory/Consu
 import Dashboard from "../../screens/private/dashboard/Dashboard";
 import Profile from "../../screens/private/Profile/Profile";
 import RecentActivity from "../../screens/private/recentActivity/RecentActivity";
-import Onboarding from "../../screens/public/Onboarding/Onboarding";
 import Login from "../../screens/public/Login/Login";
 import Kundli from "../../screens/private/Home/currentStatus/kundli/kundli";
 import SetPrice from "../../screens/private/Home/setPrice/SetPrice";
@@ -33,12 +32,12 @@ import Specialties from "../../screens/private/Profile/profileForms/Specialties"
 
 export const PATH = {
   publicRoutes: {
-    HOME: {
-      path: "/",
-      element: Onboarding,
-    },
+    // HOME: {
+    //   path: "/",
+    //   element: Onboarding,
+    // },
     Login: {
-      path: "/login",
+      path: "/",
       element: Login,
     },
   },

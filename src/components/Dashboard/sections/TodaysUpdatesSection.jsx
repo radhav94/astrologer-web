@@ -45,7 +45,7 @@ const TodaysUpdatesSection = ({
               ₹{totalEarnings.toLocaleString('en-IN')}
             </h3>
             <p className="text-[#9CA3AF] text-sm sm:text-lg lg:text-base font-normal">
-              Total Earning
+              Today's Earning
             </p>
           </div>
 

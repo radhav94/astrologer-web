@@ -165,7 +165,9 @@
 }
 
 .viewer-icon {
-  font-size: 13px;
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
   opacity: 0.9;
 }
 
@@ -226,11 +228,11 @@
 .right-action-bar {
   position: absolute;
   right: 14px;
-  bottom: 200px;
+  bottom: 70px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: 18px;
   z-index: 10;
 }
 
@@ -258,6 +260,11 @@
 .right-action-bar .action-btn:hover {
   transform: scale(1.1);
   border-color: #fff;
+}
+
+.right-action-bar .action-btn-static {
+  cursor: default;
+  pointer-events: none;
 }
 
 .action-label {
@@ -337,6 +344,9 @@
   flex-direction: column;
   min-width: 0;
   text-align: left;
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: 10px;
+  padding: 4px 10px 5px;
 }
 
 .inline-sender {
@@ -349,6 +359,10 @@
 
 .inline-host-message .inline-sender {
   color: #F75801;
+}
+
+.inline-host-message .inline-message-body {
+  background: rgba(247, 88, 1, 0.18);
 }
 
 .inline-text {
@@ -441,6 +455,51 @@
 }
 
 /* ===============================
+   WAITING LIST FAB
+   =============================== */
+.waiting-list-fab {
+  position: absolute;
+  right: 14px;
+  bottom: 140px;
+  z-index: 12;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.5);
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease;
+
+  &:hover {
+    transform: scale(1.08);
+    background: rgba(0, 0, 0, 0.7);
+  }
+}
+
+.waiting-list-fab-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  background: #e53935;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  line-height: 1;
+}
+
+/* ===============================
    RESPONSIVE — DESKTOP
    =============================== */
 @media (min-width: 769px) {
@@ -457,7 +516,7 @@
 
   .right-action-bar {
     right: 12px;
-    bottom: 180px;
+    bottom: 70px;
   }
 
   // .chat-panel {
@@ -483,7 +542,7 @@
 
   .right-action-bar {
     right: 12px;
-    bottom: 180px;
+    bottom: 65px;
   }
 
   .right-action-bar .action-btn {

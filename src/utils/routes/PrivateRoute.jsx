@@ -23,7 +23,7 @@ const PrivateRoute = () => {
 
   // 🔒 NOT LOGGED IN → LOGIN
   if (!isLoggedIn) {
-    return <Navigate to="/login" replace state={{ from: location }} />;
+    return <Navigate to="/" replace state={{ from: location }} />;
   }
 
   // 🔒 LOGGED IN BUT ONBOARDING NOT COMPLETE

@@ -45,7 +45,7 @@ const VerifyOtp = () => {
   /* 🔙 BLOCK BACK BUTTON */
   useEffect(() => {
     const handleBack = () => {
-      navigate("/login", { replace: true });
+      navigate("/", { replace: true });
     };
     window.history.pushState(null, "", window.location.href);
     window.addEventListener("popstate", handleBack);

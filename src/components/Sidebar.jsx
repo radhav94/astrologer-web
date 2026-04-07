@@ -36,7 +36,7 @@ const Sidebar = ({ isOpen, onClose }) => {
 
     setAstroId(null);
 
-    navigate("/login", { replace: true });
+    navigate("/", { replace: true });
   };
 
   const menuItems = [

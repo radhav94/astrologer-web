@@ -14,7 +14,13 @@ export const mallApi = epicApi.injectEndpoints({
         method: "GET",
       }),
     }),
+    getProductBySlug: builder.query({
+      query: (slug) => ({
+        url: `mall/products/${slug}`,
+        method: "GET",
+      }),
+    }),
   }),
 });
 
-export const { useGetProductCategoriesQuery, useGetProductsQuery } = mallApi;
+export const { useGetProductCategoriesQuery, useGetProductsQuery, useLazyGetProductBySlugQuery } = mallApi;

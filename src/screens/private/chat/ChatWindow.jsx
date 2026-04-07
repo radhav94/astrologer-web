@@ -132,22 +132,24 @@ const Message = ({
               {text}
             </p>
           )}
-          {products.map((p) => {
-            const dv = p.defaultVariant;
-            const productImage = p.image || p.images?.[0] || dv?.images?.[0] || p.variants?.[0]?.images?.[0];
-            const price = dv?.price ?? p.priceRange?.min ?? p.price;
-            const mrp = dv?.mrp ?? p.mrp;
+          {products.map((p, idx) => {
+            const image = p.variantImage || p.image || p.images?.[0] || p.defaultVariant?.images?.[0];
+            const price = p.variantPrice ?? p.defaultVariant?.price ?? p.priceRange?.min ?? p.price;
+            const mrp = p.variantMrp ?? p.defaultVariant?.mrp ?? p.mrp;
+            const discount = mrp && mrp > 0 && price != null && mrp > price
+              ? Math.round(((mrp - price) / mrp) * 100)
+              : 0;
             return (
             <div
-              key={p.productId || p._id || p.ID}
+              key={p.variantId || p.productId || p._id || p.ID || idx}
               className="flex gap-2.5 p-2 rounded-lg cursor-pointer active:opacity-80 transition-opacity"
               style={{ background: "rgba(0,0,0,0.04)" }}
               onClick={() => p.slug && navigate(`/product-details/${p.slug}`)}
             >
-              {productImage && (
+              {image && (
                 <img
-                  src={productImage}
-                  alt={p.title}
+                  src={image}
+                  alt={p.title || "Product"}
                   className="w-14 h-14 rounded-md object-cover flex-shrink-0"
                   onError={(e) => {
                     e.target.style.display = "none";
@@ -164,8 +166,13 @@ const Message = ({
                     overflow: "hidden",
                   }}
                 >
-                  {p.title}
+                  {p.title || "Product"}
                 </span>
+                {p.variantTitle && (
+                  <span className="text-[11px] leading-tight text-orange-600 font-medium">
+                    {p.variantTitle}
+                  </span>
+                )}
                 {p.short_description && (
                   <span
                     className="text-[11px] leading-tight text-gray-500"
@@ -183,18 +190,18 @@ const Message = ({
                   className="text-[13px] font-bold flex items-center gap-1.5"
                   style={{ color: "#f75801" }}
                 >
-                  {price != null && <>₹{price.toLocaleString("en-IN")}</>}
+                  {price != null && <>₹{Number(price).toLocaleString("en-IN")}</>}
                   {mrp != null && mrp > price && (
                     <s className="text-[11px] text-gray-400 font-normal">
-                      ₹{mrp.toLocaleString("en-IN")}
+                      ₹{Number(mrp).toLocaleString("en-IN")}
                     </s>
                   )}
-                  {mrp != null && mrp > price && (
+                  {discount > 0 && (
                     <span
                       className="text-[10px] font-semibold"
                       style={{ color: "#0a8f08" }}
                     >
-                      {Math.round(((mrp - price) / mrp) * 100)}% off
+                      {discount}% off
                     </span>
                   )}
                 </span>

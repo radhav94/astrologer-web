@@ -5,13 +5,36 @@ const LiveStreamContext = createContext();
 export const LiveStreamProvider = ({ children }) => {
   const [isLiveMinimized, setIsLiveMinimized] = useState(false);
   const [liveMetadata, setLiveMetadata] = useState(null);
-  const [isLive, setIsLive] = useState(false);
-  const [liveStartTime, setLiveStartTime] = useState(null);
+  const [isLive, setIsLiveState] = useState(
+    () => sessionStorage.getItem("shubhtalk_is_live") === "true"
+  );
+  const [liveStartTime, setLiveStartTime] = useState(() => {
+    const saved = sessionStorage.getItem("shubhtalk_live_start_time");
+    return saved ? Number(saved) : null;
+  });
+
+  const setIsLive = useCallback((value) => {
+    setIsLiveState(value);
+    if (value) {
+      sessionStorage.setItem("shubhtalk_is_live", "true");
+    } else {
+      sessionStorage.removeItem("shubhtalk_is_live");
+      sessionStorage.removeItem("shubhtalk_live_start_time");
+    }
+  }, []);
 
   const startLiveSession = useCallback(() => {
     setIsLive(true);
-    setLiveStartTime(Date.now());
-  }, []);
+    // Only set a new start time if one doesn't already exist (preserves timer on refresh)
+    const existing = sessionStorage.getItem("shubhtalk_live_start_time");
+    if (existing && Number(existing) > 0) {
+      setLiveStartTime(Number(existing));
+    } else {
+      const now = Date.now();
+      setLiveStartTime(now);
+      sessionStorage.setItem("shubhtalk_live_start_time", String(now));
+    }
+  }, [setIsLive]);
 
   const minimizeLive = useCallback((metadata) => {
     setLiveMetadata(metadata);
@@ -27,7 +50,7 @@ export const LiveStreamProvider = ({ children }) => {
     setLiveMetadata(null);
     setIsLive(false);
     setLiveStartTime(null);
-  }, []);
+  }, [setIsLive]);
 
   return (
     <LiveStreamContext.Provider

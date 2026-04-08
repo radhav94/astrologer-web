@@ -31,17 +31,31 @@ export const CallProvider = ({ children }) => {
   const reconnectTimeoutRef = useRef(null);
   const [callSeconds, setCallSeconds] = useState(0);
   const [isUpgradeRejectionProtected, setIsUpgradeRejectionProtected] = useState(false);
-  const [isCallMinimized, setIsCallMinimized] = useState(false);
+  const [isCallMinimized, setIsCallMinimizedState] = useState(
+    () => sessionStorage.getItem("shubhtalk_call_minimized") === "true"
+  );
   const timerRef = useRef(null);
   const upgradeRejectionRef = useRef(false); // Immediate protection using ref
   const isUpgradingRef = useRef(false); // 🔑 Synchronous ref for upgrade-in-progress (readable in cleanup closures)
 
-  // Reset minimized state when call ends
+  // Persist minimized state to sessionStorage
+  const setIsCallMinimized = useCallback((value) => {
+    setIsCallMinimizedState(value);
+    if (value) {
+      sessionStorage.setItem("shubhtalk_call_minimized", "true");
+    } else {
+      sessionStorage.removeItem("shubhtalk_call_minimized");
+    }
+  }, []);
+
+  // Reset minimized state only when call transitions from active → ended
+  const prevActiveCallRef = useRef(activeCall);
   useEffect(() => {
-    if (!activeCall) {
+    if (prevActiveCallRef.current && !activeCall) {
       setIsCallMinimized(false);
     }
-  }, [activeCall]);
+    prevActiveCallRef.current = activeCall;
+  }, [activeCall, setIsCallMinimized]);
 
   // Shared Agora state for smooth call upgrades
   const [sharedAgoraState, setSharedAgoraState] = useState({

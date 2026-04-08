@@ -1,6 +1,6 @@
-import { useEffect, useCallback, useState, useRef } from "react";
+import { useEffect, useCallback, useState, useRef, memo } from "react";
 import { LocalUser, RemoteUser } from "agora-rtc-react";
-import { MicOff, Mic, VideoOff, Video, Send, Timer, Gift, ChevronLeft } from "lucide-react";
+import { MicOff, Mic, VideoOff, Video, Send, ChevronLeft } from "lucide-react";
 import "./styles/videoBox.scss";
 import { useLiveViewLogic } from "./useLiveViewLogic";
 import GiftPopup from "./GiftPopup";
@@ -75,6 +75,8 @@ const LiveView = (props) => {
     endRoom,
     clearLiveSession,
     isMicMutedByCall,
+    giftNotification,
+    dismissGiftNotification,
   } = props;
 
   // Auto-scroll messages to bottom
@@ -317,6 +319,9 @@ const LiveView = (props) => {
         </div>
       </form>
 
+      {/* Gift Received Notification */}
+      <LiveGiftNotification gift={giftNotification} onDismiss={dismissGiftNotification} />
+
       {/* POPUPS */}
       <GiftPopup
         show={showGifts}
@@ -353,5 +358,53 @@ const LiveView = (props) => {
     </div>
   );
 };
+
+const LiveGiftNotification = memo(({ gift, onDismiss }) => {
+  if (!gift) return null;
+  return (
+    <div
+      style={{
+        position: "fixed",
+        top: 72,
+        left: "50%",
+        transform: "translateX(-50%)",
+        zIndex: 10000,
+        width: "90%",
+        maxWidth: 380,
+        pointerEvents: "auto",
+      }}
+    >
+      <div
+        className="flex items-center gap-3 px-4 py-3 rounded-2xl shadow-2xl backdrop-blur-md border border-white/20"
+        style={{ background: "linear-gradient(135deg, rgba(247,88,1,0.95), rgba(212,52,0,0.95))" }}
+      >
+        {gift.giftImg && (
+          <img
+            src={gift.giftImg}
+            alt={gift.giftName}
+            className="w-12 h-12 object-contain rounded-lg bg-white/20 p-1 flex-shrink-0"
+            onError={(e) => { e.target.style.display = "none"; }}
+          />
+        )}
+        <div className="flex flex-col flex-1 min-w-0">
+          <span className="text-white text-sm font-bold">
+            🎁 {gift.senderName} sent a gift!
+          </span>
+          <span className="text-white/80 text-xs">
+            {gift.giftName}
+            {gift.price > 0 && ` • ₹${Number(gift.price).toLocaleString("en-IN")}`}
+          </span>
+        </div>
+        <button
+          onClick={onDismiss}
+          className="ml-1 text-white/70 hover:text-white flex-shrink-0"
+          aria-label="Dismiss gift notification"
+        >
+          ✕
+        </button>
+      </div>
+    </div>
+  );
+});
 
 export default LiveView;

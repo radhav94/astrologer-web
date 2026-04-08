@@ -2,7 +2,7 @@ import { Suspense, useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Icons } from "../components/Icons";
 import Sidebar from "../components/Sidebar";
-import { Outlet, useNavigate, useParams } from "react-router-dom";
+import { Outlet, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { updateAstrologerStatus } from "../../src/services/appServices/authservice";
 import AudioVideoContainer from "../screens/private/call/AudioVideoContainer";
 import IncomingChatModal from "../components/IncomingChatModal";
@@ -24,6 +24,8 @@ import { availabilityConfig } from "../utils/config";
 
 const HomeLayout = () => {
   const { kundliId } = useParams();
+  const [searchParams] = useSearchParams();
+  const isWebView = searchParams.get("type") === "webview";
   const dispatch = useDispatch();
 
   // Get astrologer details from Redux state
@@ -315,11 +317,11 @@ const HomeLayout = () => {
 
   return (
     <div className={styles.container}>
-      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      {!isWebView && <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />}
 
       <main className={styles.main}>
-        <MiniLiveBar />
-        <header className={`${styles.header} ${kundliId ? styles.hidden : ""}`}>
+        {!isWebView && <MiniLiveBar />}
+        <header className={`${styles.header} ${kundliId || isWebView ? styles.hidden : ""}`}>
           <div className={styles.headerContent}>
             {/* LEFT: Profile + Info */}
             <div className={styles.leftSection}>
@@ -388,7 +390,7 @@ const HomeLayout = () => {
         </header>
 
         {/* Mobile View only */}
-        {isManualVerification && (
+        {isManualVerification && !isWebView && (
           <div className={styles.mobileCenterSection}>
             <div className={styles.mobileAvailabilityCards}>
               {/* Call Card */}
@@ -414,12 +416,11 @@ const HomeLayout = () => {
           </div>
         </Suspense>
 
-        {/* Bottom padding for mobile nav if needed */}
-        <div className={styles.bottomSpacer}></div>
-        <AudioVideoContainer />
-        <IncomingChatModal />
-        <StickyReviewFooter />
-        <StickyChatFooter />
+        {!isWebView && <div className={styles.bottomSpacer}></div>}
+        {!isWebView && <AudioVideoContainer />}
+        {!isWebView && <IncomingChatModal />}
+        {!isWebView && <StickyReviewFooter />}
+        {!isWebView && <StickyChatFooter />}
       </main>
     </div>
   );

@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Icons } from "../../../../../components/Icons";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import styles from "./FAQs.module.scss";
 import SectionHeader from "../../../../../components/UI/sectionHeader/SectionHeader";
 
 const FAQs = () => {
+  const navigate = useNavigate();
   const [openIndex, setOpenIndex] = useState(null);
 
   const categories = [
@@ -107,7 +108,7 @@ const FAQs = () => {
 
       <div className={styles.footer}>
         <span className={styles.footerText}>Still have a query?</span>
-        <button className={styles.contactButton}>
+        <button className={styles.contactButton} onClick={() => navigate("/customer-support")}>
           Contact Support
         </button>
       </div>

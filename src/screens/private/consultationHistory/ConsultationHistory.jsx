@@ -217,7 +217,13 @@ const ConsultationHistory = () => {
       <div className={styles.headerWrapper}>
         <SectionHeader title={activeTab === "orders" ? "Order History" : activeTab === "transactions" ? "Transaction History" : "Gift Received"} />
         <h2 className={styles.ordersCount}>
-          Total Records: {data?.data?.pagination?.totalItems || 0}
+          Total Records: {
+            activeTab === "gifts"
+              ? giftPagination?.totalItems || 0
+              : activeTab === "transactions"
+                ? txnPagination?.totalItems || 0
+                : data?.data?.pagination?.totalItems || 0
+          }
         </h2>
       </div>
 

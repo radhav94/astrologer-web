@@ -7,7 +7,7 @@ import { Toast } from "../../components";
 import "./WaitingListPanel.scss";
 
 const WaitingListPanel = ({ show, onClose }) => {
-  const { waitingList, setWaitingList, activeCall, setActiveCall } = useCall();
+  const { waitingList, setWaitingList, activeCall, setActiveCall, setIsCallMinimized } = useCall();
   const { activeChat, setActiveChat } = useChat();
 
   const getUserName = (call) => {
@@ -83,6 +83,9 @@ const WaitingListPanel = ({ show, onClose }) => {
           callType: call.type || "audio",
         });
 
+        // Start call minimized so livestream stays visible
+        setIsCallMinimized(true);
+
         setActiveCall({
           roomId: call.roomId,
           agoraToken: call.agoraToken,
@@ -95,6 +98,9 @@ const WaitingListPanel = ({ show, onClose }) => {
           kundliId: call.kundliId,
           userID: customer?.user_ID || astro?.user_ID || call.userID,
         });
+
+        // Close the panel so astrologer stays on the live view
+        onClose?.();
       }
     },
     [activeCall, activeChat, setActiveCall, setWaitingList]

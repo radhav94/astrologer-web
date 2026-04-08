@@ -9,6 +9,7 @@ import SharePopup from "./SharePopup";
 import IncomingWaitingNotification from "./IncomingWaitingNotification";
 import WaitingListPanel from "./WaitingListPanel";
 import ExitConfirmationModal from "./ExitConfirmationModal";
+import MiniCallOverlay from "./MiniCallOverlay";
 import { Toast } from "../../components";
 import { stopLiveStream } from "../../services/appServices/authservice";
 import { getUserFromStorage } from "../../utils/authStorage";
@@ -55,11 +56,9 @@ const LiveView = (props) => {
       const mins = Math.floor((diff % 3600) / 60);
       const secs = diff % 60;
       if (hrs > 0) {
-        setElapsedTime(`${hrs} h`);
-      } else if (mins > 0) {
-        setElapsedTime(`${mins} m`);
+        setElapsedTime(`${String(hrs).padStart(2, "0")}:${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`);
       } else {
-        setElapsedTime(`${secs} s`);
+        setElapsedTime(`${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`);
       }
     };
     tick();
@@ -265,6 +264,7 @@ const LiveView = (props) => {
           </div>
           <div>
             <div className="host-name">{astrologerName}</div>
+            <div className="host-live-timer"><span className="host-live-dot" />Live {elapsedTime}</div>
           </div>
         </div>
 
@@ -323,12 +323,15 @@ const LiveView = (props) => {
           <span className="action-label">Calls</span>
         </div>
 
-        <div className="action-item">
+        {/* <div className="action-item">
           <div className="action-btn action-btn-static" aria-label="Live duration">
             <Timer size={24} strokeWidth={1.5} />
           </div>
           <span className="action-label">{elapsedTime}</span>
-        </div>
+        </div> */}
+
+        {/* Minimized call overlay — appears below timer when call is active */}
+        <MiniCallOverlay />
 
       </div>
 

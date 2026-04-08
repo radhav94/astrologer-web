@@ -13,6 +13,7 @@ import { useNavigate } from "react-router-dom";
 import styles from "./VideoCalling.module.scss";
 import { voiceSocket } from "../../../services/appServices/voiceSocketServices";
 import { useCall } from "../../../context/CallContext";
+import { useLiveStream } from "../../../context/LiveStreamContext";
 import { useChat as useChatContext } from "../../../context/chatContext";
 import VideoCallChat from "./VideoCallChat";
 import { PATH } from "../../../utils/routes/Paths";
@@ -28,6 +29,7 @@ const APP_ID = import.meta.env.VITE_AGORA_APP_ID;
 const VideoCalling = ({ callData }) => {
   const { activeCall, setActiveCall, setReviewData, setOpenReview, sharedAgoraState, setSharedAgoraState, isUpgradingRef, callStartTime, setCallStartTime, isCallMinimized, setIsCallMinimized, isReconnecting, networkDisconnected, recoverCallAfterSystemDisconnect } = useCall();
   const { activeChat } = useChatContext();
+  const { isLive } = useLiveStream();
   const navigate = useNavigate();
 
 
@@ -756,6 +758,13 @@ const VideoCalling = ({ callData }) => {
     await cleanup();
   };
 
+  /* ================= MINI CALL END (from MiniCallOverlay in LiveView) ================= */
+  useEffect(() => {
+    const onMiniEnd = () => safeEndCall();
+    window.addEventListener("mini-call-end", onMiniEnd);
+    return () => window.removeEventListener("mini-call-end", onMiniEnd);
+  });
+
   /* ================= HANDLE REMOTE/SERVER CALL END ================= */
   const handleRemoteCallEnd = async () => {
     // Don't end call if downgrading
@@ -928,7 +937,7 @@ const VideoCalling = ({ callData }) => {
           position: 'fixed',
           top: position.y,
           left: position.x,
-          display: isCallMinimized ? "block" : "none",
+          display: (isCallMinimized && !isLive) ? "block" : "none",
           zIndex: 100000,
         }}
         className="w-48 rounded-2xl bg-[#1e003c]/70 backdrop-blur-xl border border-white/20 shadow-2xl text-white select-none overflow-hidden"

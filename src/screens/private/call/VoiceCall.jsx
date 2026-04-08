@@ -12,6 +12,7 @@ import styles from "./VoiceCall.module.scss";
 // import { useCall } from "../../context/CallContext";
 // import { PATH } from "../../utils/routes/Paths";
 import { useCall } from "../../../context/CallContext";
+import { useLiveStream } from "../../../context/LiveStreamContext";
 import { voiceSocket } from "../../../services/appServices/voiceSocketServices";
 import { PATH } from "../../../utils/routes/Paths";
 import { useChat as useChatContext } from "../../../context/chatContext";
@@ -28,6 +29,7 @@ const APP_ID = import.meta.env.VITE_AGORA_APP_ID;
 const AgoraVoiceCalling = ({ callData }) => {
   const { activeCall, setActiveCall, sharedAgoraState, setSharedAgoraState, isUpgradeRejectionProtected, upgradeRejectionRef, isUpgradingRef, setReviewData, setOpenReview, callStartTime, setCallStartTime, isCallMinimized, setIsCallMinimized, isReconnecting, networkDisconnected, recoverCallAfterSystemDisconnect } = useCall();
   const { activeChat, setActiveChat } = useChatContext();
+  const { isLive } = useLiveStream();
   const navigate = useNavigate();
 
   if (!activeCall || activeCall.callType !== "audio") {
@@ -598,6 +600,13 @@ const AgoraVoiceCalling = ({ callData }) => {
     await cleanup();
   };
 
+  /* ================= MINI CALL END (from MiniCallOverlay in LiveView) ================= */
+  useEffect(() => {
+    const onMiniEnd = () => endCall();
+    window.addEventListener("mini-call-end", onMiniEnd);
+    return () => window.removeEventListener("mini-call-end", onMiniEnd);
+  });
+
   /* ================= HANDLE REMOTE USER LEFT (Remote initiated) ================= */
   const handleRemoteUserLeft = async () => {
     // Check if we're upgrading or downgrading - don't end call if switching
@@ -815,7 +824,7 @@ const AgoraVoiceCalling = ({ callData }) => {
       />
       
       {/* MINI VIEW */}
-      {isCallMinimized && (
+      {isCallMinimized && !isLive && (
         <div
           onMouseDown={startDrag}
           onTouchStart={startDrag}

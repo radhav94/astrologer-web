@@ -75,6 +75,10 @@
   color: var(--main-primary-start);
 }
 
+.cardIconImage {
+  background: transparent;
+}
+
 .cardInfo {
   display: flex;
   flex-direction: column;

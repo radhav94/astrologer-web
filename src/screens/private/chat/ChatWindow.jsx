@@ -853,7 +853,7 @@ const ChatWindow = () => {
   };
 
   return (
-    <div className="-m-4 max-w-none flex flex-col h-screen bg-gray-50">
+    <div className="-m-4 max-w-none flex flex-col h-screen bg-gray-50 overflow-hidden">
       {/* RECONNECTING OVERLAY */}
       <ReconnectingOverlay
         isVisible={networkDisconnected || isReconnecting}
@@ -861,7 +861,7 @@ const ChatWindow = () => {
       />
 
       {/* ---------- Header ---------- */}
-      <div className="sticky top-30 z-20 bg-white w-[100%]">
+      <div className="z-20 bg-white w-full shrink-0">
         <div className="flex items-center justify-between px-4 md:px-6 py-3 border-b border-gray-200">
           <div className="flex items-center gap-3">
             <button

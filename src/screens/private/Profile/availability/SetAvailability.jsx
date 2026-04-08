@@ -4,6 +4,8 @@ import { Clock, ChevronUp, ChevronDown, Info } from "lucide-react";
 import { useUpdateAvailabilityMutation, useGetAstrologerByIdQuery } from "../../../../redux/astrologer/astrologerApi";
 import { Toast } from "../../../../components";
 import SectionHeader from "../../../../components/UI/SectionHeader";
+import privateRequest from "../../../../services/appServices/privateRequest";
+import IconSet from "../../../../assets/icons/icon_set.png";
 
 const DAYS_OF_WEEK = [
   { key: "monday", label: "Monday" },
@@ -60,6 +62,8 @@ const SetAvailability = () => {
   const [isScheduleOpen, setIsScheduleOpen] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [updateAvailability, { isLoading }] = useUpdateAvailabilityMutation();
+  const [isEmergency, setIsEmergency] = useState(() => !!userData?.isEmergencyAvailable);
+  const [emergencyLoading, setEmergencyLoading] = useState(false);
 
   // Sync schedule when API data loads
   useEffect(() => {
@@ -68,6 +72,23 @@ const SetAvailability = () => {
       setSchedule(getInitialSchedule(availability));
     }
   }, [astrologerData]);
+
+    const handleEmergencyToggle = async () => {
+    if (emergencyLoading) return;
+    const newStatus = !isEmergency;
+    setIsEmergency(newStatus);
+    setEmergencyLoading(true);
+    try {
+      await privateRequest.put("astrologers/editProfileData", { isEmergencyAvailable: newStatus });
+      const updatedUser = { ...userData, isEmergencyAvailable: newStatus };
+      localStorage.setItem("shubhtalk_astrologer_details", JSON.stringify(updatedUser));
+    } catch (error) {
+      console.error("Emergency toggle error:", error);
+      setIsEmergency(!newStatus);
+    } finally {
+      setEmergencyLoading(false);
+    }
+  };
 
   const toggleDay = useCallback((dayKey) => {
     setSchedule((prev) => ({
@@ -155,6 +176,49 @@ const SetAvailability = () => {
       {/* ===== WEEKLY SCHEDULE HEADING ===== */}
       <div className="mb-5">
         <SectionHeader title="Weekly Schedule" />
+      </div>
+
+              {/* ===== ALLOW EMERGENCY CALLS ===== */}
+      <div
+        className="rounded-2xl px-5 py-4 mb-8 flex items-center justify-between gap-3"
+        style={{ backgroundColor: "#FFF0F0", border: "1px solid #FFD6D6" }}
+      >
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <div className="flex-shrink-0">
+            <img src={IconSet} alt="Emergency" width={24} height={24} />
+          </div>
+          <div className="min-w-0">
+            <h4 className="text-[14px] font-bold" style={{ color: "#1A1A1A" }}>
+              Allow Emergency Calls
+            </h4>
+            <p className="text-[12px] leading-[1.5]" style={{ color: "#6B7280" }}>
+              Stay available for urgent consultations even when offline.
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); handleEmergencyToggle(); }}
+          disabled={emergencyLoading}
+          className="relative rounded-full transition-colors flex-shrink-0"
+          style={{
+            width: 44,
+            height: 24,
+            backgroundColor: isEmergency ? "#16A34A" : "#D1D5DB",
+            opacity: emergencyLoading ? 0.5 : 1,
+          }}
+          aria-label="Toggle emergency calls"
+        >
+          <span
+            className="absolute top-[2px] rounded-full bg-white shadow-sm transition-transform"
+            style={{
+              width: 20,
+              height: 20,
+              left: 2,
+              transform: isEmergency ? "translateX(20px)" : "translateX(0px)",
+            }}
+          />
+        </button>
       </div>
 
       {/* ===== SCHEDULE CARD (collapsible) ===== */}

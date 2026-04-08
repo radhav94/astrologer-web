@@ -118,53 +118,66 @@ const WaitingListPanel = ({ show, onClose }) => {
 
   if (!show) return null;
 
+  const getInitials = (name) =>
+    name
+      .split(" ")
+      .map((w) => w.charAt(0).toUpperCase())
+      .slice(0, 2)
+      .join("");
+
   return (
     <div className="wlp-overlay" onClick={onClose}>
       <div className="wlp-panel" onClick={(e) => e.stopPropagation()}>
+        {/* Drag handle */}
+        <div className="wlp-handle" />
+
         {/* Header */}
         <div className="wlp-header">
-          <h3 className="wlp-title">Incoming Requests</h3>
-          <div className="wlp-header-right">
-            <span className="wlp-count">{waitingList?.length || 0} in Queue</span>
-            <button className="wlp-close" onClick={onClose} aria-label="Close panel">
-              <X size={18} />
-            </button>
-          </div>
+          <h3 className="wlp-title">Call Request</h3>
         </div>
 
-        {/* List */}
+        {/* Horizontal scrollable list */}
         <div className="wlp-list">
           {waitingList.length === 0 ? (
             <div className="wlp-empty">No incoming requests</div>
           ) : (
             waitingList.map((call) => {
               const name = getUserName(call);
-              const image = getUserImage(call);
               const type = call.type || "audio";
+              const initials = getInitials(name);
 
               return (
                 <div key={call._id || call.roomId} className="wlp-card">
-                  {/* Info */}
-                  <div className="wlp-info">
-                    <p className="wlp-name">{name}</p>
-                    <p className="wlp-session-type">Session type: {type === "chat" ? "Chat" : "Call"}</p>
+                  <div className="wlp-card-top">
+                    <div className="wlp-avatar">
+                      <span>{initials}</span>
+                    </div>
+                    <div className="wlp-info">
+                      <p className="wlp-name">{name}</p>
+                      <p className="wlp-session-type">Session Type : {type === "chat" ? "Chat" : "Call"}</p>
+                    </div>
                   </div>
 
-                  {/* Actions */}
                   <div className="wlp-actions">
                     <button
                       className="wlp-btn wlp-reject"
                       onClick={() => handleReject(call)}
-                      aria-label={`Reject ${name}`}
+                      aria-label={`Decline ${name}`}
                     >
-                      <X size={16} />
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="white" style={{ transform: "rotate(135deg)" }}>
+                        <path d="M6.62 10.79a15.053 15.053 0 006.59 6.59l2.2-2.2a1.003 1.003 0 011.01-.24c1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1C10.07 21 3 13.93 3 4c0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.1.31.03.66-.25 1.02l-2.2 2.2z"/>
+                      </svg>
+                      <span>Decline</span>
                     </button>
                     <button
                       className="wlp-btn wlp-accept"
                       onClick={() => handleAccept(call)}
                       aria-label={`Accept ${name}`}
                     >
-                      <Phone size={16} />
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
+                        <path d="M6.62 10.79a15.053 15.053 0 006.59 6.59l2.2-2.2a1.003 1.003 0 011.01-.24c1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1C10.07 21 3 13.93 3 4c0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.1.31.03.66-.25 1.02l-2.2 2.2z"/>
+                      </svg>
+                      <span>Start Now</span>
                     </button>
                   </div>
                 </div>

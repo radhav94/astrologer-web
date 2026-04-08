@@ -1,120 +1,142 @@
 import { useState, useCallback } from "react";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import { Icons } from "../../Icons";
 import { DonutChart, Heatmap } from "../../Charts";
 import SectionHeader from "../../UI/SectionHeader";
 import useClickOutside from "../../../hooks/useClickOutside";
 
-const MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December"
-];
-
-const NOW = new Date();
-const CURRENT_MONTH = NOW.getMonth() + 1;
-const CURRENT_YEAR = NOW.getFullYear();
-
 /**
  * Monthly Overview Section Component
- * Displays monthly earnings, metrics, and session heatmap
+ * Uses overviewOptions (Today / Yesterday / Last 7 Days / Last 30 Days / Custom)
+ * instead of the old MONTHS-based picker.
  */
-const MonthlyOverviewSection = ({ 
-  monthName,
+const MonthlyOverviewSection = ({
+  overviewTitle,
   isMonthlyLoading,
   totalMonthlyEarnings,
   metricsData,
   categoryPercentages,
   monthlyOverview,
   heatmapData,
-  selectedMonth,
-  selectedYear,
-  setSelectedMonth,
-  setSelectedYear,
+  overviewOptions,
+  selectedOverviewOption,
+  setSelectedOverviewOption,
+  customFromDate,
+  customToDate,
+  setCustomFromDate,
+  setCustomToDate,
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const closeDropdown = useCallback(() => setIsDropdownOpen(false), []);
+  const closeDatePicker = useCallback(() => setIsDatePickerOpen(false), []);
   const dropdownRef = useClickOutside(closeDropdown, isDropdownOpen);
+  const datePickerRef = useClickOutside(closeDatePicker, isDatePickerOpen);
 
-  const handleMonthSelect = (monthIndex) => {
-    setSelectedMonth(monthIndex + 1);
+  /** Select a filter option */
+  const handleOptionSelect = useCallback((option) => {
+    setSelectedOverviewOption(option);
     setIsDropdownOpen(false);
-  };
-
-  const handleYearChange = (direction) => {
-    const newYear = selectedYear + direction;
-    if (newYear > CURRENT_YEAR) return;
-    setSelectedYear(newYear);
-    if (newYear === CURRENT_YEAR && selectedMonth > CURRENT_MONTH) {
-      setSelectedMonth(CURRENT_MONTH);
+    if (option.value === "custom") {
+      // Open the date picker popover
+      setIsDatePickerOpen(true);
+    } else {
+      setCustomFromDate(null);
+      setCustomToDate(null);
+      setIsDatePickerOpen(false);
     }
+  }, [setSelectedOverviewOption, setCustomFromDate, setCustomToDate]);
+
+  /** Handle range selection — auto-close when both dates are picked */
+  const handleDateRangeChange = useCallback((dates) => {
+    const [start, end] = dates;
+    setCustomFromDate(start);
+    setCustomToDate(end);
+    if (start && end) {
+      setIsDatePickerOpen(false);
+    }
+  }, [setCustomFromDate, setCustomToDate]);
+
+  const isCustom = selectedOverviewOption?.value === "custom";
+
+  /** Format custom date range for button label */
+  const getButtonLabel = () => {
+    if (isMonthlyLoading) return "Loading...";
+    if (isCustom && customFromDate && customToDate) {
+      const fmt = (d) => d.toLocaleDateString("en-IN", { day: "2-digit", month: "short" });
+      return `${fmt(customFromDate)} – ${fmt(customToDate)}`;
+    }
+    return selectedOverviewOption?.label || "Select";
   };
 
   return (
     <div className="space-y-4 lg:space-y-6">
       <div className="space-y-4 lg:space-y-6">
+        {/* Header + Filter Dropdown */}
         <div className="flex items-center justify-between">
-          <SectionHeader title="MONTHLY OVERVIEW" />
+          <SectionHeader title={overviewTitle || "OVERVIEW"} />
           <div className="relative" ref={dropdownRef}>
             <button
-              onClick={() => setIsDropdownOpen((prev) => !prev)}
+              onClick={() => {
+                // Always toggle the dropdown — date picker is independent
+                setIsDropdownOpen((prev) => !prev);
+                setIsDatePickerOpen(false);
+              }}
               className="bg-white border border-[#D1D5DB] px-4 py-2 rounded-full text-sm font-normal text-[#FF6B35] flex items-center gap-2 ml-4 cursor-pointer hover:bg-[#FFF8F0] transition-colors"
             >
-              {isMonthlyLoading ? "Loading..." : monthName}
+              {getButtonLabel()}
               <Icons.ChevronDown
                 size={16}
-                className={`text-[#FF6B35] transition-transform ${isDropdownOpen ? "rotate-180" : ""}`}
+                className={`text-[#FF6B35] transition-transform ${(isDropdownOpen || isDatePickerOpen) ? "rotate-180" : ""}`}
               />
             </button>
 
+            {/* Options dropdown */}
             {isDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-lg border border-gray-200 z-30 overflow-hidden">
-                {/* Year selector */}
-                <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-100 bg-[#FFF8F0]">
-                  <button
-                    onClick={() => handleYearChange(-1)}
-                    className="p-1 hover:bg-white rounded-full transition-colors"
-                  >
-                    <Icons.ChevronLeft size={16} className="text-[#FF6B35]" />
-                  </button>
-                  <span className="text-sm font-semibold text-gray-800">{selectedYear}</span>
-                  <button
-                    onClick={() => handleYearChange(1)}
-                    disabled={selectedYear >= CURRENT_YEAR}
-                    className="p-1 hover:bg-white rounded-full transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                  >
-                    <Icons.ChevronRight size={16} className="text-[#FF6B35]" />
-                  </button>
-                </div>
-
-                {/* Month grid */}
-                <div className="grid grid-cols-3 gap-1 p-2">
-                  {MONTHS.map((m, idx) => {
-                    const monthNum = idx + 1;
-                    const isSelected = monthNum === selectedMonth;
-                    const isFuture = selectedYear === CURRENT_YEAR && monthNum > CURRENT_MONTH;
-
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-lg border border-gray-200 z-30 overflow-hidden">
+                <div className="py-1">
+                  {(overviewOptions || []).map((option) => {
+                    const isSelected = selectedOverviewOption?.id === option.id;
                     return (
                       <button
-                        key={m}
-                        onClick={() => !isFuture && handleMonthSelect(idx)}
-                        disabled={isFuture}
-                        className={`py-2 px-1 rounded-lg text-xs font-medium transition-colors
+                        key={option.id}
+                        onClick={() => handleOptionSelect(option)}
+                        className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors
                           ${isSelected
-                            ? "bg-[#FF6B35] text-white"
-                            : isFuture
-                              ? "text-gray-300 cursor-not-allowed"
-                              : "text-gray-700 hover:bg-[#FFF0E6]"
+                            ? "bg-[#FFF3ED] text-[#FF6B35]"
+                            : "text-gray-700 hover:bg-[#FFF8F0]"
                           }`}
                       >
-                        {m.slice(0, 3)}
+                        {option.label}
                       </button>
                     );
                   })}
                 </div>
               </div>
             )}
+
+            {/* Date picker popover — floats below button when Custom Date is active */}
+            {isDatePickerOpen && isCustom && (
+              <div
+                ref={datePickerRef}
+                className="absolute right-0 mt-2 bg-white rounded-2xl shadow-xl border border-gray-200 z-30 p-3"
+              >
+                <DatePicker
+                  selected={customFromDate}
+                  onChange={handleDateRangeChange}
+                  startDate={customFromDate}
+                  endDate={customToDate}
+                  selectsRange
+                  inline
+                  maxDate={new Date()}
+                />
+              </div>
+            )}
           </div>
         </div>
 
+        {/* Main Content */}
         <div className="bg-[#FFF8F0] rounded-[1rem] p-2 sm:p-2 shadow-sm border border-[#F0E5D8]">
           <div className="space-y-3 sm:space-y-4">
             {/* TOP ROW: Earnings and Key Metrics Chart */}
@@ -126,7 +148,7 @@ const MonthlyOverviewSection = ({
                     <span className="text-white text-base sm:text-xl font-bold">₹</span>
                   </div>
                   <p className="text-[#9E9E9E] text-[10px] sm:text-sm font-normal leading-tight">
-                    Earnings this<br className="sm:hidden" /> month
+                    Earnings
                   </p>
                 </div>
                 <h3 className="text-xl sm:text-4xl font-bold text-[#212121] mb-1.5 sm:mb-2">
@@ -171,7 +193,6 @@ const MonthlyOverviewSection = ({
               <h4 className="text-[10px] sm:text-sm font-normal text-[#9E9E9E] mb-3 sm:mb-4">
                 Key Metrics
               </h4>
-
               <div className="grid grid-cols-3 gap-2 sm:gap-4 text-center">
                 <div className="flex flex-col items-center">
                   <div className="w-10 h-10 sm:w-16 sm:h-16 rounded-full bg-[#FF5722] flex items-center justify-center text-white mb-2 sm:mb-3 shadow-sm">
@@ -184,7 +205,6 @@ const MonthlyOverviewSection = ({
                     Average<br />Rating
                   </p>
                 </div>
-
                 <div className="flex flex-col items-center">
                   <div className="w-10 h-10 sm:w-16 sm:h-16 rounded-full bg-[#FF5722] flex items-center justify-center text-white mb-2 sm:mb-3 shadow-sm">
                     <Icons.Clock size={14} className="sm:w-6 sm:h-6" />
@@ -196,7 +216,6 @@ const MonthlyOverviewSection = ({
                     Average<br />Response Time
                   </p>
                 </div>
-
                 <div className="flex flex-col items-center">
                   <div className="w-10 h-10 sm:w-16 sm:h-16 rounded-full bg-[#FF5722] flex items-center justify-center text-white mb-2 sm:mb-3 shadow-sm">
                     <Icons.FileText size={14} className="sm:w-6 sm:h-6" />
@@ -211,10 +230,10 @@ const MonthlyOverviewSection = ({
               </div>
             </div>
 
-            {/* BOTTOM: Monthly Sessions Heatmap */}
+            {/* BOTTOM: Sessions Heatmap */}
             <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-sm">
               <h4 className="text-[10px] sm:text-sm font-normal text-[#9E9E9E] mb-3 sm:mb-4">
-                Monthly Sessions
+                Sessions
               </h4>
               <div className="overflow-x-auto">
                 {isMonthlyLoading ? (

@@ -1,14 +1,18 @@
 import { useCall } from "../context/CallContext";
 import { useChat as useChatContext } from "../context/chatContext";
+import { useLiveStream } from "../context/LiveStreamContext";
 import { voiceSocket } from "../services/appServices/voiceSocketServices";
 import toast from "./toast";
 import { useEffect, useState, useRef } from "react";
 
 const IncomingCallModal = () => {
-  const { incomingCall, setIncomingCall, setActiveCall, activeCall, sharedAgoraState, setSharedAgoraState, setIsUpgradeRejectionProtected, upgradeRejectionRef, isUpgradingRef } = useCall();
+  const { incomingCall, setIncomingCall, setActiveCall, activeCall, sharedAgoraState, setSharedAgoraState, setIsUpgradeRejectionProtected, upgradeRejectionRef, isUpgradingRef, setIsCallMinimized } = useCall();
   const { activeChat } = useChatContext();
+  const { isLive } = useLiveStream();
   const [isAccepting, setIsAccepting] = useState(false);
   const pendingUpgradeRef = useRef(false); // Track if we're waiting for an upgrade accept
+  const isLiveRef = useRef(isLive);
+  isLiveRef.current = isLive;
 
   // Listen for call accept errors from server
   useEffect(() => {
@@ -88,6 +92,9 @@ const IncomingCallModal = () => {
         if (isSwitch && activeCall) {
           console.log(`🔄 Switching call type from ${activeCall.callType} to ${incomingCall.callType}`);
           
+          // Minimize call during active livestream so live view stays visible
+          if (isLiveRef.current) setIsCallMinimized(true);
+
           setActiveCall({
             ...activeCall, // Preserve existing call data
             callType: incomingCall.callType, // Update only the call type
@@ -96,6 +103,9 @@ const IncomingCallModal = () => {
           });
         } else {
           // New call - set all data from incomingCall
+          // Minimize call during active livestream so live view stays visible
+          if (isLiveRef.current) setIsCallMinimized(true);
+
           setActiveCall({
             roomId: incomingCall.roomId,
             agoraToken: data.agoraToken || incomingCall.agoraToken,

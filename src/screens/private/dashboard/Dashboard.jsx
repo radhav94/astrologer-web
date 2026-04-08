@@ -150,19 +150,46 @@ const Dashboard = () => {
     }
   }, [isActiveSession, activeChat, activeCall, navigate, astrologerId, setIsCallMinimized]);
 
-  // Monthly overview state
-  const currentDate = new Date();
-  const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1);
-  const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
+  // Old month/year state — commented out, replaced by overviewOptions filter
+  // const currentDate = new Date();
+  // const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1);
+  // const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
+
+  // --- Overview filter options ---
+  const overviewOptions = useMemo(() => [
+    { id: 1, value: "today", label: "Today" },
+    { id: 2, value: "yesterday", label: "Yesterday" },
+    { id: 3, value: "last7days", label: "Last 7 Days" },
+    { id: 4, value: "last30days", label: "Last 30 Days" },
+    { id: 5, value: "custom", label: "Custom Date" },
+  ], []);
+  // Default to "yesterday" as per requirements
+  const [selectedOverviewOption, setSelectedOverviewOption] = useState(() => overviewOptions[1]);
+  // Custom date range state (only used when option is "custom")
+  const [customFromDate, setCustomFromDate] = useState(null);
+  const [customToDate, setCustomToDate] = useState(null);
 
   // Today's earnings from astrologer API (useGetAstrologerByIdQuery)
   const totalEarnings = astrologerData?.todaysEarning ?? 0;
 
+  // Build query params based on selected overview option
+  const overviewQueryParams = useMemo(() => {
+    if (selectedOverviewOption.value === "custom") {
+      // Only fire when both dates are picked
+      if (customFromDate && customToDate) {
+        const fmt = (d) => d.toISOString().split("T")[0]; // YYYY-MM-DD
+        return { customFromDate: fmt(customFromDate), customToDate: fmt(customToDate) };
+      }
+      return null; // skip query until both dates are set
+    }
+    return { dateRange: selectedOverviewOption.value };
+  }, [selectedOverviewOption, customFromDate, customToDate]);
+
   // Fetch monthly overview data
-  const { data: monthlyData, isLoading: isMonthlyLoading } = useGetMonthlyOverviewQuery({
-    month: selectedMonth,
-    year: selectedYear,
-  });
+  const { data: monthlyData, isLoading: isMonthlyLoading } = useGetMonthlyOverviewQuery(
+    overviewQueryParams ?? { dateRange: "yesterday" },
+    { skip: !overviewQueryParams },
+  );
 
   const monthlyOverview = monthlyData?.data || {};
   const totalMonthlyEarnings = monthlyOverview.totalIncome || 0;
@@ -186,12 +213,12 @@ const Dashboard = () => {
   }, [monthlyOverview.categories]);
 
   const heatmapData = useMemo(() => {
-    if (!monthlyOverview.monthlySessions) return [];
-    return monthlyOverview.monthlySessions.map((session) => ({
+    if (!monthlyOverview.periodSessions) return [];
+    return monthlyOverview.periodSessions.map((session) => ({
       day: session.day,
       value: session.count,
     }));
-  }, [monthlyOverview.monthlySessions]);
+  }, [monthlyOverview.periodSessions]);
 
   const categoryPercentages = useMemo(() => {
     if (!monthlyOverview.categories || monthlyOverview.totalIncome === 0) return [];
@@ -201,7 +228,17 @@ const Dashboard = () => {
     }));
   }, [monthlyOverview.categories, monthlyOverview.totalIncome]);
 
-  const monthName = monthlyOverview.period?.monthName || "Current Month";
+  // Dynamic section title based on selected option
+  const overviewTitle = useMemo(() => {
+    const titles = {
+      today: "TODAY'S OVERVIEW",
+      yesterday: "YESTERDAY'S OVERVIEW",
+      last7days: "LAST 7 DAYS OVERVIEW",
+      last30days: "LAST 30 DAYS OVERVIEW",
+      custom: "OVERVIEW",
+    };
+    return titles[selectedOverviewOption.value] || "OVERVIEW";
+  }, [selectedOverviewOption]);
 
   /**
    * Section registry mapping display_type to component
@@ -236,17 +273,20 @@ const Dashboard = () => {
     [SECTION_TYPES.MONTHLY_OVERVIEW]: {
       component: MonthlyOverviewSection,
       props: {
-        monthName,
+        overviewTitle,
         isMonthlyLoading,
         totalMonthlyEarnings,
         metricsData,
         categoryPercentages,
         monthlyOverview,
         heatmapData,
-        selectedMonth,
-        selectedYear,
-        setSelectedMonth,
-        setSelectedYear,
+        overviewOptions,
+        selectedOverviewOption,
+        setSelectedOverviewOption,
+        customFromDate,
+        customToDate,
+        setCustomFromDate,
+        setCustomToDate,
       },
     },
     [SECTION_TYPES.MILESTONES]: {
@@ -268,17 +308,20 @@ const Dashboard = () => {
     chatQueue,
     callQueue,
     waitingList,
-    monthName,
+    overviewTitle,
     isMonthlyLoading,
     totalMonthlyEarnings,
     metricsData,
     categoryPercentages,
     monthlyOverview,
     heatmapData,
-    selectedMonth,
-    selectedYear,
-    setSelectedMonth,
-    setSelectedYear,
+    overviewOptions,
+    selectedOverviewOption,
+    setSelectedOverviewOption,
+    customFromDate,
+    customToDate,
+    setCustomFromDate,
+    setCustomToDate,
     tipsContent,
   ]);
 

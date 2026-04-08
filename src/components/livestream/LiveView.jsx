@@ -1,12 +1,15 @@
-import { useEffect, useCallback, useState, useRef } from "react";
+import { useEffect, useCallback, useState, useRef, memo } from "react";
 import { LocalUser, RemoteUser } from "agora-rtc-react";
-import { MicOff, Mic, VideoOff, Video, Send, Timer, Gift, ChevronLeft } from "lucide-react";
+import { MicOff, Mic, VideoOff, Video, Send, ChevronLeft } from "lucide-react";
 import "./styles/videoBox.scss";
 import { useLiveViewLogic } from "./useLiveViewLogic";
 import GiftPopup from "./GiftPopup";
 import CallRequestPopup from "./CallRequestPopup";
 import SharePopup from "./SharePopup";
 import IncomingWaitingNotification from "./IncomingWaitingNotification";
+import WaitingListPanel from "./WaitingListPanel";
+import ExitConfirmationModal from "./ExitConfirmationModal";
+import MiniCallOverlay from "./MiniCallOverlay";
 import { Toast } from "../../components";
 import { stopLiveStream } from "../../services/appServices/authservice";
 import { getUserFromStorage } from "../../utils/authStorage";
@@ -14,6 +17,7 @@ import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { getDefaultImgBasedOnGender } from "../../utils/utils";
 import { useLiveStream } from "../../context/LiveStreamContext";
+import { useCall } from "../../context/CallContext";
 import eyeIcon from "../../assets/images/eye.png";
 
 
@@ -22,9 +26,13 @@ const LiveView = (props) => {
   const [selectedGift, setSelectedGift] = useState(null);
   const [coins, setCoins] = useState(106);
   const [showCallPopup, setShowCallPopup] = useState(false);
+  const [showWaitingList, setShowWaitingList] = useState(false);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const pendingExitActionRef = useRef(null);
 
   const navigate = useNavigate();
-  const { minimizeLive, maximizeLive, isLiveMinimized, endLiveSession } = useLiveStream();
+  const { minimizeLive, maximizeLive, isLiveMinimized, endLiveSession, liveStartTime } = useLiveStream();
+  const { waitingList } = useCall();
 
   const user = getUserFromStorage();
   const astrologerDetails = useSelector((state) => state.register.astrologerDetails);
@@ -36,6 +44,27 @@ const LiveView = (props) => {
   const hasEndedRef = useRef(false);
   const isMountedRef = useRef(false);
   const messagesOverlayRef = useRef(null);
+
+  // Elapsed live time
+  const [elapsedTime, setElapsedTime] = useState("0 s");
+
+  useEffect(() => {
+    if (!liveStartTime) return;
+    const tick = () => {
+      const diff = Math.floor((Date.now() - liveStartTime) / 1000);
+      const hrs = Math.floor(diff / 3600);
+      const mins = Math.floor((diff % 3600) / 60);
+      const secs = diff % 60;
+      if (hrs > 0) {
+        setElapsedTime(`${String(hrs).padStart(2, "0")}:${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`);
+      } else {
+        setElapsedTime(`${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`);
+      }
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [liveStartTime]);
 
   const hostData = {
     name: "Anaisha",
@@ -75,6 +104,8 @@ const LiveView = (props) => {
     endRoom,
     clearLiveSession,
     isMicMutedByCall,
+    giftNotification,
+    dismissGiftNotification,
   } = props;
 
   // Auto-scroll messages to bottom
@@ -139,6 +170,63 @@ const LiveView = (props) => {
     navigate("/dashboard", { replace: true });
   }, [minimizeLive, astrologerName, profileImage, viewerCount, channelName, endRoom, clearLiveSession, navigate]);
 
+  /* ================= EXIT CONFIRMATION FLOW ================= */
+  // Ask for confirmation instead of navigating directly
+  const requestExit = useCallback((action) => {
+    if (ROLE !== "host") {
+      // Non-host viewers can leave freely
+      action?.();
+      return;
+    }
+    pendingExitActionRef.current = action || null;
+    setShowExitConfirm(true);
+  }, [ROLE]);
+
+  const handleStay = useCallback(() => {
+    pendingExitActionRef.current = null;
+    setShowExitConfirm(false);
+  }, []);
+
+  const handleConfirmExit = useCallback(() => {
+    setShowExitConfirm(false);
+    pendingExitActionRef.current = null;
+    handleEndLive();
+  }, [handleEndLive]);
+
+  // Block browser back button / swipe-back with confirmation
+  useEffect(() => {
+    if (ROLE !== "host") return;
+
+    // Push a guard entry so pressing back triggers popstate instead of leaving
+    window.history.pushState({ liveGuard: true }, "");
+
+    const onPopState = (e) => {
+      // Re-push the guard so repeated back presses keep showing the modal
+      window.history.pushState({ liveGuard: true }, "");
+      setShowExitConfirm(true);
+      pendingExitActionRef.current = () => {
+        // Remove the guard entry and actually go back
+        window.history.go(-1);
+      };
+    };
+
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, [ROLE]);
+
+  // Block tab close / refresh with native browser prompt
+  useEffect(() => {
+    if (ROLE !== "host") return;
+
+    const onBeforeUnload = (e) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [ROLE]);
+
   const {
     messagesEndRef,
     showSharePopup,
@@ -162,8 +250,8 @@ const LiveView = (props) => {
       <div className="top-bar">
         <button
           className="back-btn"
-          onClick={handleMinimize}
-          aria-label="Minimize live"
+          onClick={() => requestExit()}
+          aria-label="Exit live"
         >
           <ChevronLeft size={22} strokeWidth={2} />
         </button>
@@ -178,6 +266,7 @@ const LiveView = (props) => {
           </div>
           <div>
             <div className="host-name">{astrologerName}</div>
+            <div className="host-live-timer"><span className="host-live-dot" />Live {elapsedTime}</div>
           </div>
         </div>
 
@@ -192,7 +281,7 @@ const LiveView = (props) => {
           </div>
           <button
             className="close-live-btn"
-            onClick={isHost ? handleEndLive : () => navigate(-1)}
+            onClick={isHost ? () => requestExit() : () => navigate(-1)}
             aria-label="Close live"
           >
             ✕
@@ -220,30 +309,33 @@ const LiveView = (props) => {
       </div>
 
       {/* RIGHT FLOATING ACTION BUTTONS */}
-      {/* <div className="right-action-bar">
+      <div className="right-action-bar">
         <div className="action-item">
           <button
             className="action-btn"
-            onClick={() => setShowCallPopup(true)}
-            aria-label="Request call"
+            onClick={() => setShowWaitingList(true)}
+            aria-label="View call requests"
           >
-            <Timer size={24} strokeWidth={1.5} />
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="4" width="18" height="16" rx="2" />
+              <line x1="3" y1="8" x2="21" y2="8" />
+              <rect x="14" y="12" width="4" height="4" rx="0.5" />
+            </svg>
           </button>
-          <span className="action-label">20 m</span>
+          <span className="action-label">Calls</span>
         </div>
 
-        <div className="action-item">
-          <button
-            className="action-btn"
-            onClick={() => setShowGifts(true)}
-            aria-label="Send gift"
-          >
-             <Gift size={24} strokeWidth={1.5} />
-          </button>
-          <span className="action-label">Gift</span>
-          <span className="action-label">13</span>
-        </div>
-      </div> */}
+        {/* <div className="action-item">
+          <div className="action-btn action-btn-static" aria-label="Live duration">
+            <Timer size={24} strokeWidth={1.5} />
+          </div>
+          <span className="action-label">{elapsedTime}</span>
+        </div> */}
+
+        {/* Minimized call overlay — appears below timer when call is active */}
+        <MiniCallOverlay />
+
+      </div>
 
       {/* Inline Messages Overlay */}
       <div className="inline-messages-overlay" ref={messagesOverlayRef}>
@@ -317,6 +409,9 @@ const LiveView = (props) => {
         </div>
       </form>
 
+      {/* Gift Received Notification */}
+      <LiveGiftNotification gift={giftNotification} onDismiss={dismissGiftNotification} />
+
       {/* POPUPS */}
       <GiftPopup
         show={showGifts}
@@ -350,8 +445,69 @@ const LiveView = (props) => {
 
       {/* Waiting list notification (calls/chats arriving while live) */}
       <IncomingWaitingNotification />
+
+      {/* Waiting list panel */}
+      <WaitingListPanel
+        show={showWaitingList}
+        onClose={() => setShowWaitingList(false)}
+      />
+
+      {/* Exit confirmation */}
+      <ExitConfirmationModal
+        show={showExitConfirm}
+        onStay={handleStay}
+        onExit={handleConfirmExit}
+      />
     </div>
   );
 };
+
+const LiveGiftNotification = memo(({ gift, onDismiss }) => {
+  if (!gift) return null;
+  return (
+    <div
+      style={{
+        position: "fixed",
+        top: 72,
+        left: "50%",
+        transform: "translateX(-50%)",
+        zIndex: 10000,
+        width: "90%",
+        maxWidth: 380,
+        pointerEvents: "auto",
+      }}
+    >
+      <div
+        className="flex items-center gap-3 px-4 py-3 rounded-2xl shadow-2xl backdrop-blur-md border border-white/20"
+        style={{ background: "linear-gradient(135deg, rgba(247,88,1,0.95), rgba(212,52,0,0.95))" }}
+      >
+        {gift.giftImg && (
+          <img
+            src={gift.giftImg}
+            alt={gift.giftName}
+            className="w-12 h-12 object-contain rounded-lg bg-white/20 p-1 flex-shrink-0"
+            onError={(e) => { e.target.style.display = "none"; }}
+          />
+        )}
+        <div className="flex flex-col flex-1 min-w-0">
+          <span className="text-white text-sm font-bold">
+            🎁 {gift.senderName} sent a gift!
+          </span>
+          <span className="text-white/80 text-xs">
+            {gift.giftName}
+            {gift.price > 0 && ` • ₹${Number(gift.price).toLocaleString("en-IN")}`}
+          </span>
+        </div>
+        <button
+          onClick={onDismiss}
+          className="ml-1 text-white/70 hover:text-white flex-shrink-0"
+          aria-label="Dismiss gift notification"
+        >
+          ✕
+        </button>
+      </div>
+    </div>
+  );
+});
 
 export default LiveView;

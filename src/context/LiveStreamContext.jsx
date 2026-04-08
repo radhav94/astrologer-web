@@ -6,9 +6,11 @@ export const LiveStreamProvider = ({ children }) => {
   const [isLiveMinimized, setIsLiveMinimized] = useState(false);
   const [liveMetadata, setLiveMetadata] = useState(null);
   const [isLive, setIsLive] = useState(false);
+  const [liveStartTime, setLiveStartTime] = useState(null);
 
   const startLiveSession = useCallback(() => {
     setIsLive(true);
+    setLiveStartTime(Date.now());
   }, []);
 
   const minimizeLive = useCallback((metadata) => {
@@ -24,6 +26,7 @@ export const LiveStreamProvider = ({ children }) => {
     setIsLiveMinimized(false);
     setLiveMetadata(null);
     setIsLive(false);
+    setLiveStartTime(null);
   }, []);
 
   return (
@@ -32,6 +35,7 @@ export const LiveStreamProvider = ({ children }) => {
         isLive,
         isLiveMinimized,
         liveMetadata,
+        liveStartTime,
         startLiveSession,
         minimizeLive,
         maximizeLive,

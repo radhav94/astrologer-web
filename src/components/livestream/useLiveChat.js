@@ -27,6 +27,15 @@ export const useLiveChat = (agoraChannel, isReconnect = false, tokenChatRoomId =
   const [participantCount, setParticipantCount] = useState(0);
   const [isConnected, setIsConnected] = useState(false);
   const [roomId, setRoomId] = useState(null);
+  const [giftNotification, setGiftNotification] = useState(null);
+  const giftTimerRef = useRef(null);
+
+  // Cleanup gift timer on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (giftTimerRef.current) clearTimeout(giftTimerRef.current);
+    };
+  }, []);
 
   const user = getUserFromStorage();
   // authStorage saves _id as "id", fall back to the dedicated localStorage key
@@ -201,21 +210,62 @@ export const useLiveChat = (agoraChannel, isReconnect = false, tokenChatRoomId =
         const msgList = Array.isArray(data) ? data : data?.messages;
         if (msgList?.length) {
           // Server has messages — use them as the authoritative source
-          const mapped = msgList.map((msg) => ({
-            id: msg.id,
-            sender: msg.userId,
-            senderName: msg.userName,
-            text: msg.message,
-            role: msg.userType === "host" ? "host" : "audience",
-            isSelf: msg.userId === userId,
-            timestamp: msg.timestamp,
-          }));
+          // Only include regular messages (not gifts or other types)
+          const mapped = msgList
+            .filter((msg) => !msg.type || msg.type === "message")
+            .map((msg) => ({
+              id: msg.id,
+              sender: msg.userId,
+              senderName: msg.userName,
+              text: msg.message,
+              role: msg.userType === "host" ? "host" : "audience",
+              isSelf: msg.userId === userId,
+              timestamp: msg.timestamp,
+            }));
           setMessages(mapped);
         }
         // If server sends 0 messages, keep whatever we have (cached from sessionStorage)
       });
 
       socket.on("live:message", (msg) => {
+        const msgType = msg.type || "message";
+
+        // Gift messages → show notification popup, don't add to chat
+        if (msgType === "gift") {
+          // Parse gift data from the message
+          let giftData = null;
+          try {
+            if (typeof msg.message === "string") {
+              const parsed = JSON.parse(msg.message);
+              giftData = parsed.giftData || parsed;
+            } else if (typeof msg.message === "object") {
+              giftData = msg.message?.giftData || msg.message;
+            }
+          } catch {
+            giftData = { giftName: "Gift", price: 0 };
+          }
+
+          // Clear any existing gift timer
+          if (giftTimerRef.current) clearTimeout(giftTimerRef.current);
+
+          setGiftNotification({
+            senderName: msg.userName || "Someone",
+            giftName: giftData?.giftName || "Gift",
+            giftImg: giftData?.giftImg || giftData?.giftImage,
+            price: giftData?.price || 0,
+            timestamp: Date.now(),
+          });
+
+          // Auto-dismiss after 5 seconds
+          giftTimerRef.current = setTimeout(() => {
+            setGiftNotification(null);
+          }, 5000);
+          return;
+        }
+
+        // Only show regular messages in the chat overlay
+        if (msgType !== "message") return;
+
         setMessages((prev) => [
           ...prev,
           {
@@ -324,6 +374,14 @@ export const useLiveChat = (agoraChannel, isReconnect = false, tokenChatRoomId =
     sessionStorage.removeItem(CHAT_MESSAGES_SESSION_KEY);
   }, [userId]);
 
+  const dismissGiftNotification = useCallback(() => {
+    setGiftNotification(null);
+    if (giftTimerRef.current) {
+      clearTimeout(giftTimerRef.current);
+      giftTimerRef.current = null;
+    }
+  }, []);
+
   return {
     messages,
     chatInput,
@@ -333,5 +391,7 @@ export const useLiveChat = (agoraChannel, isReconnect = false, tokenChatRoomId =
     isConnected,
     endRoom,
     roomId,
+    giftNotification,
+    dismissGiftNotification,
   };
 };

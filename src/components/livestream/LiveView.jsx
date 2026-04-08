@@ -345,11 +345,11 @@ const LiveView = (props) => {
       <div className="inline-messages-overlay" ref={messagesOverlayRef}>
         {messages.map((m) => {
           // System messages (join/leave)
-          if (m.type === "join" || m.type === "leave") {
+          if (m.type === "join") {
             return (
               <div key={m.id} className="inline-message" style={{ opacity: 0.6 }}>
-                <span className="inline-initial" style={{ background: m.type === "join" ? "#22c55e" : "#6b7280", fontSize: 10 }}>
-                  {m.type === "join" ? "▶" : "◀"}
+                <span className="inline-initial" style={{ background: "#22c55e", fontSize: 10 }}>
+                  ▶
                 </span>
                 <div className="inline-message-body">
                   <span className="inline-text" style={{ fontStyle: "italic", fontSize: 11 }}>{m.text}</span>

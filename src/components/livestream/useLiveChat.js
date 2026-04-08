@@ -337,21 +337,6 @@ export const useLiveChat = (agoraChannel, isReconnect = false, tokenChatRoomId =
 
       socket.on("live:user_left", (data) => {
         setParticipantCount(data.participantCount || 0);
-        if (data.userName && data.userId !== userId) {
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: `leave_${data.userId}_${Date.now()}`,
-              sender: data.userId,
-              senderName: data.userName,
-              text: `${data.userName} left`,
-              role: "system",
-              isSelf: false,
-              timestamp: Date.now(),
-              type: "leave",
-            },
-          ]);
-        }
       });
 
       // Broadcast when a live session starts (informational for host)

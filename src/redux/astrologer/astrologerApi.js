@@ -47,11 +47,26 @@ export const astrologerApi = epicApi.injectEndpoints({
     }),
 
     getMonthlyOverview: builder.query({
+      /* Old month/year params — commented out, replaced with dateRange-based params
       query: ({ month, year } = {}) => {
         const params = new URLSearchParams();
         if (month) params.append("month", month);
         if (year) params.append("year", year);
-        
+        const queryString = params.toString();
+        return {
+          url: `astrologers/monthly-overview${queryString ? `?${queryString}` : ""}`,
+          method: "GET",
+        };
+      },
+      */
+      query: ({ dateRange, customFromDate, customToDate } = {}) => {
+        const params = new URLSearchParams();
+        if (customFromDate && customToDate) {
+          params.append("customFromDate", customFromDate);
+          params.append("customToDate", customToDate);
+        } else if (dateRange) {
+          params.append("dateRange", dateRange);
+        }
         const queryString = params.toString();
         return {
           url: `astrologers/monthly-overview${queryString ? `?${queryString}` : ""}`,

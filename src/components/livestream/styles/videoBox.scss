@@ -50,7 +50,7 @@
   justify-content: space-between;
   padding: 14px 14px 10px;
   z-index: 10;
-  background: linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, transparent 100%);
+  background: linear-gradient(to bottom, rgba(0,0,0,1) 0%, transparent 100%);
 }
 
 .host-info {
@@ -203,13 +203,13 @@
 }
 
 .close-live-btn {
-  width: 36px;
-  height: 36px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   border: none;
   background: #e53935;
   color: #fff;
-  font-size: 18px;
+  font-size: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -305,7 +305,7 @@
 .inline-messages-overlay {
   position: absolute;
   left: 0;
-  right: 80px;
+  right: 0px;
   bottom: 60px;
   display: flex;
   flex-direction: column;
@@ -324,7 +324,16 @@
   }
   scrollbar-width: none;
 }
-
+.reel-container:after{
+  content: "";
+  height: 36%;
+  width: 100%;
+  background: linear-gradient(to top, rgb(0 0 0 / 78%) 0%, transparent 100%);
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
 .inline-message {
   display: flex;
   align-items: flex-start;
@@ -465,18 +474,18 @@
 
 .composer-icon-btn.mic-btn.active,
 .composer-icon-btn.video-btn.active {
-  background: #e65100;
+  background: #e53935;
   color: #fff;
 }
 
 /* Send button — orange circle, white icon */
 .composer-icon-btn.send-btn {
-  background: #e65100;
+  background: #e53935;
   color: #fff;
 }
 
 .composer-icon-btn.send-btn:hover {
-  background: #bf360c;
+  background: #e53935;
 }
 
 /* ===============================
@@ -608,8 +617,11 @@
   }
 
   .right-action-bar .action-btn {
-    width: 40px;
-    height: 40px;
+    width: 34px;
+    height: 34px;
+    svg{
+    height: 20px;
+  }
   }
 
   .action-label {

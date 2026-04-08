@@ -10,6 +10,8 @@ const AvailabilityCard = ({
   onClick,
   Icon,
 }) => {
+  const isImageIcon = type === "emergency";
+
   return (
     <button
       disabled={loading}
@@ -21,7 +23,9 @@ const AvailabilityCard = ({
       {/* Icon */}
       <div
         className={`${styles.cardIcon} ${
-          isOnline ? styles.cardIconActive : styles.cardIconInactive
+          isImageIcon
+            ? styles.cardIconImage
+            : isOnline ? styles.cardIconActive : styles.cardIconInactive
         }`}
       >
         <Icon

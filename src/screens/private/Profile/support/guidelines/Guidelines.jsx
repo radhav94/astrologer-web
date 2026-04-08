@@ -1,15 +1,18 @@
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Icons } from "../../../../../components/Icons";
 import SectionHeader from "../../../../../components/UI/sectionHeader/SectionHeader";
 import styles from "./Guidelines.module.scss";
 
 const Guidelines = () => {
+  const [searchParams] = useSearchParams();
+  const isWebView = searchParams.get("type") === "webview";
+
   const items = [
     {
       label: "Terms & Conditions",
       desc: "Read our service terms and platform policies.",
       icon: Icons.FileText,
-      path: "/guidelines/terms-conditions",
+      path: `/guidelines/terms-conditions${isWebView ? "?type=webview" : ""}`,
     },
     {
       label: "Privacy Policies",

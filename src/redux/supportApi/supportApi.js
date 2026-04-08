@@ -40,10 +40,14 @@ export const supportApi = epicApi.injectEndpoints({
       }),
     }),
     sendTicketMessage: builder.mutation({
-      query: ({ ticketId, message }) => ({
+      query: ({ ticketId, message, attachments }) => ({
         url: `support/tickets/${ticketId}/message`,
         method: "POST",
-        body: { message },
+        body: {
+          message,
+          isUserMessage: true,
+          ...(attachments && attachments.length > 0 && { attachments }),
+        },
       }),
     }),
     rateTicket: builder.mutation({

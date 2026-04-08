@@ -339,24 +339,40 @@ const LiveView = (props) => {
 
       {/* Inline Messages Overlay */}
       <div className="inline-messages-overlay" ref={messagesOverlayRef}>
-        {messages.map((m) => (
-          <div
-            key={m.id}
-            className={`inline-message ${m.role === "host" ? "inline-host-message" : ""}`}
-          >
-            <span className="inline-initial">
-              {(m.senderName || (m.role === "host" ? "A" : "U")).charAt(0).toUpperCase()}
-            </span>
-            <div className="inline-message-body">
-              {m.senderName && (
-                <span className="inline-sender">
-                  {m.role === "host" ? "You" : m.senderName}
+        {messages.map((m) => {
+          // System messages (join/leave)
+          if (m.type === "join" || m.type === "leave") {
+            return (
+              <div key={m.id} className="inline-message" style={{ opacity: 0.6 }}>
+                <span className="inline-initial" style={{ background: m.type === "join" ? "#22c55e" : "#6b7280", fontSize: 10 }}>
+                  {m.type === "join" ? "▶" : "◀"}
                 </span>
-              )}
-              <span className="inline-text">{m.text}</span>
+                <div className="inline-message-body">
+                  <span className="inline-text" style={{ fontStyle: "italic", fontSize: 11 }}>{m.text}</span>
+                </div>
+              </div>
+            );
+          }
+
+          return (
+            <div
+              key={m.id}
+              className={`inline-message ${m.role === "host" ? "inline-host-message" : ""} ${m.type === "gift" ? "inline-gift-message" : ""}`}
+            >
+              <span className="inline-initial" style={m.type === "gift" ? { background: "linear-gradient(135deg, #f75801, #d43400)" } : undefined}>
+                {m.type === "gift" ? "🎁" : (m.senderName || (m.role === "host" ? "A" : "U")).charAt(0).toUpperCase()}
+              </span>
+              <div className="inline-message-body">
+                {m.senderName && (
+                  <span className="inline-sender" style={m.type === "gift" ? { color: "#f75801" } : undefined}>
+                    {m.role === "host" ? "You" : m.senderName}
+                  </span>
+                )}
+                <span className="inline-text">{m.text}</span>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
         <div ref={messagesEndRef} />
       </div>
 

@@ -209,30 +209,53 @@ export const useLiveChat = (agoraChannel, isReconnect = false, tokenChatRoomId =
       socket.on("live:recent_messages", (data) => {
         const msgList = Array.isArray(data) ? data : data?.messages;
         if (msgList?.length) {
-          // Server has messages — use them as the authoritative source
-          // Only include regular messages (not gifts or other types)
+          // Only include regular messages and gifts
           const mapped = msgList
-            .filter((msg) => !msg.type || msg.type === "message")
-            .map((msg) => ({
-              id: msg.id,
-              sender: msg.userId,
-              senderName: msg.userName,
-              text: msg.message,
-              role: msg.userType === "host" ? "host" : "audience",
-              isSelf: msg.userId === userId,
-              timestamp: msg.timestamp,
-            }));
+            .filter((msg) => !msg.type || msg.type === "message" || msg.type === "gift")
+            .map((msg) => {
+              if (msg.type === "gift") {
+                let giftData = null;
+                try {
+                  if (typeof msg.message === "string") {
+                    const parsed = JSON.parse(msg.message);
+                    giftData = parsed.giftData || parsed;
+                  } else if (typeof msg.message === "object") {
+                    giftData = msg.message?.giftData || msg.message;
+                  }
+                } catch {
+                  giftData = { giftName: "Gift", price: 0 };
+                }
+                return {
+                  id: msg.id,
+                  sender: msg.userId,
+                  senderName: msg.userName,
+                  text: `🎁 sent ${giftData?.giftName || "a gift"}`,
+                  role: msg.userType === "host" ? "host" : "audience",
+                  isSelf: msg.userId === userId,
+                  timestamp: msg.timestamp,
+                  type: "gift",
+                  giftData,
+                };
+              }
+              return {
+                id: msg.id,
+                sender: msg.userId,
+                senderName: msg.userName,
+                text: msg.message,
+                role: msg.userType === "host" ? "host" : "audience",
+                isSelf: msg.userId === userId,
+                timestamp: msg.timestamp,
+              };
+            });
           setMessages(mapped);
         }
-        // If server sends 0 messages, keep whatever we have (cached from sessionStorage)
       });
 
       socket.on("live:message", (msg) => {
         const msgType = msg.type || "message";
 
-        // Gift messages → show notification popup, don't add to chat
+        // Gift messages → show notification popup AND add to chat
         if (msgType === "gift") {
-          // Parse gift data from the message
           let giftData = null;
           try {
             if (typeof msg.message === "string") {
@@ -245,9 +268,8 @@ export const useLiveChat = (agoraChannel, isReconnect = false, tokenChatRoomId =
             giftData = { giftName: "Gift", price: 0 };
           }
 
-          // Clear any existing gift timer
+          // Show floating notification
           if (giftTimerRef.current) clearTimeout(giftTimerRef.current);
-
           setGiftNotification({
             senderName: msg.userName || "Someone",
             giftName: giftData?.giftName || "Gift",
@@ -255,11 +277,25 @@ export const useLiveChat = (agoraChannel, isReconnect = false, tokenChatRoomId =
             price: giftData?.price || 0,
             timestamp: Date.now(),
           });
-
-          // Auto-dismiss after 5 seconds
           giftTimerRef.current = setTimeout(() => {
             setGiftNotification(null);
           }, 5000);
+
+          // Also add to chat messages inline
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: msg.id || `gift_${Date.now()}`,
+              sender: msg.userId,
+              senderName: msg.userName,
+              text: `🎁 sent ${giftData?.giftName || "a gift"}`,
+              role: msg.userType === "host" ? "host" : "audience",
+              isSelf: msg.userId === userId,
+              timestamp: msg.timestamp,
+              type: "gift",
+              giftData,
+            },
+          ]);
           return;
         }
 
@@ -282,10 +318,40 @@ export const useLiveChat = (agoraChannel, isReconnect = false, tokenChatRoomId =
 
       socket.on("live:user_joined", (data) => {
         setParticipantCount(data.participantCount || 0);
+        if (data.userName && data.userId !== userId) {
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: `join_${data.userId}_${Date.now()}`,
+              sender: data.userId,
+              senderName: data.userName,
+              text: `${data.userName} joined`,
+              role: "system",
+              isSelf: false,
+              timestamp: Date.now(),
+              type: "join",
+            },
+          ]);
+        }
       });
 
       socket.on("live:user_left", (data) => {
         setParticipantCount(data.participantCount || 0);
+        if (data.userName && data.userId !== userId) {
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: `leave_${data.userId}_${Date.now()}`,
+              sender: data.userId,
+              senderName: data.userName,
+              text: `${data.userName} left`,
+              role: "system",
+              isSelf: false,
+              timestamp: Date.now(),
+              type: "leave",
+            },
+          ]);
+        }
       });
 
       // Broadcast when a live session starts (informational for host)

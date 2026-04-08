@@ -1,8 +1,7 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { useGetAstrologerByIdQuery, useGetMonthlyOverviewQuery } from "../../../redux/astrologer/astrologerApi";
-import * as AuthServices from "../../../services/appServices/authservice";
 import { useCall } from "../../../context/CallContext";
 import { useChat } from "../../../context/chatContext";
 import { SECTION_TYPES } from "../../../constants/sectionTypes";
@@ -156,17 +155,8 @@ const Dashboard = () => {
   const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
 
-  // Fetch total earnings
-  const [totalEarnings, setTotalEarnings] = useState(0);
-
-  useEffect(() => {
-    const fetchTotalEarnings = async () => {
-      const response = await AuthServices.totalEarning();
-      const earnings = response?.data?.data?.[0]?.amount || 0;
-      setTotalEarnings(earnings);
-    };
-    fetchTotalEarnings();
-  }, []);
+  // Today's earnings from astrologer API (useGetAstrologerByIdQuery)
+  const totalEarnings = astrologerData?.todaysEarning ?? 0;
 
   // Fetch monthly overview data
   const { data: monthlyData, isLoading: isMonthlyLoading } = useGetMonthlyOverviewQuery({

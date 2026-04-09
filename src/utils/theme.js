@@ -8,7 +8,7 @@ export const appShadow = {
 export const appColors = {
   pri: "#ffcb03",
   sec: "#fbf1dd",
-  tri: "#BB1160",
+  tri: "#F75801",
 
   white: "#ffff",
   black: "#1a1a1a",

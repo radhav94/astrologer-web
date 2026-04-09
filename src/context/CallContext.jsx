@@ -35,6 +35,7 @@ export const CallProvider = ({ children }) => {
     () => sessionStorage.getItem("shubhtalk_call_minimized") === "true"
   );
   const timerRef = useRef(null);
+  const activeCallRef = useRef(null); // Synchronous ref for reading activeCall in socket handlers
   const upgradeRejectionRef = useRef(false); // Immediate protection using ref
   const isUpgradingRef = useRef(false); // 🔑 Synchronous ref for upgrade-in-progress (readable in cleanup closures)
 
@@ -55,6 +56,7 @@ export const CallProvider = ({ children }) => {
       setIsCallMinimized(false);
     }
     prevActiveCallRef.current = activeCall;
+    activeCallRef.current = activeCall;
   }, [activeCall, setIsCallMinimized]);
 
   // Shared Agora state for smooth call upgrades
@@ -455,6 +457,18 @@ export const CallProvider = ({ children }) => {
         if (canceledRoomId && canceledRoomId !== current.roomId) return current;
         return null;
       });
+
+      // Also end the active call if the user declined the astrologer-initiated call.
+      // When astrologer accepts from waiting list, activeCall is set immediately.
+      // If the user then declines, call:canceled fires but activeCall was never cleared.
+      const currentCall = activeCallRef.current;
+      if (currentCall && canceledRoomId && canceledRoomId === currentCall.roomId) {
+        setActiveCallState(null);
+        clearPersistedCallState();
+        setCallStartTimeState(null);
+        setCallTimer(0);
+        resetTimer();
+      }
     };
 
     const handleWaitingList = (data) => {

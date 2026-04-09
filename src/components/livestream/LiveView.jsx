@@ -343,32 +343,52 @@ const LiveView = (props) => {
 
       {/* Inline Messages Overlay */}
       <div className="inline-messages-overlay" ref={messagesOverlayRef}>
-        {messages.map((m) => {
-          // System messages (join/leave)
-          if (m.type === "join") {
+        {messages.map((m, index) => {
+          // System messages (join/leave) — same circle with first letter as regular messages
+          if (m.type === "join" || m.type === "leave") {
             return (
-              <div key={m.id} className="inline-message" style={{ opacity: 0.6 }}>
-                <span className="inline-initial" style={{ background: "#22c55e", fontSize: 10 }}>
-                  ▶
+              <div key={m.id || index} className="inline-message" style={{ opacity: 0.7 }}>
+                <span className="inline-initial">
+                  {(m.senderName || "U").charAt(0).toUpperCase()}
                 </span>
                 <div className="inline-message-body">
-                  <span className="inline-text" style={{ fontStyle: "italic", fontSize: 11 }}>{m.text}</span>
+                  <span className="inline-text" style={{ fontStyle: "italic", fontSize: 12 }}>{m.text}</span>
                 </div>
               </div>
             );
           }
 
+          // Gift messages
+          if (m.type === "gift") {
+            return (
+              <div key={m.id || index} className="inline-message inline-gift-message">
+                <span className="inline-initial" style={{ background: "linear-gradient(135deg, #f75801, #d43400)" }}>
+                  🎁
+                </span>
+                <div className="inline-message-body">
+                  {m.senderName && (
+                    <span className="inline-sender" style={{ color: "#f75801" }}>
+                      {m.role === "host" ? "You" : m.senderName}
+                    </span>
+                  )}
+                  <span className="inline-text">{m.text}</span>
+                </div>
+              </div>
+            );
+          }
+
+          // Regular messages
           return (
             <div
-              key={m.id}
-              className={`inline-message ${m.role === "host" ? "inline-host-message" : ""} ${m.type === "gift" ? "inline-gift-message" : ""}`}
+              key={m.id || index}
+              className={`inline-message ${m.role === "host" ? "inline-host-message" : ""}`}
             >
-              <span className="inline-initial" style={m.type === "gift" ? { background: "linear-gradient(135deg, #f75801, #d43400)" } : undefined}>
-                {m.type === "gift" ? "🎁" : (m.senderName || (m.role === "host" ? "A" : "U")).charAt(0).toUpperCase()}
+              <span className="inline-initial">
+                {(m.senderName || (m.role === "host" ? "A" : "U")).charAt(0).toUpperCase()}
               </span>
               <div className="inline-message-body">
                 {m.senderName && (
-                  <span className="inline-sender" style={m.type === "gift" ? { color: "#f75801" } : undefined}>
+                  <span className="inline-sender">
                     {m.role === "host" ? "You" : m.senderName}
                   </span>
                 )}

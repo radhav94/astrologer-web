@@ -812,6 +812,7 @@ const AgoraVoiceCalling = ({ callData }) => {
     chatRoomId: activeCall?.chatRoomId,
     kundliId: activeCall?.kundliId,
     isUserSide: activeCall?.isUserSide,
+    callerName: activeCall?.callerName,
   };
 
   /* ================= UI ================= */
@@ -977,7 +978,7 @@ const AgoraVoiceCalling = ({ callData }) => {
                 className="px-4 py-2 text-white rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity"
                 style={{ background: 'linear-gradient(135deg, #f75801, #d43400)' }}
               >
-                View Kundli
+              View Kundli
               </button>
             </div>
 
@@ -990,7 +991,7 @@ const AgoraVoiceCalling = ({ callData }) => {
                 className="px-4 py-2 text-white rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity"
                 style={{ background: 'linear-gradient(135deg, #f75801, #d43400)' }}
               >
-                View Kundli
+                {callerName ? `${callerName}'s Kundli` : "View Kundli"}
               </button>
             </div>
           </div>

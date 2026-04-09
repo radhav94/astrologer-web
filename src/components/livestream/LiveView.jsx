@@ -302,10 +302,10 @@ const LiveView = (props) => {
       <div className="reel-container">
         {isHost && isConnected && (
           <LocalUser
-            audioTrack={localMicrophoneTrack}
             videoTrack={localCameraTrack}
             cameraOn={cameraOn}
             micOn={micOn && !isMicMutedByCall}
+            playAudio={false}
           />
         )}
 

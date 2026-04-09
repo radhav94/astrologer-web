@@ -102,13 +102,24 @@ export const useLiveStreaming = (client, ROLE, previewSettings = {}) => {
       },
       canJoin
     );
-  const { localMicrophoneTrack } = useLocalMicrophoneTrack(
-    micOn && ROLE === "host"
-  );
-  const { localCameraTrack } = useLocalCameraTrack(
-    cameraOn && ROLE === "host"
-  );
+  const { localMicrophoneTrack } = useLocalMicrophoneTrack(ROLE === "host");
+  const { localCameraTrack } = useLocalCameraTrack(ROLE === "host");
   const remoteUsers = useRemoteUsers();
+
+  // Mute/unmute mic track via setEnabled (don't destroy/recreate)
+  useEffect(() => {
+    if (localMicrophoneTrack) {
+      const shouldBeEnabled = micOn && !micMutedByCallRef.current;
+      localMicrophoneTrack.setEnabled(shouldBeEnabled);
+    }
+  }, [micOn, localMicrophoneTrack]);
+
+  // Mute/unmute camera track via setEnabled
+  useEffect(() => {
+    if (localCameraTrack) {
+      localCameraTrack.setEnabled(cameraOn);
+    }
+  }, [cameraOn, localCameraTrack]);
 
   const shouldPublish =
     isConnected && ROLE === "host" && localCameraTrack && localMicrophoneTrack;

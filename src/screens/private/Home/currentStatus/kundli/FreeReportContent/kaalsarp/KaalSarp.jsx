@@ -82,7 +82,7 @@ const KaalSarp = (props) => {
           <div className="bg-slate-50 rounded-lg shadow-black/30 shadow-lg my-5 p-3">
             <h1 className="text-xl font-bold">Remedies</h1>
             {kaalsarp?.remedies?.map((item, i) => (
-              <div key={i} className="bg-yellow-200 my-2 p-2 rounded-lg ">
+              <div key={i} className="bg-[#f7f2e7] my-2 p-2 rounded-lg ">
                 <p>{item}</p>
               </div>
             ))}
@@ -92,7 +92,7 @@ const KaalSarp = (props) => {
           <div className="bg-slate-50 rounded-lg shadow-black/30 shadow-lg my-5 p-3">
             <h1 className="text-xl font-bold">Kaal Sarp Aspects</h1>
             {kaalsarp?.aspects?.map((item, i) => (
-              <div key={i} className="bg-yellow-200 my-2 p-2 rounded-lg ">
+              <div key={i} className="bg-[#f7f2e7] my-2 p-2 rounded-lg ">
                 <p>{item}</p>
               </div>
             ))}

@@ -444,8 +444,17 @@ export const CallProvider = ({ children }) => {
       });
     };
 
-    const handleCallCanceled = () => {
-      setIncomingCall(null);
+    const handleCallCanceled = (data) => {
+      // Only dismiss the incoming call popup if the canceled call
+      // matches the one currently being shown. Without this check,
+      // a waiting-list user canceling would hide the popup for the
+      // first caller's incoming call.
+      const canceledRoomId = data?.sessionData?.roomId || data?.roomId;
+      setIncomingCall((current) => {
+        if (!current) return null;
+        if (canceledRoomId && canceledRoomId !== current.roomId) return current;
+        return null;
+      });
     };
 
     const handleWaitingList = (data) => {

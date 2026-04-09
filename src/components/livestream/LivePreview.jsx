@@ -3,17 +3,29 @@ import { useNavigate } from "react-router-dom";
 import { Eye, X } from "lucide-react";
 import CountdownTimer from "./CountdownTimer";
 import { useLiveStream } from "../../context/LiveStreamContext";
+import { useCall } from "../../context/CallContext";
+import { useChat as useChatContext } from "../../context/chatContext";
 import { Toast } from "../../components";
 import "./styles/livePreview.scss";
 
 const LivePreview = () => {
   const navigate = useNavigate();
-  const { isLive } = useLiveStream();
+  const { isLive, endLiveSession } = useLiveStream();
+  const { activeCall } = useCall();
+  const { activeChat } = useChatContext();
   const videoRef = useRef(null);
   const streamRef = useRef(null);
 
   const [hasPermission, setHasPermission] = useState(null);
   const [showCountdown, setShowCountdown] = useState(false);
+
+  // If we're on the preview page, we're not actually live.
+  // Clear any stale sessionStorage flag from a previous session.
+  useEffect(() => {
+    if (isLive) {
+      endLiveSession();
+    }
+  }, []); // Run once on mount only
 
   const stopAllTracks = useCallback(() => {
     streamRef.current?.getTracks().forEach((t) => t.stop());
@@ -62,9 +74,15 @@ const LivePreview = () => {
     };
   }, [stopAllTracks, attachStream]);
 
+  const hasActiveSession = Boolean(activeCall || activeChat);
+
   const handleGoLive = () => {
     if (isLive) {
       Toast.warn("You already have an ongoing live session");
+      return;
+    }
+    if (hasActiveSession) {
+      Toast.warn("Please end your current consultation before going live");
       return;
     }
     setShowCountdown(true);
@@ -134,9 +152,9 @@ const LivePreview = () => {
         <button
           className="go-live-btn"
           onClick={handleGoLive}
-          disabled={hasPermission === false || showCountdown || isLive}
+          disabled={hasPermission === false || showCountdown || isLive || hasActiveSession}
         >
-          {isLive ? "Already Live" : "Go Live"}
+          {isLive ? "Already Live" : hasActiveSession ? "In Consultation" : "Go Live"}
         </button>
       </div>
 

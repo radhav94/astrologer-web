@@ -51,11 +51,14 @@
     left: 0;
     right: 0;
     height: 3px;
-    background: #ffcb03;
+    background: var(--main-primary-start);
     border-radius: 2px 2px 0 0;
   }
   
   .tabContent {
-    padding: 24px;
+    padding: 16px 0 0 0;
   }
+  // .tabContent {
+  //   padding: 16px;
+  // }
   

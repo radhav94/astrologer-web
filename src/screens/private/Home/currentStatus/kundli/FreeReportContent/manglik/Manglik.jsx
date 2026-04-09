@@ -82,7 +82,7 @@ const Manglik = (props) => {
           <div className="bg-slate-50 rounded-lg shadow-black/30 shadow-lg my-5 p-3">
             <h1 className="text-xl font-bold">Manglik Analysis factors</h1>
             {manglik?.factors?.map((item, i) => (
-              <div key={i} className="bg-yellow-200 my-2 p-2 rounded-lg ">
+              <div key={i} className="bg-[#f7f2e7] my-2 p-2 rounded-lg ">
                 <p>{item}</p>
               </div>
             ))}
@@ -92,7 +92,7 @@ const Manglik = (props) => {
           <div className="bg-slate-50 rounded-lg shadow-black/30 shadow-lg my-5 p-3">
             <h1 className="text-xl font-bold">Manglik Aspects</h1>
             {manglik?.aspects?.map((item, i) => (
-              <div key={i} className="bg-yellow-200 my-2 p-2 rounded-lg ">
+              <div key={i} className="bg-[#f7f2e7] my-2 p-2 rounded-lg ">
                 <p>{item}</p>
               </div>
             ))}

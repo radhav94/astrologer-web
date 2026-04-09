@@ -515,9 +515,9 @@
     transition: box-shadow 0.15s;
     width: 100%;
 
-    @media (min-width: 640px) {
-        border-radius: 20px;
-    }
+    // @media (min-width: 640px) {
+    //     border-radius: 20px;
+    // }
 
     &:hover {
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);

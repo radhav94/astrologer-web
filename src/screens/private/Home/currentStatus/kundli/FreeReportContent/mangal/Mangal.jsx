@@ -83,10 +83,10 @@ const Mangal = (props) => {
         {mangal?.factors && (
           <div className="bg-slate-50 rounded-lg shadow-lg my-5 p-3">
             <h1 className="text-xl font-bold">Mangal Analysis factors</h1>
-            <div className="bg-yellow-200 my-2 p-2 rounded-lg ">
+            <div className="bg-[#f7f2e7] my-2 p-2 rounded-lg ">
               <p>{mangal?.factors?.mars}</p>
             </div>
-            <div className="bg-yellow-200 my-2 p-2 rounded-lg ">
+            <div className="bg-[#f7f2e7] my-2 p-2 rounded-lg ">
               <p>{mangal?.factors?.moon}</p>
             </div>
           </div>
@@ -95,7 +95,7 @@ const Mangal = (props) => {
           <div className="bg-slate-50 rounded-lg shadow-black/30 shadow-lg my-5 p-3">
             <h1 className="text-xl font-bold">Cancellation / Exception</h1>
             {data?.cancellation?.cancellationReason?.map((item) => (
-              <div className="bg-yellow-300 my-2 p-2 rounded-lg ">
+              <div className="bg-[#f7f2e7] my-2 p-2 rounded-lg ">
                 <p>{item}</p>
               </div>
             ))}

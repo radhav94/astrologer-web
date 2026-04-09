@@ -248,6 +248,7 @@
     display: flex;
     gap: 1rem;
     align-items: flex-start;
+    position: relative;
 }
 
 .profileImageContainer {
@@ -328,6 +329,10 @@
     justify-content: center;
     flex-shrink: 0;
     transition: background-color 0.15s;
+    position: absolute;
+    right: 1rem;
+    top: 4px;
+    z-index: 99;
 
     @media (max-width: 640px) {
         width: 36px;
@@ -360,6 +365,10 @@
     margin-bottom: 0;
     text-align: left;
     text-transform: capitalize;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    width: calc(100% - 50px);
 }
 
 .dateTimeRow {

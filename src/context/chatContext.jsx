@@ -418,8 +418,17 @@ useEffect(() => {
 
   const handleChatCanceled = (data) => {
     console.log("🚫 Chat canceled", data);
-    setIncomingChat(null);
-    toast.warning(data?.message || "User has cancelled chat request!")
+    // Only dismiss the incoming chat popup if the canceled chat
+    // matches the one currently being shown. Without this check,
+    // a waiting-list user canceling would hide the popup for the
+    // first user's incoming chat request.
+    const canceledRoomId = data?.sessionData?.roomId || data?.roomId;
+    setIncomingChat((current) => {
+      if (!current) return null;
+      if (canceledRoomId && canceledRoomId !== current.roomId) return current;
+      toast.warning(data?.message || "User has cancelled chat request!");
+      return null;
+    });
   };
 
   const handleWaitingList = (data) => {

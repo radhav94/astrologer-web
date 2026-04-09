@@ -11,6 +11,7 @@ const CHAT_MESSAGES_SESSION_KEY = "shubhtalk_live_chat_messages";
 export const useLiveChat = (agoraChannel, isReconnect = false, tokenChatRoomId = null) => {
   const socketRef = useRef(null);
   const roomIdRef = useRef(null);
+  const hostEndedRef = useRef(false);
 
   const [messages, setMessages] = useState(() => {
     // On reconnect, restore cached messages so they show immediately
@@ -141,6 +142,7 @@ export const useLiveChat = (agoraChannel, isReconnect = false, tokenChatRoomId =
       // Track fallback attempts to avoid infinite loops
       let didFallbackCreate = false;
       let didFallbackJoin = false;
+      let hasCreatedRoom = false;
 
       const createRoom = () => {
         socket.emit("live:create_room", {
@@ -165,9 +167,9 @@ export const useLiveChat = (agoraChannel, isReconnect = false, tokenChatRoomId =
         didFallbackCreate = false;
         didFallbackJoin = false;
 
-        if (isReconnect) {
-          // On refresh the room likely still exists (backend grace period),
-          // so join it to get recent messages and participant count
+        if (isReconnect || hasCreatedRoom) {
+          // Room already exists (initial create succeeded, or restoring
+          // after page refresh) — just join to get messages & count
           joinRoom();
         } else {
           createRoom();
@@ -186,6 +188,7 @@ export const useLiveChat = (agoraChannel, isReconnect = false, tokenChatRoomId =
       // Always use the server-returned roomId — it may differ if the server
       // reused an existing room after a refresh/reconnect
       socket.on("live:room_created", (data) => {
+        hasCreatedRoom = true;
         if (data?.roomId) {
           roomIdRef.current = data.roomId;
           setRoomId(data.roomId);
@@ -203,6 +206,7 @@ export const useLiveChat = (agoraChannel, isReconnect = false, tokenChatRoomId =
       });
 
       socket.on("live:joined", (data) => {
+        hasCreatedRoom = true;
         setParticipantCount(data.participantCount || 0);
       });
 
@@ -379,8 +383,20 @@ export const useLiveChat = (agoraChannel, isReconnect = false, tokenChatRoomId =
         console.error("LiveChat → Error:", data.message);
       });
 
-      socket.on("live:room_ended", () => {
-        setIsConnected(false);
+      socket.on("live:room_ended", (data) => {
+        if (hostEndedRef.current) {
+          // Host explicitly ended — respect it
+          setIsConnected(false);
+          return;
+        }
+        // Room ended unexpectedly (HMR, backend timeout, etc.)
+        // Auto-recreate since astrologer is still on the live page
+        console.log("[LiveChat] Room ended unexpectedly — auto-recreating");
+        setTimeout(() => {
+          if (socketRef.current?.connected && roomIdRef.current) {
+            createRoom();
+          }
+        }, 1000);
       });
 
       socket.on("live:session_ended", () => {});
@@ -417,6 +433,7 @@ export const useLiveChat = (agoraChannel, isReconnect = false, tokenChatRoomId =
 
   const endRoom = useCallback(() => {
     if (!socketRef.current?.connected || !roomIdRef.current) return;
+    hostEndedRef.current = true;
     socketRef.current.emit("live:end_room", {
       roomId: roomIdRef.current,
       hostId: userId,

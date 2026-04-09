@@ -1,5 +1,5 @@
 // src/components/LiveStreaming/useLiveStreaming.js
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import {
   useJoin,
   usePublish,
@@ -8,8 +8,9 @@ import {
   useIsConnected,
   useRemoteUsers,
 } from "agora-rtc-react";
-import { getAgoraToken } from "../../services/appServices/getLiveStreamService";
+import { getAgoraToken, refreshAgoraToken } from "../../services/appServices/getLiveStreamService";
 import { useCall } from "../../context/CallContext";
+import { useLiveStream } from "../../context/LiveStreamContext";
 
 const APP_ID = import.meta.env.VITE_AGORA_APP_ID;
 const SESSION_KEY = "shubhtalk_live_session";
@@ -31,6 +32,36 @@ export const useLiveStreaming = (client, ROLE, previewSettings = {}) => {
   const [isMicMutedByCall, setIsMicMutedByCall] = useState(false);
 
   const { activeCall } = useCall();
+  const { endLiveSession } = useLiveStream();
+  const hasTriedRefreshRef = useRef(false);
+  const hasInitRef = useRef(false);
+
+  // Fetch a fresh Agora token (used on first load only)
+  const fetchFreshToken = useCallback(async () => {
+    try {
+      const res = await getAgoraToken();
+      const data = res.data?.data;
+      setToken(data?.token);
+      setChannelName(data?.channel);
+      setUid(data?.uid);
+      setChatRoomId(data?.chatRoomId || null);
+      setIsReconnect(false);
+
+      sessionStorage.setItem(
+        SESSION_KEY,
+        JSON.stringify({
+          token: data?.token,
+          channel: data?.channel,
+          uid: data?.uid,
+          chatRoomId: data?.chatRoomId || null,
+        })
+      );
+    } catch (err) {
+      console.error("Agora token fetch failed", err);
+      sessionStorage.removeItem(SESSION_KEY);
+      endLiveSession();
+    }
+  }, [endLiveSession]);
 
   useEffect(() => {
     if (client) {
@@ -42,6 +73,9 @@ export const useLiveStreaming = (client, ROLE, previewSettings = {}) => {
   const AGORA_ROLE = ROLE === "host" ? "publisher" : "subscriber";
 
   useEffect(() => {
+    if (hasInitRef.current) return;
+    hasInitRef.current = true;
+
     const fetchOrRestoreSession = async () => {
       // Check sessionStorage for an existing live session
       try {
@@ -63,32 +97,10 @@ export const useLiveStreaming = (client, ROLE, previewSettings = {}) => {
       }
 
       // No saved session — fetch a fresh token (new room)
-      try {
-        const res = await getAgoraToken();
-        console.log("🔹 Agora token response:", JSON.stringify(res.data?.data));
-        const data = res.data?.data;
-        setToken(data?.token);
-        setChannelName(data?.channel);
-        setUid(data?.uid);
-        setChatRoomId(data?.chatRoomId || null);
-        setIsReconnect(false);
-
-        // Persist to sessionStorage so refreshes reconnect
-        sessionStorage.setItem(
-          SESSION_KEY,
-          JSON.stringify({
-            token: data?.token,
-            channel: data?.channel,
-            uid: data?.uid,
-            chatRoomId: data?.chatRoomId || null,
-          })
-        );
-      } catch (err) {
-        console.error("Agora token fetch failed", err);
-      }
+      await fetchFreshToken();
     };
     fetchOrRestoreSession();
-  }, []);
+  }, [fetchFreshToken]);
 
   const canJoin = Boolean(token && channelName && calling);
 
@@ -102,6 +114,118 @@ export const useLiveStreaming = (client, ROLE, previewSettings = {}) => {
       },
       canJoin
     );
+
+  // Handle Agora join failures (e.g. expired token from a restored session).
+  // CONNECTING → DISCONNECTED means the join itself failed.
+  // Also handle token renewal before expiry to keep the stream alive.
+  useEffect(() => {
+    if (!client) return;
+
+    const handleStateChange = (curState, prevState) => {
+      if (prevState === "CONNECTING" && curState === "DISCONNECTED") {
+        console.warn("[useLiveStreaming] Agora join failed (CONNECTING → DISCONNECTED)");
+        if (!hasTriedRefreshRef.current) {
+          hasTriedRefreshRef.current = true;
+          // Try refreshing the token for the same channel first.
+          // Only fall back to a brand-new room if there's no channel to refresh.
+          const currentChannel = channelName;
+          const currentUid = uid;
+          if (currentChannel) {
+            console.log("[useLiveStreaming] Refreshing token for existing channel:", currentChannel);
+            refreshAgoraToken(currentChannel, currentUid)
+              .then((res) => {
+                const data = res.data?.data;
+                const newToken = data?.token;
+                if (newToken) {
+                  setToken(newToken);
+                  try {
+                    const saved = sessionStorage.getItem(SESSION_KEY);
+                    if (saved) {
+                      const session = JSON.parse(saved);
+                      session.token = newToken;
+                      sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+                    }
+                  } catch (_) {}
+                  console.log("[useLiveStreaming] ✅ Token refreshed — will retry join");
+                } else {
+                  console.error("[useLiveStreaming] No token in refresh response — creating new room");
+                  sessionStorage.removeItem(SESSION_KEY);
+                  fetchFreshToken();
+                }
+              })
+              .catch(() => {
+                console.error("[useLiveStreaming] Refresh failed — creating new room");
+                sessionStorage.removeItem(SESSION_KEY);
+                fetchFreshToken();
+              });
+          } else {
+            console.log("[useLiveStreaming] No existing channel — fetching fresh token");
+            sessionStorage.removeItem(SESSION_KEY);
+            fetchFreshToken();
+          }
+        } else {
+          console.error("[useLiveStreaming] Retry also failed — ending live session");
+          sessionStorage.removeItem(SESSION_KEY);
+          endLiveSession();
+        }
+      }
+
+      if (curState === "CONNECTED") {
+        hasTriedRefreshRef.current = false;
+      }
+    };
+
+    // Renew token for the SAME channel using the dedicated refresh endpoint.
+    const renewForChannel = async () => {
+      const currentChannel = channelName;
+      const currentUid = uid;
+      if (!currentChannel) return;
+
+      console.log("[useLiveStreaming] Renewing token for channel:", currentChannel);
+      try {
+        const res = await refreshAgoraToken(currentChannel, currentUid);
+        const data = res.data?.data;
+        const newToken = data?.token;
+        if (newToken) {
+          await client.renewToken(newToken);
+          setToken(newToken);
+          try {
+            const saved = sessionStorage.getItem(SESSION_KEY);
+            if (saved) {
+              const session = JSON.parse(saved);
+              session.token = newToken;
+              sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+            }
+          } catch (_) {}
+          console.log("[useLiveStreaming] ✅ Token renewed successfully");
+        }
+      } catch (err) {
+        console.error("[useLiveStreaming] Token renewal failed:", err);
+      }
+    };
+
+    // Fires ~30s before expiry — proactive renewal
+    const handleTokenWillExpire = () => {
+      console.warn("[useLiveStreaming] ⚠️ Token expiring soon");
+      renewForChannel();
+    };
+
+    // Fires after token has fully expired — same renewal flow.
+    // If this also fails, the stream stops silently (matches mobile behavior).
+    const handleTokenDidExpire = () => {
+      console.warn("[useLiveStreaming] 🔴 Token expired — attempting renewal");
+      renewForChannel();
+    };
+
+    client.on("connection-state-change", handleStateChange);
+    client.on("token-privilege-will-expire", handleTokenWillExpire);
+    client.on("token-privilege-did-expire", handleTokenDidExpire);
+    return () => {
+      client.off("connection-state-change", handleStateChange);
+      client.off("token-privilege-will-expire", handleTokenWillExpire);
+      client.off("token-privilege-did-expire", handleTokenDidExpire);
+    };
+  }, [client, channelName, fetchFreshToken, endLiveSession]);
   const { localMicrophoneTrack } = useLocalMicrophoneTrack(
     micOn && ROLE === "host"
   );

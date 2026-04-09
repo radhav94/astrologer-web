@@ -922,7 +922,8 @@ const VideoCalling = ({ callData }) => {
     chatRoomId: activeCall.chatRoomId,
     kundliId: activeCall.kundliId,
     isUserSide: activeCall.isUserSide,
-  }), [activeCall.userId, activeCall.astrologerId, activeCall.chatRoomId, activeCall.kundliId, activeCall.isUserSide]);
+    callerName: activeCall.callerName,
+  }), [activeCall.userId, activeCall.astrologerId, activeCall.chatRoomId, activeCall.kundliId, activeCall.isUserSide, activeCall.callerName]);
   return (
     <>
       {/* RECONNECTING OVERLAY */}

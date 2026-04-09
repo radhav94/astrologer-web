@@ -21,7 +21,7 @@ const VideoCallChat = ({
   const messagesRef = useRef(null);
   const [iframeSrc, setIframeSrc] = useState(null);
 
-  const { astrologerId, userId, isUserSide, kundliId, chatRoomId } = videoCallData;
+  const { astrologerId, userId, isUserSide, kundliId, chatRoomId, callerName } = videoCallData;
 
   // Early return if required data is missing
   if (!videoCallData || !userId || !astrologerId || !chatRoomId) {
@@ -224,7 +224,7 @@ const VideoCallChat = ({
                 if (msg.kundliId) setIframeSrc(`${window.location.origin}/kundli/${msg.kundliId}`);
               }}
             >
-              <GrReactjs/> View Kundli
+              <GrReactjs/> {callerName ? `${callerName}'s Kundli` : "View Kundli"}
             </span>
           </div>
         );

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { io } from "socket.io-client";
 import { getUserFromStorage } from "../../utils/authStorage";
 import { getLiveUsers } from "../../services/appServices/getLiveStreamService";
+import toast from "../../components/toast";
 
 const SOCKET_URL = import.meta.env.VITE_APP_API_BASE_URL;
 
@@ -349,6 +350,12 @@ export const useLiveChat = (agoraChannel, isReconnect = false, tokenChatRoomId =
       socket.on("live:error", (data) => {
         const msg = data.message?.toLowerCase() || "";
         const code = data.code || "";
+
+        // Content moderation — show toast with the reason
+        if (code === "CONTENT_BLOCKED") {
+          toast.error(data.message || "Message contains inappropriate content");
+          return;
+        }
 
         // "Room already exists" → create_room failed because room survived
         // the refresh. Fall back to join_room to rejoin and get recent messages.

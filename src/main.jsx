@@ -18,6 +18,7 @@ createRoot(document.getElementById("root")).render(
           <Toaster
             position="top-right"
             reverseOrder={false}
+            containerStyle={{ zIndex: 99999 }}
             toastOptions={{
               style: {
                 fontFamily: "Poppins",

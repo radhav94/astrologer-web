@@ -1,5 +1,6 @@
 import ConsultationHistory from "../../screens/private/consultationHistory/ConsultationHistory";
 import Dashboard from "../../screens/private/dashboard/Dashboard";
+import Followers from "../../screens/private/followers/Followers";
 import Profile from "../../screens/private/Profile/Profile";
 import RecentActivity from "../../screens/private/recentActivity/RecentActivity";
 import Login from "../../screens/public/Login/Login";
@@ -45,6 +46,10 @@ export const PATH = {
     DASHBOARD: {
       path: "/dashboard",
       element: Dashboard,
+    },
+    FOLLOWERS: {
+      path: "/followers",
+      element: Followers,
     },
     CONSULTATION_HISTORY: {
       path: "/consultation-history",

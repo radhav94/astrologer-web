@@ -42,6 +42,21 @@ export const PATH = {
       element: Login,
     },
   },
+  // Routes accessible without login
+  openRoutes: {
+    FAQS: {
+      path: "/FAQs",
+      element: FAQs,
+    },
+    GUIDELINES: {
+      path: "/guidelines",
+      element: Guidelines,
+    },
+    TERMS_CONDITIONS: {
+      path: "/guidelines/terms-conditions",
+      element: TermsConditions,
+    },
+  },
   privateRoutes: {
     DASHBOARD: {
       path: "/dashboard",
@@ -84,10 +99,6 @@ export const PATH = {
       path: "/customer-support",
       element: CustomerSupport,
     },
-    FAQS: {
-      path: "/FAQs",
-      element: FAQs,
-    },
     RECENT_TICKETS: {
       path: "/recent-tickets",
       element: RecentTickets,
@@ -95,14 +106,6 @@ export const PATH = {
     TICKET_DETAIL: {
       path: "/ticket/:ticketId",
       element: TicketDetail,
-    },
-    GUIDELINES: {
-      path: "/guidelines",
-      element: Guidelines,
-    },
-    TERMS_CONDITIONS: {
-      path: "/guidelines/terms-conditions",
-      element: TermsConditions,
     },
     SCHEDULE_AVAILABILITY: {
       path: "/schedule-availablity",

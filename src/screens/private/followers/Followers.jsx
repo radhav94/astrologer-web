@@ -73,25 +73,40 @@ const Followers = () => {
       {/* Sort Bar */}
       <div className="flex items-center justify-between px-5 py-3 border-b border-gray-50 relative">
         <p className="text-sm text-gray-600">
-          Sort by <span className="font-bold text-gray-900 capitalize">{sortBy}</span>
+          Sort by <span className="font-bold text-gray-900">{sortBy === "recent" ? "Newest first" : sortBy === "oldest" ? "Oldest first" : "Default"}</span>
         </p>
         <button onClick={() => setShowSortMenu(!showSortMenu)} className="text-[#F75801]">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M6 12h12M9 18h6"/></svg>
         </button>
-        {showSortMenu && (
-          <div className="absolute right-4 top-12 bg-white rounded-xl shadow-lg border border-gray-100 z-10 overflow-hidden">
-            {["default", "name", "recent", "oldest"].map((opt) => (
+      </div>
+
+      {/* Sort Bottom Sheet */}
+      {showSortMenu && (
+        <div className="fixed inset-0 z-[9999] flex items-end justify-center bg-black/30" onClick={() => setShowSortMenu(false)}>
+          <div className="bg-white rounded-t-2xl w-full max-w-lg pb-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-center pt-3 pb-2">
+              <div className="w-10 h-1 bg-gray-300 rounded-full" />
+            </div>
+            <h3 className="text-center font-bold text-gray-900 text-base pb-3 border-b border-gray-100">Sort By</h3>
+            {[
+              { key: "default", label: "Default" },
+              { key: "recent", label: "Newest first" },
+              { key: "oldest", label: "Oldest first" },
+            ].map((opt) => (
               <button
-                key={opt}
-                onClick={() => { setSortBy(opt); setShowSortMenu(false); }}
-                className={`block w-full text-left px-5 py-3 text-sm hover:bg-gray-50 capitalize ${sortBy === opt ? "text-[#F75801] font-semibold" : "text-gray-700"}`}
+                key={opt.key}
+                onClick={() => { setSortBy(opt.key); setShowSortMenu(false); }}
+                className="flex items-center justify-between w-full px-6 py-4 text-sm text-gray-800 hover:bg-gray-50"
               >
-                {opt}
+                {opt.label}
+                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${sortBy === opt.key ? "border-[#F75801]" : "border-gray-300"}`}>
+                  {sortBy === opt.key && <div className="w-2.5 h-2.5 rounded-full bg-[#F75801]" />}
+                </div>
               </button>
             ))}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Followers List */}
       <div className="flex-1 overflow-y-auto">

@@ -40,6 +40,12 @@ function App() {
       })),
     },
 
+    /* ================= OPEN ROUTES (no auth required) ================= */
+    ...Object.values(PATH.openRoutes).map((route) => ({
+      path: route.path,
+      element: <route.element />,
+    })),
+
     /* ================= OTP + ONBOARDING ROUTES ================= */
     {
       element: <OtpRoute />,

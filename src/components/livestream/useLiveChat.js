@@ -31,11 +31,14 @@ export const useLiveChat = (agoraChannel, isReconnect = false, tokenChatRoomId =
   const [roomId, setRoomId] = useState(null);
   const [giftNotification, setGiftNotification] = useState(null);
   const giftTimerRef = useRef(null);
+  const [followNotification, setFollowNotification] = useState(null);
+  const followTimerRef = useRef(null);
 
-  // Cleanup gift timer on unmount to prevent memory leaks
+  // Cleanup timers on unmount to prevent memory leaks
   useEffect(() => {
     return () => {
       if (giftTimerRef.current) clearTimeout(giftTimerRef.current);
+      if (followTimerRef.current) clearTimeout(followTimerRef.current);
     };
   }, []);
 
@@ -216,7 +219,7 @@ export const useLiveChat = (agoraChannel, isReconnect = false, tokenChatRoomId =
         if (msgList?.length) {
           // Only include regular messages and gifts
           const mapped = msgList
-            .filter((msg) => !msg.type || msg.type === "message" || msg.type === "gift")
+            .filter((msg) => !msg.type || msg.type === "message" || msg.type === "gift" || msg.type === "follow")
             .map((msg) => {
               if (msg.type === "gift") {
                 let giftData = null;
@@ -240,6 +243,18 @@ export const useLiveChat = (agoraChannel, isReconnect = false, tokenChatRoomId =
                   timestamp: msg.timestamp,
                   type: "gift",
                   giftData,
+                };
+              }
+              if (msg.type === "follow") {
+                return {
+                  id: msg.id,
+                  sender: msg.userId,
+                  senderName: msg.userName,
+                  text: `started following you`,
+                  role: msg.userType === "host" ? "host" : "audience",
+                  isSelf: msg.userId === userId,
+                  timestamp: msg.timestamp,
+                  type: "follow",
                 };
               }
               return {
@@ -299,6 +314,47 @@ export const useLiveChat = (agoraChannel, isReconnect = false, tokenChatRoomId =
               timestamp: msg.timestamp,
               type: "gift",
               giftData,
+            },
+          ]);
+          return;
+        }
+
+        // Follow messages → show notification popup AND add to chat
+        if (msgType === "follow") {
+          let followData = null;
+          try {
+            if (typeof msg.message === "string") {
+              const parsed = JSON.parse(msg.message);
+              followData = parsed.followData || parsed;
+            } else if (typeof msg.message === "object") {
+              followData = msg.message?.followData || msg.message;
+            }
+          } catch {
+            followData = {};
+          }
+
+          // Show floating notification
+          if (followTimerRef.current) clearTimeout(followTimerRef.current);
+          setFollowNotification({
+            senderName: msg.userName || followData?.userName || "Someone",
+            timestamp: Date.now(),
+          });
+          followTimerRef.current = setTimeout(() => {
+            setFollowNotification(null);
+          }, 4000);
+
+          // Add to chat messages inline
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: msg.id || `follow_${Date.now()}`,
+              sender: msg.userId,
+              senderName: msg.userName || followData?.userName || "Someone",
+              text: `started following you`,
+              role: msg.userType === "host" ? "host" : "audience",
+              isSelf: msg.userId === userId,
+              timestamp: msg.timestamp,
+              type: "follow",
             },
           ]);
           return;
@@ -457,6 +513,14 @@ export const useLiveChat = (agoraChannel, isReconnect = false, tokenChatRoomId =
     }
   }, []);
 
+  const dismissFollowNotification = useCallback(() => {
+    setFollowNotification(null);
+    if (followTimerRef.current) {
+      clearTimeout(followTimerRef.current);
+      followTimerRef.current = null;
+    }
+  }, []);
+
   return {
     messages,
     chatInput,
@@ -468,5 +532,7 @@ export const useLiveChat = (agoraChannel, isReconnect = false, tokenChatRoomId =
     roomId,
     giftNotification,
     dismissGiftNotification,
+    followNotification,
+    dismissFollowNotification,
   };
 };

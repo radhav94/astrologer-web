@@ -600,12 +600,29 @@ const AgoraVoiceCalling = ({ callData }) => {
     await cleanup();
   };
 
-  /* ================= MINI CALL END (from MiniCallOverlay in LiveView) ================= */
+  /* ================= MINI CALL CONTROLS (from MiniCallOverlay in LiveView) ================= */
   useEffect(() => {
     const onMiniEnd = () => endCall();
+    const onMiniToggleMic = () => setMicOn((m) => !m);
+    const onMiniToggleSpeaker = () => setSpeakerOn((s) => !s);
     window.addEventListener("mini-call-end", onMiniEnd);
-    return () => window.removeEventListener("mini-call-end", onMiniEnd);
+    window.addEventListener("mini-call-toggle-mic", onMiniToggleMic);
+    window.addEventListener("mini-call-toggle-speaker", onMiniToggleSpeaker);
+    return () => {
+      window.removeEventListener("mini-call-end", onMiniEnd);
+      window.removeEventListener("mini-call-toggle-mic", onMiniToggleMic);
+      window.removeEventListener("mini-call-toggle-speaker", onMiniToggleSpeaker);
+    };
   });
+
+  // Sync mic/speaker state to MiniCallOverlay
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("mini-call-mic-sync", { detail: micOn }));
+  }, [micOn]);
+
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("mini-call-speaker-sync", { detail: speakerOn }));
+  }, [speakerOn]);
 
   /* ================= HANDLE REMOTE USER LEFT (Remote initiated) ================= */
   const handleRemoteUserLeft = async () => {

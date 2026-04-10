@@ -106,6 +106,8 @@ const LiveView = (props) => {
     isMicMutedByCall,
     giftNotification,
     dismissGiftNotification,
+    followNotification,
+    dismissFollowNotification,
   } = props;
 
   // Auto-scroll messages to bottom
@@ -377,6 +379,25 @@ const LiveView = (props) => {
             );
           }
 
+          // Follow messages
+          if (m.type === "follow") {
+            return (
+              <div key={m.id || index} className="inline-message inline-gift-message">
+                <span className="inline-initial" style={{ background: "linear-gradient(135deg, #f75801, #d43400)" }}>
+                  👤
+                </span>
+                <div className="inline-message-body">
+                  {m.senderName && (
+                    <span className="inline-sender" style={{ color: "#f75801" }}>
+                      {m.senderName}
+                    </span>
+                  )}
+                  <span className="inline-text">{m.text}</span>
+                </div>
+              </div>
+            );
+          }
+
           // Regular messages
           return (
             <div
@@ -451,6 +472,9 @@ const LiveView = (props) => {
 
       {/* Gift Received Notification */}
       <LiveGiftNotification gift={giftNotification} onDismiss={dismissGiftNotification} />
+
+      {/* Follow Notification */}
+      <LiveFollowNotification follow={followNotification} onDismiss={dismissFollowNotification} />
 
       {/* POPUPS */}
       <GiftPopup
@@ -542,6 +566,43 @@ const LiveGiftNotification = memo(({ gift, onDismiss }) => {
           onClick={onDismiss}
           className="ml-1 text-white/70 hover:text-white flex-shrink-0"
           aria-label="Dismiss gift notification"
+        >
+          ✕
+        </button>
+      </div>
+    </div>
+  );
+});
+
+const LiveFollowNotification = memo(({ follow, onDismiss }) => {
+  if (!follow) return null;
+  return (
+    <div
+      style={{
+        position: "fixed",
+        top: 72,
+        left: "50%",
+        transform: "translateX(-50%)",
+        zIndex: 10000,
+        width: "90%",
+        maxWidth: 380,
+        pointerEvents: "auto",
+      }}
+    >
+      <div
+        className="flex items-center gap-3 px-4 py-3 rounded-2xl shadow-2xl backdrop-blur-md border border-white/20"
+        style={{ background: "linear-gradient(135deg, rgba(247,88,1,0.95), rgba(212,52,0,0.95))" }}
+      >
+        <span className="text-2xl flex-shrink-0">👤</span>
+        <div className="flex flex-col flex-1 min-w-0">
+          <span className="text-white text-sm font-bold">
+             {follow.senderName} started following you!
+          </span>
+        </div>
+        <button
+          onClick={onDismiss}
+          className="ml-1 text-white/70 hover:text-white flex-shrink-0"
+          aria-label="Dismiss follow notification"
         >
           ✕
         </button>

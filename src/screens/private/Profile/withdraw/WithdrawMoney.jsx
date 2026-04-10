@@ -65,9 +65,9 @@ const WithdrawMoney = () => {
   const { data, isLoading } = useGetBankAccountsQuery();
   const accounts = [...(data?.data || [])].sort((a, b) => (b.isPrimary ? 1 : 0) - (a.isPrimary ? 1 : 0));
 
-  // Auto-select primary account
+  // Auto-select primary account (only if approved)
   useState(() => {
-    const primary = accounts.find((a) => a.isPrimary);
+    const primary = accounts.find((a) => a.isPrimary && a.verificationStatus !== "pending");
     if (primary) setSelectedAccount(primary._id);
   }, [accounts]);
 
@@ -187,18 +187,22 @@ const WithdrawMoney = () => {
                 return (
                   <div
                     key={acc._id}
-                    onClick={() => setSelectedAccount(acc._id)}
-                    className={`${styles.accountCard} ${isSelected ? styles.accountCardSelected : ""}`}
+                    onClick={() => {
+                      if (acc.verificationStatus !== "pending") setSelectedAccount(acc._id);
+                    }}
+                    className={`${styles.accountCard} ${isSelected ? styles.accountCardSelected : ""} ${acc.verificationStatus === "pending" ? styles.accountCardPending : ""}`}
                   >
                     {/* Pending badge */}
                     {acc.verificationStatus === "pending" && (
                       <span className={styles.pendingBadge}>Waiting for approval</span>
                     )}
 
-                    {/* Radio */}
-                    <div className={`${styles.accountRadio} ${isSelected ? styles.accountRadioActive : ""}`}>
-                      {isSelected && <div className={styles.accountRadioInner} />}
-                    </div>
+                    {/* Radio - hidden for pending accounts */}
+                    {acc.verificationStatus !== "pending" && (
+                      <div className={`${styles.accountRadio} ${isSelected ? styles.accountRadioActive : ""}`}>
+                        {isSelected && <div className={styles.accountRadioInner} />}
+                      </div>
+                    )}
 
                     {/* Bank Logo */}
                     <div className={styles.bankLogo}>

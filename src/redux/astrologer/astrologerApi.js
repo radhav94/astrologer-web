@@ -84,6 +84,13 @@ export const astrologerApi = epicApi.injectEndpoints({
       }),
       providesTags: ["Wallets"],
     }),
+
+    getFollowers: builder.query({
+      query: ({ astrologerId, page = 1, limit = 20 } = {}) => ({
+        url: `follows/followers?astrologerId=${astrologerId}&page=${page}&limit=${limit}`,
+        method: "GET",
+      }),
+    }),
   }),
 });
 
@@ -93,4 +100,5 @@ export const {
   useGetAstrologerByIdQuery,
   useGetMonthlyOverviewQuery,
   useGetAllWalletsQuery,
+  useLazyGetFollowersQuery,
 } = astrologerApi;

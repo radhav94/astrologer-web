@@ -381,7 +381,7 @@ const HomeLayout = () => {
 
             {/* RIGHT: Followers */}
             {isManualVerification && (
-              <div className={styles.rightSection}>
+              <div className={styles.rightSection} onClick={() => navigate("/followers")} style={{ cursor: "pointer" }}>
                 <p className={styles.followersCount}>{followers}</p>
                 <p className={styles.followersLabel}>Followers</p>
               </div>

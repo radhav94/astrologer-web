@@ -1126,14 +1126,14 @@ const VideoCalling = ({ callData }) => {
         >
           <button
             onClick={openChatWithMinimize}
-            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-full border-2 hover:opacity-90 transition-all duration-300"
+            className="flex-1 flex h-10 items-center justify-center gap-1 py-1 rounded-full border-2 hover:opacity-90 transition-all duration-300"
             style={{
               borderColor: '#f75801',
               backgroundColor: hasRemoteVideo ? 'rgba(255, 255, 255, 0.1)' : 'white',
               backdropFilter: hasRemoteVideo ? 'blur(10px)' : 'none'
             }}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 17 17" fill="none">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 17 17" fill="none">
               <path d="M15 0H1.66667C0.75 0 0.00833333 0.75 0.00833333 1.66667L0 16.6667L3.33333 13.3333H15C15.9167 13.3333 16.6667 12.5833 16.6667 11.6667V1.66667C16.6667 0.75 15.9167 0 15 0ZM4.16667 5.83333H12.5C12.9583 5.83333 13.3333 6.20833 13.3333 6.66667C13.3333 7.125 12.9583 7.5 12.5 7.5H4.16667C3.70833 7.5 3.33333 7.125 3.33333 6.66667C3.33333 6.20833 3.70833 5.83333 4.16667 5.83333ZM9.16667 10H4.16667C3.70833 10 3.33333 9.625 3.33333 9.16667C3.33333 8.70833 3.70833 8.33333 4.16667 8.33333H9.16667C9.625 8.33333 10 8.70833 10 9.16667C10 9.625 9.625 10 9.16667 10ZM12.5 5H4.16667C3.70833 5 3.33333 4.625 3.33333 4.16667C3.33333 3.70833 3.70833 3.33333 4.16667 3.33333H12.5C12.9583 3.33333 13.3333 3.70833 13.3333 4.16667C13.3333 4.625 12.9583 5 12.5 5Z" fill="url(#paint0_linear_mobile_chat_video)" />
               <defs>
                 <linearGradient id="paint0_linear_mobile_chat_video" x1="0" y1="8.33333" x2="16.6667" y2="8.33333" gradientUnits="userSpaceOnUse">
@@ -1142,12 +1142,12 @@ const VideoCalling = ({ callData }) => {
                 </linearGradient>
               </defs>
             </svg>
-            <span className="text-base font-medium" style={{ color: '#f75801' }}>Chat</span>
+            <span className="text-sm font-medium" style={{ color: '#f75801' }}>Chat</span>
           </button>
 
           <button
             onClick={() => setCameraOn((p) => !p)}
-            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-full border-2 hover:opacity-90 transition-all duration-300"
+            className="flex-1 flex h-10 items-center justify-center gap-2 py-3 rounded-full border-2 hover:opacity-90 transition-all duration-300"
             style={{
               borderColor: '#f75801',
               backgroundColor: hasRemoteVideo ? 'rgba(255, 255, 255, 0.1)' : 'white',
@@ -1157,7 +1157,7 @@ const VideoCalling = ({ callData }) => {
             {cameraOn ? (
               <img src={CallIcon} alt="Audio" width="22" height="22" style={{ filter: 'invert(45%) sepia(94%) saturate(2477%) hue-rotate(356deg) brightness(101%) contrast(98%)' }} />
             ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="15" viewBox="0 0 17 11" fill="none">
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 17 11" fill="none">
                 <path d="M12.8333 4.125V0.916667C12.8333 0.4125 12.4208 0 11.9167 0H0.916667C0.4125 0 0 0.4125 0 0.916667V10.0833C0 10.5875 0.4125 11 0.916667 11H11.9167C12.4208 11 12.8333 10.5875 12.8333 10.0833V6.875L14.9325 8.97417C15.51 9.55167 16.5 9.13917 16.5 8.32333V2.6675C16.5 1.85167 15.51 1.43917 14.9325 2.01667L12.8333 4.125Z" fill="url(#paint0_linear_mobile)" />
                 <defs>
                   <linearGradient id="paint0_linear_mobile" x1="0" y1="5.5" x2="16.5" y2="5.5" gradientUnits="userSpaceOnUse">
@@ -1167,7 +1167,7 @@ const VideoCalling = ({ callData }) => {
                 </defs>
               </svg>
             )}
-            <span className="text-base font-medium" style={{ color: '#f75801' }}>{cameraOn ? "Audio" : "Video"}</span>
+            <span className="text-sm font-medium" style={{ color: '#f75801' }}>{cameraOn ? "Audio" : "Video"}</span>
           </button>
         </div>
 
@@ -1252,9 +1252,7 @@ const VideoCalling = ({ callData }) => {
               {/* SUGGEST REMEDY BUTTON - Blurred Background */}
               <div
                 style={{
-                  backdropFilter: hasRemoteVideo ? 'blur(20px)' : 'none',
-                  background: hasRemoteVideo ? 'rgba(100, 100, 100, 0.4)' : 'transparent',
-                  padding: '20px 0',
+                  padding: '16px 0',
                   display: 'flex',
                   justifyContent: 'center',
                   transition: 'all 0.3s'
@@ -1277,18 +1275,18 @@ const VideoCalling = ({ callData }) => {
               {/* CONTROL BUTTONS - Solid Black Background */}
               <div
                 style={{
-                  background: hasRemoteVideo ? 'rgba(0, 0, 0, 0.6)' : 'transparent',
-                  padding: '24px 20px 32px 20px',
+                  background: hasRemoteVideo ? 'linear-gradient(0deg, #000000b3, #00000000)' : 'transparent',
+                  padding: '16px 0px',
                   transition: 'all 0.3s'
                 }}
               >
-                <div className="flex items-center justify-center gap-8 md:gap-6">
+                <div className={styles.bottomBtnMedia}>
 
                   {/* MUTE BUTTON */}
-                  <div className="flex flex-col items-center gap-2">
+                  <div className={styles.buttonWrap}>
                     <button
                       onClick={() => setMicOn((p) => !p)}
-                      className="w-16 h-16 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center shadow-lg hover:bg-gray-50 transition-colors"
+                      className="rounded-full bg-white border-2 border-gray-200 flex items-center justify-center shadow-lg hover:bg-gray-50 transition-colors"
                     >
                       {micOn ? (
                         <IoMic size={28} style={{ color: '#f75801' }} />
@@ -1296,27 +1294,27 @@ const VideoCalling = ({ callData }) => {
                         <IoMicOff size={28} style={{ color: '#f75801' }} />
                       )}
                     </button>
-                    <span className="text-sm font-medium text-white">
+                    <span className="font-medium text-white" style={{fontSize:"12px"}}>
                       {micOn ? "Mute" : "Unmute"}
                     </span>
                   </div>
 
                   {/* REPORT CALLER BUTTON */}
-                  <div className="flex flex-col items-center gap-2">
+                  <div className={styles.buttonWrap}>
                     <button
                       onClick={safeEndCall}
-                      className="w-16 h-16 rounded-full bg-red-500 flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors"
+                      className="rounded-full bg-red-500 flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors"
                     >
                       <IoCallSharp color="white" size={24} />
                     </button>
-                    <span className="text-sm font-medium text-white">End Call</span>
+                    <span className="font-medium text-white" style={{fontSize:"12px"}}>End Call</span>
                   </div>
 
                   {/* SPEAKER BUTTON */}
-                  <div className="flex flex-col items-center gap-2">
+                  <div className={styles.buttonWrap}>
                     <button
                       onClick={() => setSpeakerOn((p) => !p)}
-                      className="w-16 h-16 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center shadow-lg hover:bg-gray-50 transition-colors"
+                      className="rounded-full bg-white border-2 border-gray-200 flex items-center justify-center shadow-lg hover:bg-gray-50 transition-colors"
                     >
                       {speakerOn ? (
                         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#f75801" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1331,15 +1329,15 @@ const VideoCalling = ({ callData }) => {
                         </svg>
                       )}
                     </button>
-                    <span className="text-sm font-medium text-white">
+                    <span className="font-medium text-white" style={{fontSize:"12px"}}>
                       Speaker {speakerOn ? "On" : "Off"}
                     </span>
                   </div>
 
-                  <div className="flex flex-col items-center gap-2">
+                  <div className={styles.buttonWrap}>
                     <button
                       onClick={() => setShowReportModal(true)}
-                      className="w-16 h-16 rounded-full bg-red-500 flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors"
+                      className="rounded-full bg-red-500 flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors"
                     >
                       <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
                         <path d="M12 2L2 20h20L12 2z" fill="white" />
@@ -1347,7 +1345,7 @@ const VideoCalling = ({ callData }) => {
                         <circle cx="12" cy="17" r="1" fill="#ef4444" />
                       </svg>
                     </button>
-                    <span className="text-sm font-medium text-white">Report Caller</span>
+                    <span className="font-medium text-white" style={{fontSize:"12px"}}>Report Caller</span>
                   </div>
 
                 </div>

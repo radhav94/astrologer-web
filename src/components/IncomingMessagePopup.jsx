@@ -10,7 +10,7 @@ import { detectURL, isImageURL, extractDomain } from "../utils/helper/linkPrevie
 const GRACE_PERIOD_MS = 5000; // Skip messages in first 5s after call connects
 
 const IncomingMessagePopup = () => {
-  const { activeCall, setIsCallMinimized } = useCall();
+  const { activeCall, setIsCallMinimized, onMessagePopupClickRef } = useCall();
   const { setActiveChat } = useChatContext();
   const navigate = useNavigate();
   const [popup, setPopup] = useState(null);
@@ -33,6 +33,13 @@ const IncomingMessagePopup = () => {
 
   const handlePopupClick = useCallback(() => {
     if (!activeCall) return;
+
+    // If LiveView registered a callback (live + call), use it instead of navigating
+    if (onMessagePopupClickRef?.current) {
+      onMessagePopupClickRef.current();
+      dismiss();
+      return;
+    }
 
     setActiveChat({
       roomId: activeCall.chatRoomId,
@@ -57,7 +64,7 @@ const IncomingMessagePopup = () => {
     );
 
     dismiss();
-  }, [activeCall, navigate, setActiveChat, setIsCallMinimized, dismiss]);
+  }, [activeCall, navigate, setActiveChat, setIsCallMinimized, dismiss, onMessagePopupClickRef]);
 
   useEffect(() => {
     if (!activeCall) return;

@@ -38,6 +38,7 @@ export const CallProvider = ({ children }) => {
   const activeCallRef = useRef(null); // Synchronous ref for reading activeCall in socket handlers
   const upgradeRejectionRef = useRef(false); // Immediate protection using ref
   const isUpgradingRef = useRef(false); // 🔑 Synchronous ref for upgrade-in-progress (readable in cleanup closures)
+  const onMessagePopupClickRef = useRef(null); // Callback for live view to intercept message popup clicks
 
   // Persist minimized state to sessionStorage
   const setIsCallMinimized = useCallback((value) => {
@@ -589,7 +590,8 @@ export const CallProvider = ({ children }) => {
         upgradeRejectionRef,
         isUpgradingRef,
         isCallMinimized,
-        setIsCallMinimized
+        setIsCallMinimized,
+        onMessagePopupClickRef,
       }}
     >
       {children}

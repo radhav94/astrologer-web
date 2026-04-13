@@ -15,7 +15,8 @@ const formatDate = (date) => dayjs(date).format("DD MMMM YYYY");
 const VideoCallChat = ({
   isOpen,
   onClose,
-  videoCallData = {}
+  videoCallData = {},
+  hideAttachment = false,
 }) => {
   // const [message, setMessage] = useState("");
   const messagesRef = useRef(null);
@@ -304,15 +305,16 @@ const VideoCallChat = ({
         )} */}
       </div>
 
-      <div className={styles.inputContainer}>
-        <button
-          type="button"
-          className={styles.attachButton}
-          onClick={handleAttachClick}
-          title="Attach file"
-        >
-          <IoAttach size={18} />
-        </button>
+      {!hideAttachment && (
+        <div className={styles.inputContainer}>
+          <button
+            type="button"
+            className={styles.attachButton}
+            onClick={handleAttachClick}
+            title="Attach file"
+          >
+            <IoAttach size={18} />
+          </button>
 
         {/* <input
           className={styles.messageInput}
@@ -330,6 +332,7 @@ const VideoCallChat = ({
           <IoSend size={18} />
         </button> */}
       </div>
+      )}
       {/* 👇 Modal */}
       <IframeModal
         open={!!iframeSrc}

@@ -1,6 +1,7 @@
 import { useEffect, useCallback, useState, useRef, memo } from "react";
 import { LocalUser, RemoteUser } from "agora-rtc-react";
 import { MicOff, Mic, VideoOff, Video, Send, ChevronLeft } from "lucide-react";
+import { GrReactjs } from "react-icons/gr";
 import "./styles/videoBox.scss";
 import { useLiveViewLogic } from "./useLiveViewLogic";
 import GiftPopup from "./GiftPopup";
@@ -19,6 +20,8 @@ import { useSelector } from "react-redux";
 import { getDefaultImgBasedOnGender } from "../../utils/utils";
 import { useLiveStream } from "../../context/LiveStreamContext";
 import { useCall } from "../../context/CallContext";
+import SuggestRemedyPanel from "../../screens/private/call/SuggestRemedyPanel";
+import VideoCallChat from "../../screens/private/call/VideoCallChat";
 import eyeIcon from "../../assets/images/eye.png";
 
 
@@ -29,11 +32,33 @@ const LiveView = (props) => {
   const [showCallPopup, setShowCallPopup] = useState(false);
   const [showWaitingList, setShowWaitingList] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [isRemedyOpen, setIsRemedyOpen] = useState(false);
+  const [isKundliChatOpen, setIsKundliChatOpen] = useState(false);
   const pendingExitActionRef = useRef(null);
 
   const navigate = useNavigate();
   const { minimizeLive, maximizeLive, isLiveMinimized, endLiveSession, liveStartTime } = useLiveStream();
-  const { waitingList, activeCall, isCallMinimized, callTimer, setActiveCall, setWaitingList } = useCall();
+  const { waitingList, activeCall, isCallMinimized, callTimer, setActiveCall, setWaitingList, onMessagePopupClickRef } = useCall();
+
+  // Close call-specific panels when call ends
+  useEffect(() => {
+    if (!activeCall) {
+      setIsRemedyOpen(false);
+      setIsKundliChatOpen(false);
+    }
+  }, [activeCall]);
+
+  // Register callback so IncomingMessagePopup opens kundli panel here instead of navigating away
+  useEffect(() => {
+    if (!onMessagePopupClickRef) return;
+    onMessagePopupClickRef.current = () => {
+      setIsRemedyOpen(false);
+      setIsKundliChatOpen(true);
+    };
+    return () => {
+      onMessagePopupClickRef.current = null;
+    };
+  }, [onMessagePopupClickRef]);
 
   const user = getUserFromStorage();
   const astrologerDetails = useSelector((state) => state.register.astrologerDetails);
@@ -371,13 +396,32 @@ const LiveView = (props) => {
           <span className="action-label">Calls</span>
         </div>
 
-        {/* <div className="action-item">
-          <div className="action-btn action-btn-static" aria-label="Live duration">
-            <Timer size={24} strokeWidth={1.5} />
-          </div>
-          <span className="action-label">{elapsedTime}</span>
-        </div> */}
-
+        {activeCall && (
+          <>
+            <div className="action-item">
+              <button
+                className="action-btn"
+                onClick={() => { setIsRemedyOpen(false); setIsKundliChatOpen(true); }}
+                aria-label="View Kundli"
+              >
+                <GrReactjs size={22} />
+              </button>
+              <span className="action-label">Kundli</span>
+            </div>
+            <div className="action-item">
+              <button
+                className="action-btn"
+                onClick={() => { setIsKundliChatOpen(false); setIsRemedyOpen(true); }}
+                aria-label="Suggest Remedy"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                </svg>
+              </button>
+              <span className="action-label">Remedy</span>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Inline Messages Overlay */}
@@ -558,6 +602,29 @@ const LiveView = (props) => {
         show={showExitConfirm}
         onStay={handleStay}
         onExit={handleConfirmExit}
+      />
+
+      {/* Kundli / Chat Panel — only during active call */}
+      {activeCall && isKundliChatOpen && (
+        <VideoCallChat
+          isOpen={isKundliChatOpen}
+          onClose={() => setIsKundliChatOpen(false)}
+          hideAttachment
+          videoCallData={{
+            userId: activeCall.userId,
+            astrologerId: activeCall.astrologerId,
+            chatRoomId: activeCall.chatRoomId || activeCall.roomId,
+            kundliId: activeCall.kundliId,
+            isUserSide: false,
+          }}
+        />
+      )}
+
+      {/* Suggest Remedy Panel — only during active call */}
+      <SuggestRemedyPanel
+        isOpen={isRemedyOpen && !!activeCall}
+        onClose={() => setIsRemedyOpen(false)}
+        roomId={activeCall?.chatRoomId || activeCall?.roomId}
       />
     </div>
   );

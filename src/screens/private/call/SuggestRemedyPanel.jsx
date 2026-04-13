@@ -146,7 +146,7 @@ const SuggestRemedyPanel = ({ isOpen, onClose, roomId }) => {
     : "Suggest Remedy";
 
   return (
-    <div className="fixed inset-0 md:inset-auto md:right-0 md:top-0 md:bottom-0 md:w-[420px] bg-white flex flex-col shadow-[-2px_0_10px_rgba(0,0,0,0.1)] z-[1001]">
+    <div className="fixed inset-0 md:inset-auto md:right-0 md:top-0 md:bottom-0 md:w-[420px] bg-white flex flex-col shadow-[-2px_0_10px_rgba(0,0,0,0.1)] z-[100001]">
       {/* Header */}
       <div className="flex items-center gap-2 px-4 py-3 border-b bg-gray-50">
         {currentView !== "categories" && (

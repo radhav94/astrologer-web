@@ -13,6 +13,7 @@ import ExitConfirmationModal from "./ExitConfirmationModal";
 import MiniCallOverlay from "./MiniCallOverlay";
 import { Toast } from "../../components";
 import { stopLiveStream } from "../../services/appServices/authservice";
+import { voiceSocket } from "../../services/appServices/voiceSocketServices";
 import { getUserFromStorage } from "../../utils/authStorage";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
@@ -37,7 +38,7 @@ const LiveView = (props) => {
 
   const navigate = useNavigate();
   const { minimizeLive, maximizeLive, isLiveMinimized, endLiveSession, liveStartTime } = useLiveStream();
-  const { waitingList, activeCall, isCallMinimized, callTimer, onMessagePopupClickRef } = useCall();
+  const { waitingList, activeCall, isCallMinimized, callTimer, setActiveCall, setWaitingList, onMessagePopupClickRef } = useCall();
 
   // Close call-specific panels when call ends
   useEffect(() => {
@@ -149,6 +150,24 @@ const LiveView = (props) => {
       setCamera(false);
       setMic(false);
       endRoom?.();
+
+      // Cancel active call if any
+      if (activeCall?.roomId) {
+        voiceSocket.emit("call:end", { roomId: activeCall.roomId, endedBy: "ASTROLOGER" });
+        setActiveCall(null);
+      }
+
+      // Reject all waiting calls
+      if (waitingList?.length > 0) {
+        waitingList.forEach((call) => {
+          if (call?.roomId) {
+            const event = call.type === "chat" ? "chat:reject" : "call:reject";
+            voiceSocket.emit(event, { roomId: call.roomId, rejectedBy: "ASTROLOGER" });
+          }
+        });
+        setWaitingList([]);
+      }
+
       await stopLiveStream(channelName);
       clearLiveSession?.();
       endLiveSession();
@@ -159,7 +178,7 @@ const LiveView = (props) => {
     } finally {
       setCalling(false);
     }
-  }, [ROLE, channelName, setCalling, setCamera, setMic, navigate, endRoom, clearLiveSession, endLiveSession]);
+  }, [ROLE, channelName, setCalling, setCamera, setMic, navigate, endRoom, clearLiveSession, endLiveSession, activeCall, waitingList, setActiveCall, setWaitingList]);
 
   const endLiveSafely = useCallback(async () => {
     if (ROLE !== "host") return;
@@ -171,6 +190,24 @@ const LiveView = (props) => {
       setCamera(false);
       setMic(false);
       endRoom?.();
+
+      // Cancel active call if any
+      if (activeCall?.roomId) {
+        voiceSocket.emit("call:end", { roomId: activeCall.roomId, endedBy: "ASTROLOGER" });
+        setActiveCall(null);
+      }
+
+      // Reject all waiting calls
+      if (waitingList?.length > 0) {
+        waitingList.forEach((call) => {
+          if (call?.roomId) {
+            const event = call.type === "chat" ? "chat:reject" : "call:reject";
+            voiceSocket.emit(event, { roomId: call.roomId, rejectedBy: "ASTROLOGER" });
+          }
+        });
+        setWaitingList([]);
+      }
+
       await stopLiveStream(channelName);
       clearLiveSession?.();
       endLiveSession();
@@ -180,7 +217,7 @@ const LiveView = (props) => {
     } finally {
       setCalling(false);
     }
-  }, [ROLE, channelName, setCalling, setCamera, setMic, endRoom, clearLiveSession, endLiveSession]);
+  }, [ROLE, channelName, setCalling, setCamera, setMic, endRoom, clearLiveSession, endLiveSession, activeCall, waitingList, setActiveCall, setWaitingList]);
 
   const isHost = ROLE === "host";
   const viewerCount = participantCount || (remoteUsers?.length || 0) + 1;

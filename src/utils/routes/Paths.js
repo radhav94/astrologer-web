@@ -1,4 +1,5 @@
 import ConsultationHistory from "../../screens/private/consultationHistory/ConsultationHistory";
+import OrderDetails from "../../screens/private/consultationHistory/OrderDetails";
 import Dashboard from "../../screens/private/dashboard/Dashboard";
 import Followers from "../../screens/private/followers/Followers";
 import Profile from "../../screens/private/Profile/Profile";
@@ -69,6 +70,10 @@ export const PATH = {
     CONSULTATION_HISTORY: {
       path: "/consultation-history",
       element: ConsultationHistory,
+    },
+    ORDER_DETAILS: {
+      path: "/order-details/:userId",
+      element: OrderDetails,
     },
     VOICE_CALL: {
       path: "/voice-call",

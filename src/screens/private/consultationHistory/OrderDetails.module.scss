@@ -1,0 +1,275 @@
+/* ===== Page ===== */
+.orderDetails {
+  min-height: 100vh;
+  background-color: #ffffff;
+  padding-bottom: 20px;
+}
+
+.tabContent { padding: 0; }
+
+/* ===== Header ===== */
+.orderHeader {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  background-color: #FFF5EC;
+  height: 110px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.backButton {
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 1.5px solid #f97316; background: transparent;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: #f97316; flex-shrink: 0;
+  transition: all 0.2s;
+  &:hover { background: rgba(249,115,22,0.1); }
+}
+.astrologerInfo { display: flex; align-items: center; gap: 12px; flex: 1; }
+.avatarContainer { position: relative; flex-shrink: 0; }
+.avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; }
+.avatarFallback {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: linear-gradient(135deg, #f97316, #ea580c);
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 16px; font-weight: 600;
+}
+.details { display: flex; flex-direction: column; gap: 2px; }
+.name { font-size: 16px; font-weight: 600; color: #111827; margin: 0; text-transform: capitalize; }
+
+/* ===== Tabs ===== */
+.tabsContainer {
+  background-color: #f3f4f6;
+  padding: 20px 14px;
+  position: sticky; top: 110px; z-index: 9;
+}
+.tabsWrapper {
+  display: flex; gap: 14px;
+  overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none;
+  &::-webkit-scrollbar { display: none; }
+  @media (min-width: 640px) { justify-content: center; overflow-x: visible; }
+}
+.tab {
+  padding: 6px 18px; border-radius: 999px;
+  border: 1px solid #f97316; background: #fff; color: #f97316;
+  font-size: 14px; font-weight: 500; cursor: pointer;
+  white-space: nowrap; transition: all 0.2s; flex-shrink: 0;
+  &:hover { background: #fff7ed; }
+}
+.tabActive {
+  background: linear-gradient(135deg, #f97316, #d43400) !important;
+  color: #fff !important; border: none !important;
+}
+
+/* ===== Recording Cards (Call & Video) ===== */
+.recordingsList {
+  display: flex; flex-direction: column; gap: 12px;
+  padding: 8px 0; background-color: #f3f4f6;
+}
+.infoCard { padding: 0 16px; }
+.cardWrapper {
+  background: #fff; border-radius: 12px; padding: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08); margin-bottom: 12px;
+}
+.cardHeader {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid #f3f4f6;
+}
+.orderId { font-size: 18px; font-weight: 600; color: #111827; margin: 0; }
+.cardContent {
+  display: flex; gap: 12px; align-items: flex-start; cursor: pointer; position: relative;
+}
+.waveformIcon {
+  width: 90px; height: 90px; background: #fef3e2; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  @media (max-width: 639px) { width: 75px; height: 75px; }
+}
+.astroImage {
+  width: 90px; height: 90px; border-radius: 12px; object-fit: cover; flex-shrink: 0;
+  @media (max-width: 639px) { width: 75px; height: 75px; }
+}
+.infoSection { flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.astroName { font-size: 16px; font-weight: 700; color: #111827; margin: 0; text-transform: capitalize; }
+.detailRow {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 13px; color: #6b7280; margin: 0; flex-wrap: wrap; line-height: 1.5;
+}
+.sep { color: #d1d5db; margin: 0 2px; }
+.amount { font-size: 16px; font-weight: 700; color: #111827; margin: 0; }
+.typeIcon {
+  width: 40px; height: 40px; border-radius: 10px; background: #fff4ec;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; border: 1px solid #fde5d0;
+}
+.noRec { font-size: 12px; color: #9ca3af; font-style: italic; margin: 8px 0 0; text-align: center; }
+.progressBar {
+  height: 3px; background: #f3f4f6; border-radius: 2px; margin-top: 12px; overflow: hidden;
+}
+.progressFill {
+  height: 100%; background: linear-gradient(90deg, #f97316, #d43400);
+  border-radius: 2px; transition: width 0.3s;
+}
+
+/* ===== Video Modal ===== */
+.videoOverlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.95);
+  z-index: 9999; display: flex; align-items: center; justify-content: center;
+}
+.videoModal {
+  position: relative; width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+}
+.closeBtn {
+  position: absolute; top: 16px; left: 16px; z-index: 10;
+  background: rgba(0,0,0,0.5); border: none; border-radius: 50%;
+  width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer;
+}
+.videoPlayer { width: 100%; max-height: 100vh; object-fit: contain; }
+
+/* ===== Chat Window ===== */
+.chatWindow {
+  background-color: #f3f4f6; padding: 0 20px 40px; min-height: 400px;
+  @media (max-width: 639px) { padding: 20px 16px 40px; }
+}
+.chatSession {
+  background: #fff; padding: 1rem; margin-bottom: 1rem; border-radius: 1rem;
+}
+.sessionHeader { margin-top: 16px; margin-bottom: 12px; }
+.sessionId {
+  font-size: 15px; font-weight: 600; color: #111827; margin: 0; text-align: center;
+}
+.divider { border-top: 1px solid #e5e7eb; margin-top: 8px; }
+.sessionDateTime {
+  text-align: center; font-size: 15px; font-weight: 500; color: #1f2937;
+  margin-top: 14px; margin-bottom: 22px;
+}
+.messagesContainer { display: flex; flex-direction: column; }
+
+/* Sent (astrologer = right) */
+.sentWrapper {
+  display: flex; flex-direction: column; align-items: flex-end; margin-bottom: 18px;
+}
+.sentBubble {
+  background: #FFF5EC; padding: 10px 14px; border-radius: 12px;
+  border-bottom-right-radius: 4px; max-width: 72%;
+  @media (max-width: 639px) { max-width: 80%; }
+}
+.msgMeta {
+  display: flex; align-items: center; gap: 4px; margin-top: 4px;
+  font-size: 11px; color: #6b7280;
+}
+.time { font-size: 11px; color: #6b7280; }
+
+/* Received (user = left) */
+.receivedWrapper {
+  display: flex; flex-direction: column; align-items: flex-start; margin-bottom: 18px;
+}
+.receivedBubble {
+  background: #fff; border: 1px solid #d1d5db; padding: 10px 14px;
+  border-radius: 10px; border-bottom-left-radius: 4px; max-width: 72%;
+  @media (max-width: 639px) { max-width: 80%; }
+}
+.receivedTime { font-size: 11px; color: #6b7280; margin-top: 4px; }
+.messageText { font-size: 14px; color: #111827; margin: 0; line-height: 1.5; word-wrap: break-word; }
+
+/* ===== Chat Message Types ===== */
+.imageMsg { display: flex; flex-direction: column; gap: 8px; max-width: 100%; }
+.msgImage {
+  width: 100%; max-width: 280px; height: auto; max-height: 350px;
+  border-radius: 12px; object-fit: cover; cursor: pointer; transition: transform 0.2s;
+  &:hover { transform: scale(1.02); }
+  @media (max-width: 639px) { max-width: 220px; max-height: 280px; }
+}
+.videoMsg {
+  position: relative; width: 100%; max-width: 280px; border-radius: 12px;
+  overflow: hidden; background: #000;
+  @media (max-width: 639px) { max-width: 220px; }
+}
+.msgVideo {
+  width: 100%; height: auto; max-height: 350px; display: block; border-radius: 12px;
+  @media (max-width: 639px) { max-height: 280px; }
+}
+.chatAudio {
+  width: 100%; max-width: 280px; height: 40px; border-radius: 20px; outline: none;
+}
+.attachmentLink {
+  display: flex; align-items: center; gap: 8px; padding: 10px 12px;
+  background: rgba(0,0,0,0.03); border-radius: 8px; text-decoration: none;
+  color: #f97316; font-size: 13px; transition: all 0.2s; word-break: break-all;
+  &:hover { background: rgba(247,88,1,0.1); }
+}
+.kundliLink {
+  display: flex; align-items: center; gap: 6px; color: #111827;
+  font-weight: 600; text-decoration: underline; cursor: pointer;
+  transition: color 0.2s; font-size: 14px; background: none; border: none; padding: 0;
+  &:hover { color: #f97316; }
+}
+.productsMsg { display: flex; flex-direction: column; gap: 6px; max-width: 260px; }
+.productsNote { font-size: 12px; color: #374151; font-style: italic; margin: 0; }
+.productMsgCard { display: flex; gap: 8px; padding: 6px; border-radius: 8px; background: rgba(0,0,0,0.04); }
+.productMsgImg { width: 48px; height: 48px; border-radius: 6px; object-fit: cover; flex-shrink: 0; }
+.productMsgInfo { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.productMsgTitle {
+  font-size: 12px; font-weight: 600; color: #111827;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.productMsgVariant { font-size: 10px; color: #f75801; }
+.productMsgPrice { font-size: 12px; font-weight: 700; color: #f75801; }
+.mrp { font-size: 11px; color: #9ca3af; font-weight: 400; }
+
+/* Image Preview */
+.imagePreviewOverlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.9);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 10000; cursor: pointer; padding: 20px;
+}
+.imagePreviewFull { max-width: 90vw; max-height: 90vh; object-fit: contain; border-radius: 8px; }
+
+/* ===== Remedies Tab ===== */
+.remediesList { display: flex; flex-direction: column; gap: 16px; padding: 16px; }
+.remedyCard { background: #fff; border-radius: 12px; border: 1px solid #e5e7eb; padding: 14px 16px; }
+.remedyNote {
+  font-size: 13px; color: #374151; font-style: italic; margin: 0 0 6px;
+  background: linear-gradient(to right, #fff7ed, #fef3c7);
+  padding: 8px 12px; border-radius: 8px; border-left: 3px solid #f75801;
+}
+.remedyDate { font-size: 11px; color: #9ca3af; display: block; margin-bottom: 12px; }
+.productList { display: flex; flex-direction: column; gap: 10px; }
+.productCard { display: flex; gap: 12px; padding: 10px; border-radius: 10px; background: #f9fafb; border: 1px solid #f3f4f6; }
+.productImageWrap { width: 64px; height: 64px; border-radius: 8px; overflow: hidden; background: #e5e7eb; flex-shrink: 0; }
+.productImage { width: 100%; height: 100%; object-fit: cover; }
+.productInfo { flex: 1; min-width: 0; }
+.productTitle {
+  font-size: 13px; font-weight: 600; color: #111827; margin: 0;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.productVariant { font-size: 11px; color: #f75801; font-weight: 500; display: block; margin-top: 2px; }
+.productBrand { font-size: 11px; color: #6b7280; display: block; margin-top: 1px; }
+.productDesc {
+  font-size: 11px; color: #9ca3af; margin: 2px 0 0;
+  display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;
+}
+.priceRow { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
+.price { font-size: 13px; font-weight: 700; color: #f75801; }
+.mrpStrike { font-size: 11px; color: #9ca3af; }
+.discount { font-size: 10px; font-weight: 600; color: #16a34a; }
+.categories { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; }
+.categoryTag { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: #f3f4f6; color: #6b7280; }
+
+/* ===== States ===== */
+.loadingState {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 60px 20px; gap: 12px; color: #9ca3af;
+}
+.spinner {
+  width: 32px; height: 32px; border: 3px solid #f3f4f6;
+  border-top: 3px solid #f97316; border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.emptyState {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 40px 20px; text-align: center; color: #6b7280; font-size: 14px; gap: 12px;
+}

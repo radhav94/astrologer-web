@@ -9,8 +9,10 @@ import {
 } from "../../../redux/kyc/kycApi";
 import { Toast } from "../../../components";
 import Button from "../../../components/UI/button/Button";
+import DateTimePicker from "../../../components/UI/dateTimePicker/DateTimePicker";
 import FormStep from "./FormStep";
 import styles from "./BasicForms.module.scss";
+import dayjs from "dayjs";
 
 const OTP_LENGTH = 6;
 const AADHAAR_LENGTH = 12;
@@ -239,11 +241,16 @@ const KycVerification = () => {
 
               <div className={styles.formGroup}>
                 <label className={styles.label}>Date of Birth</label>
-                <input
-                  type="date"
-                  value={aadhaarDob}
-                  onChange={(e) => setAadhaarDob(e.target.value)}
-                  className={styles.dateInput}
+                {/* Old native date input — replaced with DateTimePicker
+                <input type="date" value={aadhaarDob} onChange={(e) => setAadhaarDob(e.target.value)} ... />
+                */}
+                <DateTimePicker
+                  selected={aadhaarDob ? new Date(aadhaarDob) : null}
+                  onChange={(date) => setAadhaarDob(date ? dayjs(date).format("YYYY-MM-DD") : "")}
+                  mode="date"
+                  dateFormat="dd/MM/yyyy"
+                  placeholder="Select date of birth"
+                  maxDate={new Date()}
                   disabled={isKycVerified}
                 />
               </div>
@@ -350,11 +357,16 @@ const KycVerification = () => {
 
               <div className={styles.formGroup}>
                 <label className={styles.label}>Date of Birth</label>
-                <input
-                  type="date"
-                  value={panDob}
-                  onChange={(e) => setPanDob(e.target.value)}
-                  className={styles.dateInput}
+                {/* Old native date input — replaced with DateTimePicker
+                <input type="date" value={panDob} onChange={(e) => setPanDob(e.target.value)} ... />
+                */}
+                <DateTimePicker
+                  selected={panDob ? new Date(panDob) : null}
+                  onChange={(date) => setPanDob(date ? dayjs(date).format("YYYY-MM-DD") : "")}
+                  mode="date"
+                  dateFormat="dd/MM/yyyy"
+                  placeholder="Select date of birth"
+                  maxDate={new Date()}
                   disabled={isKycVerified}
                 />
               </div>

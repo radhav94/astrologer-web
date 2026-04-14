@@ -1,14 +1,16 @@
-import { Calendar, Mars, Transgender, Venus } from "lucide-react";
+import { Mars, Transgender, Venus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
 import { useDispatch, useSelector } from "react-redux";
 import * as Yup from "yup";
+import dayjs from "dayjs";
 import {
   updateRegisterData,
   setCurrentStep,
 } from "../../../reducer/registerSlice";
 import Button from "../../../components/UI/button/Button";
 import FormStep from "./FormStep";
+import DateTimePicker from "../../../components/UI/dateTimePicker/DateTimePicker";
 import styles from "./BasicForms.module.scss";
 import {
   nameValidationSchemas,
@@ -181,23 +183,29 @@ const BasicDetails = () => {
               Birth Date
             </label>
 
+            {/* Old native date input — replaced with DateTimePicker
             <div className={styles.dateInputWrapper}>
-              <input
-                type="date"
-                name="dateOfBirth"
-                value={formik.values.dateOfBirth}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                className={`${styles.dateInput} ${
-                  formik.touched.dateOfBirth && formik.errors.dateOfBirth ? styles.dateInputError : ""
-                }`}
-              />
-
-              {/* Custom Calendar Icon */}
-              <div className={styles.calendarIcon}>
-                <Calendar size={20} />
-              </div>
+              <input type="date" name="dateOfBirth" ... />
+              <div className={styles.calendarIcon}><Calendar size={20} /></div>
             </div>
+            */}
+            <DateTimePicker
+              selected={formik.values.dateOfBirth ? new Date(formik.values.dateOfBirth) : null}
+              onChange={(date) => {
+                const formatted = date ? dayjs(date).format("YYYY-MM-DD") : "";
+                formik.setFieldValue("dateOfBirth", formatted);
+                formik.setFieldTouched("dateOfBirth", true);
+              }}
+              mode="date"
+              dateFormat="dd/MM/yyyy"
+              placeholder="Select your birth date"
+              maxDate={new Date()}
+              className={
+                formik.touched.dateOfBirth && formik.errors.dateOfBirth
+                  ? styles.dateInputError
+                  : ""
+              }
+            />
             {formik.touched.dateOfBirth && formik.errors.dateOfBirth && (
               <p className={styles.errorText}>
                 {formik.errors.dateOfBirth}

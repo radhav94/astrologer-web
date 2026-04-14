@@ -15,6 +15,7 @@ import styles from "./ConsultationHistory.module.scss";
 import dayjs from "dayjs";
 import { PATH } from "../../../utils/routes/Paths";
 import useHistoryFilters from "../../../hooks/useHistoryFilters";
+import DateTimePicker from "../../../components/UI/dateTimePicker/DateTimePicker";
 import { Toast } from "../../../components";
 
 const formatDuration = (seconds = 0) => {
@@ -508,27 +509,26 @@ const ConsultationHistory = () => {
                     {/* Custom date pickers — shown when "Custom Date Range" is selected */}
                     {tempFilters.dateRange === "custom" && (
                       <div className={styles.customDateGroup}>
-                        <label className={styles.customDateLabel}>
+                        {/* Old native date inputs — replaced with DateTimePicker */}
+                        {/* <label className={styles.customDateLabel}>
                           From Date
-                          <input
-                            type="date"
-                            value={tempFilters.customFromDate}
-                            onChange={(e) => updateTempFilter("customFromDate", e.target.value)}
-                            className={styles.customDateInput}
-                            max={dayjs().format("YYYY-MM-DD")}
-                          />
-                        </label>
-                        <label className={styles.customDateLabel}>
-                          To Date
-                          <input
-                            type="date"
-                            value={tempFilters.customToDate}
-                            onChange={(e) => updateTempFilter("customToDate", e.target.value)}
-                            min={tempFilters.customFromDate || undefined}
-                            max={dayjs().format("YYYY-MM-DD")}
-                            className={styles.customDateInput}
-                          />
-                        </label>
+                          <input type="date" value={tempFilters.customFromDate} ... />
+                        </label> */}
+                        <DateTimePicker
+                          label="From Date"
+                          selected={tempFilters.customFromDate ? new Date(tempFilters.customFromDate) : null}
+                          onChange={(date) => updateTempFilter("customFromDate", date ? dayjs(date).format("YYYY-MM-DD") : "")}
+                          maxDate={tempFilters.customToDate ? new Date(tempFilters.customToDate) : new Date()}
+                          placeholder="Select start date"
+                        />
+                        <DateTimePicker
+                          label="To Date"
+                          selected={tempFilters.customToDate ? new Date(tempFilters.customToDate) : null}
+                          onChange={(date) => updateTempFilter("customToDate", date ? dayjs(date).format("YYYY-MM-DD") : "")}
+                          minDate={tempFilters.customFromDate ? new Date(tempFilters.customFromDate) : undefined}
+                          maxDate={new Date()}
+                          placeholder="Select end date"
+                        />
                         {((tempFilters.customFromDate && !tempFilters.customToDate) ||
                           (!tempFilters.customFromDate && tempFilters.customToDate)) && (
                           <p className={styles.customDateError}>Both dates are required</p>

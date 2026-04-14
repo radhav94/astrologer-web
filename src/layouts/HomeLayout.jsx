@@ -72,7 +72,6 @@ const HomeLayout = () => {
     firstName && lastName ? `${firstName} ${lastName}` : "Unknown";
   const avatar =
     userData?.profileImgUrl || getDefaultImgBasedOnGender(userData?.gender);
-    console.log(userData?.followersList);
   const followers = userData?.followersList || 0;
 
   //Chat

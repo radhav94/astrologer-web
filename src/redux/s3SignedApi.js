@@ -3,10 +3,16 @@ import { privateApi } from "../services/appServices/privateRequest";
 export const s3SignedApi = privateApi.injectEndpoints({
   endpoints: (builder) => ({
     getS3SignedUrl: builder.mutation({
-      query: ({ fileType }) => ({
-        url: "getUploadUrl?fileType="+encodeURI(fileType),
-        method: "GET"
-      }),
+      query: ({ fileType, fileName }) => {
+        let url = "getUploadUrl?fileType=" + encodeURI(fileType);
+        if (fileName) {
+          url += "&fileName=" + encodeURIComponent(fileName);
+        }
+        return {
+          url,
+          method: "GET"
+        };
+      },
     })
   }),
 });

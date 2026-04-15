@@ -12,6 +12,7 @@ import FileUploadInput from "../../../../components/UI/fileUploadInput/FileUploa
 import { useFileUpload } from "../../../../hooks/useFileUpload";
 import { useSetAstroEditProfileMutation } from "../../../../redux/profileApi/profileApi";
 import toast from "../../../../components/toast";
+import DateTimePicker from "../../../../components/UI/dateTimePicker/DateTimePicker";
 import {
   nameValidationSchemas,
   genderValidationSchema,
@@ -228,21 +229,29 @@ useEffect(() => {
 
         {/* Birth Date */}
         <div className={styles.formGroup}>
-          <label className={styles.label}>Birth Date </label>
+          <label className={styles.label}>Birth Date</label>
+          {/* Old native date input — replaced with DateTimePicker
           <div className={styles.dateInput}>
-            <input
-              type="date"
-              name="dateOfBirth"
-              value={formik.values.dateOfBirth}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              className={`${styles.input} ${
-                formik.touched.dateOfBirth && formik.errors.dateOfBirth
-                  ? styles.inputError
-                  : ""
-              }`}
-            />
+            <input type="date" name="dateOfBirth" ... />
           </div>
+          */}
+          <DateTimePicker
+            selected={formik.values.dateOfBirth ? new Date(formik.values.dateOfBirth) : null}
+            onChange={(date) => {
+              const formatted = date ? dayjs(date).format("YYYY-MM-DD") : "";
+              formik.setFieldValue("dateOfBirth", formatted);
+              formik.setFieldTouched("dateOfBirth", true);
+            }}
+            mode="date"
+            dateFormat="dd/MM/yyyy"
+            placeholder="Select your birth date"
+            maxDate={new Date()}
+            className={
+              formik.touched.dateOfBirth && formik.errors.dateOfBirth
+                ? styles.inputError
+                : ""
+            }
+          />
           {formik.touched.dateOfBirth && formik.errors.dateOfBirth && (
             <p className={styles.errorText}>{formik.errors.dateOfBirth}</p>
           )}

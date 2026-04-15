@@ -20,6 +20,14 @@ export const orderHistory = epicApi.injectEndpoints({
       providesTags: ["Transactions"],
     }),
 
+    // GET /api/callSessions/recordings/inbox/:userId — fetch call/video recordings
+    getCallRecordings: builder.query({
+      query: (userId) => ({
+        url: `callSessions/recordings/inbox/${userId}`,
+        method: "GET",
+      }),
+    }),
+
     // Refund initiation API - POST /api/transactions/refundIniitalByAstrologer
     refundInitiateByAstrologer: builder.mutation({
       query: ({ astrologerId, minutes, roomId, userId }) => ({
@@ -45,6 +53,7 @@ export const orderHistory = epicApi.injectEndpoints({
 
 export const {
   useGetOrderHistoryQuery,
+  useGetCallRecordingsQuery,
   useRefundInitiateByAstrologerMutation,
   useGetWithdrawalHistoryQuery,
 } = orderHistory;

@@ -145,18 +145,11 @@ const ConsultationHistory = () => {
   }, [orderPage, txnPage, giftPage]);
 
   const handleNavigation = (type, item) => {
-    if (type !== "chat") {
-      return;
-    }
-    navigate(PATH.privateRoutes.CHAT_WINDOW.path.replace(":chatId", item?.id), {
+    navigate(`/order-details/${item?.userId}`, {
       state: {
-        userId: item?.userId,
-        astrologerId: item?.astrologerId,
-        fullName: item?.displayProfile?.name,
-        roomId: null,
-        isUserSide: false,
-        kundliId: null,
-        userID: item?.userId,
+        userName: item?.displayProfile?.name || "User",
+        profileImage: item?.displayProfile?.profileImage,
+        tab: type === "video" ? "Video" : type === "chat" ? "Chat" : "Call",
       },
     });
   };

@@ -136,9 +136,7 @@ const OrderHistory = ({
                   <div
                     className={styles.orderContent}
                     onClick={() => onNavigate(item?.type, item)}
-                    style={{
-                      cursor: item?.type === "chat" ? "pointer" : "default",
-                    }}
+                    style={{ cursor: "pointer" }}
                   >
                     <div className={styles.profileImageContainer}>
                       <div className={styles.profileImage}>

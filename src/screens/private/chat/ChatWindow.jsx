@@ -144,7 +144,16 @@ const Message = ({
               key={p.variantId || p.productId || p._id || p.ID || idx}
               className="flex gap-2.5 p-2 rounded-lg cursor-pointer active:opacity-80 transition-opacity"
               style={{ background: "rgba(0,0,0,0.04)" }}
-              onClick={() => p.slug && navigate(`/product-details/${p.slug}`)}
+              onClick={() => {
+                if (!p.slug) return;
+                const baseUrl = import.meta.env.VITE_FRONTEND_BASE_URL;
+                const url = new URL(`/product-details/${p.slug}`, baseUrl);
+                if (p.variantId) {
+                  url.searchParams.set("variantId", p.variantId);
+                  if (p.variantSkuCode) url.searchParams.set("sku", p.variantSkuCode);
+                }
+                window.open(url.toString(), "_blank");
+              }}
             >
               {image && (
                 <img

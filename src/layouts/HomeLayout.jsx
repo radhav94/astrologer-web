@@ -2,7 +2,7 @@ import { Suspense, useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Icons } from "../components/Icons";
 import Sidebar from "../components/Sidebar";
-import { Outlet, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Outlet, useNavigate, useParams, useSearchParams, useMatch } from "react-router-dom";
 import { updateAstrologerStatus } from "../../src/services/appServices/authservice";
 import AudioVideoContainer from "../screens/private/call/AudioVideoContainer";
 import IncomingChatModal from "../components/IncomingChatModal";
@@ -26,6 +26,7 @@ const HomeLayout = () => {
   const { kundliId } = useParams();
   const [searchParams] = useSearchParams();
   const isWebView = searchParams.get("type") === "webview";
+  const isChatWindow = !!useMatch("/chat/:chatId");
   const dispatch = useDispatch();
 
   // Get astrologer details from Redux state
@@ -72,7 +73,7 @@ const HomeLayout = () => {
     firstName && lastName ? `${firstName} ${lastName}` : "Unknown";
   const avatar =
     userData?.profileImgUrl || getDefaultImgBasedOnGender(userData?.gender);
-  const followers = userData?.followersList?.length || 0;
+  const followers = userData?.followersList || 0;
 
   //Chat
   const {
@@ -321,7 +322,7 @@ const HomeLayout = () => {
 
       <main className={styles.main}>
         {!isWebView && <MiniLiveBar />}
-        <header className={`${styles.header} ${kundliId || isWebView ? styles.hidden : ""}`}>
+        <header className={`${styles.header} ${kundliId || isWebView || isChatWindow ? styles.hidden : ""}`}>
           <div className={styles.headerContent}>
             {/* LEFT: Profile + Info */}
             <div className={styles.leftSection}>
@@ -390,7 +391,7 @@ const HomeLayout = () => {
         </header>
 
         {/* Mobile View only */}
-        {isManualVerification && !isWebView && (
+        {isManualVerification && !isWebView && !isChatWindow && (
           <div className={styles.mobileCenterSection}>
             <div className={styles.mobileAvailabilityCards}>
               {/* Call Card */}
@@ -411,7 +412,7 @@ const HomeLayout = () => {
         )}
 
         <Suspense fallback="..Loading">
-          <div className={styles.content}>
+          <div className={isChatWindow ? styles.chatContent : styles.content}>
             <Outlet />
           </div>
         </Suspense>

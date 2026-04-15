@@ -587,6 +587,7 @@ const AgoraVoiceCalling = ({ callData }) => {
       roomId,
       endedBy: isUserSide ? "CUSTOMER" : "ASTROLOGER",
     });
+    Toast.success(isVideo ? "Video session ended." : "Call ended.");
     setReviewData({
       userID: activeCall?.userID,
       fullName: activeCall?.callerName,

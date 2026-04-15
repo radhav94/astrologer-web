@@ -750,6 +750,7 @@ const VideoCalling = ({ callData }) => {
       roomId,
       endedBy: isUserSide ? "CUSTOMER" : "ASTROLOGER",
     });
+    Toast.success("Video session ended.");
 
     // Don't show review popup if chat is still active
     if (!shouldSkipReview) {

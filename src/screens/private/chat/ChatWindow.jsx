@@ -701,6 +701,7 @@ const ChatWindow = () => {
   const handleDisconnect = () => {
     try {
       voiceSocket.emit("chat:end", { roomId, endedBy: "ASTROLOGER" });
+      Toast.success("Chat ended.");
     } catch (error) {
       handleChatEndedFromServer();
       console.log("chat end error", error);

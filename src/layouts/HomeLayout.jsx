@@ -300,7 +300,7 @@ const HomeLayout = () => {
       if (recoverChatAfterSystemDisconnect(data)) {
         return;
       }
-      toast.warning("Chat has ended");
+      // toast.warning("Chat has ended");
       setActiveChat(null);
     };
 

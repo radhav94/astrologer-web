@@ -314,16 +314,56 @@ const Message = ({
     }
 
     if (type === "attachment") {
+      // Try to parse JSON payload with fileName, fallback to URL extraction
+      let fileUrl = text;
+      let displayName = "Download Attachment";
+      try {
+        const parsed = typeof text === "string" ? JSON.parse(text) : text;
+        if (parsed?.url) {
+          fileUrl = parsed.url;
+          displayName = parsed.fileName || displayName;
+        }
+      } catch {
+        // Not JSON — extract name from URL
+        try {
+          const urlPath = new URL(text).pathname;
+          const segments = urlPath.split("/");
+          const lastSegment = segments[segments.length - 1];
+          if (lastSegment && lastSegment.includes(".")) {
+            displayName = decodeURIComponent(lastSegment);
+          }
+        } catch {
+          // keep default
+        }
+      }
+
+      const handleDownload = async (e) => {
+        e.preventDefault();
+        try {
+          const res = await fetch(fileUrl);
+          const blob = await res.blob();
+          const blobUrl = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = blobUrl;
+          a.download = displayName;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(blobUrl);
+        } catch {
+          // Fallback: open in new tab
+          window.open(fileUrl, "_blank");
+        }
+      };
+
       return (
-        <a
-          href={text}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-2 text-sm underline font-semibold"
+        <button
+          onClick={handleDownload}
+          className="flex items-center gap-2 text-sm underline font-semibold text-inherit cursor-pointer bg-transparent border-none p-0"
         >
           <span className="text-lg">📎</span>
-          <span className="truncate max-w-[180px]">Download Attachment</span>
-        </a>
+          <span className="truncate max-w-[180px]">{displayName}</span>
+        </button>
       );
     }
 
@@ -639,14 +679,20 @@ const ChatWindow = () => {
 
   const handleAttachment = async () => {
     try {
-      const { blob } = await openFileSelector(
+      const { blob, name } = await openFileSelector(
         "image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.txt",
       );
-      const signedUrl = await getS3SignedUrl({ fileType: blob.type }).unwrap();
+      const signedUrl = await getS3SignedUrl({ fileType: blob.type, fileName: name }).unwrap();
       const fileUrl = signedUrl.uploadUrl.split("?")[0];
       await uploadAudioToS3(signedUrl.uploadUrl, blob);
       const attachType = getAttachType(blob.type);
-      astroReply(fileUrl, attachType);
+      // For document attachments, send as JSON with original file name
+      if (attachType === "attachment") {
+        const payload = JSON.stringify({ url: fileUrl, fileName: name });
+        astroReply(payload, attachType);
+      } else {
+        astroReply(fileUrl, attachType);
+      }
     } catch (err) {
       console.error("Attachment failed:", err);
     }

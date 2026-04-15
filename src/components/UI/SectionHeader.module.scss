@@ -5,14 +5,24 @@
   width: auto;
 }
 
-/* 🔥 Responsive title */
+/* Title with subtle gradient text effect */
 .title {
   margin: 0;
-  font-weight: 600;
+  font-weight: 700;
   font-size: clamp(16px, 2vw, 24px);
   color: var(--title);
   text-align: center;
-  white-space: nowrap;
+  white-space: normal;
+  text-wrap: balance;
+  letter-spacing: 0.02em;
+  max-width: min(100%, 18rem);
+}
+
+@media (min-width: 640px) {
+  .title {
+    white-space: nowrap;
+    max-width: none;
+  }
 }
 
 /* Divider container */
@@ -25,16 +35,16 @@
   width: 100%;
 }
 
-/* 🔥 Responsive scaling lines */
+/* Responsive scaling lines */
 .line {
   flex: 1;
   height: auto;
-  min-width: 20px; // prevents collapse on very small screens
+  min-width: 20px;
   width: 100%;
   object-fit: contain;
 }
 
-/* 🔥 Responsive moon */
+/* Responsive moon */
 .moon {
   width: clamp(8px, 1vw, 8px);
   height: auto;

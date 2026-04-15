@@ -39,7 +39,13 @@ import {
   RefreshCw,
   BookOpen,
   Search,
-  Paperclip
+  Paperclip,
+  Gift,
+  Zap,
+  Sun,
+  Moon,
+  CloudSun,
+  Layout,
 } from "lucide-react";
 
 export const Icons = {
@@ -83,5 +89,11 @@ export const Icons = {
   ArrowUpDown,
   BookOpen,
   Search,
-  Paperclip
+  Paperclip,
+  Gift,
+  Zap,
+  Sun,
+  Moon,
+  CloudSun,
+  Layout,
 };

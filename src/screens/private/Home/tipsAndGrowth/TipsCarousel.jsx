@@ -59,8 +59,8 @@ const TipsCarousel = ({ tips = DEFAULT_TIPS }) => {
           scroll-smooth
         "
       >
-        {tips.map((tip) => (
-          <TipCard key={tip.id} tip={tip} />
+        {tips.map((tip, index) => (
+          <TipCard key={tip.id} tip={tip} index={index} />
         ))}
 
         {/* Spacer for right-side padding when scrolling to the end */}

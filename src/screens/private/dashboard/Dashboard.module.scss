@@ -1,0 +1,74 @@
+/* ===== Dashboard Animations & Eye-Candy ===== */
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 107, 53, 0.15); }
+  50% { box-shadow: 0 0 20px 4px rgba(255, 107, 53, 0.1); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.dashboardWrapper {
+  position: relative;
+  min-height: 100%;
+  --dashboard-surface: #ffffff;
+  --dashboard-surface-soft: #FFF8F2;
+  --dashboard-surface-strong: #1B1D2A;
+  --dashboard-surface-strong-alt: #252836;
+  --dashboard-border: rgba(0, 0, 0, 0.06);
+  --dashboard-border-strong: rgba(255, 255, 255, 0.08);
+  --dashboard-shadow-soft: 0 4px 16px rgba(0, 0, 0, 0.05);
+  --dashboard-shadow-card: 0 2px 12px rgba(0, 0, 0, 0.06);
+  --dashboard-shadow-dark: 0 8px 28px rgba(0, 0, 0, 0.18);
+  --dashboard-text: #1A1A1A;
+  --dashboard-muted: #6B7280;
+  --dashboard-accent: #F75801;
+  --dashboard-accent-strong: #D43400;
+  --dashboard-accent-soft: #FFF0E4;
+  --dashboard-gold: #d7a24f;
+  --dashboard-gold-soft: #fff7e0;
+  --dashboard-success: #4BA01D;
+  --dashboard-success-soft: #EAFBE5;
+}
+
+.sectionAnimated {
+  animation: fadeInUp 0.5s ease-out both;
+
+  @for $i from 1 through 10 {
+    &:nth-child(#{$i}) {
+      animation-delay: #{$i * 0.08}s;
+    }
+  }
+}
+
+.glowCard {
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+.floatingIcon {
+  animation: float 3s ease-in-out infinite;
+}

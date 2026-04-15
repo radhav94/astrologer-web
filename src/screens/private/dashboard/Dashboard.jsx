@@ -4,22 +4,39 @@ import { useSelector } from "react-redux";
 import { useGetAstrologerByIdQuery, useGetMonthlyOverviewQuery } from "../../../redux/astrologer/astrologerApi";
 import { useCall } from "../../../context/CallContext";
 import { useChat } from "../../../context/chatContext";
-import { SECTION_TYPES } from "../../../constants/sectionTypes";
 import { useHomepageSections } from "../../../hooks/useHomepageSections";
 import { PATH } from "../../../utils/routes/Paths";
 import TipsCarousel from "../../../screens/private/Home/tipsAndGrowth/TipsCarousel";
 import PrimaryLoader from "../../../components/UI/PrimaryLoader";
+import dashStyles from "./Dashboard.module.scss";
 
 // Import section components
 import {
   ConsultationPriceSection,
   TodaysUpdatesSection,
-  UpcomingSessionsSection,
-  AvailabilityScheduleSection,
   MonthlyOverviewSection,
   MilestonesSection,
   PendingVerificationSection,
+  QuickStatsSection,
+  WalletSection,
+  RecentActivitySection,
+  ProfileCompletionSection,
+  GreetingBanner,
+  QuickActionsSection,
+  GiftSummarySection,
+  OrderHistorySection,
+  TransactionHistorySection,
+  GiftReceivedSection,
 } from "../../../components/Dashboard/sections";
+
+const getStoredAstrologerDetails = () => {
+  try {
+    const storedValue = localStorage.getItem("shubhtalk_astrologer_details");
+    return storedValue ? JSON.parse(storedValue) : null;
+  } catch {
+    return null;
+  }
+};
 
 /**
  * Dashboard Component
@@ -40,9 +57,7 @@ const Dashboard = () => {
     ? (astrologerDetails?.manualVerification ?? false)
     : false;
 
-  const userData = JSON.parse(
-    localStorage.getItem("shubhtalk_astrologer_details")
-  );
+  const userData = useMemo(() => getStoredAstrologerDetails(), []);
 
   
   const astrologerId = userData?._id || userData?.id;
@@ -51,18 +66,21 @@ const Dashboard = () => {
     refetchOnMountOrArgChange: true,
   });
   const astrologerData = data?.data || {};
-
-  console.log("Astrologer Details Dashboard::", astrologerData);
   
 
   // Fetch homepage sections with ordering
   const { orderedSections, tipsContent, isLoading: isSectionsLoading } = useHomepageSections();
 
   // Get waiting list, active call, and call timer from CallContext
-  const { waitingList, activeCall, callTimer, setIsCallMinimized } = useCall();
+  const {
+    waitingList = [],
+    activeCall = null,
+    callTimer = 0,
+    setIsCallMinimized = () => {},
+  } = useCall();
   
   // Get active chat and chat timer from ChatContext
-  const { activeChat, chatSeconds } = useChat();
+  const { activeChat = null, chatSeconds = 0 } = useChat();
 
   // Calculate queue counts
   const chatQueue = waitingList.filter(item => item.type === "chat").length;
@@ -199,9 +217,9 @@ const Dashboard = () => {
     if (!monthlyOverview.categories) return [];
     return monthlyOverview.categories.map((cat) => {
       const colors = {
-        Call: "#10B981",
+        Call: "#4BA01D",
         Chat: "#3B82F6",
-        Video: "#FF6B35",
+        Video: "#F75801",
         Gifts: "#F59E0B",
       };
       return {
@@ -240,121 +258,13 @@ const Dashboard = () => {
     return titles[selectedOverviewOption.value] || "OVERVIEW";
   }, [selectedOverviewOption]);
 
-  /**
-   * Section registry mapping display_type to component
-   * Each section receives the props it needs
-   */
-  const sectionRegistry = useMemo(() => ({
-    [SECTION_TYPES.CONSULTATION_PRICE]: {
-      component: ConsultationPriceSection,
-      props: { astrologerData },
-    },
-    [SECTION_TYPES.TODAYS_UPDATES]: {
-      component: TodaysUpdatesSection,
-      props: {
-        isActiveSession,
-        sessionInfo,
-        getSessionDuration,
-        handleCurrentStatusClick,
-        totalEarnings,
-        totalQueue,
-        chatQueue,
-        callQueue,
-      },
-    },
-    [SECTION_TYPES.UPCOMING_SESSIONS]: {
-      component: UpcomingSessionsSection,
-      props: { waitingList },
-    },
-    [SECTION_TYPES.AVAILABILITY_SCHEDULE]: {
-      component: AvailabilityScheduleSection,
-      props: {},
-    },
-    [SECTION_TYPES.MONTHLY_OVERVIEW]: {
-      component: MonthlyOverviewSection,
-      props: {
-        overviewTitle,
-        isMonthlyLoading,
-        totalMonthlyEarnings,
-        metricsData,
-        categoryPercentages,
-        monthlyOverview,
-        heatmapData,
-        overviewOptions,
-        selectedOverviewOption,
-        setSelectedOverviewOption,
-        customFromDate,
-        customToDate,
-        setCustomFromDate,
-        setCustomToDate,
-      },
-    },
-    [SECTION_TYPES.MILESTONES]: {
-      component: MilestonesSection,
-      props: {},
-    },
-    [SECTION_TYPES.TIPS_AND_GROWTH]: {
-      component: TipsCarousel,
-      props: { tips: tipsContent },
-    },
-  }), [
-    astrologerData,
-    isActiveSession,
-    sessionInfo,
-    getSessionDuration,
-    handleCurrentStatusClick,
-    totalEarnings,
-    totalQueue,
-    chatQueue,
-    callQueue,
-    waitingList,
-    overviewTitle,
-    isMonthlyLoading,
-    totalMonthlyEarnings,
-    metricsData,
-    categoryPercentages,
-    monthlyOverview,
-    heatmapData,
-    overviewOptions,
-    selectedOverviewOption,
-    setSelectedOverviewOption,
-    customFromDate,
-    customToDate,
-    setCustomFromDate,
-    setCustomToDate,
-    tipsContent,
-  ]);
-
-  /**
-   * Render section based on display_type
-   * Returns null if section not found in registry
-   */
-  const renderSection = useCallback((section) => {
-    const sectionConfig = sectionRegistry[section.display_type];
-    
-    if (!sectionConfig) {
-      if (process.env.NODE_ENV === 'development') {
-        console.warn(`[Dashboard] Unknown section type: ${section.display_type}`);
-      }
-      return null;
-    }
-
-    const SectionComponent = sectionConfig.component;
-    return (
-      <div key={section.display_type}>
-        <SectionComponent {...sectionConfig.props} />
-      </div>
-    );
-  }, [sectionRegistry]);
-
   // If user is not fully verified, show pending message card
   if (!isManualVerification) {
     return <PendingVerificationSection />;
   }
 
   return (
-    <div className="space-y-6 bg-[#F5F5F5] lg:bg-transparent -m-4 p-4 lg:m-0 lg:p-0">
-      {/* Show loader while fetching sections */}
+    <div className={`space-y-4 bg-[#f8f9fa] lg:bg-transparent -m-4 p-4 lg:m-0 lg:p-0 ${dashStyles.dashboardWrapper}`}>
       {isSectionsLoading ? (
         <PrimaryLoader 
           isLoading={true} 
@@ -362,8 +272,87 @@ const Dashboard = () => {
           message="Loading dashboard..."
         />
       ) : (
-        /* All sections are now dynamically ordered by API */
-        orderedSections.map(renderSection)
+        <>
+          {/* Row 1: Greeting + Profile Completion */}
+          <div className={`grid grid-cols-1 lg:grid-cols-2 gap-3 ${dashStyles.sectionAnimated}`}>
+            <div><GreetingBanner astrologerData={astrologerData} /></div>
+            <div><ProfileCompletionSection astrologerData={astrologerData} /></div>
+          </div>
+
+          {/* Row 2: Quick Actions + Consultation Price */}
+          <div className={`grid grid-cols-1 lg:grid-cols-2 gap-3 ${dashStyles.sectionAnimated}`}>
+            <div><QuickActionsSection /></div>
+            <div><ConsultationPriceSection astrologerData={astrologerData} /></div>
+          </div>
+
+          {/* Row 3: Wallet + Gift Summary */}
+          <div className={`grid grid-cols-1 lg:grid-cols-2 gap-3 ${dashStyles.sectionAnimated}`}>
+            <div><WalletSection /></div>
+            <div><GiftSummarySection /></div>
+          </div>
+
+          {/* Row 4: Today's Updates + Upcoming Sessions */}
+          <div className={dashStyles.sectionAnimated}>
+            <TodaysUpdatesSection
+              isActiveSession={isActiveSession}
+              sessionInfo={sessionInfo}
+              getSessionDuration={getSessionDuration}
+              handleCurrentStatusClick={handleCurrentStatusClick}
+              totalEarnings={totalEarnings}
+              totalQueue={totalQueue}
+              chatQueue={chatQueue}
+              callQueue={callQueue}
+              waitingList={waitingList}
+            />
+          </div>
+
+          {/* Row 5: Quick Stats */}
+          <div className={dashStyles.sectionAnimated}>
+            <QuickStatsSection astrologerData={astrologerData} />
+          </div>
+
+          {/* Row 6: Monthly Overview */}
+          <div className={dashStyles.sectionAnimated}>
+            <MonthlyOverviewSection
+              overviewTitle={overviewTitle}
+              isMonthlyLoading={isMonthlyLoading}
+              totalMonthlyEarnings={totalMonthlyEarnings}
+              metricsData={metricsData}
+              categoryPercentages={categoryPercentages}
+              monthlyOverview={monthlyOverview}
+              heatmapData={heatmapData}
+              overviewOptions={overviewOptions}
+              selectedOverviewOption={selectedOverviewOption}
+              setSelectedOverviewOption={setSelectedOverviewOption}
+              customFromDate={customFromDate}
+              customToDate={customToDate}
+              setCustomFromDate={setCustomFromDate}
+              setCustomToDate={setCustomToDate}
+            />
+          </div>
+
+          {/* Row 7: Recent Activity */}
+          <div className={dashStyles.sectionAnimated}>
+            <RecentActivitySection />
+          </div>
+
+          {/* Row 8: Order History + Transactions + Gifts */}
+          <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 ${dashStyles.sectionAnimated}`}>
+            <div><OrderHistorySection /></div>
+            <div><TransactionHistorySection /></div>
+            <div><GiftReceivedSection /></div>
+          </div>
+
+          {/* Row 9: Milestones */}
+          <div className={dashStyles.sectionAnimated}>
+            <MilestonesSection />
+          </div>
+
+          {/* Row 10: Tips & Growth */}
+          <div className={dashStyles.sectionAnimated}>
+            <TipsCarousel tips={tipsContent} />
+          </div>
+        </>
       )}
     </div>
   );

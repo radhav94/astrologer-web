@@ -6,11 +6,6 @@ import { DonutChart, Heatmap } from "../../Charts";
 import SectionHeader from "../../UI/SectionHeader";
 import useClickOutside from "../../../hooks/useClickOutside";
 
-/**
- * Monthly Overview Section Component
- * Uses overviewOptions (Today / Yesterday / Last 7 Days / Last 30 Days / Custom)
- * instead of the old MONTHS-based picker.
- */
 const MonthlyOverviewSection = ({
   overviewTitle,
   isMonthlyLoading,
@@ -34,12 +29,10 @@ const MonthlyOverviewSection = ({
   const dropdownRef = useClickOutside(closeDropdown, isDropdownOpen);
   const datePickerRef = useClickOutside(closeDatePicker, isDatePickerOpen);
 
-  /** Select a filter option */
   const handleOptionSelect = useCallback((option) => {
     setSelectedOverviewOption(option);
     setIsDropdownOpen(false);
     if (option.value === "custom") {
-      // Open the date picker popover
       setIsDatePickerOpen(true);
     } else {
       setCustomFromDate(null);
@@ -48,205 +41,152 @@ const MonthlyOverviewSection = ({
     }
   }, [setSelectedOverviewOption, setCustomFromDate, setCustomToDate]);
 
-  /** Handle range selection — auto-close when both dates are picked */
   const handleDateRangeChange = useCallback((dates) => {
     const [start, end] = dates;
     setCustomFromDate(start);
     setCustomToDate(end);
-    if (start && end) {
-      setIsDatePickerOpen(false);
-    }
+    if (start && end) setIsDatePickerOpen(false);
   }, [setCustomFromDate, setCustomToDate]);
 
   const isCustom = selectedOverviewOption?.value === "custom";
+  const safeTotalMonthlyEarnings = Number(totalMonthlyEarnings || 0);
 
-  /** Format custom date range for button label */
+  const formatCurrency = () => {
+    if (safeTotalMonthlyEarnings >= 100000) return `₹${(safeTotalMonthlyEarnings / 1000).toFixed(0)}K`;
+    if (safeTotalMonthlyEarnings >= 1000) return `₹${(safeTotalMonthlyEarnings / 1000).toFixed(1)}K`;
+    return `₹${safeTotalMonthlyEarnings.toLocaleString("en-IN")}`;
+  };
+
   const getButtonLabel = () => {
     if (isMonthlyLoading) return "Loading...";
     if (isCustom && customFromDate && customToDate) {
       const fmt = (d) => d.toLocaleDateString("en-IN", { day: "2-digit", month: "short" });
       return `${fmt(customFromDate)} – ${fmt(customToDate)}`;
     }
+    if (isCustom) return "Pick range";
     return selectedOverviewOption?.label || "Select";
   };
 
+  const metricItems = [
+    { icon: <Icons.Star size={14} fill="currentColor" />, value: isMonthlyLoading ? "..." : (monthlyOverview.metrics?.averageRating || 0).toFixed(1), label: "Avg Rating", color: "#F59E0B", bg: "rgba(245,158,11,0.08)" },
+    { icon: <Icons.Clock size={14} />, value: isMonthlyLoading ? "..." : `${Math.round(monthlyOverview.metrics?.averageResponseTimeMinutes?.chat || 0)}m`, label: "Response Time", color: "#3B82F6", bg: "rgba(59,130,246,0.08)" },
+    { icon: <Icons.RefreshCw size={14} />, value: isMonthlyLoading ? "..." : `${Math.round(monthlyOverview.metrics?.repeatSessionsPercent || 0)}%`, label: "Repeat Rate", color: "#4BA01D", bg: "rgba(75,160,29,0.08)" },
+  ];
+
   return (
-    <div className="space-y-4 lg:space-y-6">
-      <div className="space-y-4 lg:space-y-6">
-        {/* Header + Filter Dropdown */}
-        <div className="flex items-center justify-between">
-          <SectionHeader title={overviewTitle || "OVERVIEW"} />
-          <div className="relative" ref={dropdownRef}>
-            <button
-              onClick={() => {
-                // Always toggle the dropdown — date picker is independent
-                setIsDropdownOpen((prev) => !prev);
-                setIsDatePickerOpen(false);
-              }}
-              className="bg-white border border-[#D1D5DB] px-4 py-2 rounded-full text-sm font-normal text-[#FF6B35] flex items-center gap-2 ml-4 cursor-pointer hover:bg-[#FFF8F0] transition-colors"
-            >
-              {getButtonLabel()}
-              <Icons.ChevronDown
-                size={16}
-                className={`text-[#FF6B35] transition-transform ${(isDropdownOpen || isDatePickerOpen) ? "rotate-180" : ""}`}
-              />
-            </button>
+    <div>
+      {/* Header + Filter */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
+        <SectionHeader title={overviewTitle || "OVERVIEW"} />
+        <div className="relative w-full sm:w-auto" ref={dropdownRef}>
+          <button
+            onClick={() => { setIsDropdownOpen((p) => !p); setIsDatePickerOpen(false); }}
+            className="w-full sm:w-auto bg-white border border-[rgba(0,0,0,0.08)] px-3.5 py-2 rounded-full text-xs font-semibold text-[#F75801] flex items-center justify-between gap-2 cursor-pointer hover:bg-[#FFF5EC] transition-all"
+          >
+            {getButtonLabel()}
+            <Icons.ChevronDown size={13} className={`text-[#F75801] transition-transform duration-200 ${(isDropdownOpen || isDatePickerOpen) ? "rotate-180" : ""}`} />
+          </button>
 
-            {/* Options dropdown */}
-            {isDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-lg border border-gray-200 z-30 overflow-hidden">
-                <div className="py-1">
-                  {(overviewOptions || []).map((option) => {
-                    const isSelected = selectedOverviewOption?.id === option.id;
-                    return (
-                      <button
-                        key={option.id}
-                        onClick={() => handleOptionSelect(option)}
-                        className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors
-                          ${isSelected
-                            ? "bg-[#FFF3ED] text-[#FF6B35]"
-                            : "text-gray-700 hover:bg-[#FFF8F0]"
-                          }`}
-                      >
-                        {option.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+          {isDropdownOpen && (
+            <div className="absolute left-0 right-0 sm:left-auto sm:right-0 mt-1.5 sm:w-40 bg-white rounded-xl shadow-2xl border border-[rgba(0,0,0,0.08)] z-30 overflow-hidden">
+              {(overviewOptions || []).map((option) => (
+                <button key={option.id} onClick={() => handleOptionSelect(option)}
+                  className={`w-full text-left px-3 py-2 text-xs font-medium transition-all ${selectedOverviewOption?.id === option.id ? "bg-[#FFF0E4] text-[#F75801]" : "text-[#6B7280] hover:bg-[#f8f9fa] hover:text-[#1A1A1A]"}`}
+                >{option.label}</button>
+              ))}
+            </div>
+          )}
 
-            {/* Date picker popover — floats below button when Custom Date is active */}
-            {isDatePickerOpen && isCustom && (
-              <div
-                ref={datePickerRef}
-                className="absolute right-0 mt-2 bg-white rounded-2xl shadow-xl border border-gray-200 z-30 p-3"
-              >
-                <DatePicker
-                  selected={customFromDate}
-                  onChange={handleDateRangeChange}
-                  startDate={customFromDate}
-                  endDate={customToDate}
-                  selectsRange
-                  inline
-                  maxDate={new Date()}
-                />
-              </div>
-            )}
-          </div>
+          {isDatePickerOpen && isCustom && (
+            <div ref={datePickerRef} className="absolute left-0 sm:left-auto sm:right-0 mt-1.5 bg-white rounded-xl shadow-xl border border-gray-200 z-30 p-2 max-w-[calc(100vw-2rem)] overflow-x-auto">
+              <DatePicker selected={customFromDate} onChange={handleDateRangeChange} startDate={customFromDate} endDate={customToDate} selectsRange inline maxDate={new Date()} />
+            </div>
+          )}
         </div>
+      </div>
 
-        {/* Main Content */}
-        <div className="bg-[#FFF8F0] rounded-[1rem] p-2 sm:p-2 shadow-sm border border-[#F0E5D8]">
-          <div className="space-y-3 sm:space-y-4">
-            {/* TOP ROW: Earnings and Key Metrics Chart */}
-            <div className="grid grid-cols-2 gap-3 sm:gap-4">
-              {/* Earnings */}
-              <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-sm">
-                <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#FFA726] rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-white text-base sm:text-xl font-bold">₹</span>
-                  </div>
-                  <p className="text-[#9E9E9E] text-[10px] sm:text-sm font-normal leading-tight">
-                    Earnings
-                  </p>
-                </div>
-                <h3 className="text-xl sm:text-4xl font-bold text-[#212121] mb-1.5 sm:mb-2">
-                  {isMonthlyLoading ? "..." : `₹${(totalMonthlyEarnings / 1000).toFixed(1)}K`}
-                </h3>
-                <div className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-1">
-                  <span className="bg-[#E8F5E9] text-[#4CAF50] text-[10px] sm:text-xs font-semibold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md inline-flex items-center gap-1">
-                    +3.67% ↑
-                  </span>
-                </div>
+      {/* Main card */}
+      <div className="rounded-2xl overflow-hidden" style={{ background: "#fff", boxShadow: "0 2px 12px rgba(0,0,0,0.05)", border: "1px solid rgba(0,0,0,0.06)" }}>
+
+        {/* Top: Earnings hero + Donut */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr]">
+          {/* Earnings */}
+          <div className="p-5 sm:p-6" style={{ background: "linear-gradient(135deg, #FFF5EC 0%, #FFF0E4 100%)" }}>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#F75801] to-[#FF8F00] flex items-center justify-center shadow-sm">
+                <span className="text-white text-xs font-bold">₹</span>
               </div>
+              <div>
+                <p className="text-[11px] text-[#6B7280] font-medium">Total Earnings</p>
+                <p className="text-[10px] text-[#9CA3AF]">{isCustom ? "Custom range" : selectedOverviewOption?.label}</p>
+              </div>
+            </div>
+            <h3 className="text-3xl sm:text-4xl font-bold text-[#1A1A1A] tracking-tight">
+              {isMonthlyLoading ? <span className="inline-block w-24 h-8 bg-black/5 rounded-lg animate-pulse" /> : formatCurrency()}
+            </h3>
 
-              {/* Key Metrics Donut Chart */}
-              <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-sm">
-                <p className="text-[10px] sm:text-sm font-normal text-[#9E9E9E] mb-2 sm:mb-3">Key metrics</p>
-                {isMonthlyLoading ? (
-                  <div className="flex items-center justify-center h-24 sm:h-32 text-[#9E9E9E] text-xs">Loading...</div>
-                ) : metricsData.length > 0 ? (
-                  <div className="flex items-center justify-center gap-2 sm:gap-4">
-                    <DonutChart data={metricsData} />
-                    <div className="space-y-1 sm:space-y-2">
-                      {categoryPercentages.map((item, idx) => (
-                        <div key={idx} className="flex items-center gap-1 sm:gap-2 text-[10px] sm:text-sm">
-                          <div
-                            className="w-2 h-2 sm:w-3 sm:h-3 rounded-full flex-shrink-0"
-                            style={{ backgroundColor: metricsData[idx]?.fill }}
-                          />
-                          <span className="text-[#9E9E9E] w-7 sm:w-12 font-normal">{item.label}</span>
-                          <span className="font-semibold text-[#212121]">{item.percentage}%</span>
-                        </div>
-                      ))}
+            {/* Category breakdown bars */}
+            {!isMonthlyLoading && categoryPercentages.length > 0 && (
+              <div className="mt-4 space-y-2">
+                {categoryPercentages.map((cat, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <span className="text-[10px] font-semibold text-[#6B7280] w-10">{cat.label}</span>
+                    <div className="flex-1 h-2 rounded-full bg-black/[0.04] overflow-hidden">
+                      <div className="h-full rounded-full transition-all duration-700" style={{ width: `${cat.percentage}%`, background: metricsData[idx]?.fill || "#9CA3AF" }} />
                     </div>
+                    <span className="text-[10px] font-bold text-[#1A1A1A] w-8 text-right">{cat.percentage}%</span>
                   </div>
-                ) : (
-                  <div className="flex items-center justify-center h-24 sm:h-32 text-[#9E9E9E] text-xs">No data</div>
-                )}
+                ))}
               </div>
-            </div>
+            )}
+          </div>
 
-            {/* MIDDLE: Key Metrics Icons */}
-            <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-sm">
-              <h4 className="text-[10px] sm:text-sm font-normal text-[#9E9E9E] mb-3 sm:mb-4">
-                Key Metrics
-              </h4>
-              <div className="grid grid-cols-3 gap-2 sm:gap-4 text-center">
-                <div className="flex flex-col items-center">
-                  <div className="w-10 h-10 sm:w-16 sm:h-16 rounded-full bg-[#FF5722] flex items-center justify-center text-white mb-2 sm:mb-3 shadow-sm">
-                    <Icons.Star size={14} className="sm:w-6 sm:h-6" fill="currentColor" />
-                  </div>
-                  <p className="text-sm sm:text-xl font-bold text-[#212121] mb-0.5 sm:mb-1">
-                    {isMonthlyLoading ? "..." : (monthlyOverview.metrics?.averageRating || 0).toFixed(1)}
-                  </p>
-                  <p className="text-[9px] sm:text-xs text-[#9E9E9E] font-normal leading-tight">
-                    Average<br />Rating
-                  </p>
-                </div>
-                <div className="flex flex-col items-center">
-                  <div className="w-10 h-10 sm:w-16 sm:h-16 rounded-full bg-[#FF5722] flex items-center justify-center text-white mb-2 sm:mb-3 shadow-sm">
-                    <Icons.Clock size={14} className="sm:w-6 sm:h-6" />
-                  </div>
-                  <p className="text-sm sm:text-xl font-bold text-[#212121] mb-0.5 sm:mb-1">
-                    {isMonthlyLoading ? "..." : `${Math.round(monthlyOverview.metrics?.averageResponseTimeMinutes?.chat || 0)} min`}
-                  </p>
-                  <p className="text-[9px] sm:text-xs text-[#9E9E9E] font-normal leading-tight">
-                    Average<br />Response Time
-                  </p>
-                </div>
-                <div className="flex flex-col items-center">
-                  <div className="w-10 h-10 sm:w-16 sm:h-16 rounded-full bg-[#FF5722] flex items-center justify-center text-white mb-2 sm:mb-3 shadow-sm">
-                    <Icons.FileText size={14} className="sm:w-6 sm:h-6" />
-                  </div>
-                  <p className="text-sm sm:text-xl font-bold text-[#212121] mb-0.5 sm:mb-1">
-                    {isMonthlyLoading ? "..." : `${Math.round(monthlyOverview.metrics?.repeatSessionsPercent || 0)}%`}
-                  </p>
-                  <p className="text-[9px] sm:text-xs text-[#9E9E9E] font-normal leading-tight">
-                    Repeat<br />sessions
-                  </p>
+          {/* Donut chart */}
+          <div className="p-5 sm:p-6 flex flex-col items-center justify-center border-t lg:border-t-0 lg:border-l border-[rgba(0,0,0,0.04)]">
+            <p className="text-[11px] font-semibold text-[#6B7280] mb-3">Income Split</p>
+            {isMonthlyLoading ? (
+              <div className="flex items-center justify-center h-28 text-[#9CA3AF] text-xs">Loading...</div>
+            ) : metricsData.length > 0 ? (
+              <div className="flex flex-col items-center gap-3">
+                <DonutChart data={metricsData} />
+                <div className="flex flex-wrap justify-center gap-x-4 gap-y-1">
+                  {categoryPercentages.map((item, idx) => (
+                    <div key={idx} className="flex items-center gap-1.5 text-[11px]">
+                      <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: metricsData[idx]?.fill }} />
+                      <span className="text-[#6B7280]">{item.label}</span>
+                      <span className="font-bold text-[#1A1A1A]">{item.percentage}%</span>
+                    </div>
+                  ))}
                 </div>
               </div>
-            </div>
-
-            {/* BOTTOM: Sessions Heatmap */}
-            <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-sm">
-              <h4 className="text-[10px] sm:text-sm font-normal text-[#9E9E9E] mb-3 sm:mb-4">
-                Sessions
-              </h4>
-              <div className="overflow-x-auto">
-                {isMonthlyLoading ? (
-                  <div className="flex items-center justify-center h-48 sm:h-64 text-[#9E9E9E] text-xs">Loading...</div>
-                ) : heatmapData.length > 0 ? (
-                  <Heatmap data={heatmapData} />
-                ) : (
-                  <div className="flex items-center justify-center h-48 sm:h-64 text-[#9E9E9E] text-xs">No sessions data</div>
-                )}
-              </div>
-            </div>
+            ) : (
+              <div className="flex items-center justify-center h-28 text-[#9CA3AF] text-xs">No data for this period</div>
+            )}
           </div>
         </div>
+
+        {/* Metrics strip */}
+        <div className="grid grid-cols-3 border-t border-[rgba(0,0,0,0.04)]">
+          {metricItems.map((item, idx) => (
+            <div key={idx} className={`flex items-center gap-2.5 px-4 py-3.5 ${idx < 2 ? "border-r border-[rgba(0,0,0,0.04)]" : ""}`}>
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: item.bg, color: item.color }}>
+                {item.icon}
+              </div>
+              <div>
+                <p className="text-sm font-bold text-[#1A1A1A] leading-none">{item.value}</p>
+                <p className="text-[10px] text-[#9CA3AF] font-medium mt-0.5">{item.label}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Heatmap — only show for multi-day ranges */}
+        {heatmapData.length >= 3 && (
+          <div className="border-t border-[rgba(0,0,0,0.04)] p-4 sm:p-5">
+            <h4 className="text-xs font-semibold text-[#1A1A1A] mb-3">Session Activity</h4>
+            <Heatmap data={heatmapData} />
+          </div>
+        )}
       </div>
     </div>
   );

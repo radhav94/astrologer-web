@@ -8,12 +8,12 @@ export const DonutChart = ({ data }) => {
     const { name, value, fill } = payload[0].payload;
     const pct = total > 0 ? ((value / total) * 100).toFixed(0) : 0;
     return (
-      <div className="bg-white rounded-lg shadow-md border border-gray-100 px-3 py-2 text-xs">
+      <div className="bg-[#1E1E2E] rounded-xl shadow-2xl border border-white/10 px-3 py-2 text-xs">
         <div className="flex items-center gap-1.5">
-          <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: fill }} />
-          <span className="text-gray-700 font-medium">{name}</span>
+          <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: fill }} />
+          <span className="text-white/80 font-semibold">{name}</span>
         </div>
-        <p className="text-gray-900 font-semibold mt-0.5">₹{value.toLocaleString("en-IN")} ({pct}%)</p>
+        <p className="text-white font-bold mt-0.5">₹{value.toLocaleString("en-IN")} ({pct}%)</p>
       </div>
     );
   };
@@ -28,7 +28,7 @@ export const DonutChart = ({ data }) => {
             cy="50%"
             innerRadius={20}
             outerRadius={30}
-            paddingAngle={0}
+            paddingAngle={2}
             dataKey="value"
             stroke="none"
             className="sm:!hidden"
@@ -43,7 +43,7 @@ export const DonutChart = ({ data }) => {
             cy="50%"
             innerRadius={40}
             outerRadius={60}
-            paddingAngle={0}
+            paddingAngle={2}
             dataKey="value"
             stroke="none"
             className="!hidden sm:!block"
@@ -56,20 +56,31 @@ export const DonutChart = ({ data }) => {
         </PieChart>
       </ResponsiveContainer>
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <div className="text-center"></div>
+        <div className="text-center" />
       </div>
     </div>
   );
 };
 
-export const Heatmap = ({ data }) => {
+export const Heatmap = ({ data, dark = false }) => {
   const getColor = (count) => {
-    if (count === 0) return "bg-[#E8F5E9]";
+    if (dark) {
+      if (count === 0) return "bg-white/[0.04]";
+      if (count <= 2) return "bg-[#FF6B35]/25";
+      if (count <= 5) return "bg-[#FF6B35]/45";
+      if (count <= 10) return "bg-[#FF6B35]/70";
+      return "bg-[#FF6B35]";
+    }
+    if (count === 0) return "bg-[#F0F4F0]";
     if (count <= 2) return "bg-[#A5D6A7]";
     if (count <= 5) return "bg-[#66BB6A]";
-    if (count <= 10) return "bg-[#4CAF50]";
+    if (count <= 10) return "bg-[#43A047]";
     return "bg-[#2E7D32]";
   };
+
+  const legendColors = dark
+    ? ["bg-white/[0.04]", "bg-[#FF6B35]/25", "bg-[#FF6B35]/45", "bg-[#FF6B35]"]
+    : ["bg-[#F0F4F0]", "bg-[#A5D6A7]", "bg-[#66BB6A]", "bg-[#43A047]"];
 
   return (
     <div className="w-full">
@@ -77,20 +88,17 @@ export const Heatmap = ({ data }) => {
         {data.map((item, idx) => (
           <div
             key={idx}
-            className={`aspect-square rounded-md ${getColor(
-              item.value
-            )} transition-colors duration-200 hover:opacity-80 cursor-pointer`}
-            title={`Day ${item.day}: ${item.value} session${item.value !== 1 ? 's' : ''}`}
+            className={`aspect-square rounded-lg ${getColor(item.value)} transition-all duration-200 hover:opacity-80 hover:scale-110 cursor-pointer`}
+            title={`Day ${item.day}: ${item.value} session${item.value !== 1 ? "s" : ""}`}
           />
         ))}
       </div>
-      <div className="flex items-center gap-2 mt-4 text-xs text-[#9CA3AF]">
+      <div className={`flex items-center gap-2 mt-4 text-xs font-medium ${dark ? "text-white/30" : "text-[#9CA3AF]"}`}>
         <span>Less</span>
-        <div className="flex gap-1.5">
-          <div className="w-3 h-3 rounded-md bg-[#E8F5E9]"></div>
-          <div className="w-3 h-3 rounded-md bg-[#A5D6A7]"></div>
-          <div className="w-3 h-3 rounded-md bg-[#66BB6A]"></div>
-          <div className="w-3 h-3 rounded-md bg-[#4CAF50]"></div>
+        <div className="flex gap-1">
+          {legendColors.map((c, i) => (
+            <div key={i} className={`w-3.5 h-3.5 rounded-md ${c}`} />
+          ))}
         </div>
         <span>Many</span>
       </div>

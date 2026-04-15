@@ -413,7 +413,7 @@ const Message = ({
         {!isSender && (
           <div
             className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-            style={{ background: "linear-gradient(135deg, #f75801, #d43400)" }}
+            style={{ background: "linear-gradient(135deg, #FE9934, #F75801)" }}
           >
             {fullName?.charAt(0)?.toUpperCase() || "A"}
           </div>
@@ -465,7 +465,7 @@ const Message = ({
 
         {/* Sender Avatar - Right side */}
         {isSender && (
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+          <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ background: "linear-gradient(135deg, #F75801, #D43400)" }}>
             {userName?.charAt(0)?.toUpperCase() || "Y"}
           </div>
         )}

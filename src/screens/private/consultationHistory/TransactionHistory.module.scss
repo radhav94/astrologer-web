@@ -102,3 +102,63 @@
     transform: rotate(360deg);
   }
 }
+
+// Amount + Download row
+.amountRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+// Download invoice button — matches theme (orange on light orange bg)
+.downloadInvoiceBtn {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background-color: #fff7ed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.15s;
+  color: #ea580c;
+
+  @media (max-width: 640px) {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+
+    svg {
+      width: 14px;
+      height: 14px;
+    }
+  }
+
+  &:hover {
+    background-color: #ffedd5;
+  }
+
+  &:active {
+    background-color: #fed7aa;
+  }
+}
+
+// Download button loading state
+.downloadLoading {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+// Small spinner inside download button
+.btnSpinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #fed7aa;
+  border-top-color: #ea580c;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  display: block;
+}

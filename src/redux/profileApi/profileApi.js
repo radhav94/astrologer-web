@@ -46,9 +46,16 @@ export const profileApi = epicApi.injectEndpoints({
       invalidatesTags: (result, error, { id }) => 
         id ? [{ type: "Astrologer", id }] : ["Astrologer"],
     }),
-    
-    
+
+    // GET /api/transactions/invoice?transactionId=xxx — download invoice PDF
+    getTransactionInvoice: builder.query({
+      query: (transactionId) => ({
+        url: "transactions/invoice",
+        method: "GET",
+        params: { transactionId },
+      }),
+    }),
   }),
 });
 
-export const { useGetTransactionListQuery, useGetGiftReceivedListQuery, useSetAstroEditProfileMutation } = profileApi;
+export const { useGetTransactionListQuery, useGetGiftReceivedListQuery, useSetAstroEditProfileMutation, useLazyGetTransactionInvoiceQuery } = profileApi;

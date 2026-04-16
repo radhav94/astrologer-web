@@ -18,15 +18,13 @@ import {
   MilestonesSection,
   PendingVerificationSection,
   QuickStatsSection,
-  WalletSection,
   RecentActivitySection,
-  ProfileCompletionSection,
-  GreetingBanner,
   QuickActionsSection,
-  GiftSummarySection,
   OrderHistorySection,
   TransactionHistorySection,
   GiftReceivedSection,
+  WalletStatsSection,
+  DashboardDateFilter,
 } from "../../../components/Dashboard/sections";
 
 const getStoredAstrologerDetails = () => {
@@ -175,14 +173,15 @@ const Dashboard = () => {
 
   // --- Overview filter options ---
   const overviewOptions = useMemo(() => [
+    { id: 0, value: "alltime", label: "All Time" },
     { id: 1, value: "today", label: "Today" },
     { id: 2, value: "yesterday", label: "Yesterday" },
     { id: 3, value: "last7days", label: "Last 7 Days" },
     { id: 4, value: "last30days", label: "Last 30 Days" },
     { id: 5, value: "custom", label: "Custom Date" },
   ], []);
-  // Default to "yesterday" as per requirements
-  const [selectedOverviewOption, setSelectedOverviewOption] = useState(() => overviewOptions[1]);
+  // Default to "All Time" (registration date → today)
+  const [selectedOverviewOption, setSelectedOverviewOption] = useState(() => overviewOptions[0]);
   // Custom date range state (only used when option is "custom")
   const [customFromDate, setCustomFromDate] = useState(null);
   const [customToDate, setCustomToDate] = useState(null);
@@ -190,18 +189,28 @@ const Dashboard = () => {
   // Today's earnings from astrologer API (useGetAstrologerByIdQuery)
   const totalEarnings = astrologerData?.todaysEarning ?? 0;
 
+  // Astrologer registration date for "All Time" range
+  const registrationDate = useMemo(() => {
+    const regDate = astrologerData?.createdAt || userData?.createdAt;
+    return regDate ? new Date(regDate).toISOString().split("T")[0] : "2024-01-01";
+  }, [astrologerData?.createdAt, userData?.createdAt]);
+
   // Build query params based on selected overview option
   const overviewQueryParams = useMemo(() => {
+    if (selectedOverviewOption.value === "alltime") {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      return { customFromDate: registrationDate, customToDate: yesterday.toISOString().split("T")[0] };
+    }
     if (selectedOverviewOption.value === "custom") {
-      // Only fire when both dates are picked
       if (customFromDate && customToDate) {
-        const fmt = (d) => d.toISOString().split("T")[0]; // YYYY-MM-DD
+        const fmt = (d) => d.toISOString().split("T")[0];
         return { customFromDate: fmt(customFromDate), customToDate: fmt(customToDate) };
       }
-      return null; // skip query until both dates are set
+      return null;
     }
     return { dateRange: selectedOverviewOption.value };
-  }, [selectedOverviewOption, customFromDate, customToDate]);
+  }, [selectedOverviewOption, customFromDate, customToDate, registrationDate]);
 
   // Fetch monthly overview data
   const { data: monthlyData, isLoading: isMonthlyLoading } = useGetMonthlyOverviewQuery(
@@ -249,6 +258,7 @@ const Dashboard = () => {
   // Dynamic section title based on selected option
   const overviewTitle = useMemo(() => {
     const titles = {
+      alltime: "ALL TIME OVERVIEW",
       today: "TODAY'S OVERVIEW",
       yesterday: "YESTERDAY'S OVERVIEW",
       last7days: "LAST 7 DAYS OVERVIEW",
@@ -273,25 +283,29 @@ const Dashboard = () => {
         />
       ) : (
         <>
-          {/* Row 1: Greeting + Profile Completion */}
-          <div className={`grid grid-cols-1 lg:grid-cols-2 gap-3 ${dashStyles.sectionAnimated}`}>
-            <div><GreetingBanner astrologerData={astrologerData} /></div>
-            <div><ProfileCompletionSection astrologerData={astrologerData} /></div>
-          </div>
+          {/* Global Date Filter */}
+          <DashboardDateFilter
+            options={overviewOptions}
+            selected={selectedOverviewOption}
+            onSelect={setSelectedOverviewOption}
+            customFromDate={customFromDate}
+            customToDate={customToDate}
+            onCustomFromDate={setCustomFromDate}
+            onCustomToDate={setCustomToDate}
+          />
 
-          {/* Row 2: Quick Actions + Consultation Price */}
+          {/* Row 1: Quick Actions + Consultation Price */}
           <div className={`grid grid-cols-1 lg:grid-cols-2 gap-3 ${dashStyles.sectionAnimated}`}>
-            <div><QuickActionsSection /></div>
+            <div><QuickActionsSection overviewData={monthlyOverview} isLoading={isMonthlyLoading} /></div>
             <div><ConsultationPriceSection astrologerData={astrologerData} /></div>
           </div>
 
-          {/* Row 3: Wallet + Gift Summary */}
-          <div className={`grid grid-cols-1 lg:grid-cols-2 gap-3 ${dashStyles.sectionAnimated}`}>
-            <div><WalletSection /></div>
-            <div><GiftSummarySection /></div>
+          {/* Row 2: Wallet Stats */}
+          <div className={dashStyles.sectionAnimated}>
+            <WalletStatsSection />
           </div>
 
-          {/* Row 4: Today's Updates + Upcoming Sessions */}
+          {/* Row 3: Today's Updates + Upcoming Sessions */}
           <div className={dashStyles.sectionAnimated}>
             <TodaysUpdatesSection
               isActiveSession={isActiveSession}

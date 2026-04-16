@@ -52,7 +52,7 @@ const InactiveSessionCard = () => (
 
     <div className="flex-1 flex flex-col justify-center py-2 relative z-10">
       <p className="text-[#2D2D2D] text-sm font-bold mb-0.5">No Active Session</p>
-      <p className="text-[#9CA3AF] text-xs">You are offline</p>
+      <p className="text-[#9CA3AF] text-xs"></p>
     </div>
 
     <div className="border-t border-gray-200/60 pt-2 flex-shrink-0">

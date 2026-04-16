@@ -19,3 +19,5 @@ export { default as GiftSummarySection } from './GiftSummarySection';
 export { default as OrderHistorySection } from './OrderHistorySection';
 export { default as TransactionHistorySection } from './TransactionHistorySection';
 export { default as GiftReceivedSection } from './GiftReceivedSection';
+export { default as WalletStatsSection } from './WalletStatsSection';
+export { default as DashboardDateFilter } from './DashboardDateFilter';

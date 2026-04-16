@@ -6,6 +6,22 @@ import { Toast } from "../../../../components";
 import SectionHeader from "../../../../components/UI/SectionHeader";
 import privateRequest from "../../../../services/appServices/privateRequest";
 import IconSet from "../../../../assets/icons/icon_set.png";
+import DateTimePicker from "../../../../components/UI/dateTimePicker/DateTimePicker";
+
+// Convert "HH:mm" string to Date object for DateTimePicker
+const timeStrToDate = (str) => {
+  if (!str) return null;
+  const [h, m] = str.split(":").map(Number);
+  const d = new Date();
+  d.setHours(h, m, 0, 0);
+  return d;
+};
+
+// Convert Date object back to "HH:mm" string for state
+const dateToTimeStr = (date) => {
+  if (!date) return "";
+  return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+};
 
 const DAYS_OF_WEEK = [
   { key: "monday", label: "Monday" },
@@ -344,35 +360,21 @@ const SetAvailability = () => {
                   {/* Time pickers */}
                   {s.enabled && (
                     <div className="flex items-center gap-3 mt-3">
-                      <div className="flex-1 relative">
-                        <input
-                          type="time"
-                          value={s.start}
-                          onChange={(e) => updateTime(day.key, "start", e.target.value)}
-                          onClick={(e) => e.target.showPicker?.()}
-                          className="w-full rounded-xl px-3 py-2.5 text-[13px] pr-9 focus:outline-none"
-                          style={{ border: "1px solid #E5E7EB", color: "#1A1A1A" }}
-                        />
-                        <Clock
-                          size={16}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"
-                          style={{ color: "#F75801" }}
+                      <div className="flex-1">
+                        <DateTimePicker
+                          selected={timeStrToDate(s.start)}
+                          onChange={(date) => updateTime(day.key, "start", dateToTimeStr(date))}
+                          mode="time"
+                          placeholder="Start time"
                         />
                       </div>
                       <span className="text-[13px] font-medium" style={{ color: "#9CA3AF" }}>To</span>
-                      <div className="flex-1 relative">
-                        <input
-                          type="time"
-                          value={s.end}
-                          onChange={(e) => updateTime(day.key, "end", e.target.value)}
-                          onClick={(e) => e.target.showPicker?.()}
-                          className="w-full rounded-xl px-3 py-2.5 text-[13px] pr-9 focus:outline-none"
-                          style={{ border: "1px solid #E5E7EB", color: "#1A1A1A" }}
-                        />
-                        <Clock
-                          size={16}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"
-                          style={{ color: "#F75801" }}
+                      <div className="flex-1">
+                        <DateTimePicker
+                          selected={timeStrToDate(s.end)}
+                          onChange={(date) => updateTime(day.key, "end", dateToTimeStr(date))}
+                          mode="time"
+                          placeholder="End time"
                         />
                       </div>
                     </div>

@@ -1,7 +1,7 @@
-import React, { useState } from "react";
-import { ChevronLeft, ChevronRight, Calendar } from "lucide-react";
-import { SectionHeader } from "../../../../Profile/profile/ui";
+import { useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useGetMahaDashaPredictionsQuery } from "../../../../../../redux/kundli/kundliApi";
+import DateTimePicker from "../../../../../../components/UI/dateTimePicker/DateTimePicker";
 
 const Vimshottari = () => {
   const [selectedDate, setSelectedDate] = useState(new Date(2025, 10, 10)); // Months are 0-indexed
@@ -17,21 +17,10 @@ const Vimshottari = () => {
     });
   };
 
-  const formatDateValue = (date) => {
-    // Format to YYYY-MM-DD for input value, ensuring local time usage
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  };
-
-  const handleDateChange = (e) => {
-    if (e.target.value) {
-      // Create date object treating input as local time
-      const [y, m, d] = e.target.value.split("-").map();
-      setSelectedDate(new Date(y, m - 1, d));
-    }
-  };
+  /* Old native date helpers — replaced by DateTimePicker
+  const formatDateValue = (date) => { ... };
+  const handleDateChange = (e) => { ... };
+  */
 
   // Helper to calculate mock date ranges for the display
   const getDateOffset = (date, years, months = 0) => {
@@ -45,22 +34,14 @@ const Vimshottari = () => {
     <div className="h-full flex flex-col">
       <div className="flex-1 flex flex-col items-center justify-center p-4">
         <div className="w-full  space-y-8">
-          {/* Date Selector Header */}
-          <div className="relative w-full group">
-            <div className="w-[70%] m-auto bg-white border-2 border-gray-900 rounded-2xl p-5 flex items-center justify-between shadow-sm group-hover:bg-gray-50 transition-all duration-200 cursor-pointer pointer-events-none">
-              <span className="font-bold text-gray-900 text-lg group-hover:text-gray-700">
-                {formatDateDisplay(selectedDate)}
-              </span>
-              <Calendar className="text-gray-900" size={24} />
-            </div>
-
-            {/* Hidden Native Date Input Overlay */}
-            <input
-              type="date"
-              value={formatDateValue(selectedDate)}
-              onChange={handleDateChange}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-              aria-label="Select Date"
+          {/* Date Selector Header — using reusable DateTimePicker */}
+          <div className="w-[70%] m-auto">
+            <DateTimePicker
+              selected={selectedDate}
+              onChange={(date) => date && setSelectedDate(date)}
+              mode="date"
+              dateFormat="MMMM d, yyyy"
+              placeholder="Select Date"
             />
           </div>
 

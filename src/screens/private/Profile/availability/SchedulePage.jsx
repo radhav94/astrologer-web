@@ -5,6 +5,22 @@ import { formatToAmPm, isDuplicateSlot } from "./utils";
 import { Toast } from "../../../../components";
 import { useUpdateAvailabilityMutation } from "../../../../redux/astrologer/astrologerApi";
 import { Clock, Calendar, Trash2, ChevronRight } from "lucide-react";
+import DateTimePicker from "../../../../components/UI/dateTimePicker/DateTimePicker";
+
+// Convert "HH:mm" string to Date object for DateTimePicker
+const timeStrToDate = (str) => {
+  if (!str) return null;
+  const [h, m] = str.split(":").map(Number);
+  const d = new Date();
+  d.setHours(h, m, 0, 0);
+  return d;
+};
+
+// Convert Date object back to "HH:mm" string for state
+const dateToTimeStr = (date) => {
+  if (!date) return "";
+  return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+};
 
 const SchedulePage = () => {
   const { state: { data } } = useLocation();
@@ -127,45 +143,23 @@ const SchedulePage = () => {
           <div className="bg-white mb-6">
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div>
-                <label htmlFor="startTime" className="text-base font-semibold text-gray-900 mb-3 block">
-                  Start Time
-                </label>
-                <div className="relative">
-                  <input
-                    id="startTime"
-                    type="time"
-                    value={startTime}
-                    onChange={(e) => setStartTime(e.target.value)}
-                    onClick={(e) => e.target.showPicker?.()}
-                    className="w-full border border-gray-300 rounded-xl px-4 py-3.5 text-sm font-medium text-gray-900
-                             focus:outline-none focus:ring-0 focus:border-gray-400 pr-10"
-                  />
-                  <Clock 
-                    size={20} 
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#F75801] pointer-events-none" 
-                  />
-                </div>
+                <DateTimePicker
+                  label="Start Time"
+                  selected={timeStrToDate(startTime)}
+                  onChange={(date) => setStartTime(dateToTimeStr(date))}
+                  mode="time"
+                  placeholder="Start time"
+                />
               </div>
 
               <div>
-                <label htmlFor="endTime" className="text-base font-semibold text-gray-900 mb-3 block">
-                  End Time
-                </label>
-                <div className="relative">
-                  <input
-                    id="endTime"
-                    type="time"
-                    value={endTime}
-                    onChange={(e) => setEndTime(e.target.value)}
-                    onClick={(e) => e.target.showPicker?.()}
-                    className="w-full border border-gray-300 rounded-xl px-4 py-3.5 text-sm font-medium text-gray-900
-                             focus:outline-none focus:ring-0 focus:border-gray-400 pr-10"
-                  />
-                  <Calendar 
-                    size={20} 
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#F75801] pointer-events-none" 
-                  />
-                </div>
+                <DateTimePicker
+                  label="End Time"
+                  selected={timeStrToDate(endTime)}
+                  onChange={(date) => setEndTime(dateToTimeStr(date))}
+                  mode="time"
+                  placeholder="End time"
+                />
               </div>
             </div>
             

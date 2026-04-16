@@ -144,7 +144,16 @@ const Message = ({
               key={p.variantId || p.productId || p._id || p.ID || idx}
               className="flex gap-2.5 p-2 rounded-lg cursor-pointer active:opacity-80 transition-opacity"
               style={{ background: "rgba(0,0,0,0.04)" }}
-              onClick={() => p.slug && navigate(`/product-details/${p.slug}`)}
+              onClick={() => {
+                if (!p.slug) return;
+                const baseUrl = import.meta.env.VITE_FRONTEND_BASE_URL;
+                const url = new URL(`/product-details/${p.slug}`, baseUrl);
+                if (p.variantId) {
+                  url.searchParams.set("variantId", p.variantId);
+                  if (p.variantSkuCode) url.searchParams.set("sku", p.variantSkuCode);
+                }
+                window.open(url.toString(), "_blank");
+              }}
             >
               {image && (
                 <img
@@ -314,16 +323,56 @@ const Message = ({
     }
 
     if (type === "attachment") {
+      // Try to parse JSON payload with fileName, fallback to URL extraction
+      let fileUrl = text;
+      let displayName = "Download Attachment";
+      try {
+        const parsed = typeof text === "string" ? JSON.parse(text) : text;
+        if (parsed?.url) {
+          fileUrl = parsed.url;
+          displayName = parsed.fileName || displayName;
+        }
+      } catch {
+        // Not JSON — extract name from URL
+        try {
+          const urlPath = new URL(text).pathname;
+          const segments = urlPath.split("/");
+          const lastSegment = segments[segments.length - 1];
+          if (lastSegment && lastSegment.includes(".")) {
+            displayName = decodeURIComponent(lastSegment);
+          }
+        } catch {
+          // keep default
+        }
+      }
+
+      const handleDownload = async (e) => {
+        e.preventDefault();
+        try {
+          const res = await fetch(fileUrl);
+          const blob = await res.blob();
+          const blobUrl = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = blobUrl;
+          a.download = displayName;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(blobUrl);
+        } catch {
+          // Fallback: open in new tab
+          window.open(fileUrl, "_blank");
+        }
+      };
+
       return (
-        <a
-          href={text}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-2 text-sm underline font-semibold"
+        <button
+          onClick={handleDownload}
+          className="flex items-center gap-2 text-sm underline font-semibold text-inherit cursor-pointer bg-transparent border-none p-0"
         >
           <span className="text-lg">📎</span>
-          <span className="truncate max-w-[180px]">Download Attachment</span>
-        </a>
+          <span className="truncate max-w-[180px]">{displayName}</span>
+        </button>
       );
     }
 
@@ -413,7 +462,7 @@ const Message = ({
         {!isSender && (
           <div
             className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-            style={{ background: "linear-gradient(135deg, #f75801, #d43400)" }}
+            style={{ background: "linear-gradient(135deg, #FE9934, #F75801)" }}
           >
             {fullName?.charAt(0)?.toUpperCase() || "A"}
           </div>
@@ -465,7 +514,7 @@ const Message = ({
 
         {/* Sender Avatar - Right side */}
         {isSender && (
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+          <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ background: "linear-gradient(135deg, #F75801, #D43400)" }}>
             {userName?.charAt(0)?.toUpperCase() || "Y"}
           </div>
         )}
@@ -639,14 +688,20 @@ const ChatWindow = () => {
 
   const handleAttachment = async () => {
     try {
-      const { blob } = await openFileSelector(
+      const { blob, name } = await openFileSelector(
         "image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.txt",
       );
-      const signedUrl = await getS3SignedUrl({ fileType: blob.type }).unwrap();
+      const signedUrl = await getS3SignedUrl({ fileType: blob.type, fileName: name }).unwrap();
       const fileUrl = signedUrl.uploadUrl.split("?")[0];
       await uploadAudioToS3(signedUrl.uploadUrl, blob);
       const attachType = getAttachType(blob.type);
-      astroReply(fileUrl, attachType);
+      // For document attachments, send as JSON with original file name
+      if (attachType === "attachment") {
+        const payload = JSON.stringify({ url: fileUrl, fileName: name });
+        astroReply(payload, attachType);
+      } else {
+        astroReply(fileUrl, attachType);
+      }
     } catch (err) {
       console.error("Attachment failed:", err);
     }
@@ -701,6 +756,7 @@ const ChatWindow = () => {
   const handleDisconnect = () => {
     try {
       voiceSocket.emit("chat:end", { roomId, endedBy: "ASTROLOGER" });
+      Toast.success("Chat ended.");
     } catch (error) {
       handleChatEndedFromServer();
       console.log("chat end error", error);
@@ -853,7 +909,7 @@ const ChatWindow = () => {
   };
 
   return (
-    <div className="-m-4 max-w-none flex flex-col h-screen bg-gray-50 overflow-hidden">
+    <div className="max-w-none flex flex-col h-full bg-gray-50 overflow-hidden">
       {/* RECONNECTING OVERLAY */}
       <ReconnectingOverlay
         isVisible={networkDisconnected || isReconnecting}
@@ -861,7 +917,7 @@ const ChatWindow = () => {
       />
 
       {/* ---------- Header ---------- */}
-      <div className="z-20 bg-white w-full shrink-0">
+      <div className="z-20 bg-white w-full shrink-0 sticky top-0">
         <div className="flex items-center justify-between px-4 md:px-6 py-3 border-b border-gray-200">
           <div className="flex items-center gap-3">
             <button
@@ -1019,7 +1075,7 @@ const ChatWindow = () => {
       {/* ---------- Messages ---------- */}
       <div
         ref={messagesContainerRef}
-        className="flex-1 overflow-y-auto p-4 md:p-6 pb-24 md:pb-8 custom-scrollbar"
+        className="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar"
       >
         {messagesWithDate.map((msg) =>
           msg.isDate ? (
@@ -1053,7 +1109,7 @@ const ChatWindow = () => {
 
       {/* ---------- Input ---------- */}
       {!isMessageDisabled && (
-        <div className="fixed bottom-0 left-0 right-0 z-20 px-4 py-3 bg-white border-t border-gray-200 md:sticky md:bottom-0">
+        <div className="sticky bottom-0 left-0 right-0 z-20 px-4 py-3 bg-white border-t border-gray-200">
           <div className="flex items-center gap-2">
             <div className="flex-1 flex items-center bg-white border border-gray-300 rounded-lg px-3 md:px-5 py-3 shadow-sm min-w-0">
               <input

@@ -9,26 +9,10 @@ const Vimshottari = () => {
   const { data } = useGetMahaDashaPredictionsQuery();
   const dashaData = data?.response?.dashas || [];
 
-  const formatDateDisplay = (date) => {
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
-
-  /* Old native date helpers — replaced by DateTimePicker
-  const formatDateValue = (date) => { ... };
-  const handleDateChange = (e) => { ... };
+  /* Old helpers — no longer needed, DateTimePicker handles display
+  const formatDateDisplay = (date) => { ... };
+  const getDateOffset = (date, years, months) => { ... };
   */
-
-  // Helper to calculate mock date ranges for the display
-  const getDateOffset = (date, years, months = 0) => {
-    const newDate = new Date(date);
-    newDate.setFullYear(newDate.getFullYear() + years);
-    newDate.setMonth(newDate.getMonth() + months);
-    return formatDateDisplay(newDate);
-  };
 
   return (
     <div className="h-full flex flex-col">
@@ -37,11 +21,15 @@ const Vimshottari = () => {
           {/* Date Selector Header — using reusable DateTimePicker */}
           <div className="w-[70%] m-auto">
             <DateTimePicker
-              selected={selectedDate}
-              onChange={(date) => date && setSelectedDate(date)}
               mode="date"
-              dateFormat="MMMM d, yyyy"
-              placeholder="Select Date"
+              selected={selectedDate}
+              onChange={(date) => {
+                if (date) {
+                  setSelectedDate(date);
+                }
+              }}
+              maxDate={new Date()}
+              placeholder="DD/MM/YYYY"
             />
           </div>
 

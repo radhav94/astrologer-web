@@ -1,31 +1,159 @@
-import { forwardRef, useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import styles from "./DateTimePicker.module.scss";
 
-/* ── 12-hour helpers ── */
+/* ───── 12-hour helpers ───── */
+const to12 = (h24) => {
+  const period = h24 >= 12 ? "PM" : "AM";
+  let h12 = h24 % 12;
+  if (h12 === 0) h12 = 12;
+  return { hour: h12, period };
+};
+
+const to24 = (h12, period) => {
+  if (period === "AM") return h12 === 12 ? 0 : h12;
+  return h12 === 12 ? 12 : h12 + 12;
+};
+
+const pad = (n) => String(n).padStart(2, "0");
+
 const HOURS = Array.from({ length: 12 }, (_, i) => i + 1);
 const MINUTES = Array.from({ length: 60 }, (_, i) => i);
 const PERIODS = ["AM", "PM"];
-const pad = (n) => String(n).padStart(2, "0");
 
-const to12Hour = (date) => {
-  if (!date) return { hour: 12, minute: 0, period: "AM" };
-  const h = date.getHours();
-  return {
-    hour: h === 0 ? 12 : h > 12 ? h - 12 : h,
-    minute: date.getMinutes(),
-    period: h >= 12 ? "PM" : "AM",
+/* ───── Custom 12-hour Time Picker ───── */
+const TimePicker12 = ({ selected, onChange, disabled, placeholder }) => {
+  const [open, setOpen] = useState(false);
+  const wrapperRef = useRef(null);
+
+  // Derive display values from selected Date
+  const hour = selected ? to12(selected.getHours()).hour : null;
+  const minute = selected ? selected.getMinutes() : null;
+  const period = selected ? to12(selected.getHours()).period : null;
+
+  const displayValue =
+    hour != null ? `${pad(hour)}:${pad(minute)} ${period}` : "";
+
+  // Scroll selected items into view when dropdown opens
+  const hourListRef = useRef(null);
+  const minuteListRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    // Small delay so DOM is painted
+    const t = setTimeout(() => {
+      hourListRef.current
+        ?.querySelector(`.${styles.activeItem}`)
+        ?.scrollIntoView({ block: "nearest" });
+      minuteListRef.current
+        ?.querySelector(`.${styles.activeItem}`)
+        ?.scrollIntoView({ block: "nearest" });
+    }, 0);
+    return () => clearTimeout(t);
+  }, [open]);
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target))
+        setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  const buildDate = useCallback(
+    (h12, m, p) => {
+      const d = selected ? new Date(selected) : new Date();
+      d.setHours(to24(h12, p), m, 0, 0);
+      return d;
+    },
+    [selected]
+  );
+
+  const handleSelect = (type, value) => {
+    const curH = hour ?? 12;
+    const curM = minute ?? 0;
+    const curP = period ?? "AM";
+
+    let newH = curH,
+      newM = curM,
+      newP = curP;
+    if (type === "hour") newH = value;
+    else if (type === "minute") newM = value;
+    else newP = value;
+
+    onChange(buildDate(newH, newM, newP));
   };
+
+  return (
+    <div className={styles.timePickerWrapper} ref={wrapperRef}>
+      <input
+        type="text"
+        readOnly
+        value={displayValue}
+        placeholder={placeholder || "Select time"}
+        disabled={disabled}
+        className={styles.input}
+        onClick={() => !disabled && setOpen((o) => !o)}
+        autoComplete="off"
+      />
+
+      {open && (
+        <div className={styles.timeDropdown}>
+          {/* Hours */}
+          <div className={styles.timeColumn} ref={hourListRef}>
+            {HOURS.map((h) => (
+              <div
+                key={h}
+                className={`${styles.timeItem} ${h === hour ? styles.activeItem : ""}`}
+                onClick={() => handleSelect("hour", h)}
+              >
+                {pad(h)}
+              </div>
+            ))}
+          </div>
+
+          {/* Minutes */}
+          <div className={styles.timeColumn} ref={minuteListRef}>
+            {MINUTES.map((m) => (
+              <div
+                key={m}
+                className={`${styles.timeItem} ${m === minute ? styles.activeItem : ""}`}
+                onClick={() => handleSelect("minute", m)}
+              >
+                {pad(m)}
+              </div>
+            ))}
+          </div>
+
+          {/* AM / PM */}
+          <div className={styles.timeColumn}>
+            {PERIODS.map((p) => (
+              <div
+                key={p}
+                className={`${styles.timeItem} ${p === period ? styles.activeItem : ""}`}
+                onClick={() => handleSelect("period", p)}
+              >
+                {p}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 };
 
-const to24Date = (hour, minute, period, base) => {
-  const d = base ? new Date(base) : new Date();
-  let h24 = hour;
-  if (period === "AM") h24 = hour === 12 ? 0 : hour;
-  else h24 = hour === 12 ? 12 : hour + 12;
-  d.setHours(h24, minute, 0, 0);
-  return d;
+
+/* ───── Main DateTimePicker ───── */
+
+/** Format Date to DD/MM/YYYY display string */
+const formatDateDisplay = (d) => {
+  if (!d) return "";
+  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
 };
 
 /**
@@ -64,46 +192,85 @@ const DateTimePicker = ({
   const isTimeOnly = resolvedMode === "time";
   const isDateTime = resolvedMode === "datetime";
 
-  // Resolve format based on mode
-  const resolvedFormat = dateFormat || (
-    isTimeOnly ? "hh:mm aa" : isDateTime ? "dd/MM/yyyy hh:mm aa" : "dd/MM/yyyy"
-  );
-
-  const resolvedPlaceholder = placeholder || (
-    isTimeOnly ? "Select time" : isDateTime ? "Select date & time" : "Select date"
-  );
-
-  /* ── Time-only mode: custom 12-hour dropdown ── */
+  // For time-only mode, use our custom 12-hour picker
   if (isTimeOnly) {
     return (
-      <TimeOnly12h
-        selected={selected}
-        onChange={onChange}
-        placeholder={resolvedPlaceholder}
-        disabled={disabled}
-        label={label}
-        required={required}
-        className={className}
-      />
+      <div className={`${styles.wrapper} ${className}`}>
+        {label && (
+          <label className={styles.label}>
+            {label}
+            {required && <span className={styles.required}>*</span>}
+          </label>
+        )}
+        <TimePicker12
+          selected={selected}
+          onChange={onChange}
+          disabled={disabled}
+          placeholder={placeholder || "Select time"}
+        />
+      </div>
     );
   }
 
-  // Custom input for consistent cross-browser rendering
-  const CustomInput = forwardRef(({ value, onClick, onChange: onInputChange }, ref) => (
-    <input
-      ref={ref}
-      type="text"
-      value={value}
-      onClick={onClick}
-      onChange={onInputChange}
-      placeholder={resolvedPlaceholder}
-      disabled={disabled}
-      className={styles.input}
-      readOnly={false}
-      autoComplete="off"
-    />
-  ));
-  CustomInput.displayName = "CustomInput";
+  // ── Date / DateTime mode ──
+
+  const resolvedFormat =
+    dateFormat || (isDateTime ? "dd/MM/yyyy hh:mm aa" : "dd/MM/yyyy");
+
+  const resolvedPlaceholder =
+    placeholder || (isDateTime ? "Select date & time" : "dd/mm/yyyy");
+
+  const [inputText, setInputText] = useState(selected ? formatDateDisplay(selected) : "");
+
+  // Sync inputText when selected prop changes (picker or parent update)
+  useEffect(() => {
+    setInputText(selected ? formatDateDisplay(selected) : "");
+  }, [selected]);
+
+  // Parse DD/MM/YYYY string to Date
+  const parseManualDate = useCallback((text) => {
+    const cleaned = text.replace(/[^0-9/]/g, "");
+    const parts = cleaned.split("/");
+    if (parts.length !== 3) return null;
+    const [dd, mm, yyyy] = parts;
+    if (!dd || !mm || !yyyy || yyyy.length !== 4) return null;
+    const d = parseInt(dd, 10);
+    const m = parseInt(mm, 10);
+    const y = parseInt(yyyy, 10);
+    if (d < 1 || d > 31 || m < 1 || m > 12 || y < 1900) return null;
+    const date = new Date(y, m - 1, d);
+    if (date.getDate() !== d || date.getMonth() !== m - 1 || date.getFullYear() !== y) return null;
+    if (minDate && date < minDate) return null;
+    if (maxDate && date > maxDate) return null;
+    return date;
+  }, [minDate, maxDate]);
+
+  const handleManualChange = (e) => {
+    const val = e.target.value;
+    setInputText(val);
+    // Try to parse as user types — only call onChange when fully valid
+    const parsed = parseManualDate(val);
+    if (parsed) {
+      onChange(parsed);
+    }
+  };
+
+  const handleManualBlur = () => {
+    // On blur, if text doesn't parse to a valid date, revert to selected
+    const parsed = parseManualDate(inputText);
+    if (!parsed && inputText.length > 0) {
+      // Revert to last valid selection
+      setInputText(selected ? formatDateDisplay(selected) : "");
+    }
+  };
+
+  const handlePickerChange = (date) => {
+    onChange(date);
+    // inputText will sync via the useEffect above
+  };
+
+  // Ref for the DatePicker to open programmatically
+  const datePickerRef = useRef(null);
 
   return (
     <div className={`${styles.wrapper} ${className}`}>
@@ -114,150 +281,61 @@ const DateTimePicker = ({
         </label>
       )}
 
-      <DatePicker
-        selected={selected}
-        onChange={onChange}
-        // Date options
-        {...(!isTimeOnly && {
-          showMonthDropdown: true,
-          showYearDropdown: true,
-          dropdownMode: "select",
-          scrollableYearDropdown: true,
-          yearDropdownItemNumber: 100,
-        })}
-        // Time options
-        showTimeSelect={isDateTime}
-        showTimeSelectOnly={false}
-        timeFormat="hh:mm aa"
-        timeIntervals={15}
-        // Format
-        dateFormat={resolvedFormat}
-        // Constraints
-        minDate={minDate}
-        maxDate={maxDate}
-        disabled={disabled}
-        // Custom input for Safari compatibility
-        customInput={<CustomInput />}
-        // Positioning
-        popperPlacement="bottom-start"
-        popperClassName={styles.popper}
-        calendarClassName={styles.calendar}
-        // Accessibility
-        autoComplete="off"
-      />
-    </div>
-  );
-};
+      <div className={styles.dateInputRow}>
+        <input
+          type="text"
+          value={inputText}
+          onChange={handleManualChange}
+          onBlur={handleManualBlur}
+          placeholder={resolvedPlaceholder}
+          disabled={disabled}
+          className={styles.input}
+          autoComplete="off"
+        />
+        {/* Invisible overlay covering right 1/3 of input to open calendar */}
+        <div
+          className={styles.calendarOverlay}
+          onClick={() => !disabled && datePickerRef.current?.setOpen(true)}
+        />
+        <button
+          type="button"
+          className={styles.calendarBtn}
+          disabled={disabled}
+          onClick={() => datePickerRef.current?.setOpen(true)}
+          tabIndex={-1}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+            <line x1="16" y1="2" x2="16" y2="6" />
+            <line x1="8" y1="2" x2="8" y2="6" />
+            <line x1="3" y1="10" x2="21" y2="10" />
+          </svg>
+        </button>
+      </div>
 
-/* ── Internal 12-hour time picker (inline, not a separate file) ── */
-const TimeOnly12h = ({ selected, onChange, placeholder, disabled, label, required, className }) => {
-  const { hour, minute, period } = to12Hour(selected);
-  const [open, setOpen] = useState(false);
-  const [selHour, setSelHour] = useState(hour);
-  const [selMinute, setSelMinute] = useState(minute);
-  const [selPeriod, setSelPeriod] = useState(period);
-  const wrapperRef = useRef(null);
-  const hourColRef = useRef(null);
-  const minuteColRef = useRef(null);
-
-  // Sync when selected prop changes externally
-  useEffect(() => {
-    const { hour: h, minute: m, period: p } = to12Hour(selected);
-    setSelHour(h);
-    setSelMinute(m);
-    setSelPeriod(p);
-  }, [selected]);
-
-  const emitChange = useCallback(
-    (h, m, p) => { if (onChange) onChange(to24Date(h, m, p, selected)); },
-    [onChange, selected]
-  );
-
-  const pickHour = (h) => { setSelHour(h); emitChange(h, selMinute, selPeriod); };
-  const pickMinute = (m) => { setSelMinute(m); emitChange(selHour, m, selPeriod); };
-  const pickPeriod = (p) => { setSelPeriod(p); emitChange(selHour, selMinute, p); };
-
-  // Close on outside click
-  useEffect(() => {
-    const handler = (e) => {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) setOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-
-  // Scroll selected items into view when dropdown opens
-  useEffect(() => {
-    if (!open) return;
-    const ITEM_H = 36;
-    const scrollInto = (ref, idx) => {
-      if (ref.current) {
-        ref.current.scrollTop = idx * ITEM_H - ref.current.clientHeight / 2 + ITEM_H / 2;
-      }
-    };
-    requestAnimationFrame(() => {
-      scrollInto(hourColRef, selHour - 1);
-      scrollInto(minuteColRef, selMinute);
-    });
-  }, [open, selHour, selMinute]);
-
-  const displayValue = selected ? `${pad(selHour)}:${pad(selMinute)} ${selPeriod}` : "";
-
-  return (
-    <div className={`${styles.wrapper} ${className || ""}`} ref={wrapperRef}>
-      {label && (
-        <label className={styles.label}>
-          {label}
-          {required && <span className={styles.required}>*</span>}
-        </label>
-      )}
-      <input
-        type="text"
-        readOnly
-        value={displayValue}
-        placeholder={placeholder}
-        disabled={disabled}
-        className={styles.input}
-        onClick={() => !disabled && setOpen((v) => !v)}
-        autoComplete="off"
-      />
-      {open && (
-        <div className={styles.timeDropdown}>
-          <div className={styles.timeColumn} ref={hourColRef}>
-            {HOURS.map((h) => (
-              <div
-                key={h}
-                className={`${styles.timeItem} ${h === selHour ? styles.timeItemSelected : ""}`}
-                onClick={() => pickHour(h)}
-              >
-                {pad(h)}
-              </div>
-            ))}
-          </div>
-          <div className={styles.timeColumn} ref={minuteColRef}>
-            {MINUTES.map((m) => (
-              <div
-                key={m}
-                className={`${styles.timeItem} ${m === selMinute ? styles.timeItemSelected : ""}`}
-                onClick={() => pickMinute(m)}
-              >
-                {pad(m)}
-              </div>
-            ))}
-          </div>
-          <div className={styles.timeColumn}>
-            {PERIODS.map((p) => (
-              <div
-                key={p}
-                className={`${styles.timeItem} ${p === selPeriod ? styles.timeItemSelected : ""}`}
-                onClick={() => pickPeriod(p)}
-              >
-                {p}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* Hidden DatePicker for calendar popup */}
+      <div className={styles.hiddenPicker}>
+        <DatePicker
+          ref={datePickerRef}
+          selected={selected}
+          onChange={handlePickerChange}
+          showMonthDropdown
+          showYearDropdown
+          dropdownMode="select"
+          scrollableYearDropdown
+          yearDropdownItemNumber={100}
+          showTimeSelect={isDateTime}
+          timeFormat="hh:mm aa"
+          timeIntervals={15}
+          dateFormat={resolvedFormat}
+          minDate={minDate}
+          maxDate={maxDate}
+          disabled={disabled}
+          popperPlacement="bottom-start"
+          popperClassName={styles.popper}
+          calendarClassName={styles.calendar}
+        />
+      </div>
     </div>
   );
 };

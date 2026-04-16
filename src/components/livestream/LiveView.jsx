@@ -34,6 +34,7 @@ const LiveView = (props) => {
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [isRemedyOpen, setIsRemedyOpen] = useState(false);
   const [isKundliChatOpen, setIsKundliChatOpen] = useState(false);
+  const [hasUnreadKundliMessage, setHasUnreadKundliMessage] = useState(false);
   const pendingExitActionRef = useRef(null);
 
   const navigate = useNavigate();
@@ -45,8 +46,21 @@ const LiveView = (props) => {
     if (!activeCall) {
       setIsRemedyOpen(false);
       setIsKundliChatOpen(false);
+      setHasUnreadKundliMessage(false);
     }
   }, [activeCall]);
+
+  // Track incoming kundli/chat messages for unread dot on Kundli button
+  useEffect(() => {
+    if (!activeCall) return;
+    const handleIncomingMessage = (data) => {
+      if (!isKundliChatOpen && data.sender !== "astrologer") {
+        setHasUnreadKundliMessage(true);
+      }
+    };
+    voiceSocket.on("message:recieved", handleIncomingMessage);
+    return () => voiceSocket.off("message:recieved", handleIncomingMessage);
+  }, [activeCall, isKundliChatOpen]);
 
   // Register callback so IncomingMessagePopup opens kundli panel here instead of navigating away
   useEffect(() => {
@@ -430,9 +444,23 @@ const LiveView = (props) => {
             <div className="action-item">
               <button
                 className="action-btn"
-                onClick={() => { setIsRemedyOpen(false); setIsKundliChatOpen(true); }}
+                onClick={() => { setIsRemedyOpen(false); setIsKundliChatOpen(true); setHasUnreadKundliMessage(false); }}
                 aria-label="View Kundli"
+                style={{ position: 'relative' }}
               >
+                {hasUnreadKundliMessage && (
+                  <span style={{
+                    position: 'absolute',
+                    top: -2,
+                    right: -2,
+                    width: 10,
+                    height: 10,
+                    backgroundColor: '#22c55e',
+                    borderRadius: '50%',
+                    border: '2px solid white',
+                    animation: 'pulse 2s infinite',
+                  }} />
+                )}
                 <GrReactjs size={22} />
               </button>
               <span className="action-label">Kundli</span>

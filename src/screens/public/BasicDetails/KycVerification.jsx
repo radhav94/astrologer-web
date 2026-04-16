@@ -12,7 +12,7 @@ import Button from "../../../components/UI/button/Button";
 import DateTimePicker from "../../../components/UI/dateTimePicker/DateTimePicker";
 import FormStep from "./FormStep";
 import styles from "./BasicForms.module.scss";
-import dayjs from "dayjs";
+
 
 const OTP_LENGTH = 6;
 const AADHAAR_LENGTH = 12;
@@ -245,12 +245,20 @@ const KycVerification = () => {
                 <input type="date" value={aadhaarDob} onChange={(e) => setAadhaarDob(e.target.value)} ... />
                 */}
                 <DateTimePicker
-                  selected={aadhaarDob ? new Date(aadhaarDob) : null}
-                  onChange={(date) => setAadhaarDob(date ? dayjs(date).format("YYYY-MM-DD") : "")}
                   mode="date"
-                  dateFormat="dd/MM/yyyy"
-                  placeholder="Select date of birth"
+                  selected={aadhaarDob ? new Date(aadhaarDob) : null}
+                  onChange={(date) => {
+                    if (date) {
+                      const yyyy = date.getFullYear();
+                      const mm = String(date.getMonth() + 1).padStart(2, "0");
+                      const dd = String(date.getDate()).padStart(2, "0");
+                      setAadhaarDob(`${yyyy}-${mm}-${dd}`);
+                    } else {
+                      setAadhaarDob("");
+                    }
+                  }}
                   maxDate={new Date()}
+                  placeholder="DD/MM/YYYY"
                   disabled={isKycVerified}
                 />
               </div>
@@ -361,12 +369,20 @@ const KycVerification = () => {
                 <input type="date" value={panDob} onChange={(e) => setPanDob(e.target.value)} ... />
                 */}
                 <DateTimePicker
-                  selected={panDob ? new Date(panDob) : null}
-                  onChange={(date) => setPanDob(date ? dayjs(date).format("YYYY-MM-DD") : "")}
                   mode="date"
-                  dateFormat="dd/MM/yyyy"
-                  placeholder="Select date of birth"
+                  selected={panDob ? new Date(panDob) : null}
+                  onChange={(date) => {
+                    if (date) {
+                      const yyyy = date.getFullYear();
+                      const mm = String(date.getMonth() + 1).padStart(2, "0");
+                      const dd = String(date.getDate()).padStart(2, "0");
+                      setPanDob(`${yyyy}-${mm}-${dd}`);
+                    } else {
+                      setPanDob("");
+                    }
+                  }}
                   maxDate={new Date()}
+                  placeholder="DD/MM/YYYY"
                   disabled={isKycVerified}
                 />
               </div>

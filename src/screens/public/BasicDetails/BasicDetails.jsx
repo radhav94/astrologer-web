@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
 import { useDispatch, useSelector } from "react-redux";
 import * as Yup from "yup";
-import dayjs from "dayjs";
 import {
   updateRegisterData,
   setCurrentStep,
@@ -190,16 +189,21 @@ const BasicDetails = () => {
             </div>
             */}
             <DateTimePicker
+              mode="date"
               selected={formik.values.dateOfBirth ? new Date(formik.values.dateOfBirth) : null}
               onChange={(date) => {
-                const formatted = date ? dayjs(date).format("YYYY-MM-DD") : "";
-                formik.setFieldValue("dateOfBirth", formatted);
+                if (date) {
+                  const yyyy = date.getFullYear();
+                  const mm = String(date.getMonth() + 1).padStart(2, "0");
+                  const dd = String(date.getDate()).padStart(2, "0");
+                  formik.setFieldValue("dateOfBirth", `${yyyy}-${mm}-${dd}`);
+                } else {
+                  formik.setFieldValue("dateOfBirth", "");
+                }
                 formik.setFieldTouched("dateOfBirth", true);
               }}
-              mode="date"
-              dateFormat="dd/MM/yyyy"
-              placeholder="Select your birth date"
               maxDate={new Date()}
+              placeholder="DD/MM/YYYY"
               className={
                 formik.touched.dateOfBirth && formik.errors.dateOfBirth
                   ? styles.dateInputError

@@ -31,6 +31,7 @@ import ConfirmWithdrawal from "../../screens/private/Profile/bankAccount/Confirm
 import SuccessEditAddAccount from "../../screens/private/Profile/bankAccount/SuccessEditAddAccount";
 import SuccessWithdrawal from "../../screens/private/Profile/bankAccount/SuccessWithdrawal";
 import Specialties from "../../screens/private/Profile/profileForms/Specialties";
+import MyEarnings from "../../screens/private/myEarnings/MyEarnings";
 
 export const PATH = {
   publicRoutes: {
@@ -144,6 +145,10 @@ export const PATH = {
       path: "/client-details",
       element: Kundli,
     },
+    MY_EARNINGs: {
+      path: "/my-earnings",
+      element: MyEarnings,
+    },
     CHAT: {
       path: "/chats",
       element: ChatPage,
@@ -168,7 +173,7 @@ export const PATH = {
       header: false,
       footer: false,
     },
-   
+
     ADD_BANK_ACCOUNT: {
       path: "/bank-accounts/add",
       element: AddEditBankAccount,

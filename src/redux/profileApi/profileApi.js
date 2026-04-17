@@ -3,7 +3,7 @@ import { epicApi } from "../baseApi/epicApi";
 export const profileApi = epicApi.injectEndpoints({
   endpoints: (builder) => ({
     getTransactionList: builder.query({
-      query: ({ page = 1, limit = 10, sortBy, filterBy, search, dateRange, customFromDate, customToDate } = {}) => ({
+      query: ({ page = 1, limit = 10, sortBy, filterBy, search, dateRange, customFromDate, customToDate, giftcheck } = {}) => ({
         url: "transactions/all",
         method: "GET",
         params: {
@@ -15,6 +15,7 @@ export const profileApi = epicApi.injectEndpoints({
           ...(dateRange && { dateRange }),
           ...(customFromDate && { customFromDate }),
           ...(customToDate && { customToDate }),
+          ...(giftcheck && { giftcheck }),
         },
       }),
       providesTags: ["Transactions"],

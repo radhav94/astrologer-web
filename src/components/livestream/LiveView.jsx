@@ -34,6 +34,7 @@ const LiveView = (props) => {
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [isRemedyOpen, setIsRemedyOpen] = useState(false);
   const [isKundliChatOpen, setIsKundliChatOpen] = useState(false);
+  const [hasUnreadKundliMessage, setHasUnreadKundliMessage] = useState(false);
   const pendingExitActionRef = useRef(null);
 
   const navigate = useNavigate();
@@ -45,8 +46,21 @@ const LiveView = (props) => {
     if (!activeCall) {
       setIsRemedyOpen(false);
       setIsKundliChatOpen(false);
+      setHasUnreadKundliMessage(false);
     }
   }, [activeCall]);
+
+  // Track incoming kundli/chat messages for unread dot on Kundli button
+  useEffect(() => {
+    if (!activeCall) return;
+    const handleIncomingMessage = (data) => {
+      if (!isKundliChatOpen && data.sender !== "astrologer") {
+        setHasUnreadKundliMessage(true);
+      }
+    };
+    voiceSocket.on("message:recieved", handleIncomingMessage);
+    return () => voiceSocket.off("message:recieved", handleIncomingMessage);
+  }, [activeCall, isKundliChatOpen]);
 
   // Register callback so IncomingMessagePopup opens kundli panel here instead of navigating away
   useEffect(() => {
@@ -320,29 +334,58 @@ const LiveView = (props) => {
           <ChevronLeft size={22} strokeWidth={2} />
         </button>
         <div className="host-info">
-          <div className="host-avatar">
-            <img
-              src={profileImage}
-              alt={astrologerName}
-              style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }}
-              onError={(e) => { e.target.style.display = "none"; e.target.parentNode.textContent = "🕉️"; }}
-            />
-          </div>
-          <div>
-            <div className="host-name">{astrologerName}</div>
-            <div className="host-live-timer">
-              <span className="host-live-dot" />
-              {activeCall && isCallMinimized
-                ? `Call ${String(Math.floor(callTimer / 60)).padStart(2, "0")}:${String(callTimer % 60).padStart(2, "0")}`
-                : `Live ${elapsedTime}`}
-            </div>
-          </div>
+          {activeCall && isCallMinimized ? (
+            <>
+              <div
+                className="host-avatar"
+                style={{
+                  width: 30, height: 30, minWidth: 30,
+                  background: "linear-gradient(135deg, #f75801, #d43400)",
+                  color: "#fff", fontSize: 12, fontWeight: 700,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}
+              >
+                {(activeCall.callerName || "U").split(" ").map(w => w.charAt(0).toUpperCase()).slice(0, 2).join("")}
+              </div>
+              <div>
+                <div className="host-name" style={{ fontSize: 12, maxWidth: 100 }}>
+                  {activeCall.callerName || "Caller"}
+                </div>
+                <div className="host-live-timer">
+                  <span className="host-live-dot" />
+                  {`Private Call ${String(Math.floor(callTimer / 60)).padStart(2, "0")}:${String(callTimer % 60).padStart(2, "0")}`}
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="host-avatar">
+                <img
+                  src={profileImage}
+                  alt={astrologerName}
+                  style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }}
+                  onError={(e) => { e.target.style.display = "none"; e.target.parentNode.textContent = "🕉️"; }}
+                />
+              </div>
+              <div>
+                <div className="host-name">{astrologerName}</div>
+                <div className="host-live-timer">
+                  <span className="host-live-dot" />
+                  {`Live ${elapsedTime}`}
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
-        <div className="top-bar-right">
-          {activeCall && isCallMinimized ? (
+        {activeCall && isCallMinimized && (
+          <div className="top-bar-center">
             <MiniCallOverlay />
-          ) : (
+          </div>
+        )}
+
+        <div className="top-bar-right">
+          {!(activeCall && isCallMinimized) && (
             <div className="live-badge">
               <span className="live-badge-dot" />
               LIVE
@@ -393,7 +436,7 @@ const LiveView = (props) => {
               <path d="M15.854.146a.5.5 0 0 1 0 .708L11.707 5H14.5a.5.5 0 0 1 0 1h-4a.5.5 0 0 1-.5-.5v-4a.5.5 0 0 1 1 0v2.793L15.146.146a.5.5 0 0 1 .708 0m-12.2 1.182a.678.678 0 0 0-1.015-.063L1.605 2.3c-.483.484-.661 1.169-.45 1.77a17.6 17.6 0 0 0 4.168 6.608 17.6 17.6 0 0 0 6.608 4.168c.601.211 1.286.033 1.77-.45l1.034-1.034a.678.678 0 0 0-.063-1.015l-2.307-1.794a.68.68 0 0 0-.58-.122l-2.19.547a1.75 1.75 0 0 1-1.657-.459L5.482 8.062a1.75 1.75 0 0 1-.46-1.657l.548-2.19a.68.68 0 0 0-.122-.58zM1.884.511a1.745 1.745 0 0 1 2.612.163L6.29 2.98c.329.423.445.974.315 1.494l-.547 2.19a.68.68 0 0 0 .178.643l2.457 2.457a.68.68 0 0 0 .644.178l2.189-.547a1.75 1.75 0 0 1 1.494.315l2.306 1.794c.829.645.905 1.87.163 2.611l-1.034 1.034c-.74.74-1.846 1.065-2.877.702a18.6 18.6 0 0 1-7.01-4.42 18.6 18.6 0 0 1-4.42-7.009c-.362-1.03-.037-2.137.703-2.877z" />
             </svg>
           </button>
-          <span className="action-label">Calls</span>
+          <span className="action-label">{activeCall ? "Private Call" : "Calls"}</span>
         </div>
 
         {activeCall && (
@@ -401,9 +444,23 @@ const LiveView = (props) => {
             <div className="action-item">
               <button
                 className="action-btn"
-                onClick={() => { setIsRemedyOpen(false); setIsKundliChatOpen(true); }}
+                onClick={() => { setIsRemedyOpen(false); setIsKundliChatOpen(true); setHasUnreadKundliMessage(false); }}
                 aria-label="View Kundli"
+                style={{ position: 'relative' }}
               >
+                {hasUnreadKundliMessage && (
+                  <span style={{
+                    position: 'absolute',
+                    top: -2,
+                    right: -2,
+                    width: 10,
+                    height: 10,
+                    backgroundColor: '#22c55e',
+                    borderRadius: '50%',
+                    border: '2px solid white',
+                    animation: 'pulse 2s infinite',
+                  }} />
+                )}
                 <GrReactjs size={22} />
               </button>
               <span className="action-label">Kundli</span>
@@ -443,18 +500,26 @@ const LiveView = (props) => {
 
           // Gift messages
           if (m.type === "gift") {
+            const giftImg = m.giftData?.giftImg || m.giftData?.giftImage;
+            const giftName = m.giftData?.giftName || "Gift";
+            const giftPrice = m.giftData?.price || 0;
+            const senderDisplay = m.role === "host" ? "You" : (m.senderName || "Someone");
             return (
               <div key={m.id || index} className="inline-message inline-gift-message">
                 <span className="inline-initial" style={{ background: "linear-gradient(135deg, #f75801, #d43400)" }}>
-                  🎁
+                  {(m.senderName || "U").charAt(0).toUpperCase()}
                 </span>
-                <div className="inline-message-body">
-                  {m.senderName && (
-                    <span className="inline-sender" style={{ color: "#f75801" }}>
-                      {m.role === "host" ? "You" : m.senderName}
-                    </span>
+                <div className="inline-gift-card">
+                  {giftImg && (
+                    <img src={giftImg} alt={giftName} className="inline-gift-img" onError={(e) => { e.target.style.display = "none"; }} />
                   )}
-                  <span className="inline-text">{m.text}</span>
+                  <div className="inline-gift-info">
+                    <span className="inline-gift-sender">{senderDisplay}</span>
+                    <span className="inline-gift-text">sent {giftName}</span>
+                  </div>
+                  {giftPrice > 0 && (
+                    <span className="inline-gift-price">₹{giftPrice}</span>
+                  )}
                 </div>
               </div>
             );
@@ -636,39 +701,73 @@ const LiveGiftNotification = memo(({ gift, onDismiss }) => {
     <div
       style={{
         position: "fixed",
-        top: 72,
+        top: 16,
         left: "50%",
         transform: "translateX(-50%)",
         zIndex: 10000,
         width: "90%",
-        maxWidth: 380,
+        maxWidth: 400,
         pointerEvents: "auto",
       }}
     >
       <div
-        className="flex items-center gap-3 px-4 py-3 rounded-2xl shadow-2xl backdrop-blur-md border border-white/20"
-        style={{ background: "linear-gradient(135deg, rgba(247,88,1,0.95), rgba(212,52,0,0.95))" }}
+        style={{
+          display: "flex",
+          alignItems: "flex-start",
+          gap: 12,
+          padding: "14px 16px",
+          borderRadius: 16,
+          backgroundColor: "#FFF4E3",
+          boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+        }}
       >
-        {gift.giftImg && (
-          <img
-            src={gift.giftImg}
-            alt={gift.giftName}
-            className="w-12 h-12 object-contain rounded-lg bg-white/20 p-1 flex-shrink-0"
-            onError={(e) => { e.target.style.display = "none"; }}
-          />
-        )}
-        <div className="flex flex-col flex-1 min-w-0">
-          <span className="text-white text-sm font-bold">
+        {/* Icon */}
+        <div
+          style={{
+            width: 42,
+            height: 42,
+            borderRadius: "50%",
+            backgroundColor: "#F5A623",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+            fontSize: 20,
+            overflow: "hidden",
+          }}
+        >
+          {gift.giftImg ? (
+            <img
+              src={gift.giftImg}
+              alt={gift.giftName}
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              onError={(e) => { e.target.style.display = "none"; e.target.parentNode.textContent = "🎁"; }}
+            />
+          ) : "🎁"}
+        </div>
+
+        {/* Content */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "#1a1a1a", lineHeight: 1.3 }}>
             🎁 {gift.senderName} sent a gift!
-          </span>
-          <span className="text-white/80 text-xs">
+          </p>
+          <p style={{ margin: "4px 0 0", fontSize: 13, color: "#666", lineHeight: 1.4 }}>
             {gift.giftName}
             {gift.price > 0 && ` • ₹${Number(gift.price).toLocaleString("en-IN")}`}
-          </span>
+          </p>
         </div>
+
+        {/* Close */}
         <button
           onClick={onDismiss}
-          className="ml-1 text-white/70 hover:text-white flex-shrink-0"
+          style={{
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            padding: 4,
+            color: "#E85D04",
+            flexShrink: 0,
+          }}
           aria-label="Dismiss gift notification"
         >
           ✕

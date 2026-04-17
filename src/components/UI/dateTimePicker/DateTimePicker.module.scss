@@ -53,6 +53,138 @@
   }
 }
 
+/* ───── Date input row with calendar button ───── */
+.dateInputRow {
+  display: flex;
+  align-items: center;
+  position: relative;
+
+  .input {
+    padding-right: 40px;
+  }
+}
+
+.calendarOverlay {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 33%;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.calendarBtn {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 44px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0 8px 8px 0;
+  transition: color 0.15s;
+  z-index: 2;
+
+  &:hover {
+    color: #F75801;
+    background: rgba(247, 88, 1, 0.04);
+  }
+
+  &:disabled {
+    color: #d1d5db;
+    cursor: not-allowed;
+    background: none;
+  }
+}
+
+.hiddenPicker {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: visible;
+  pointer-events: none;
+
+  :global(.react-datepicker-wrapper) {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+  }
+
+  :global(.react-datepicker__tab-loop) {
+    pointer-events: auto;
+  }
+
+  :global(.react-datepicker-popper) {
+    pointer-events: auto;
+  }
+}
+
+/* ───── Custom 12-hour Time Picker ───── */
+.timePickerWrapper {
+  position: relative;
+  width: 100%;
+}
+
+.timeDropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  display: flex;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  z-index: 9999;
+  overflow: hidden;
+}
+
+.timeColumn {
+  max-height: 220px;
+  overflow-y: auto;
+  min-width: 56px;
+  text-align: center;
+  scrollbar-width: thin;
+
+  &:not(:last-child) {
+    border-right: 1px solid #f0f0f0;
+  }
+
+  &::-webkit-scrollbar {
+    width: 3px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 3px;
+  }
+}
+
+.timeItem {
+  padding: 8px 12px;
+  font-size: 14px;
+  color: #1a1a1a;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: #fff5ec;
+  }
+}
+
+.activeItem {
+  background: #F75801 !important;
+  color: #fff !important;
+  font-weight: 600;
+}
+
 /* Calendar popup */
 .popper {
   z-index: 9999 !important;
@@ -173,76 +305,5 @@
       color: #fff !important;
       font-weight: 600;
     }
-  }
-}
-
-/* ── 12-hour time picker dropdown ── */
-.timeDropdown {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  z-index: 9999;
-  display: flex;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  background: #fff;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-  margin-top: 4px;
-  overflow: hidden;
-  width: max-content;
-}
-
-.timeColumn {
-  max-height: 252px;
-  overflow-y: auto;
-  min-width: 64px;
-  scrollbar-width: thin;
-
-  &:not(:last-child) {
-    border-right: 1px solid #f0f0f0;
-  }
-
-  &::-webkit-scrollbar {
-    width: 4px;
-  }
-  &::-webkit-scrollbar-thumb {
-    background: #d1d5db;
-    border-radius: 4px;
-  }
-}
-
-.timeItem {
-  padding: 8px 16px;
-  font-size: 14px;
-  text-align: center;
-  cursor: pointer;
-  color: #1a1a1a;
-  transition: background 0.15s ease;
-  user-select: none;
-  line-height: 20px;
-
-  &:hover {
-    background: #fff5ec;
-  }
-}
-
-.timeItemSelected {
-  background: #F75801 !important;
-  color: #fff !important;
-  font-weight: 600;
-}
-
-@media (max-width: 480px) {
-  .timeDropdown {
-    max-width: calc(100vw - 32px);
-  }
-
-  .timeColumn {
-    min-width: 56px;
-  }
-
-  .timeItem {
-    padding: 8px 12px;
-    font-size: 13px;
   }
 }

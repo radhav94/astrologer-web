@@ -509,18 +509,38 @@ const ConsultationHistory = () => {
                         </label> */}
                         <DateTimePicker
                           label="From Date"
+                          mode="date"
                           selected={tempFilters.customFromDate ? new Date(tempFilters.customFromDate) : null}
-                          onChange={(date) => updateTempFilter("customFromDate", date ? dayjs(date).format("YYYY-MM-DD") : "")}
+                          onChange={(date) => {
+                            if (date) {
+                              const yyyy = date.getFullYear();
+                              const mm = String(date.getMonth() + 1).padStart(2, "0");
+                              const dd = String(date.getDate()).padStart(2, "0");
+                              updateTempFilter("customFromDate", `${yyyy}-${mm}-${dd}`);
+                            } else {
+                              updateTempFilter("customFromDate", "");
+                            }
+                          }}
                           maxDate={tempFilters.customToDate ? new Date(tempFilters.customToDate) : new Date()}
-                          placeholder="Select start date"
+                          placeholder="DD/MM/YYYY"
                         />
                         <DateTimePicker
                           label="To Date"
+                          mode="date"
                           selected={tempFilters.customToDate ? new Date(tempFilters.customToDate) : null}
-                          onChange={(date) => updateTempFilter("customToDate", date ? dayjs(date).format("YYYY-MM-DD") : "")}
+                          onChange={(date) => {
+                            if (date) {
+                              const yyyy = date.getFullYear();
+                              const mm = String(date.getMonth() + 1).padStart(2, "0");
+                              const dd = String(date.getDate()).padStart(2, "0");
+                              updateTempFilter("customToDate", `${yyyy}-${mm}-${dd}`);
+                            } else {
+                              updateTempFilter("customToDate", "");
+                            }
+                          }}
                           minDate={tempFilters.customFromDate ? new Date(tempFilters.customFromDate) : undefined}
                           maxDate={new Date()}
-                          placeholder="Select end date"
+                          placeholder="DD/MM/YYYY"
                         />
                         {((tempFilters.customFromDate && !tempFilters.customToDate) ||
                           (!tempFilters.customFromDate && tempFilters.customToDate)) && (

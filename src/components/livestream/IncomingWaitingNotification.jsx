@@ -81,7 +81,7 @@ const IncomingWaitingNotification = () => {
           gap: 12,
           padding: "14px 16px",
           borderRadius: 16,
-          backgroundColor: "#FFF8EE",
+          backgroundColor: "#FFF4E3",
           boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
         }}
       >

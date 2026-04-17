@@ -474,7 +474,7 @@ const Message = ({
           <div
             className={`px-4 py-3 rounded-2xl text-[15px] leading-relaxed shadow-sm ${
               isSender
-                ? "bg-[#FFE4BA] text-gray-900 rounded-tr-md"
+                ? "bg-[#FFF8EE] text-gray-900 rounded-tr-md"
                 : "bg-white text-gray-800 rounded-tl-md border border-gray-100"
             }`}
           >

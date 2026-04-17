@@ -57,6 +57,12 @@ const MiniCallOverlay = () => {
           <div className="mini-call-avatar">
             <span>{initials}</span>
           </div>
+          <div className="mini-call-wave">
+            <span className="mini-call-wave-bar" />
+            <span className="mini-call-wave-bar" />
+            <span className="mini-call-wave-bar" />
+            <span className="mini-call-wave-bar" />
+          </div>
           <button className="mini-call-end" onClick={endCall} aria-label="End call">
             <IoCallSharp size={12} style={{ transform: "rotate(135deg)" }} />
           </button>

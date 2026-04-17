@@ -334,48 +334,23 @@ const LiveView = (props) => {
           <ChevronLeft size={22} strokeWidth={2} />
         </button>
         <div className="host-info">
-          {activeCall && isCallMinimized ? (
-            <>
-              <div
-                className="host-avatar"
-                style={{
-                  width: 30, height: 30, minWidth: 30,
-                  background: "linear-gradient(135deg, #f75801, #d43400)",
-                  color: "#fff", fontSize: 12, fontWeight: 700,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                }}
-              >
-                {(activeCall.callerName || "U").split(" ").map(w => w.charAt(0).toUpperCase()).slice(0, 2).join("")}
-              </div>
-              <div>
-                <div className="host-name" style={{ fontSize: 12, maxWidth: 100 }}>
-                  {activeCall.callerName || "Caller"}
-                </div>
-                <div className="host-live-timer">
-                  <span className="host-live-dot" />
-                  {`Private Call ${String(Math.floor(callTimer / 60)).padStart(2, "0")}:${String(callTimer % 60).padStart(2, "0")}`}
-                </div>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="host-avatar">
-                <img
-                  src={profileImage}
-                  alt={astrologerName}
-                  style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }}
-                  onError={(e) => { e.target.style.display = "none"; e.target.parentNode.textContent = "🕉️"; }}
-                />
-              </div>
-              <div>
-                <div className="host-name">{astrologerName}</div>
-                <div className="host-live-timer">
-                  <span className="host-live-dot" />
-                  {`Live ${elapsedTime}`}
-                </div>
-              </div>
-            </>
-          )}
+          <div className="host-avatar">
+            <img
+              src={profileImage}
+              alt={astrologerName}
+              style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }}
+              onError={(e) => { e.target.style.display = "none"; e.target.parentNode.textContent = "🕉️"; }}
+            />
+          </div>
+          <div>
+            <div className="host-name">{astrologerName}</div>
+            <div className="host-live-timer">
+              <span className="host-live-dot" />
+              {activeCall && isCallMinimized
+                ? `Private Call ${String(Math.floor(callTimer / 60)).padStart(2, "0")}:${String(callTimer % 60).padStart(2, "0")}`
+                : `Live ${elapsedTime}`}
+            </div>
+          </div>
         </div>
 
         {activeCall && isCallMinimized && (

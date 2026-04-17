@@ -24,8 +24,29 @@ export const useLiveStreaming = (client, ROLE, previewSettings = {}) => {
   const [isReconnect, setIsReconnect] = useState(false);
 
   const isConnected = useIsConnected();
-  const [micOn, setMic] = useState(previewSettings.micOn ?? true);
-  const [cameraOn, setCamera] = useState(previewSettings.cameraOn ?? true);
+  const [micOn, setMicState] = useState(() => {
+    const saved = sessionStorage.getItem("shubhtalk_live_mic");
+    if (saved !== null) return saved === "true";
+    return previewSettings.micOn ?? true;
+  });
+  const [cameraOn, setCameraState] = useState(() => {
+    const saved = sessionStorage.getItem("shubhtalk_live_camera");
+    if (saved !== null) return saved === "true";
+    return previewSettings.cameraOn ?? true;
+  });
+
+  // Persist mic/camera state
+  const setMic = useCallback((value) => {
+    const next = typeof value === "function" ? value(micOn) : value;
+    setMicState(next);
+    sessionStorage.setItem("shubhtalk_live_mic", String(next));
+  }, [micOn]);
+
+  const setCamera = useCallback((value) => {
+    const next = typeof value === "function" ? value(cameraOn) : value;
+    setCameraState(next);
+    sessionStorage.setItem("shubhtalk_live_camera", String(next));
+  }, [cameraOn]);
 
   // Track whether mic was muted by an active call (not by the host manually)
   const micMutedByCallRef = useRef(false);

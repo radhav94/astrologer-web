@@ -50,6 +50,8 @@ export const LiveStreamProvider = ({ children }) => {
     setLiveMetadata(null);
     setIsLive(false);
     setLiveStartTime(null);
+    sessionStorage.removeItem("shubhtalk_live_mic");
+    sessionStorage.removeItem("shubhtalk_live_camera");
   }, [setIsLive]);
 
   return (

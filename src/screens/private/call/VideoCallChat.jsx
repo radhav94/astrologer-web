@@ -245,17 +245,47 @@ const VideoCallChat = ({
         )
       } else if (msg.type === "attachment") {
         isSpecialMessage = true;
+        let fileUrl = msg.text;
+        let displayName = "Download Attachment";
+        try {
+          const parsed = typeof msg.text === "string" ? JSON.parse(msg.text) : msg.text;
+          if (parsed?.url) {
+            fileUrl = parsed.url;
+            displayName = parsed.fileName || displayName;
+          }
+        } catch {
+          // Not JSON — extract a readable name from URL or raw text
+          if (typeof msg.text === "string" && msg.text.startsWith("http")) {
+            try {
+              const urlPath = new URL(msg.text).pathname;
+              const lastSegment = urlPath.split("/").pop();
+              if (lastSegment) displayName = decodeURIComponent(lastSegment);
+            } catch {
+              // keep default
+            }
+          }
+        }
+        // Clean up S3-style filenames: remove UUID prefix (e.g. "1776259847338-17dc7de1-...")
+        // If name has a recognizable extension, try to shorten
+        const extMatch = displayName.match(/\.(pdf|docx?|xlsx?|txt|csv|pptx?|zip|rar)$/i);
+        if (!extMatch && displayName.length > 40) {
+          // Has MIME-like extension (e.g. .vnd.openxmlformats...), simplify
+          if (displayName.includes("wordprocessingml")) displayName = "Document.docx";
+          else if (displayName.includes("spreadsheetml")) displayName = "Spreadsheet.xlsx";
+          else if (displayName.includes("presentationml")) displayName = "Presentation.pptx";
+          else displayName = "Download Attachment";
+        }
         content = (
           <div className={styles.fileMessage}>
             <a
-              href={msg.text}
+              href={fileUrl}
               target="_blank"
               rel="noopener noreferrer"
               className={styles.fileLink}
+              style={{ wordBreak: "break-all" }}
             >
-              📎 {msg.text}
+              📎 {displayName}
             </a>
-
           </div>
         );
       }

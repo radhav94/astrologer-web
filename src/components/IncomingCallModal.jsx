@@ -5,6 +5,9 @@ import { voiceSocket } from "../services/appServices/voiceSocketServices";
 import toast from "./toast";
 import { useEffect, useState, useRef } from "react";
 
+const capitalize = (name) =>
+  name ? name.replace(/\b\w/g, (c) => c.toUpperCase()) : name;
+
 const IncomingCallModal = () => {
   const { incomingCall, setIncomingCall, setActiveCall, activeCall, sharedAgoraState, setSharedAgoraState, setIsUpgradeRejectionProtected, upgradeRejectionRef, isUpgradingRef, setIsCallMinimized } = useCall();
   const { activeChat } = useChatContext();
@@ -275,10 +278,10 @@ const IncomingCallModal = () => {
             </h3>
             <p className="text-sm text-zinc-400">
               {activeCall && activeCall.callType === "audio" && incomingCall.callType === "video"
-                ? `${incomingCall.callerName || "Caller"} wants to switch to video`
+                ? `${capitalize(incomingCall.callerName) || "Caller"} wants to switch to video`
                 : activeCall && activeCall.callType === "video" && incomingCall.callType === "audio"
-                ? `${incomingCall.callerName || "Caller"} wants to switch to audio only`
-                : `${incomingCall.callerName || "Someone"} is calling you…`}
+                ? `${capitalize(incomingCall.callerName) || "Caller"} wants to switch to audio only`
+                : `${capitalize(incomingCall.callerName) || "Someone"} is calling you…`}
             </p>
           </div>
         </div>

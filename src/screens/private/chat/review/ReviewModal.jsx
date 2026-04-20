@@ -13,15 +13,21 @@ const ReviewModal = ({ onClose, onSubmit, ratedUserName, reviewerName }) => {
       <div className={styles.modal}>
         {/* Header */}
         <div className={styles.header}>
-          <h2 className={styles.title}>Please Rate your Experience</h2>
-          <button onClick={onClose} className={styles.closeBtn} aria-label="Close">
+          <h2 className={styles.title}>
+            Please Rate your Experience {ratedUserName ? `with ${ratedUserName}` : ""}
+          </h2>
+          <button
+            onClick={onClose}
+            className={styles.closeBtn}
+            aria-label="Close"
+          >
             <Icons.X size={14} />
           </button>
         </div>
 
         {/* Stars */}
         <div className={styles.stars}>
-         {[1, 2, 3, 4, 5].map((i) => (
+          {[1, 2, 3, 4, 5].map((i) => (
             <button
               key={i}
               type="button"
@@ -62,7 +68,9 @@ const ReviewModal = ({ onClose, onSubmit, ratedUserName, reviewerName }) => {
             onChange={(e) => setAnonymous(e.target.checked)}
             className={styles.checkbox}
           />
-          <span className={styles.checkboxLabel}>Hide my name from the review</span>
+          <span className={styles.checkboxLabel}>
+            Hide my name from the review
+          </span>
         </label>
 
         {/* Submit */}

@@ -10,6 +10,9 @@ import { useChat } from "../../../context/chatContext";
 
 dayjs.extend(relativeTime);
 
+const capitalize = (name) =>
+  name ? name.replace(/\b\w/g, (c) => c.toUpperCase()) : name;
+
 const mapRecentActivity = (apiData = []) => {
   return apiData
     .map((item) => {
@@ -35,10 +38,11 @@ const mapRecentActivity = (apiData = []) => {
         userId: user?._id,
         type: "chat",
 
-        title:
+        title: capitalize(
           user?.firstName || user?.lastName
             ? `${user?.firstName || ""} ${user?.lastName || ""}`.trim()
-            : user?.phoneNumber || "Unknown User",
+            : user?.phoneNumber || "Unknown User"
+        ),
 
         subtitle:
           latestMessage?.sender === "astrologer"

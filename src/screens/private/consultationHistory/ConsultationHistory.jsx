@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Icons } from "../../../components/Icons";
 import { Link } from "react-router";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   useGetOrderHistoryQuery,
   useRefundInitiateByAstrologerMutation,
@@ -37,7 +37,8 @@ const groupByDate = (transactions) => {
 };
 
 const ConsultationHistory = () => {
-  const [activeTab, setActiveTab] = useState("orders");
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState(location.state?.tab || "orders");
   const [openMenuId, setOpenMenuId] = useState(null);
   const [refundItem, setRefundItem] = useState(null);
   const [refundMinutes, setRefundMinutes] = useState("");

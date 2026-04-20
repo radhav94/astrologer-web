@@ -18,10 +18,6 @@ const TodaysUpdatesSection = ({
 
   return (
     <div>
-      <div className="flex mb-3">
-        <SectionHeader title="TODAY'S UPDATE" />
-      </div>
-
       <div
         className="rounded-2xl overflow-hidden"
         style={{ background: "#fff", boxShadow: "0 2px 12px rgba(0,0,0,0.05)", border: "1px solid rgba(0,0,0,0.06)" }}
@@ -39,10 +35,10 @@ const TodaysUpdatesSection = ({
             <div className={styles.queueCard}>
               <div className={styles.queueGlow} />
               <div className="relative z-10">
-                <h3 className="text-lg sm:text-xl font-bold text-[#1A1A1A] tracking-tight mb-0.5">
+                <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight mb-0.5">
                   {Number(totalQueue || 0)} in Queue
                 </h3>
-                <p className="text-[#6B7280] text-[11px] font-medium mb-2">Next Session</p>
+                <p className="text-white/70 text-xs font-medium mb-2">Next Session</p>
                 <div className={styles.queuePills}>
                   <span className={styles.queuePill}>
                     <span className={styles.pillDot} style={{ background: '#3B82F6' }} />

@@ -8,8 +8,8 @@ import dayjs from "dayjs";
 
 const COLORS = ["#D7A24F", "#F59E0B", "#FBBF24", "#FCD34D", "#FDE68A"];
 
-const GiftReceivedSection = () => {
-  const { data, isLoading } = useGetGiftReceivedListQuery({ page: 1, limit: 10 }, { refetchOnMountOrArgChange: true });
+const GiftReceivedSection = ({ dateFilter }) => {
+  const { data, isLoading } = useGetGiftReceivedListQuery({ page: 1, limit: 10, ...dateFilter }, { refetchOnMountOrArgChange: true });
   const gifts = data?.data?.transactions || [];
   const total = data?.data?.pagination?.totalItems || 0;
 

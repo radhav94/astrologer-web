@@ -8,8 +8,8 @@ import dayjs from "dayjs";
 
 const typeColors = { call: "#4BA01D", chat: "#3B82F6", video: "#F75801" };
 
-const OrderHistorySection = () => {
-  const { data, isLoading } = useGetOrderHistoryQuery({ page: 1, limit: 8 }, { refetchOnMountOrArgChange: true });
+const OrderHistorySection = ({ dateFilter }) => {
+  const { data, isLoading } = useGetOrderHistoryQuery({ page: 1, limit: 8, ...dateFilter }, { refetchOnMountOrArgChange: true });
   const orders = data?.data?.transactions || [];
   const total = data?.data?.pagination?.totalItems || 0;
 
@@ -26,7 +26,7 @@ const OrderHistorySection = () => {
       <div className="rounded-2xl overflow-hidden h-full flex flex-col" style={{ background: "#fff", boxShadow: "0 2px 12px rgba(0,0,0,0.05)", border: "1px solid rgba(0,0,0,0.06)" }}>
         {/* Card header */}
         <div className="flex items-center justify-between px-4 pt-4 pb-2">
-          <h4 className="text-sm font-bold text-[#1A1A1A]">Order History</h4>
+          <h4 className="text-sm font-bold text-[#1A1A1A]">Orders</h4>
           <Link to="/consultation-history" className="text-[10px] text-[#F75801] hover:text-[#D43400] font-semibold flex items-center gap-0.5 transition-colors">
             View All <Icons.ArrowRight size={10} />
           </Link>

@@ -1,92 +1,37 @@
-@keyframes softPulse {
-  0%, 100% { opacity: 0.5; transform: scale(1); }
-  50% { opacity: 0.8; transform: scale(1.15); }
-}
-
-.earningsCard {
-  position: relative;
-  background: linear-gradient(90deg, #FFEDD4 0%, #FFD0D0 100%);
-  border-radius: 16px;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  overflow: hidden;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-  border: 1px solid rgba(0, 0, 0, 0.04);
-  transition: all 0.3s ease;
-  &:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08); }
-}
-
-.earningsGlow {
-  position: absolute;
-  top: -16px;
-  right: -16px;
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(247, 88, 1, 0.1) 0%, transparent 70%);
-  animation: softPulse 4s ease-in-out infinite;
-  pointer-events: none;
-}
-
-.earningsIcon {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  background: rgba(247, 88, 1, 0.12);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #F75801;
-  font-weight: 700;
-  font-size: 12px;
-  border: 1px solid rgba(247, 88, 1, 0.1);
-}
-
 .queueCard {
   position: relative;
-  background: linear-gradient(90deg, #FFEDD4 0%, #FFD0D0 100%);
+  background: linear-gradient(135deg, #FF9A44 0%, #FF7A2F 50%, #F75801 100%);
   border-radius: 16px;
   padding: 16px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   overflow: hidden;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-  border: 1px solid rgba(0, 0, 0, 0.04);
+  box-shadow: 0 6px 24px rgba(255, 122, 47, 0.25);
   transition: all 0.3s ease;
-  &:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08); }
+  &:hover { transform: translateY(-1px); box-shadow: 0 10px 32px rgba(255, 122, 47, 0.3); }
 }
 
 .queueGlow {
-  position: absolute;
-  bottom: -16px;
-  left: -16px;
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(247, 88, 1, 0.08) 0%, transparent 70%);
-  animation: softPulse 5s ease-in-out infinite;
-  pointer-events: none;
+  display: none;
 }
 
 .queuePills {
-  background: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.2);
   border-radius: 10px;
   padding: 6px 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .queuePill {
   display: flex;
   align-items: center;
   gap: 5px;
-  color: #1A1A1A;
+  color: #fff;
   font-size: 11px;
   font-weight: 600;
 }
@@ -99,7 +44,7 @@
 }
 
 .queueDivider {
-  color: rgba(0, 0, 0, 0.2);
+  color: rgba(255, 255, 255, 0.4);
   font-size: 16px;
   font-weight: 300;
 }

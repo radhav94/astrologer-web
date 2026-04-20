@@ -17,13 +17,11 @@ import {
   MonthlyOverviewSection,
   MilestonesSection,
   PendingVerificationSection,
-  QuickStatsSection,
   RecentActivitySection,
   QuickActionsSection,
   OrderHistorySection,
   TransactionHistorySection,
   GiftReceivedSection,
-  WalletStatsSection,
   DashboardDateFilter,
 } from "../../../components/Dashboard/sections";
 
@@ -268,6 +266,13 @@ const Dashboard = () => {
     return titles[selectedOverviewOption.value] || "OVERVIEW";
   }, [selectedOverviewOption]);
 
+  /**
+   * shouldShow — checks if an API-driven section is active.
+   */
+  const shouldShow = useCallback((displayType) => {
+    return orderedSections.some((s) => s.display_type === displayType && s.status !== false);
+  }, [orderedSections]);
+
   // If user is not fully verified, show pending message card
   if (!isManualVerification) {
     return <PendingVerificationSection />;
@@ -294,15 +299,36 @@ const Dashboard = () => {
             onCustomToDate={setCustomToDate}
           />
 
-          {/* Row 1: Quick Actions + Consultation Price */}
-          <div className={`grid grid-cols-1 lg:grid-cols-2 gap-3 ${dashStyles.sectionAnimated}`}>
-            <div><QuickActionsSection overviewData={monthlyOverview} isLoading={isMonthlyLoading} /></div>
-            <div><ConsultationPriceSection astrologerData={astrologerData} /></div>
+          {/* Row 1: Stats Grid (full width) */}
+          <div className={dashStyles.sectionAnimated}>
+            <QuickActionsSection overviewData={monthlyOverview} isLoading={isMonthlyLoading} />
           </div>
 
-          {/* Row 2: Wallet Stats */}
-          <div className={dashStyles.sectionAnimated}>
-            <WalletStatsSection />
+          {/* Row 2: Consultation Price + Monthly Overview */}
+          <div className={`grid grid-cols-1 lg:grid-cols-[1fr_3fr] gap-3 ${dashStyles.sectionAnimated}`}>
+            {shouldShow("set-your-consultation-price") && (
+              <div><ConsultationPriceSection astrologerData={astrologerData} /></div>
+            )}
+            {shouldShow("monthly-overview") && (
+              <div>
+                <MonthlyOverviewSection
+                  overviewTitle={overviewTitle}
+                  isMonthlyLoading={isMonthlyLoading}
+                  totalMonthlyEarnings={totalMonthlyEarnings}
+                  metricsData={metricsData}
+                  categoryPercentages={categoryPercentages}
+                  monthlyOverview={monthlyOverview}
+                  heatmapData={heatmapData}
+                  overviewOptions={overviewOptions}
+                  selectedOverviewOption={selectedOverviewOption}
+                  setSelectedOverviewOption={setSelectedOverviewOption}
+                  customFromDate={customFromDate}
+                  customToDate={customToDate}
+                  setCustomFromDate={setCustomFromDate}
+                  setCustomToDate={setCustomToDate}
+                />
+              </div>
+            )}
           </div>
 
           {/* Row 3: Today's Updates + Upcoming Sessions */}
@@ -320,41 +346,17 @@ const Dashboard = () => {
             />
           </div>
 
-          {/* Row 5: Quick Stats */}
-          <div className={dashStyles.sectionAnimated}>
-            <QuickStatsSection astrologerData={astrologerData} />
-          </div>
-
-          {/* Row 6: Monthly Overview */}
-          <div className={dashStyles.sectionAnimated}>
-            <MonthlyOverviewSection
-              overviewTitle={overviewTitle}
-              isMonthlyLoading={isMonthlyLoading}
-              totalMonthlyEarnings={totalMonthlyEarnings}
-              metricsData={metricsData}
-              categoryPercentages={categoryPercentages}
-              monthlyOverview={monthlyOverview}
-              heatmapData={heatmapData}
-              overviewOptions={overviewOptions}
-              selectedOverviewOption={selectedOverviewOption}
-              setSelectedOverviewOption={setSelectedOverviewOption}
-              customFromDate={customFromDate}
-              customToDate={customToDate}
-              setCustomFromDate={setCustomFromDate}
-              setCustomToDate={setCustomToDate}
-            />
-          </div>
-
-          {/* Row 7: Recent Activity */}
+          {/* Row 5: Recent Activity — commented out
           <div className={dashStyles.sectionAnimated}>
             <RecentActivitySection />
           </div>
+          */}
 
           {/* Row 8: Order History + Transactions + Gifts */}
           <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 ${dashStyles.sectionAnimated}`}>
-            <div><OrderHistorySection /></div>
-            <div><TransactionHistorySection /></div>
-            <div><GiftReceivedSection /></div>
+            <div><OrderHistorySection dateFilter={overviewQueryParams} /></div>
+            <div><TransactionHistorySection dateFilter={overviewQueryParams} /></div>
+            <div><GiftReceivedSection dateFilter={overviewQueryParams} /></div>
           </div>
 
           {/* Row 9: Milestones */}

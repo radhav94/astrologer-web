@@ -5,8 +5,8 @@ import { Icons } from "../../Icons";
 import { useGetTransactionListQuery } from "../../../redux/profileApi/profileApi";
 import dayjs from "dayjs";
 
-const TransactionHistorySection = () => {
-  const { data, isLoading } = useGetTransactionListQuery({ page: 1, limit: 10 }, { refetchOnMountOrArgChange: true });
+const TransactionHistorySection = ({ dateFilter }) => {
+  const { data, isLoading } = useGetTransactionListQuery({ page: 1, limit: 10, ...dateFilter }, { refetchOnMountOrArgChange: true });
   const transactions = data?.data?.transactions || [];
   const total = data?.data?.pagination?.totalItems || 0;
 

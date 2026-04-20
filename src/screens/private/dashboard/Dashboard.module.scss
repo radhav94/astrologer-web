@@ -35,6 +35,11 @@
 .dashboardWrapper {
   position: relative;
   min-height: 100%;
+  font-size: 15px;
+
+  @media (min-width: 640px) {
+    font-size: 16px;
+  }
   --dashboard-surface: #ffffff;
   --dashboard-surface-soft: #FFF8F2;
   --dashboard-surface-strong: #1B1D2A;

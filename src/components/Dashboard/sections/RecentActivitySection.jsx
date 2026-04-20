@@ -110,7 +110,7 @@ const RecentActivitySection = () => {
           </div>
         ) : (
           <>
-            {/* Summary chips + total */}
+            {/* Summary chips + total — commented out
             <div className="px-4 sm:px-5 pt-4 sm:pt-5 pb-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div className="flex flex-wrap gap-2">
                 {summary.map((s) => (
@@ -126,8 +126,9 @@ const RecentActivitySection = () => {
                 <p className="text-lg font-bold text-[#1A1A1A]">₹{totalEarned.toLocaleString("en-IN")}</p>
               </div>
             </div>
+            */}
 
-            {/* Multi-line chart: Call, Chat, Gift */}
+            {/* Multi-line chart — commented out
             <div className="px-2 sm:px-3 h-[170px]">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData}>
@@ -158,6 +159,7 @@ const RecentActivitySection = () => {
                 </LineChart>
               </ResponsiveContainer>
             </div>
+            */}
 
             {/* Recent list */}
             <div className="border-t border-[rgba(0,0,0,0.04)] px-4 sm:px-5 py-3">

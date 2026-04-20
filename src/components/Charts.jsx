@@ -84,20 +84,20 @@ export const Heatmap = ({ data, dark = false }) => {
 
   return (
     <div className="w-full">
-      <div className="grid grid-cols-12 gap-1.5 sm:gap-2">
+      <div className="flex flex-wrap gap-[2px]">
         {data.map((item, idx) => (
           <div
             key={idx}
-            className={`aspect-square rounded-lg ${getColor(item.value)} transition-all duration-200 hover:opacity-80 hover:scale-110 cursor-pointer`}
+            className={`w-[22px] h-[22px] rounded-sm ${getColor(item.value)} transition-all duration-200 hover:opacity-80 cursor-pointer`}
             title={`Day ${item.day}: ${item.value} session${item.value !== 1 ? "s" : ""}`}
           />
         ))}
       </div>
-      <div className={`flex items-center gap-2 mt-4 text-xs font-medium ${dark ? "text-white/30" : "text-[#9CA3AF]"}`}>
+      <div className={`flex items-center gap-1.5 mt-2 text-[10px] font-medium ${dark ? "text-white/30" : "text-[#9CA3AF]"}`}>
         <span>Less</span>
-        <div className="flex gap-1">
+        <div className="flex gap-0.5">
           {legendColors.map((c, i) => (
-            <div key={i} className={`w-3.5 h-3.5 rounded-md ${c}`} />
+            <div key={i} className={`w-2.5 h-2.5 rounded-sm ${c}`} />
           ))}
         </div>
         <span>Many</span>

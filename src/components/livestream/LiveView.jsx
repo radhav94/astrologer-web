@@ -21,7 +21,7 @@ import { getDefaultImgBasedOnGender } from "../../utils/utils";
 import { useLiveStream } from "../../context/LiveStreamContext";
 import { useCall } from "../../context/CallContext";
 import SuggestRemedyPanel from "../../screens/private/call/SuggestRemedyPanel";
-import VideoCallChat from "../../screens/private/call/VideoCallChat";
+import KundliPopup from "./KundliPopup";
 import eyeIcon from "../../assets/images/eye.png";
 
 
@@ -632,21 +632,12 @@ const LiveView = (props) => {
         onExit={handleConfirmExit}
       />
 
-      {/* Kundli / Chat Panel — only during active call */}
-      {activeCall && isKundliChatOpen && (
-        <VideoCallChat
-          isOpen={isKundliChatOpen}
-          onClose={() => setIsKundliChatOpen(false)}
-          hideAttachment
-          videoCallData={{
-            userId: activeCall.userId,
-            astrologerId: activeCall.astrologerId,
-            chatRoomId: activeCall.chatRoomId || activeCall.roomId,
-            kundliId: activeCall.kundliId,
-            isUserSide: false,
-          }}
-        />
-      )}
+      {/* Kundli Popup — only during active call */}
+      <KundliPopup
+        isOpen={isKundliChatOpen && !!activeCall}
+        onClose={() => setIsKundliChatOpen(false)}
+        activeCall={activeCall}
+      />
 
       {/* Suggest Remedy Panel — only during active call */}
       <SuggestRemedyPanel

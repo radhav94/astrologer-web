@@ -53,11 +53,17 @@ const Sidebar = ({ isOpen, onClose }) => {
       path: "/consultation-history",
     },
     {
-      icon: Icons.Chats,
-      label: "Chats",
-      id: "chats",
-      path: "/chats",
+      icon: Icons.Wallet,
+      label: "My Earnings",
+      id: "earnings",
+      path: "/my-earnings",
     },
+    // {
+    //   icon: Icons.Chats,
+    //   label: "Chats",
+    //   id: "chats",
+    //   path: "/chats",
+    // },
     // {
     //   icon: Icons.Wallet,
     //   label: "Recent Activity",

@@ -20,7 +20,7 @@ const StickyReviewFooter = () => {
   const handleReviewSubmit = async ({ rating, review, isAnonymous }) => {
     try {
       const res = await addUserReview({
-        userID: reviewData?.userID,
+        userID: reviewData?.userID || reviewData?.userId,
         roomId: reviewData?.roomId,
         rating,
         review,

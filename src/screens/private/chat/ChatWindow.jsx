@@ -780,7 +780,7 @@ const ChatWindow = () => {
   const handleReviewSubmit = async ({ rating, review, isAnonymous }) => {
     try {
       const res = await addUserReview({
-        userID,
+        userID: userID || userId,
         roomId,
         rating,
         review,

@@ -1,0 +1,143 @@
+/* ===============================
+   KUNDLI POPUP
+   =============================== */
+
+.kp-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100001;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: kpFadeIn 0.2s ease;
+}
+
+@keyframes kpFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.kp-card {
+  width: 100%;
+  max-width: 420px;
+  max-height: 70vh;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: kpScaleIn 0.2s ease;
+}
+
+@keyframes kpScaleIn {
+  from { transform: scale(0.92); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.kp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.kp-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.kp-close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  border-radius: 6px;
+  color: #6b7280;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: #f3f4f6;
+  }
+}
+
+.kp-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.kp-empty {
+  text-align: center;
+  padding: 32px 0;
+  color: #9ca3af;
+  font-size: 14px;
+}
+
+.kp-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.kp-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: #fafafa;
+
+  &:hover {
+    border-color: #f75801;
+    background: #fff7ed;
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.kp-item-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #fff7ed, #ffedd5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #f75801;
+}
+
+.kp-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.kp-item-name {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kp-item-action {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: #f75801;
+  font-weight: 500;
+}

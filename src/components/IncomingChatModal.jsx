@@ -6,6 +6,9 @@ import { PATH } from "../utils/routes/Paths";
 import { useEffect, useState } from "react";
 import toast from "./toast";
 
+const capitalize = (name) =>
+  name ? name.replace(/\b\w/g, (c) => c.toUpperCase()) : name;
+
 const IncomingChatModal = () => {
   const { incomingChat, setIncomingChat, setActiveChat, resetTimer } = useChat();
   const navigate = useNavigate();
@@ -130,7 +133,7 @@ const IncomingChatModal = () => {
               Incoming Chat 
             </h3>
             <p className="text-sm text-zinc-400">
-              {incomingChat?.chaterName || "Someone"} wants to chat with you…
+              {capitalize(incomingChat?.chaterName) || "Someone"} wants to chat with you…
             </p>
           </div>
         </div>

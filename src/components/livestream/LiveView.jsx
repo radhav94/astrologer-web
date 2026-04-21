@@ -21,7 +21,7 @@ import { getDefaultImgBasedOnGender } from "../../utils/utils";
 import { useLiveStream } from "../../context/LiveStreamContext";
 import { useCall } from "../../context/CallContext";
 import SuggestRemedyPanel from "../../screens/private/call/SuggestRemedyPanel";
-import VideoCallChat from "../../screens/private/call/VideoCallChat";
+import KundliPopup from "./KundliPopup";
 import eyeIcon from "../../assets/images/eye.png";
 
 
@@ -664,21 +664,12 @@ const LiveView = (props) => {
         onExit={handleConfirmExit}
       />
 
-      {/* Kundli / Chat Panel — only during active call */}
-      {activeCall && isKundliChatOpen && (
-        <VideoCallChat
-          isOpen={isKundliChatOpen}
-          onClose={() => setIsKundliChatOpen(false)}
-          hideAttachment
-          videoCallData={{
-            userId: activeCall.userId,
-            astrologerId: activeCall.astrologerId,
-            chatRoomId: activeCall.chatRoomId || activeCall.roomId,
-            kundliId: activeCall.kundliId,
-            isUserSide: false,
-          }}
-        />
-      )}
+      {/* Kundli Popup — only during active call */}
+      <KundliPopup
+        isOpen={isKundliChatOpen && !!activeCall}
+        onClose={() => setIsKundliChatOpen(false)}
+        activeCall={activeCall}
+      />
 
       {/* Suggest Remedy Panel — only during active call */}
       <SuggestRemedyPanel
@@ -788,18 +779,46 @@ const LiveFollowNotification = memo(({ follow, onDismiss }) => {
       }}
     >
       <div
-        className="flex items-center gap-3 px-4 py-3 rounded-2xl shadow-2xl backdrop-blur-md border border-white/20"
-        style={{ background: "linear-gradient(135deg, rgba(247,88,1,0.95), rgba(212,52,0,0.95))" }}
+        style={{
+          display: "flex",
+          alignItems: "flex-start",
+          gap: 12,
+          padding: "14px 16px",
+          borderRadius: 16,
+          backgroundColor: "#FFF8EE",
+          boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+        }}
       >
-        <span className="text-2xl flex-shrink-0">👤</span>
-        <div className="flex flex-col flex-1 min-w-0">
-          <span className="text-white text-sm font-bold">
-             {follow.senderName} started following you!
-          </span>
+        <div
+          style={{
+            width: 42,
+            height: 42,
+            borderRadius: "50%",
+            backgroundColor: "#F5A623",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+            fontSize: 20,
+          }}
+        >
+          👤
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "#1a1a1a", lineHeight: 1.3 }}>
+            {follow.senderName} started following you!
+          </p>
         </div>
         <button
           onClick={onDismiss}
-          className="ml-1 text-white/70 hover:text-white flex-shrink-0"
+          style={{
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            padding: 4,
+            color: "#E85D04",
+            flexShrink: 0,
+          }}
           aria-label="Dismiss follow notification"
         >
           ✕

@@ -1,0 +1,119 @@
+.card {
+  position: relative;
+  overflow: hidden;
+  background: var(--white-color, #fff);
+  border-radius: 16px;
+  padding: 24px;
+  border: 1px solid #f3f4f6;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s ease;
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+  }
+}
+
+.glow {
+  position: absolute;
+  top: -48px;
+  right: -48px;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  opacity: 0.6;
+  filter: blur(40px);
+}
+
+.inner {
+  position: relative;
+}
+
+.topRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.iconBox {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon {
+  width: 24px;
+  height: 24px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 9999px;
+}
+
+.badgePositive {
+  background: #e8f5e9;
+  color: #4caf50;
+}
+
+.badgeNegative {
+  background: #ffebee;
+  color: #f44336;
+}
+
+.trendIcon {
+  width: 12px;
+  height: 12px;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--grey-color-1, #9ca3af);
+  margin-bottom: 4px;
+}
+
+.value {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: var(--title, #1a1a1a);
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.subtext {
+  font-size: 12px;
+  color: var(--grey-color-1, #9ca3af);
+  margin-top: 8px;
+}
+
+/* Variant gradient colors */
+.variantPrimary {
+  background: linear-gradient(to bottom right, rgba(255, 107, 53, 0.1), rgba(255, 107, 53, 0.05));
+  color: #ff6b35;
+}
+
+.variantSuccess {
+  background: linear-gradient(to bottom right, rgba(76, 175, 80, 0.1), rgba(76, 175, 80, 0.05));
+  color: #4caf50;
+}
+
+.variantInfo {
+  background: linear-gradient(to bottom right, rgba(33, 150, 243, 0.1), rgba(33, 150, 243, 0.05));
+  color: #2196f3;
+}
+
+.variantWarning {
+  background: linear-gradient(to bottom right, rgba(255, 152, 0, 0.15), rgba(255, 152, 0, 0.05));
+  color: #ff9800;
+}

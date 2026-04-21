@@ -38,7 +38,7 @@ const LiveView = (props) => {
   const pendingExitActionRef = useRef(null);
 
   const navigate = useNavigate();
-  const { minimizeLive, maximizeLive, isLiveMinimized, endLiveSession, liveStartTime } = useLiveStream();
+  const { minimizeLive, maximizeLive, isLiveMinimized, endLiveSession } = useLiveStream();
   const { waitingList, activeCall, isCallMinimized, callTimer, setActiveCall, setWaitingList, onMessagePopupClickRef } = useCall();
 
   // Close call-specific panels when call ends
@@ -84,27 +84,6 @@ const LiveView = (props) => {
   const hasEndedRef = useRef(false);
   const isMountedRef = useRef(false);
   const messagesOverlayRef = useRef(null);
-
-  // Elapsed live time
-  const [elapsedTime, setElapsedTime] = useState("0 s");
-
-  useEffect(() => {
-    if (!liveStartTime) return;
-    const tick = () => {
-      const diff = Math.floor((Date.now() - liveStartTime) / 1000);
-      const hrs = Math.floor(diff / 3600);
-      const mins = Math.floor((diff % 3600) / 60);
-      const secs = diff % 60;
-      if (hrs > 0) {
-        setElapsedTime(`${String(hrs).padStart(2, "0")}:${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`);
-      } else {
-        setElapsedTime(`${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`);
-      }
-    };
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, [liveStartTime]);
 
   const hostData = {
     name: "Anaisha",
@@ -344,12 +323,12 @@ const LiveView = (props) => {
           </div>
           <div>
             <div className="host-name">{astrologerName}</div>
-            <div className="host-live-timer">
-              <span className="host-live-dot" />
-              {activeCall && isCallMinimized
-                ? `Private Call ${String(Math.floor(callTimer / 60)).padStart(2, "0")}:${String(callTimer % 60).padStart(2, "0")}`
-                : `Live ${elapsedTime}`}
-            </div>
+            {activeCall && isCallMinimized && (
+              <div className="host-live-timer">
+                <span className="host-live-dot" />
+                {`Private Call ${String(Math.floor(callTimer / 60)).padStart(2, "0")}:${String(callTimer % 60).padStart(2, "0")}`}
+              </div>
+            )}
           </div>
         </div>
 

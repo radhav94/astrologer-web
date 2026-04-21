@@ -94,9 +94,49 @@ const MonthlyOverviewSection = ({
         </div>
         */}
 
-        {/* Heatmap */}
+        {/* Session Activity */}
         <div className="border-t border-[rgba(0,0,0,0.04)] p-4 sm:p-5">
           <h4 className="text-xs font-semibold text-[#1A1A1A] mb-3">Session Activity</h4>
+
+          {/* Call / Chat / Video / Gift counts */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+            {(() => {
+              const cats = monthlyOverview?.categories || [];
+              const items = [
+                { label: "Call", icon: <Icons.Phone size={16} />, color: "#4BA01D", bg: "#E8F5E9" },
+                { label: "Chat", icon: <Icons.MessageSquare size={16} />, color: "#3B82F6", bg: "#EFF6FF" },
+                { label: "Video", icon: <Icons.Video size={16} />, color: "#F75801", bg: "#FFF0E6" },
+                { label: "Gifts", icon: <Icons.Gift size={16} />, color: "#F59E0B", bg: "#FFF8E1" },
+              ];
+              return items.map((item) => {
+                const cat = cats.find((c) => c.label === item.label);
+                const amount = cat?.amount ?? 0;
+                const formatted = amount >= 100000 ? `₹${(amount / 100000).toFixed(1)}L` : amount >= 1000 ? `₹${(amount / 1000).toFixed(1)}K` : `₹${amount.toLocaleString("en-IN")}`;
+                return (
+                  <div
+                    key={item.label}
+                    className="flex items-center gap-2.5 rounded-xl p-3"
+                    style={{ background: item.bg, border: `1px solid ${item.color}22` }}
+                  >
+                    <div
+                      className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                      style={{ background: "#fff", color: item.color }}
+                    >
+                      {item.icon}
+                    </div>
+                    <div>
+                      <p className="text-lg font-bold leading-none" style={{ color: item.color }}>
+                        {isMonthlyLoading ? "..." : formatted}
+                      </p>
+                      <p className="text-[10px] text-[#6B7280] font-medium mt-0.5">{item.label}</p>
+                    </div>
+                  </div>
+                );
+              });
+            })()}
+          </div>
+
+          {/* Heatmap */}
           {heatmapData.length > 0 ? (
             <Heatmap data={heatmapData} />
           ) : (

@@ -171,14 +171,13 @@ const Dashboard = () => {
 
   // --- Overview filter options ---
   const overviewOptions = useMemo(() => [
-    { id: 0, value: "alltime", label: "All Time" },
-    { id: 1, value: "today", label: "Today" },
-    { id: 2, value: "yesterday", label: "Yesterday" },
-    { id: 3, value: "last7days", label: "Last 7 Days" },
-    { id: 4, value: "last30days", label: "Last 30 Days" },
-    { id: 5, value: "custom", label: "Custom Date" },
+    { id: 0, value: "today", label: "Today" },
+    { id: 1, value: "yesterday", label: "Yesterday" },
+    { id: 2, value: "last7days", label: "Last 7 Days" },
+    { id: 3, value: "last30days", label: "Last 30 Days" },
+    { id: 4, value: "custom", label: "Custom Date" },
   ], []);
-  // Default to "All Time" (registration date → today)
+  // Default to "Today"
   const [selectedOverviewOption, setSelectedOverviewOption] = useState(() => overviewOptions[0]);
   // Custom date range state (only used when option is "custom")
   const [customFromDate, setCustomFromDate] = useState(null);
@@ -195,11 +194,6 @@ const Dashboard = () => {
 
   // Build query params based on selected overview option
   const overviewQueryParams = useMemo(() => {
-    if (selectedOverviewOption.value === "alltime") {
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      return { customFromDate: registrationDate, customToDate: yesterday.toISOString().split("T")[0] };
-    }
     if (selectedOverviewOption.value === "custom") {
       if (customFromDate && customToDate) {
         const fmt = (d) => d.toISOString().split("T")[0];
@@ -256,7 +250,6 @@ const Dashboard = () => {
   // Dynamic section title based on selected option
   const overviewTitle = useMemo(() => {
     const titles = {
-      alltime: "ALL TIME OVERVIEW",
       today: "TODAY'S OVERVIEW",
       yesterday: "YESTERDAY'S OVERVIEW",
       last7days: "LAST 7 DAYS OVERVIEW",
